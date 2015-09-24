@@ -99,14 +99,17 @@ class FMU2(object):
         modelVariables = root.find('ModelVariables')
 
         self.variables = {}
+        self.variableNames = []
 
         for variable in modelVariables:
             sv = ScalarVariable(name=variable.get('name'), valueReference=int(variable.get('valueReference')))
             sv.description = variable.get('description')
             sv.start = variable.get('start')
+            self.variableNames.append(sv.name)
             self.variables[sv.name] = sv
 
         library = cdll.LoadLibrary(os.path.join(unzipdir, 'binaries', 'win32', 'bouncingBall.dll'))
+        self.dll = library
 
         self.fmi2Instantiate = getattr(library, 'fmi2Instantiate')
         self.fmi2Instantiate.argtypes = [fmi2String, fmi2Type, fmi2String, fmi2String, POINTER(fmi2CallbackFunctions), fmi2Boolean, fmi2Boolean]
@@ -131,6 +134,10 @@ class FMU2(object):
         self.fmi2GetReal          = getattr(library, 'fmi2GetReal')
         self.fmi2GetReal.argtypes = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Real)]
         self.fmi2GetReal.restype  = fmi2Status
+
+        self.fmi2SetReal          = getattr(library, 'fmi2SetReal')
+        self.fmi2SetReal.argtypes = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Real)]
+        self.fmi2SetReal.restype  = fmi2Status
 
         self.fmi2GetBooleanStatus          = getattr(library, 'fmi2GetBooleanStatus')
         self.fmi2GetBooleanStatus.argtypes = [fmi2Component, fmi2StatusKind, POINTER(fmi2Boolean)]
@@ -181,8 +188,12 @@ class FMU2(object):
         status = self.fmi2GetReal(self.component, vr, len(vr), value)
         return list(value)
 
+    def setReal(self, vr, value):
+        status = self.fmi2SetReal(self.component, vr, len(vr), value)
+
     def terminate(self):
         status = self.fmi2Terminate(self.component)
 
     def freeInstance(self):
         self.fmi2FreeInstance(self.component)
+        windll.kernel32.FreeLibrary(self.dll._handle)

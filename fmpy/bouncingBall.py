@@ -1,46 +1,42 @@
-
-from ctypes import *
-from itertools import combinations
-
 import numpy as np
 from fmpy import *
 
 
-fmu = FMU2()
+fmu = FMU2(unzipdir=r'Z:\Development\FMPy\bouncingBall')
+
+time = 0.0
+stop = 3.0
+step = 1e-2
+
+names = ['h', 'der(h)']
+result = []
 
 fmu.instantiate('bouncingBall', fmi2CoSimulation)
-
-fmu.setupExperiment(False, 0.0, 0.0, True, 3.0)
-
+fmu.setupExperiment(tolerance=None, startTime=time)
 fmu.enterInitializationMode()
 fmu.exitInitializationMode()
 
-step = 1e-2
+vr = (fmi2ValueReference * len(names))()
 
-time = np.linspace(0, 2.5, 251)
+for i, name in enumerate(names):
+    vr[i] = fmu.variables[name].valueReference
 
-vr    = (fmi2ValueReference * 1)(0)
-value = (fmi2Real * 1)(0.0)
+result = []
 
-
-height = [0.0]
-
-for t, h in zip(time[1:], np.diff(time)):
-    status = fmu.doStep(t, h, fmi2True)
-    status = fmu.getBooleanStatus(fmi2Terminated)
-    value = fmu.getReal(vr)
-
-    print "%g, %g" % (t, value[0])
-    t += step
-
-    height.append(value[0])
+while time < stop:
+    status = fmu.doStep(time, step, fmi2True)
+    result.append([time] + fmu.getReal(vr))
+    time += step
 
 fmu.terminate()
 fmu.freeInstance()
 
 import matplotlib.pyplot as plt
 
-plt.plot(time, height)
+res = np.array(result)
+
+plt.plot(res[:,0], res[:,1])
+plt.plot(res[:,0], res[:,2])
 plt.show()
 
 pass

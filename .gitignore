@@ -1,2 +1,5 @@
 # FMUs
 *.fmu
+
+# compiled files
+*.py[cod]

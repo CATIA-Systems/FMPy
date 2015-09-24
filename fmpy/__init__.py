@@ -1,5 +1,6 @@
 import os
 
+from lxml import etree
 from ctypes import *
 from itertools import combinations
 
@@ -45,11 +46,9 @@ def logger(a, b, c, d, e):
     print a, b, c, d, e
 
 def allocateMemory(nobj, size):
-    print "allocateMemory(%d, %d)" % (nobj, size)
     return calloc(nobj, size)
 
 def freeMemory(obj):
-    print "free(%d)" % obj
     free(obj)
 
 def stepFinished(componentEnvironment, status):
@@ -69,13 +68,45 @@ callbacks.stepFinished         = fmi2StepFinishedTYPE(stepFinished)
 callbacks.freeMemory           = fmi2CallbackFreeMemoryTYPE(freeMemory)
 callbacks.componentEnvironment = None
 
+variables = {}
+
+class ScalarVariable(object):
+
+    def __init__(self, name, valueReference):
+        self.name = name
+        self.valueReference = valueReference
+        self.description = None
+        self.start = None
+        self.causality = None
+        self.variability = None
 
 class FMU2(object):
 
-    def __init__(self):
-        unzipdir = r'Z:\Development\FMPy\bouncingBall'
+    def __init__(self, unzipdir):
 
-        library = cdll.LoadLibrary(r'Z:\Development\FMPy\bouncingBall\binaries\win32\bouncingBall.dll')
+        self.unzipdir = unzipdir
+
+        tree = etree.parse(os.path.join(unzipdir, 'modelDescription.xml'))
+
+        root = tree.getroot()
+
+        self.guid       = root.get('guid')
+        self.fmiVersion = root.get('fmiVersion')
+        self.modelName  = root.get('modelName')
+        self.causality  = root.get('causality')
+        self.variability  = root.get('variability')
+
+        modelVariables = root.find('ModelVariables')
+
+        self.variables = {}
+
+        for variable in modelVariables:
+            sv = ScalarVariable(name=variable.get('name'), valueReference=int(variable.get('valueReference')))
+            sv.description = variable.get('description')
+            sv.start = variable.get('start')
+            self.variables[sv.name] = sv
+
+        library = cdll.LoadLibrary(os.path.join(unzipdir, 'binaries', 'win32', 'bouncingBall.dll'))
 
         self.fmi2Instantiate = getattr(library, 'fmi2Instantiate')
         self.fmi2Instantiate.argtypes = [fmi2String, fmi2Type, fmi2String, fmi2String, POINTER(fmi2CallbackFunctions), fmi2Boolean, fmi2Boolean]
@@ -114,9 +145,20 @@ class FMU2(object):
         self.fmi2FreeInstance.restype  = None
 
     def instantiate(self, instance_name, kind):
-        self.component = self.fmi2Instantiate(instance_name, kind, '{8c4e810f-3df3-4a00-8276-176fa3c9f003}', '', byref(callbacks), fmi2False, fmi2False)
+        self.component = self.fmi2Instantiate(instance_name, kind, self.guid, 'file://' + self.unzipdir, byref(callbacks), fmi2False, fmi2False)
 
-    def setupExperiment(self, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime):
+    def setupExperiment(self, tolerance, startTime, stopTime=None):
+
+        toleranceDefined = tolerance is not None
+
+        if tolerance is None:
+            tolerance = 0.0
+
+        stopTimeDefined = stopTime is not None
+
+        if stopTime is None:
+            stopTime = 0.0
+
         status = self.fmi2SetupExperiment(self.component, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime)
 
     def enterInitializationMode(self):
@@ -137,12 +179,10 @@ class FMU2(object):
     def getReal(self, vr):
         value = (fmi2Real * len(vr))()
         status = self.fmi2GetReal(self.component, vr, len(vr), value)
-        return value
+        return list(value)
 
     def terminate(self):
         status = self.fmi2Terminate(self.component)
 
     def freeInstance(self):
         self.fmi2FreeInstance(self.component)
-
-

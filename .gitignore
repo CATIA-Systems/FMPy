@@ -3,3 +3,6 @@
 
 # compiled files
 *.py[cod]
+
+# PyCharm project
+workspace.xml

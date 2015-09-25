@@ -6,3 +6,6 @@
 
 # PyCharm project
 workspace.xml
+
+# build folder
+build/

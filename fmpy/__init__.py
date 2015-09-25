@@ -76,6 +76,7 @@ class ScalarVariable(object):
         self.name = name
         self.valueReference = valueReference
         self.description = None
+        self.type = None
         self.start = None
         self.causality = None
         self.variability = None
@@ -96,6 +97,9 @@ class FMU2(object):
         self.causality  = root.get('causality')
         self.variability  = root.get('variability')
 
+        coSimulation = root.find('CoSimulation')
+        self.modelIdentifier = coSimulation.get('modelIdentifier')
+
         modelVariables = root.find('ModelVariables')
 
         self.variables = {}
@@ -105,10 +109,25 @@ class FMU2(object):
             sv = ScalarVariable(name=variable.get('name'), valueReference=int(variable.get('valueReference')))
             sv.description = variable.get('description')
             sv.start = variable.get('start')
+
+            value = next(variable.iterchildren())
+            sv.type = value.tag
+            start = value.get('start')
+
+            if start is not None:
+                if sv.type == 'Real':
+                    sv.start = float(start)
+                elif sv.type == 'Integer':
+                    sv.start = int(start)
+                elif sv.type == 'Boolean':
+                    sv.start = start == 'true'
+                else:
+                    sv.start = start
+
             self.variableNames.append(sv.name)
             self.variables[sv.name] = sv
 
-        library = cdll.LoadLibrary(os.path.join(unzipdir, 'binaries', 'win32', 'bouncingBall.dll'))
+        library = cdll.LoadLibrary(os.path.join(unzipdir, 'binaries', 'win32', self.modelIdentifier + '.dll'))
         self.dll = library
 
         self.fmi2Instantiate = getattr(library, 'fmi2Instantiate')
@@ -135,9 +154,25 @@ class FMU2(object):
         self.fmi2GetReal.argtypes = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Real)]
         self.fmi2GetReal.restype  = fmi2Status
 
+        self.fmi2GetInteger          = getattr(library, 'fmi2GetInteger')
+        self.fmi2GetInteger.argtypes = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer)]
+        self.fmi2GetInteger.restype  = fmi2Status
+
+        self.fmi2GetBoolean          = getattr(library, 'fmi2GetBoolean')
+        self.fmi2GetBoolean.argtypes = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Boolean)]
+        self.fmi2GetBoolean.restype  = fmi2Status
+
         self.fmi2SetReal          = getattr(library, 'fmi2SetReal')
         self.fmi2SetReal.argtypes = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Real)]
         self.fmi2SetReal.restype  = fmi2Status
+
+        self.fmi2SetInteger          = getattr(library, 'fmi2SetInteger')
+        self.fmi2SetInteger.argtypes = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer)]
+        self.fmi2SetInteger.restype  = fmi2Status
+
+        self.fmi2SetBoolean          = getattr(library, 'fmi2SetBoolean')
+        self.fmi2SetBoolean.argtypes = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Boolean)]
+        self.fmi2SetBoolean.restype  = fmi2Status
 
         self.fmi2GetBooleanStatus          = getattr(library, 'fmi2GetBooleanStatus')
         self.fmi2GetBooleanStatus.argtypes = [fmi2Component, fmi2StatusKind, POINTER(fmi2Boolean)]

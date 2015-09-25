@@ -3,10 +3,28 @@ FMPy
 
 FMPy is a Python library to simulate Functional Mockup Units (FMUs).
 
-Example
--------
+- FMI 2.0 Co-Simulation
+- Windows 32 & 64 bit
+- Pure Python (with ctypes)
 
-The `bouncingBall.fmu` is available from [fmi-standard.org](https://trac.fmi-standard.org/browser/branches/public/Test_FMUs/FMI_2.0/CoSimulation/win32/FMUSDK/2.0.3/BouncingBall).
+
+
+
+Installation
+------------
+
+Clone the repository and change to the `FMPy` folder. On the command line type
+
+```
+python setup.py install
+```
+
+Tutorial
+--------
+
+The FMUs used in this tutorial can be downloaded from the [fmi-standard.org](https://trac.fmi-standard.org/browser/branches/public/Test_FMUs/FMI_2.0/CoSimulation/win32/FMUSDK/2.0.3) website.
+
+### Simulate an FMU
 
 ```
 import matplotlib.pyplot as plt
@@ -20,13 +38,14 @@ plt.plot(result['time'], result['der(h)'])
 plt.show()
 ```
 
-Getting Startet
----------------
+### Set start values, stop time and step size
 
-Clone the repository and change to the `FMPy` folder. On the command line type
+TODO...
 
-```
-python setup.py install
-```
+### Set input
+
+
+
+
 
 Copyright (c) 2015 3DS GmbH

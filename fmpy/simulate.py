@@ -1,3 +1,5 @@
+# noinspection PyPep8
+
 import shutil
 from tempfile import mkdtemp
 import numpy as np

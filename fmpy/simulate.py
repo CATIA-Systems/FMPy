@@ -19,7 +19,7 @@ def simulate(filename, start_time=0, stop_time=1, step_size=1e-3, start_values={
     with zipfile.ZipFile(filename, 'r') as fmufile:
         fmufile.extractall(unzipdir)
 
-    fmu = FMU2(unzipdir=unzipdir)
+    fmu = FMU2(unzipdir=unzipdir, validate=False)
 
     names = fmu.variableNames
 

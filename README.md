@@ -3,11 +3,10 @@ FMPy
 
 FMPy is a Python library to simulate Functional Mockup Units (FMUs).
 
-- FMI 2.0 Co-Simulation
+- Supports FMI 2.0 Co-Simulation
 - Windows 32 & 64 bit
+- Validates the modelDescription.xml
 - Pure Python (with ctypes)
-
-
 
 
 Installation
@@ -18,6 +17,7 @@ Clone the repository and change to the `FMPy` folder. On the command line type
 ```
 python setup.py install
 ```
+
 
 Tutorial
 --------

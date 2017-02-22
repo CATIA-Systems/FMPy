@@ -4,8 +4,13 @@
 # compiled files
 *.py[cod]
 
-# PyCharm project
-workspace.xml
-
 # build folder
 build/
+
+# PyCharm user-specific stuff:
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/dictionaries
+
+# File-based project format:
+*.iws

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+  <xs:annotation>
+    <xs:documentation>
+Copyright(c) 2008-2009, MODELISAR consortium. All rights reserved.
+This file is licensed by the copyright holders under the BSD License
+(http://www.opensource.org/licenses/bsd-license.html):
+----------------------------------------------------------------------------
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+- Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+- Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+- Neither the name of the copyright holders nor the names of its
+  contributors may be used to endorse or promote products derived
+  from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+----------------------------------------------------------------------------
+    </xs:documentation>
+  </xs:annotation>
+  
+  <xs:complexType name="fmiImplementation">
+    <xs:annotation>
+      <xs:documentation>XML structures related to the FMI co-simulation interface.</xs:documentation>
+    </xs:annotation>
+    
+    <xs:choice>
+      <xs:element name="CoSimulation_StandAlone">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Capabilities" type="fmiCoSimulationCapabilities"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="CoSimulation_Tool">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Capabilities" type="fmiCoSimulationCapabilities"/>
+            <xs:element name="Model" type="fmiCoSimulationModel"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:choice>
+  </xs:complexType>
+  
+  <xs:complexType name="fmiCoSimulationCapabilities">
+    <xs:annotation>
+      <xs:documentation>List of capability flags that an FMI co-simulation interface can provide</xs:documentation>
+    </xs:annotation>
+    
+    <xs:attribute name="canHandleVariableCommunicationStepSize" type="xs:boolean" default="false"/>
+    <xs:attribute name="canHandleEvents" type="xs:boolean" default="false"/>
+    <xs:attribute name="canRejectSteps" type="xs:boolean" default="false"/>
+    <xs:attribute name="canInterpolateInputs" type="xs:boolean" default="false"/>
+    <xs:attribute name="maxOutputDerivativeOrder" type="xs:unsignedInt" default="0"/>
+    <xs:attribute name="canRunAsynchronuously" type="xs:boolean" default="false"/>
+    <xs:attribute name="canSignalEvents" type="xs:boolean" default="false"/>
+    <xs:attribute name="canBeInstantiatedOnlyOncePerProcess" type="xs:boolean" default="false"/>
+    <xs:attribute name="canNotUseMemoryManagementFunctions" type="xs:boolean" default="false"/>
+  </xs:complexType>
+
+  <xs:complexType name="fmiCoSimulationModel">
+    <xs:annotation>
+      <xs:documentation>This structure is used to model information about a model</xs:documentation>
+    </xs:annotation>
+    
+    <xs:sequence minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="File">
+        <xs:annotation>
+          <xs:documentation>This structure is used to maintain the list of additional models needed to run the main model</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:attribute name="file" type="xs:anyURI" use="required"/>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    
+    <xs:attribute name="entryPoint"  type="xs:anyURI" use="required"/>
+    <xs:attribute name="manualStart" type="xs:boolean" default="false"/>
+    <xs:attribute name="type"        type="xs:string" use="required"/>
+  </xs:complexType>
+</xs:schema>

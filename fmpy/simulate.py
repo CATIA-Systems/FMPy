@@ -3,7 +3,8 @@
 import shutil
 from tempfile import mkdtemp
 import numpy as np
-from fmpy import *
+from fmpy import FMU2
+from fmpy.fmi2 import *
 import sys
 import zipfile
 
@@ -20,6 +21,8 @@ def simulate(filename, start_time=0, stop_time=1, step_size=1e-3, start_values={
 
     with zipfile.ZipFile(filename, 'r') as fmufile:
         fmufile.extractall(unzipdir)
+
+
 
     fmu = FMU2(unzipdir=unzipdir)
 
@@ -88,7 +91,7 @@ def simulate(filename, start_time=0, stop_time=1, step_size=1e-3, start_values={
         boolean_vrs = []
 
     while time < stop_time:
-        row =[time]
+        row = [time]
 
         if len(real_vrs) > 0:
             status = fmu.fmi2GetReal(fmu.component, real_vrs, len(real_vrs), real_values)

@@ -26,7 +26,7 @@ def simulate(filename, start_time=0, stop_time=1, step_size=1e-3, start_values={
         fmufile.extractall(unzipdir)
 
     if md.fmiVersion == '1.0':
-        fmu = FMU1(modelDescription=md, unzipDirectory=unzipdir, instanceName="instance1")
+        fmu = FMU1Slave(modelDescription=md, unzipDirectory=unzipdir, instanceName="instance1")
         fmu.instantiate("rectifier1")
         fmu.initializeSlave()
         pass

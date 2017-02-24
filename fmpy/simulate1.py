@@ -2,7 +2,6 @@
 
 import shutil
 from tempfile import mkdtemp
-import numpy as np
 from fmpy.fmi1 import *
 import sys
 import zipfile
@@ -109,28 +108,18 @@ def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, ou
 
     recorder = Recorder(fmu=fmu, output=output)
 
-    nx = modelDescription.numberOfContinuousStates
-    nz = modelDescription.numberOfEventIndicators
-
-    x  = np.zeros(nx)
-    dx = np.zeros(nx)
-    z  = np.zeros(nz)
-    prez  = np.zeros(nz)
-
-    px  = x.ctypes.data_as(POINTER(fmi1Real))
-    pdx = dx.ctypes.data_as(POINTER(fmi1Real))
-    pz  = z.ctypes.data_as(POINTER(fmi1Real))
-
-    time = start_time
+    prez  = np.zeros_like(fmu.z)
 
     timeEvents  = 0
     stateEvents = 0
     stepEvents  = 0
 
+    time = start_time
+
     while time < stop_time:
 
-        status = fmu.fmi1GetContinuousStates(fmu.component, px, nx)
-        status = fmu.fmi1GetDerivatives(fmu.component, pdx, nx)
+        fmu.getContinuousStates()
+        fmu.getDerivatives()
 
         tPre = time;
         time = min(time + step_size, stop_time);
@@ -142,38 +131,24 @@ def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, ou
 
         dt = time - tPre
 
-        status = fmu.setTime(time)
+        fmu.setTime(time)
 
         # forward Euler
-        x += dt * dx
+        fmu.x += dt * fmu.dx
 
-        # perform one step
-        fmu.fmi1SetContinuousStates(fmu.component, px, nx)
+        fmu.getContinuousStates()
 
         # check for step event, e.g.dynamic state selection
-        stepEvent = fmi1Boolean()
-        status = fmu.fmi1CompletedIntegratorStep(fmu.component, byref(stepEvent))
-        stepEvent = stepEvent == fmi1True
+        stepEvent = fmu.completedIntegratorStep()
 
         # check for state event
-        prez[:] = z
-        status = fmu.fmi1GetEventIndicators(fmu.component, pz, nz)
-        stateEvent = np.any((prez * z) < 0)
+        prez[:] = fmu.z
+        fmu.getEventIndicators()
+        stateEvent = np.any((prez * fmu.z) < 0)
 
         # handle events
         if timeEvent or stateEvent or stepEvent:
-
-            if timeEvent:
-                timeEvents += 1
-
-            if stateEvent:
-                stateEvents += 1
-
-            if stepEvent:
-                stepEvents += 1
-
-            # event iteration in one step, ignoring intermediate results
-            status = fmu.fmi1EventUpdate(fmu.component, fmi1False, fmu.eventInfo)
+            fmu.eventUpdate()
 
         recorder.sample(time)
 
@@ -181,6 +156,7 @@ def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, ou
     fmu.freeInstance()
 
     return recorder.result()
+
 
 def simulateCS1(modelDescription, unzipdir, start_time, stop_time, step_size, output):
 

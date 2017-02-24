@@ -3,6 +3,7 @@
 from enum import Enum
 import os
 import pathlib
+import numpy as np
 from ctypes import *
 from itertools import combinations
 from .. import free, freeLibrary, platform, sharedLibraryExtension, calloc
@@ -186,6 +187,17 @@ class FMU1Model(_FMU1):
 
         self.eventInfo = fmi1EventInfo()
 
+        nx = modelDescription.numberOfContinuousStates
+        nz = modelDescription.numberOfEventIndicators
+
+        self.x = np.zeros(nx)
+        self.dx = np.zeros(nx)
+        self.z = np.zeros(nz)
+
+        self._px = self.x.ctypes.data_as(POINTER(fmi1Real))
+        self._pdx = self.dx.ctypes.data_as(POINTER(fmi1Real))
+        self._pz = self.z.ctypes.data_as(POINTER(fmi1Real))
+
         # FMI 1.0 Model Exchange functions
         self.fmi1InstantiateModel = getattr(self.dll, self.modelIdentifier + '_fmiInstantiateModel')
         self.fmi1InstantiateModel.argtypes = [fmi1String, fmi1String, fmi1CallbackFunctions, fmi1Boolean]
@@ -240,11 +252,26 @@ class FMU1Model(_FMU1):
     def setTime(self, time: float):
         status = self.fmi1SetTime(self.component, time)
 
-    def initialize(self, toleranceControlled=fmi1False, relativeTolerance=0.0, eventInfo=None):
-        if eventInfo is None:
-            eventInfo = self.eventInfo
-        status = self.fmi1Initialize(self.component, toleranceControlled, relativeTolerance, eventInfo)
+    def initialize(self, toleranceControlled=fmi1False, relativeTolerance=0.0):
+        status = self.fmi1Initialize(self.component, toleranceControlled, relativeTolerance, self.eventInfo)
         return status
+
+    def getContinuousStates(self):
+        status = self.fmi1GetContinuousStates(self.component, self._px, self.x.size)
+
+    def getDerivatives(self):
+        status = self.fmi1GetDerivatives(self.component, self._pdx, self.dx.size)
+
+    def completedIntegratorStep(self):
+        stepEvent = fmi1Boolean()
+        status = self.fmi1CompletedIntegratorStep(self.component, byref(stepEvent))
+        return stepEvent != fmi1False
+
+    def getEventIndicators(self):
+        status = self.fmi1GetEventIndicators(self.component, self._pz, self.z.size)
+
+    def eventUpdate(self, intermediateResults=fmi1False):
+        status = self.fmi1EventUpdate(self.component, intermediateResults, self.eventInfo)
 
     def terminate(self):
         status = self.fmi1Terminate(self.component)

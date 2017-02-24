@@ -24,7 +24,7 @@ class Recorder(object):
 
         for sv in md.modelVariables:
             if (output is None and sv.causality == 'output') or (output is not None and sv.name in output):
-                self.values[sv.type].append((sv.name, sv.valueReference))
+                self.values['Integer' if sv.type == 'Enumeration' else sv.type].append((sv.name, sv.valueReference))
 
         if len(self.values['Real']) > 0:
             real_names, real_vrs = zip(*self.values['Real'])
@@ -72,11 +72,13 @@ class Recorder(object):
         return np.array(self.rows, dtype=np.dtype(self.cols))
 
 
-def simulate(filename, start_time=0, stop_time=1, step_size=1e-3, start_values={}, output=None):
+def simulate(filename, start_time=0, stop_time=1, step_size=1e-3, fmiType=None, start_values={}, output=None):
 
     modelDescription = read_model_description(filename)
 
-    time = start_time
+    if fmiType is None:
+        # determine the FMI type automatically
+        fmiType = FMIType.CO_SIMULATION if modelDescription.coSimulation is not None else FMIType.MODEL_EXCHANGE
 
     unzipdir = mkdtemp()
 
@@ -89,21 +91,113 @@ def simulate(filename, start_time=0, stop_time=1, step_size=1e-3, start_values={
         fmufile.extractall(unzipdir)
 
     if modelDescription.fmiVersion == '1.0':
-        fmu = FMU1Slave(modelDescription=modelDescription, unzipDirectory=unzipdir, instanceName="instance1")
-        fmu.instantiate("rectifier1")
-        fmu.initializeSlave()
-        pass
+        if fmiType is FMIType.MODEL_EXCHANGE:
+            return simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, output)
+        else:
+            return simulateCS1(modelDescription, unzipdir, start_time, stop_time, step_size, output)
+
+    # clean up
+    shutil.rmtree(unzipdir)
+
+
+def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, output):
+
+    fmu = FMU1Model(modelDescription=modelDescription, unzipDirectory=unzipdir)
+    fmu.instantiate()
+    fmu.setTime(start_time)
+    fmu.initialize()
 
     recorder = Recorder(fmu=fmu, output=output)
+
+    nx = modelDescription.numberOfContinuousStates
+    nz = modelDescription.numberOfEventIndicators
+
+    x  = np.zeros(nx)
+    dx = np.zeros(nx)
+    z  = np.zeros(nz)
+    prez  = np.zeros(nz)
+
+    px  = x.ctypes.data_as(POINTER(fmi1Real))
+    pdx = dx.ctypes.data_as(POINTER(fmi1Real))
+    pz  = z.ctypes.data_as(POINTER(fmi1Real))
+
+    time = start_time
+
+    timeEvents  = 0
+    stateEvents = 0
+    stepEvents  = 0
+
+    while time < stop_time:
+
+        status = fmu.fmi1GetContinuousStates(fmu.component, px, nx)
+        status = fmu.fmi1GetDerivatives(fmu.component, pdx, nx)
+
+        tPre = time;
+        time = min(time + step_size, stop_time);
+
+        timeEvent = fmu.eventInfo.upcomingTimeEvent != fmi1False and fmu.eventInfo.nextEventTime <= time;
+
+        if timeEvent:
+            time = fmu.eventInfo.nextEventTime
+
+        dt = time - tPre
+
+        status = fmu.setTime(time)
+
+        # forward Euler
+        x += dt * dx
+
+        # perform one step
+        fmu.fmi1SetContinuousStates(fmu.component, px, nx)
+
+        # check for step event, e.g.dynamic state selection
+        stepEvent = fmi1Boolean()
+        status = fmu.fmi1CompletedIntegratorStep(fmu.component, byref(stepEvent))
+        stepEvent = stepEvent == fmi1True
+
+        # check for state event
+        prez[:] = z
+        status = fmu.fmi1GetEventIndicators(fmu.component, pz, nz)
+        stateEvent = np.any((prez * z) < 0)
+
+        # handle events
+        if timeEvent or stateEvent or stepEvent:
+
+            if timeEvent:
+                timeEvents += 1
+
+            if stateEvent:
+                stateEvents += 1
+
+            if stepEvent:
+                stepEvents += 1
+
+            # event iteration in one step, ignoring intermediate results
+            status = fmu.fmi1EventUpdate(fmu.component, fmi1False, fmu.eventInfo)
+
+        recorder.sample(time)
+
+    fmu.terminate()
+    fmu.freeInstance()
+
+    return recorder.result()
+
+def simulateCS1(modelDescription, unzipdir, start_time, stop_time, step_size, output):
+
+    fmu = FMU1Slave(modelDescription=modelDescription, unzipDirectory=unzipdir)
+    fmu.instantiate("rectifier1")
+    fmu.initialize()
+
+    recorder = Recorder(fmu=fmu, output=output)
+
+    time = start_time
 
     while time < stop_time:
         recorder.sample(time)
         status = fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
         time += step_size
 
-    # clean up
-    fmu.terminateSlave()
-    fmu.freeSlaveInstance()
-    shutil.rmtree(unzipdir)
+    fmu.terminate()
+    fmu.freeInstance()
 
     return recorder.result()

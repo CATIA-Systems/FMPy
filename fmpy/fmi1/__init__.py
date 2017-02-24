@@ -1,10 +1,12 @@
 # noinspection PyPep8
 
+from enum import Enum
 import os
 import pathlib
 from ctypes import *
 from itertools import combinations
 from .. import free, freeLibrary, platform, sharedLibraryExtension, calloc
+
 
 fmi1Component      = c_void_p
 fmi1ValueReference = c_uint
@@ -13,8 +15,8 @@ fmi1Integer        = c_int
 fmi1Boolean        = c_char
 fmi1String         = c_char_p
 
-fmi1True  = 1
-fmi1False = 0
+fmi1True  = b'\x01'
+fmi1False = b'\x00'
 
 fmi1UndefinedValueReference = -1
 
@@ -59,30 +61,30 @@ callbacks.freeMemory           = fmi1CallbackFreeMemoryTYPE(freeMemory)
 #callbacks.stepFinished         = fmi1StepFinishedTYPE(stepFinished)
 #callbacks.stepFinished = None
 
-
-class _FMU(object):
-
+class FMIType(Enum):
     MODEL_EXCHANGE = 0
     CO_SIMULATION = 1
+
+
+class _FMU(object):
 
     def __init__(self, modelDescription, unzipDirectory, instanceName, fmiType):
 
         self.modelDescription = modelDescription
         self.unzipDirectory = unzipDirectory
-        self.instanceName = instanceName
         self.fmiType = fmiType
 
-        if fmiType == _FMU.MODEL_EXCHANGE:
+        if fmiType == FMIType.MODEL_EXCHANGE:
             self.modelIdentifier = modelDescription.modelExchange.modelIdentifier
         else:
             self.modelIdentifier = modelDescription.coSimulation.modelIdentifier
+
+        self.instanceName = instanceName if instanceName is not None else self.modelIdentifier
 
 
 class _FMU1(_FMU):
 
     def __init__(self, modelDescription, unzipDirectory, instanceName, fmiType):
-
-        fmiType = _FMU.CO_SIMULATION if modelDescription.coSimulation is not None else _FMU.MODEL_EXCHANGE
 
         super(_FMU1, self).__init__(modelDescription, unzipDirectory, instanceName, fmiType)
 
@@ -115,49 +117,16 @@ class _FMU1(_FMU):
         self.fmi1SetBoolean.argtypes = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Boolean)]
         self.fmi1SetBoolean.restype = fmi1Status
 
-        pass
-
-    def instantiate(self, mimeType="application/x-fmu-sharedlibrary", timeout=0, visible=fmi1False,
-                    interactive=fmi1False, functions=callbacks, loggingOn=fmi1False):
-
-        fmuLocation = pathlib.Path(self.unzipDirectory).as_uri()
-
-        self.component = self.fmi1InstantiateSlave(self.instanceName.encode('UTF-8'),
-                                                   self.modelDescription.guid.encode('UTF-8'),
-                                                   fmuLocation.encode('UTF-8'),
-                                                   mimeType.encode('UTF-8'),
-                                                   timeout,
-                                                   visible,
-                                                   interactive,
-                                                   callbacks,
-                                                   loggingOn)
-
-    def initializeSlave(self, tStart=0.0, stopTime=None):
-        stopTimeDefined = stopTime is not None
-        tStop = stopTime if stopTimeDefined else 0
-        status = self.fmi1InitializeSlave(self.component, tStart, stopTimeDefined, tStop)
-        return status
-
-
     def doStep(self, currentCommunicationPoint, communicationStepSize, newStep=fmi1True):
         status = self.fmi1DoStep(self.component, currentCommunicationPoint, communicationStepSize, newStep)
         return status
 
-    def terminateSlave(self):
-        status = self.fmi1TerminateSlave(self.component)
-
-    def freeSlaveInstance(self):
-        self.fmi1FreeSlaveInstance(self.component)
-
-        # unload the shared library
-        freeLibrary(self.dll._handle)
-
 
 class FMU1Slave(_FMU1):
 
-    def __init__(self, modelDescription, unzipDirectory, instanceName):
+    def __init__(self, modelDescription, unzipDirectory, instanceName=None):
 
-        super(FMU1Slave, self).__init__(modelDescription, unzipDirectory, instanceName, _FMU.CO_SIMULATION)
+        super(FMU1Slave, self).__init__(modelDescription, unzipDirectory, instanceName, FMIType.CO_SIMULATION)
 
         # FMI 1.0 Co-Simulation functions
         self.fmi1InstantiateSlave = getattr(self.dll, self.modelIdentifier + '_fmiInstantiateSlave')
@@ -180,12 +149,42 @@ class FMU1Slave(_FMU1):
         self.fmi1FreeSlaveInstance.argtypes = [fmi1Component]
         self.fmi1FreeSlaveInstance.restype = fmi1Status
 
+    def instantiate(self, mimeType="application/x-fmu-sharedlibrary", timeout=0, visible=fmi1False,
+                    interactive=fmi1False, functions=callbacks, loggingOn=fmi1False):
+
+        fmuLocation = pathlib.Path(self.unzipDirectory).as_uri()
+
+        self.component = self.fmi1InstantiateSlave(self.instanceName.encode('UTF-8'),
+                                                   self.modelDescription.guid.encode('UTF-8'),
+                                                   fmuLocation.encode('UTF-8'),
+                                                   mimeType.encode('UTF-8'),
+                                                   timeout,
+                                                   visible,
+                                                   interactive,
+                                                   callbacks,
+                                                   loggingOn)
+
+    def initialize(self, tStart=0.0, stopTime=None):
+        stopTimeDefined = stopTime is not None
+        tStop = stopTime if stopTimeDefined else 0
+        status = self.fmi1InitializeSlave(self.component, tStart, stopTimeDefined, tStop)
+        return status
+
+    def terminate(self):
+        status = self.fmi1TerminateSlave(self.component)
+
+    def freeInstance(self):
+        self.fmi1FreeSlaveInstance(self.component)
+        # unload the shared library
+        freeLibrary(self.dll._handle)
 
 class FMU1Model(_FMU1):
 
-    def __init__(self, modelDescription, unzipDirectory, instanceName):
+    def __init__(self, modelDescription, unzipDirectory, instanceName=None):
 
-        super(FMU1Model, self).__init__(modelDescription, unzipDirectory, instanceName, _FMU.MODEL_EXCHANGE)
+        super(FMU1Model, self).__init__(modelDescription, unzipDirectory, instanceName, FMIType.MODEL_EXCHANGE)
+
+        self.eventInfo = fmi1EventInfo()
 
         # FMI 1.0 Model Exchange functions
         self.fmi1InstantiateModel = getattr(self.dll, self.modelIdentifier + '_fmiInstantiateModel')
@@ -213,7 +212,7 @@ class FMU1Model(_FMU1):
         self.fmi1SetContinuousStates.restype = fmi1Status
 
         self.fmi1CompletedIntegratorStep = getattr(self.dll, self.modelIdentifier + '_fmiCompletedIntegratorStep')
-        self.fmi1CompletedIntegratorStep.argtypes = [fmi1Component, fmi1Boolean]
+        self.fmi1CompletedIntegratorStep.argtypes = [fmi1Component, POINTER(fmi1Boolean)]
         self.fmi1CompletedIntegratorStep.restype = fmi1Status
 
         self.fmi1GetEventIndicators = getattr(self.dll, self.modelIdentifier + '_fmiGetEventIndicators')
@@ -231,3 +230,26 @@ class FMU1Model(_FMU1):
         self.fmi1FreeModelInstance = getattr(self.dll, self.modelIdentifier + '_fmiFreeModelInstance')
         self.fmi1FreeModelInstance.argtypes = [fmi1Component]
         self.fmi1FreeModelInstance.restype = fmi1Status
+
+    def instantiate(self, functions=callbacks, loggingOn=fmi1False):
+        self.component = self.fmi1InstantiateModel(self.instanceName.encode('UTF-8'),
+                                                   self.modelDescription.guid.encode('UTF-8'),
+                                                   callbacks,
+                                                   loggingOn)
+
+    def setTime(self, time: float):
+        status = self.fmi1SetTime(self.component, time)
+
+    def initialize(self, toleranceControlled=fmi1False, relativeTolerance=0.0, eventInfo=None):
+        if eventInfo is None:
+            eventInfo = self.eventInfo
+        status = self.fmi1Initialize(self.component, toleranceControlled, relativeTolerance, eventInfo)
+        return status
+
+    def terminate(self):
+        status = self.fmi1Terminate(self.component)
+
+    def freeInstance(self):
+        self.fmi1FreeModelInstance(self.component)
+        # unload the shared library
+        freeLibrary(self.dll._handle)

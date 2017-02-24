@@ -4,7 +4,7 @@ import os
 from ctypes import *
 from itertools import combinations
 from lxml import etree
-from .. import free, freeLibrary, platform, sharedLibraryExtension, calloc
+from . import free, freeLibrary, platform, sharedLibraryExtension, calloc
 
 fmi2Component            = c_void_p
 fmi2ComponentEnvironment = c_void_p

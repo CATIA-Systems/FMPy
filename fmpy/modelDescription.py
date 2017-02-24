@@ -15,10 +15,20 @@ class ModelDescription(object):
         self.numberOfContinuousStates = None
         self.numberOfEventIndicators = None
 
+        self.defaultExperiment = None
+
         self.coSimulation = None
         self.modelExchange = None
 
         self.modelVariables = []
+
+
+class DefaultExperiment(object):
+
+    def __init__(self):
+        self.startTime = None
+        self.stopTime = None
+        self.tolerance = None
 
 
 class CoSimulation(object):
@@ -67,6 +77,14 @@ def read_model_description(filename):
     modelDescription.variableNamingConvention = root.get('variableNamingConvention')
     modelDescription.numberOfContinuousStates = int(root.get('numberOfContinuousStates'))
     modelDescription.numberOfEventIndicators = int(root.get('numberOfEventIndicators'))
+
+    defaultExperiment = root.find('DefaultExperiment')
+
+    if defaultExperiment is not None:
+        modelDescription.defaultExperiment = DefaultExperiment()
+        modelDescription.defaultExperiment.startTime = float(defaultExperiment.get('startTime'))
+        modelDescription.defaultExperiment.stopTime = float(defaultExperiment.get('stopTime'))
+        modelDescription.defaultExperiment.tolerance = float(defaultExperiment.get('tolerance'))
 
     if modelDescription.fmiVersion == "1.0":
 

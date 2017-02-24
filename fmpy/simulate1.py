@@ -1,12 +1,10 @@
 # noinspection PyPep8
 
 import shutil
-from tempfile import mkdtemp
-from fmpy.fmi1 import *
-import sys
 import zipfile
-from .modelDescription import read_model_description
-
+from tempfile import mkdtemp
+from fmpy.modelDescription import read_model_description
+from fmpy.fmi1 import *
 
 class Recorder(object):
 
@@ -71,13 +69,31 @@ class Recorder(object):
         return np.array(self.rows, dtype=np.dtype(self.cols))
 
 
-def simulate(filename, start_time=0, stop_time=1, step_size=1e-3, fmiType=None, start_values={}, output=None):
+def simulate(filename, start_time=None, stop_time=None, step_size=None, fmiType=None, start_values={}, output=None):
 
     modelDescription = read_model_description(filename)
 
     if fmiType is None:
         # determine the FMI type automatically
         fmiType = FMIType.CO_SIMULATION if modelDescription.coSimulation is not None else FMIType.MODEL_EXCHANGE
+
+    defaultExperiment = modelDescription.defaultExperiment
+
+    if start_time is None:
+        if defaultExperiment is not None:
+            start_time = defaultExperiment.startTime
+        else:
+            start_time = 0.0
+
+    if stop_time is None:
+        if defaultExperiment is not None:
+            stop_time = defaultExperiment.stopTime
+        else:
+            stop_time = 1.0
+
+    if step_size is None:
+        total_time = stop_time - start_time
+        step_size = np.ceil(total_time) / 1000
 
     unzipdir = mkdtemp()
 
@@ -177,3 +193,30 @@ def simulateCS1(modelDescription, unzipdir, start_time, stop_time, step_size, ou
     fmu.freeInstance()
 
     return recorder.result()
+
+
+if __name__ == '__main__':
+
+    import sys
+    import matplotlib.pyplot as plt
+
+    if len(sys.argv) < 2:
+        print("Usage:")
+        print("> python fmpy.simulate <FMU>")
+        exit(-1)
+
+    filename = sys.argv[1]
+
+    result = simulate(filename=filename)
+
+    time = result['time']
+    names = result.dtype.names[1:]
+
+    for i, name in enumerate(names):
+        ax = plt.subplot(len(names), 1, i+1)
+        ax.plot(time, result[name])
+        ax.set_ylabel(name)
+        ax.grid(True)
+        ax.margins(y=0.1)
+
+    plt.show()

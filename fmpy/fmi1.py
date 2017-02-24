@@ -6,7 +6,7 @@ import pathlib
 import numpy as np
 from ctypes import *
 from itertools import combinations
-from .. import free, freeLibrary, platform, sharedLibraryExtension, calloc
+from . import free, freeLibrary, platform, sharedLibraryExtension, calloc
 
 
 fmi1Component      = c_void_p

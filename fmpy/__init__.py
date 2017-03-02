@@ -1,8 +1,10 @@
 # noinspection PyPep8
 
 import sys
+from enum import Enum
 from ctypes import *
 import _ctypes
+
 
 # determine the platform
 if sys.platform == 'win32':
@@ -32,6 +34,9 @@ if sys.maxsize > 2**32:
 else:
     platform += '32'
 
+class FMIType(Enum):
+    MODEL_EXCHANGE = 0
+    CO_SIMULATION = 1
 
 def fmu_info(filename):
     """ Read the FMI version and supported interfaces from an FMU without extracting it """
@@ -46,5 +51,3 @@ def fmu_info(filename):
     version = root.get('fmiVersion')
 
     return version, ['Co-Simulation']
-
-from .fmi2 import FMU2 as FMU2

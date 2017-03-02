@@ -4,7 +4,10 @@ import shutil
 import zipfile
 from tempfile import mkdtemp
 from fmpy.modelDescription import read_model_description
-from fmpy.fmi1 import *
+from fmpy import fmi1, fmi2, FMIType
+from fmpy.fmi1 import fmi1ValueReference, fmi1Real, fmi1Integer, fmi1Boolean
+import numpy as np
+
 
 class Recorder(object):
 
@@ -13,6 +16,15 @@ class Recorder(object):
         self.fmu = fmu
 
         md = fmu.modelDescription
+
+        if md.fmiVersion == '1.0':
+            self._getReal = fmu.fmi1GetReal
+            self._getInteger = fmu.fmi1GetInteger
+            self._getBoolean = fmu.fmi1GetBoolean
+        else:
+            self._getReal = fmu.fmi2GetReal
+            self._getInteger = fmu.fmi2GetInteger
+            self._getBoolean = fmu.fmi2GetBoolean
 
         self.cols = [('time', np.float64)]
         self.rows = []
@@ -52,15 +64,15 @@ class Recorder(object):
         row = [time]
 
         if len(self.real_vrs) > 0:
-            status = self.fmu.fmi1GetReal(self.fmu.component, self.real_vrs, len(self.real_vrs), self.real_values)
+            status = self._getReal(self.fmu.component, self.real_vrs, len(self.real_vrs), self.real_values)
             row += list(self.real_values)
 
         if len(self.integer_vrs) > 0:
-            status = self.fmu.fmi1GetInteger(self.fmu.component, self.integer_vrs, len(self.integer_vrs), self.integer_values)
+            status = self._getInteger(self.fmu.component, self.integer_vrs, len(self.integer_vrs), self.integer_values)
             row += list(self.integer_values)
 
         if len(self.boolean_vrs) > 0:
-            status = self.fmu.fmi1GetBoolean(self.fmu.component, self.boolean_vrs, len(self.boolean_vrs), self.boolean_values)
+            status = self._getBoolean(self.fmu.component, self.boolean_vrs, len(self.boolean_vrs), self.boolean_values)
             row += list(self.boolean_values)
 
         self.rows.append(tuple(row))
@@ -93,7 +105,7 @@ def simulate(filename, start_time=None, stop_time=None, step_size=None, fmiType=
 
     if step_size is None:
         total_time = stop_time - start_time
-        step_size = np.ceil(total_time) / 1000
+        step_size = 10 ** (np.round(np.log10(0.09)) - 3)
 
     unzipdir = mkdtemp()
 
@@ -110,6 +122,8 @@ def simulate(filename, start_time=None, stop_time=None, step_size=None, fmiType=
             return simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, output)
         else:
             return simulateCS1(modelDescription, unzipdir, start_time, stop_time, step_size, output)
+    else:
+        return simulateCS2(modelDescription, unzipdir, start_time, stop_time, step_size, output)
 
     # clean up
     shutil.rmtree(unzipdir)
@@ -117,7 +131,7 @@ def simulate(filename, start_time=None, stop_time=None, step_size=None, fmiType=
 
 def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, output):
 
-    fmu = FMU1Model(modelDescription=modelDescription, unzipDirectory=unzipdir)
+    fmu = fmi1.Model(modelDescription=modelDescription, unzipDirectory=unzipdir)
     fmu.instantiate()
     fmu.setTime(start_time)
     fmu.initialize()
@@ -125,10 +139,6 @@ def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, ou
     recorder = Recorder(fmu=fmu, output=output)
 
     prez  = np.zeros_like(fmu.z)
-
-    timeEvents  = 0
-    stateEvents = 0
-    stepEvents  = 0
 
     time = start_time
 
@@ -140,7 +150,7 @@ def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, ou
         tPre = time;
         time = min(time + step_size, stop_time);
 
-        timeEvent = fmu.eventInfo.upcomingTimeEvent != fmi1False and fmu.eventInfo.nextEventTime <= time;
+        timeEvent = fmu.eventInfo.upcomingTimeEvent != fmi1.fmi1False and fmu.eventInfo.nextEventTime <= time;
 
         if timeEvent:
             time = fmu.eventInfo.nextEventTime
@@ -176,7 +186,7 @@ def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, ou
 
 def simulateCS1(modelDescription, unzipdir, start_time, stop_time, step_size, output):
 
-    fmu = FMU1Slave(modelDescription=modelDescription, unzipDirectory=unzipdir)
+    fmu = fmi1.Slave(modelDescription=modelDescription, unzipDirectory=unzipdir)
     fmu.instantiate("rectifier1")
     fmu.initialize()
 
@@ -195,6 +205,28 @@ def simulateCS1(modelDescription, unzipdir, start_time, stop_time, step_size, ou
     return recorder.result()
 
 
+def simulateCS2(modelDescription, unzipdir, start_time, stop_time, step_size, output):
+
+    fmu = fmi2.FMU2Slave(modelDescription=modelDescription, unzipDirectory=unzipdir)
+    fmu.instantiate()
+    fmu.setupExperiment(tolerance=None, startTime=start_time)
+    fmu.enterInitializationMode()
+    fmu.exitInitializationMode()
+
+    recorder = Recorder(fmu=fmu, output=output)
+
+    time = start_time
+
+    while time < stop_time:
+        recorder.sample(time)
+        fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
+        time += step_size
+
+    fmu.terminate()
+    fmu.freeInstance()
+
+    return recorder.result()
+
 if __name__ == '__main__':
 
     import sys
@@ -212,11 +244,17 @@ if __name__ == '__main__':
     time = result['time']
     names = result.dtype.names[1:]
 
-    for i, name in enumerate(names):
-        ax = plt.subplot(len(names), 1, i+1)
-        ax.plot(time, result[name])
-        ax.set_ylabel(name)
-        ax.grid(True)
-        ax.margins(y=0.1)
+    if len(names) > 0:
 
-    plt.show()
+        fig, ax = plt.subplots(len(names), sharex=True)
+
+        fig.set_facecolor('white')
+
+        for i, name in enumerate(names):
+            ax[i].plot(time, result[name])
+            ax[i].set_ylabel(name)
+            ax[i].grid(True)
+            ax[i].margins(y=0.1)
+
+        plt.tight_layout()
+        plt.show()

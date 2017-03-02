@@ -4,7 +4,9 @@ import os
 from ctypes import *
 from itertools import combinations
 from lxml import etree
-from . import free, freeLibrary, platform, sharedLibraryExtension, calloc
+from . import free, freeLibrary, platform, sharedLibraryExtension, calloc, FMIType
+from .fmi1 import _FMU
+
 
 fmi2Component            = c_void_p
 fmi2ComponentEnvironment = c_void_p
@@ -20,7 +22,7 @@ fmi2Byte                 = c_char
 
 fmi2Status = c_int
 
-fmi2CallbackLoggerTYPE         = CFUNCTYPE(None, fmi2ComponentEnvironment, fmi2String, fmi2Status, fmi2String, fmi2String)
+fmi2CallbackLoggerTYPE         = CFUNCTYPE(None, fmi2ComponentEnvironment, fmi2String, fmi2Status, fmi2String, fmi2String, fmi2String)
 fmi2CallbackAllocateMemoryTYPE = CFUNCTYPE(c_void_p, c_size_t, c_size_t)
 fmi2CallbackFreeMemoryTYPE     = CFUNCTYPE(None, c_void_p)
 fmi2StepFinishedTYPE           = CFUNCTYPE(None, fmi2ComponentEnvironment, fmi2Status)
@@ -38,8 +40,8 @@ fmi2LastSuccessfulTime = 2
 fmi2Terminated         = 3
 
 
-def logger(a, b, c, d, e):
-    print(a, b, c, d, e)
+def logger(a, b, c, d, e, f):
+    print(a, b, c, d, e, f)
 
 def allocateMemory(nobj, size):
     return calloc(nobj, size)
@@ -60,9 +62,9 @@ class fmi2CallbackFunctions(Structure):
 callbacks = fmi2CallbackFunctions()
 callbacks.logger               = fmi2CallbackLoggerTYPE(logger)
 callbacks.allocateMemory       = fmi2CallbackAllocateMemoryTYPE(allocateMemory)
-callbacks.stepFinished         = fmi2StepFinishedTYPE(stepFinished)
+#callbacks.stepFinished         = fmi2StepFinishedTYPE(stepFinished)
 callbacks.freeMemory           = fmi2CallbackFreeMemoryTYPE(freeMemory)
-callbacks.componentEnvironment = None
+#callbacks.componentEnvironment = None
 
 variables = {}
 
@@ -77,129 +79,74 @@ class ScalarVariable(object):
         self.causality = None
         self.variability = None
 
-class FMU2(object):
 
-    def __init__(self, unzipdir, validate=True):
+class _FMU2(_FMU):
 
-        self.unzipdir = unzipdir
+    def __init__(self, modelDescription, unzipDirectory, instanceName, fmiType):
 
-        if validate:
-            base_path, _ = os.path.split(__file__)
-            schema_file = os.path.join(base_path, 'schema', 'fmi2ModelDescription.xsd')
-            schema = etree.XMLSchema(file=schema_file)
-        else:
-            schema = None
+        super(_FMU2, self).__init__(modelDescription, unzipDirectory, instanceName, fmiType)
 
-        parser = etree.XMLParser(schema=schema)
-
-        tree = etree.parse(os.path.join(unzipdir, 'modelDescription.xml'), parser=parser)
-
-        root = tree.getroot()
-
-        self.guid       = root.get('guid')
-        self.fmiVersion = root.get('fmiVersion')
-        self.modelName  = root.get('modelName')
-        self.causality  = root.get('causality')
-        self.variability  = root.get('variability')
-
-        coSimulation = root.find('CoSimulation')
-        self.modelIdentifier = coSimulation.get('modelIdentifier')
-
-        modelVariables = root.find('ModelVariables')
-
-        self.variables = {}
-        self.variableNames = []
-
-        for variable in modelVariables:
-
-            if variable.get("name") is None:
-                continue
-
-            sv = ScalarVariable(name=variable.get('name'), valueReference=int(variable.get('valueReference')))
-            sv.description = variable.get('description')
-            sv.start = variable.get('start')
-
-            value = next(variable.iterchildren())
-            sv.type = value.tag
-            start = value.get('start')
-
-            if start is not None:
-                if sv.type == 'Real':
-                    sv.start = float(start)
-                elif sv.type == 'Integer':
-                    sv.start = int(start)
-                elif sv.type == 'Boolean':
-                    sv.start = start == 'true'
-                else:
-                    sv.start = start
-
-            self.variableNames.append(sv.name)
-            self.variables[sv.name] = sv
-
-        # load the shared library
-        library = cdll.LoadLibrary(os.path.join(unzipdir, 'binaries', platform, self.modelIdentifier + sharedLibraryExtension))
-        self.dll = library
-
-        self.fmi2Instantiate = getattr(library, 'fmi2Instantiate')
+        # common FMI 2.0 functions
+        self.fmi2Instantiate = getattr(self.dll, 'fmi2Instantiate')
         self.fmi2Instantiate.argtypes = [fmi2String, fmi2Type, fmi2String, fmi2String, POINTER(fmi2CallbackFunctions), fmi2Boolean, fmi2Boolean]
         self.fmi2Instantiate.restype = fmi2ComponentEnvironment
 
-        self.fmi2SetupExperiment          = getattr(library, 'fmi2SetupExperiment')
+        self.fmi2SetupExperiment          = getattr(self.dll, 'fmi2SetupExperiment')
         self.fmi2SetupExperiment.argtypes = [fmi2Component, fmi2Boolean, fmi2Real, fmi2Real, fmi2Boolean, fmi2Real]
         self.fmi2SetupExperiment.restype  = fmi2Status
 
-        self.fmi2EnterInitializationMode          = getattr(library, 'fmi2EnterInitializationMode')
+        self.fmi2EnterInitializationMode          = getattr(self.dll, 'fmi2EnterInitializationMode')
         self.fmi2EnterInitializationMode.argtypes = [fmi2Component]
         self.fmi2EnterInitializationMode.restype  = fmi2Status
 
-        self.fmi2ExitInitializationMode          = getattr(library, 'fmi2ExitInitializationMode')
+        self.fmi2ExitInitializationMode          = getattr(self.dll, 'fmi2ExitInitializationMode')
         self.fmi2ExitInitializationMode.argtypes = [fmi2Component]
         self.fmi2ExitInitializationMode.restype  = fmi2Status
 
-        self.fmi2DoStep          = getattr(library, 'fmi2DoStep')
-        self.fmi2DoStep.argtypes = [fmi2Component, fmi2Real, fmi2Real, fmi2Boolean]
-        self.fmi2DoStep.restype  = fmi2Status
-
-        self.fmi2GetReal          = getattr(library, 'fmi2GetReal')
+        self.fmi2GetReal          = getattr(self.dll, 'fmi2GetReal')
         self.fmi2GetReal.argtypes = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Real)]
         self.fmi2GetReal.restype  = fmi2Status
 
-        self.fmi2GetInteger          = getattr(library, 'fmi2GetInteger')
+        self.fmi2GetInteger          = getattr(self.dll, 'fmi2GetInteger')
         self.fmi2GetInteger.argtypes = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer)]
         self.fmi2GetInteger.restype  = fmi2Status
 
-        self.fmi2GetBoolean          = getattr(library, 'fmi2GetBoolean')
+        self.fmi2GetBoolean          = getattr(self.dll, 'fmi2GetBoolean')
         self.fmi2GetBoolean.argtypes = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Boolean)]
         self.fmi2GetBoolean.restype  = fmi2Status
 
-        self.fmi2SetReal          = getattr(library, 'fmi2SetReal')
+        self.fmi2SetReal          = getattr(self.dll, 'fmi2SetReal')
         self.fmi2SetReal.argtypes = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Real)]
         self.fmi2SetReal.restype  = fmi2Status
 
-        self.fmi2SetInteger          = getattr(library, 'fmi2SetInteger')
+        self.fmi2SetInteger          = getattr(self.dll, 'fmi2SetInteger')
         self.fmi2SetInteger.argtypes = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer)]
         self.fmi2SetInteger.restype  = fmi2Status
 
-        self.fmi2SetBoolean          = getattr(library, 'fmi2SetBoolean')
+        self.fmi2SetBoolean          = getattr(self.dll, 'fmi2SetBoolean')
         self.fmi2SetBoolean.argtypes = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Boolean)]
         self.fmi2SetBoolean.restype  = fmi2Status
 
-        self.fmi2GetBooleanStatus          = getattr(library, 'fmi2GetBooleanStatus')
+        self.fmi2GetBooleanStatus          = getattr(self.dll, 'fmi2GetBooleanStatus')
         self.fmi2GetBooleanStatus.argtypes = [fmi2Component, fmi2StatusKind, POINTER(fmi2Boolean)]
         self.fmi2GetBooleanStatus.restype  = fmi2Status
 
-        self.fmi2Terminate          = getattr(library, 'fmi2Terminate')
+        self.fmi2Terminate          = getattr(self.dll, 'fmi2Terminate')
         self.fmi2Terminate.argtypes = [fmi2Component]
         self.fmi2Terminate.restype  = fmi2Status
 
-        self.fmi2FreeInstance          = getattr(library, 'fmi2FreeInstance')
+        self.fmi2FreeInstance          = getattr(self.dll, 'fmi2FreeInstance')
         self.fmi2FreeInstance.argtypes = [fmi2Component]
         self.fmi2FreeInstance.restype  = None
 
-    def instantiate(self, instance_name, kind):
-        self.component = self.fmi2Instantiate(instance_name.encode('UTF-8'), kind,
-                                              self.guid.encode('UTF-8'),
-                                              ('file://' + self.unzipdir).encode('UTF-8'),
+    def instantiate(self):
+
+        kind = fmi2ModelExchange if self.fmiType == FMIType.MODEL_EXCHANGE else fmi2CoSimulation
+
+        self.component = self.fmi2Instantiate(self.instanceName.encode('utf-8'),
+                                              kind,
+                                              self.modelDescription.guid.encode('utf-8'),
+                                              self.fmuLocation.encode('utf-8'),
                                               byref(callbacks), fmi2False,
                                               fmi2False)
 
@@ -215,16 +162,15 @@ class FMU2(object):
         if stopTime is None:
             stopTime = 0.0
 
-        status = self.fmi2SetupExperiment(self.component, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime)
+        status = self.fmi2SetupExperiment(self.component, toleranceDefined, tolerance, startTime, stopTimeDefined,
+                                          stopTime)
 
     def enterInitializationMode(self):
         status = self.fmi2EnterInitializationMode(self.component)
+        return status
 
     def exitInitializationMode(self):
         status = self.fmi2ExitInitializationMode(self.component)
-
-    def doStep(self, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint):
-        status = self.fmi2DoStep(self.component, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint)
         return status
 
     def getBooleanStatus(self, kind):
@@ -249,3 +195,17 @@ class FMU2(object):
         # unload the shared library
         freeLibrary(self.dll._handle)
 
+
+class FMU2Slave(_FMU2):
+
+    def __init__(self, modelDescription, unzipDirectory, instanceName=None):
+
+        super(FMU2Slave, self).__init__(modelDescription, unzipDirectory, instanceName, FMIType.CO_SIMULATION)
+
+        self.fmi2DoStep          = getattr(self.dll, 'fmi2DoStep')
+        self.fmi2DoStep.argtypes = [fmi2Component, fmi2Real, fmi2Real, fmi2Boolean]
+        self.fmi2DoStep.restype  = fmi2Status
+
+    def doStep(self, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint=fmi2True):
+        status = self.fmi2DoStep(self.component, currentCommunicationPoint, communicationStepSize, fmi2True)
+        return status

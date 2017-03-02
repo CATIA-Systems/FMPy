@@ -1,13 +1,11 @@
 # noinspection PyPep8
 
-from enum import Enum
 import os
 import pathlib
 import numpy as np
 from ctypes import *
 from itertools import combinations
-from . import free, freeLibrary, platform, sharedLibraryExtension, calloc
-
+from . import free, freeLibrary, platform, sharedLibraryExtension, calloc, FMIType
 
 fmi1Component      = c_void_p
 fmi1ValueReference = c_uint
@@ -62,10 +60,6 @@ callbacks.freeMemory           = fmi1CallbackFreeMemoryTYPE(freeMemory)
 #callbacks.stepFinished         = fmi1StepFinishedTYPE(stepFinished)
 #callbacks.stepFinished = None
 
-class FMIType(Enum):
-    MODEL_EXCHANGE = 0
-    CO_SIMULATION = 1
-
 
 class _FMU(object):
 
@@ -82,6 +76,10 @@ class _FMU(object):
 
         self.instanceName = instanceName if instanceName is not None else self.modelIdentifier
 
+        self.fmuLocation = pathlib.Path(self.unzipDirectory).as_uri()
+
+        # load the shared library
+        self.dll = cdll.LoadLibrary(os.path.join(unzipDirectory, 'binaries', platform, self.modelIdentifier + sharedLibraryExtension))
 
 class _FMU1(_FMU):
 
@@ -89,32 +87,28 @@ class _FMU1(_FMU):
 
         super(_FMU1, self).__init__(modelDescription, unzipDirectory, instanceName, fmiType)
 
-        # load the shared library
-        library = cdll.LoadLibrary(os.path.join(unzipDirectory, 'binaries', platform, self.modelIdentifier + sharedLibraryExtension))
-        self.dll = library
-
         # common FMI 1.0 functions
-        self.fmi1GetReal          = getattr(library, self.modelIdentifier  + '_fmiGetReal')
+        self.fmi1GetReal          = getattr(self.dll, self.modelIdentifier  + '_fmiGetReal')
         self.fmi1GetReal.argtypes = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Real)]
         self.fmi1GetReal.restype  = fmi1Status
 
-        self.fmi1GetInteger = getattr(library, self.modelIdentifier  + '_fmiGetInteger')
+        self.fmi1GetInteger = getattr(self.dll, self.modelIdentifier  + '_fmiGetInteger')
         self.fmi1GetInteger.argtypes = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Integer)]
         self.fmi1GetInteger.restype = fmi1Status
 
-        self.fmi1GetBoolean = getattr(library, self.modelIdentifier  + '_fmiGetBoolean')
+        self.fmi1GetBoolean = getattr(self.dll, self.modelIdentifier  + '_fmiGetBoolean')
         self.fmi1GetBoolean.argtypes = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Boolean)]
         self.fmi1GetBoolean.restype = fmi1Status
 
-        self.fmi1SetReal = getattr(library, self.modelIdentifier  + '_fmiSetReal')
+        self.fmi1SetReal = getattr(self.dll, self.modelIdentifier  + '_fmiSetReal')
         self.fmi1SetReal.argtypes = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Real)]
         self.fmi1SetReal.restype = fmi1Status
 
-        self.fmi1SetInteger = getattr(library, self.modelIdentifier  + '_fmiSetInteger')
+        self.fmi1SetInteger = getattr(self.dll, self.modelIdentifier  + '_fmiSetInteger')
         self.fmi1SetInteger.argtypes = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Integer)]
         self.fmi1SetInteger.restype = fmi1Status
 
-        self.fmi1SetBoolean = getattr(library, self.modelIdentifier  + '_fmiSetBoolean')
+        self.fmi1SetBoolean = getattr(self.dll, self.modelIdentifier  + '_fmiSetBoolean')
         self.fmi1SetBoolean.argtypes = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Boolean)]
         self.fmi1SetBoolean.restype = fmi1Status
 
@@ -123,11 +117,11 @@ class _FMU1(_FMU):
         return status
 
 
-class FMU1Slave(_FMU1):
+class Slave(_FMU1):
 
     def __init__(self, modelDescription, unzipDirectory, instanceName=None):
 
-        super(FMU1Slave, self).__init__(modelDescription, unzipDirectory, instanceName, FMIType.CO_SIMULATION)
+        super(Slave, self).__init__(modelDescription, unzipDirectory, instanceName, FMIType.CO_SIMULATION)
 
         # FMI 1.0 Co-Simulation functions
         self.fmi1InstantiateSlave = getattr(self.dll, self.modelIdentifier + '_fmiInstantiateSlave')
@@ -153,11 +147,9 @@ class FMU1Slave(_FMU1):
     def instantiate(self, mimeType="application/x-fmu-sharedlibrary", timeout=0, visible=fmi1False,
                     interactive=fmi1False, functions=callbacks, loggingOn=fmi1False):
 
-        fmuLocation = pathlib.Path(self.unzipDirectory).as_uri()
-
         self.component = self.fmi1InstantiateSlave(self.instanceName.encode('UTF-8'),
                                                    self.modelDescription.guid.encode('UTF-8'),
-                                                   fmuLocation.encode('UTF-8'),
+                                                   self.fmuLocation.encode('UTF-8'),
                                                    mimeType.encode('UTF-8'),
                                                    timeout,
                                                    visible,
@@ -179,11 +171,12 @@ class FMU1Slave(_FMU1):
         # unload the shared library
         freeLibrary(self.dll._handle)
 
-class FMU1Model(_FMU1):
+
+class Model(_FMU1):
 
     def __init__(self, modelDescription, unzipDirectory, instanceName=None):
 
-        super(FMU1Model, self).__init__(modelDescription, unzipDirectory, instanceName, FMIType.MODEL_EXCHANGE)
+        super(Model, self).__init__(modelDescription, unzipDirectory, instanceName, FMIType.MODEL_EXCHANGE)
 
         self.eventInfo = fmi1EventInfo()
 

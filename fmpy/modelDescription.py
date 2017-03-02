@@ -75,8 +75,12 @@ def read_model_description(filename):
     modelDescription.generationTool = root.get('generationTool')
     modelDescription.generationDateAndTime = root.get('generationDateAndTime')
     modelDescription.variableNamingConvention = root.get('variableNamingConvention')
-    modelDescription.numberOfContinuousStates = int(root.get('numberOfContinuousStates'))
     modelDescription.numberOfEventIndicators = int(root.get('numberOfEventIndicators'))
+
+    if modelDescription.fmiVersion == '1.0':
+        modelDescription.numberOfContinuousStates = int(root.get('numberOfContinuousStates'))
+    else:
+        modelDescription.numberOfContinuousStates = len(root.findall('ModelStructure/Derivatives/Unknown'))
 
     defaultExperiment = root.find('DefaultExperiment')
 
@@ -88,40 +92,57 @@ def read_model_description(filename):
 
     if modelDescription.fmiVersion == "1.0":
 
+        modelIdentifier = root.get('modelIdentifier')
+
         if root.find('Implementation') is not None:
             modelDescription.coSimulation = CoSimulation()
-            modelDescription.coSimulation.modelIdentifier = root.get('modelIdentifier')
+            modelDescription.coSimulation.modelIdentifier = modelIdentifier
         else:
             modelDescription.modelExchange = ModelExchange()
-            modelDescription.modelExchange.modelIdentifier = root.get('modelIdentifier')
+            modelDescription.modelExchange.modelIdentifier = modelIdentifier
 
-        modelVariables = root.find('ModelVariables')
+    else:
 
-        for variable in modelVariables:
+        me = root.find('ModelExchange')
 
-            if variable.get("name") is None:
-                continue
+        if me is not None:
+            modelDescription.modelExchange = ModelExchange()
+            modelDescription.modelExchange.modelIdentifier = me.get('modelIdentifier')
 
-            sv = ScalarVariable(name=variable.get('name'), valueReference=int(variable.get('valueReference')))
-            sv.description = variable.get('description')
-            sv.start = variable.get('start')
-            sv.causality = variable.get('causality')
+        cs = root.find('CoSimulation')
 
-            value = next(variable.iterchildren())
-            sv.type = value.tag
-            start = value.get('start')
+        if cs is not None:
+            modelDescription.coSimulation = CoSimulation()
+            modelDescription.coSimulation.modelIdentifier = cs.get('modelIdentifier')
 
-            if start is not None:
-                if sv.type == 'Real':
-                    sv.start = float(start)
-                elif sv.type == 'Integer':
-                    sv.start = int(start)
-                elif sv.type == 'Boolean':
-                    sv.start = start == 'true'
-                else:
-                    sv.start = start
 
-            modelDescription.modelVariables.append(sv)
+    modelVariables = root.find('ModelVariables')
+
+    for variable in modelVariables:
+
+        if variable.get("name") is None:
+            continue
+
+        sv = ScalarVariable(name=variable.get('name'), valueReference=int(variable.get('valueReference')))
+        sv.description = variable.get('description')
+        sv.start = variable.get('start')
+        sv.causality = variable.get('causality')
+
+        value = next(variable.iterchildren())
+        sv.type = value.tag
+        start = value.get('start')
+
+        if start is not None:
+            if sv.type == 'Real':
+                sv.start = float(start)
+            elif sv.type == 'Integer':
+                sv.start = int(start)
+            elif sv.type == 'Boolean':
+                sv.start = start == 'true'
+            else:
+                sv.start = start
+
+        modelDescription.modelVariables.append(sv)
 
 
     return modelDescription

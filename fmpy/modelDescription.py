@@ -88,7 +88,7 @@ def read_model_description(filename):
         modelDescription.defaultExperiment = DefaultExperiment()
         modelDescription.defaultExperiment.startTime = float(defaultExperiment.get('startTime'))
         modelDescription.defaultExperiment.stopTime = float(defaultExperiment.get('stopTime'))
-        modelDescription.defaultExperiment.tolerance = float(defaultExperiment.get('tolerance'))
+        #modelDescription.defaultExperiment.tolerance = float(defaultExperiment.get('tolerance'))
 
     if modelDescription.fmiVersion == "1.0":
 

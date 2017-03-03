@@ -81,6 +81,7 @@ class _FMU(object):
         # load the shared library
         self.dll = cdll.LoadLibrary(os.path.join(unzipDirectory, 'binaries', platform, self.modelIdentifier + sharedLibraryExtension))
 
+
 class _FMU1(_FMU):
 
     def __init__(self, modelDescription, unzipDirectory, instanceName, fmiType):
@@ -117,11 +118,11 @@ class _FMU1(_FMU):
         return status
 
 
-class Slave(_FMU1):
+class FMU1Slave(_FMU1):
 
     def __init__(self, modelDescription, unzipDirectory, instanceName=None):
 
-        super(Slave, self).__init__(modelDescription, unzipDirectory, instanceName, FMIType.CO_SIMULATION)
+        super(FMU1Slave, self).__init__(modelDescription, unzipDirectory, instanceName, FMIType.CO_SIMULATION)
 
         # FMI 1.0 Co-Simulation functions
         self.fmi1InstantiateSlave = getattr(self.dll, self.modelIdentifier + '_fmiInstantiateSlave')
@@ -172,11 +173,11 @@ class Slave(_FMU1):
         freeLibrary(self.dll._handle)
 
 
-class Model(_FMU1):
+class FMU1Model(_FMU1):
 
     def __init__(self, modelDescription, unzipDirectory, instanceName=None):
 
-        super(Model, self).__init__(modelDescription, unzipDirectory, instanceName, FMIType.MODEL_EXCHANGE)
+        super(FMU1Model, self).__init__(modelDescription, unzipDirectory, instanceName, FMIType.MODEL_EXCHANGE)
 
         self.eventInfo = fmi1EventInfo()
 

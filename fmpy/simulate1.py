@@ -6,6 +6,7 @@ from tempfile import mkdtemp
 from fmpy.modelDescription import read_model_description
 from fmpy import fmi1, fmi2, FMIType
 from fmpy.fmi1 import fmi1ValueReference, fmi1Real, fmi1Integer, fmi1Boolean
+from fmpy.fmi2 import fmi2True, fmi2False
 import numpy as np
 
 
@@ -123,7 +124,10 @@ def simulate(filename, start_time=None, stop_time=None, step_size=None, fmiType=
         else:
             return simulateCS1(modelDescription, unzipdir, start_time, stop_time, step_size, output)
     else:
-        return simulateCS2(modelDescription, unzipdir, start_time, stop_time, step_size, output)
+        if fmiType is FMIType.MODEL_EXCHANGE:
+            return simulateME2(modelDescription, unzipdir, start_time, stop_time, step_size, output)
+        else:
+            return simulateCS2(modelDescription, unzipdir, start_time, stop_time, step_size, output)
 
     # clean up
     shutil.rmtree(unzipdir)
@@ -131,7 +135,7 @@ def simulate(filename, start_time=None, stop_time=None, step_size=None, fmiType=
 
 def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, output):
 
-    fmu = fmi1.Model(modelDescription=modelDescription, unzipDirectory=unzipdir)
+    fmu = fmi1.FMU1Model(modelDescription=modelDescription, unzipDirectory=unzipdir)
     fmu.instantiate()
     fmu.setTime(start_time)
     fmu.initialize()
@@ -162,7 +166,7 @@ def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, ou
         # forward Euler
         fmu.x += dt * fmu.dx
 
-        fmu.getContinuousStates()
+        fmu.setContinuousStates()
 
         # check for step event, e.g.dynamic state selection
         stepEvent = fmu.completedIntegratorStep()
@@ -186,7 +190,7 @@ def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, ou
 
 def simulateCS1(modelDescription, unzipdir, start_time, stop_time, step_size, output):
 
-    fmu = fmi1.Slave(modelDescription=modelDescription, unzipDirectory=unzipdir)
+    fmu = fmi1.FMU1Slave(modelDescription=modelDescription, unzipDirectory=unzipdir)
     fmu.instantiate("rectifier1")
     fmu.initialize()
 
@@ -198,6 +202,87 @@ def simulateCS1(modelDescription, unzipdir, start_time, stop_time, step_size, ou
         recorder.sample(time)
         status = fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
         time += step_size
+
+    fmu.terminate()
+    fmu.freeInstance()
+
+    return recorder.result()
+
+
+def simulateME2(modelDescription, unzipdir, start_time, stop_time, step_size, output):
+
+    fmu = fmi2.FMU2Model(modelDescription=modelDescription, unzipDirectory=unzipdir)
+    fmu.instantiate()
+    fmu.setupExperiment(tolerance=None, startTime=start_time)
+    fmu.enterInitializationMode()
+    fmu.exitInitializationMode()
+
+    # event iteration
+    fmu.eventInfo.newDiscreteStatesNeeded = fmi2True
+    fmu.eventInfo.terminateSimulation = fmi2False
+
+    while fmu.eventInfo.newDiscreteStatesNeeded == fmi2True and fmu.eventInfo.terminateSimulation == fmi2False:
+        # update discrete states
+        status = fmu.newDiscreteStates()
+
+    fmu.enterContinuousTimeMode()
+
+    recorder = Recorder(fmu=fmu, output=output)
+
+    prez  = np.zeros_like(fmu.z)
+
+    time = start_time
+
+    recorder.sample(time)
+
+    while time < stop_time:
+
+        fmu.getContinuousStates()
+        fmu.getDerivatives()
+
+        tPre = time
+        time = min(time + step_size, stop_time)
+
+        timeEvent = fmu.eventInfo.nextEventTimeDefined != fmi2False and fmu.eventInfo.nextEventTime <= time
+
+        if timeEvent:
+            time = fmu.eventInfo.nextEventTime
+
+        dt = time - tPre
+
+        fmu.setTime(time)
+
+        # forward Euler
+        fmu.x += dt * fmu.dx
+
+        fmu.setContinuousStates()
+
+        # check for state event
+        prez[:] = fmu.z
+        fmu.getEventIndicators()
+        stateEvent = np.any((prez * fmu.z) < 0)
+
+        if stateEvent:
+            print(time)
+
+        # check for step event
+        stepEvent, terminateSimulation = fmu.completedIntegratorStep()
+
+        if timeEvent or stateEvent or stepEvent != fmi2False:
+
+            # handle events
+            fmu.enterEventMode()
+
+            fmu.eventInfo.newDiscreteStatesNeeded = fmi2True
+            fmu.eventInfo.terminateSimulation = fmi2False
+
+            # update discrete states
+            while fmu.eventInfo.newDiscreteStatesNeeded != fmi2False and fmu.eventInfo.terminateSimulation == fmi2False:
+                fmu.newDiscreteStates()
+
+            fmu.enterContinuousTimeMode()
+
+        recorder.sample(time)
 
     fmu.terminate()
     fmu.freeInstance()
@@ -227,6 +312,7 @@ def simulateCS2(modelDescription, unzipdir, start_time, stop_time, step_size, ou
 
     return recorder.result()
 
+
 if __name__ == '__main__':
 
     import sys
@@ -239,7 +325,7 @@ if __name__ == '__main__':
 
     filename = sys.argv[1]
 
-    result = simulate(filename=filename)
+    result = simulate(filename=filename, output=['h', 'v'])
 
     time = result['time']
     names = result.dtype.names[1:]

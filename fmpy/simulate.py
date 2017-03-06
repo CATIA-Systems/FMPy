@@ -14,20 +14,25 @@ from scipy import interpolate
 
 class Recorder(object):
 
-    def __init__(self, fmu, output=None):
+    def __init__(self, fmu, variableNames=None, interval=None):
 
         self.fmu = fmu
+        self.interval = interval
 
         md = fmu.modelDescription
 
-        if md.fmiVersion == '1.0':
+        is_fmi1 =  md.fmiVersion == '1.0'
+
+        if is_fmi1:
             self._getReal = fmu.fmi1GetReal
             self._getInteger = fmu.fmi1GetInteger
             self._getBoolean = fmu.fmi1GetBoolean
+            self._bool_type = fmi1Boolean
         else:
             self._getReal = fmu.fmi2GetReal
             self._getInteger = fmu.fmi2GetInteger
             self._getBoolean = fmu.fmi2GetBoolean
+            self._bool_type = fmi2Boolean
 
         self.cols = [('time', np.float64)]
         self.rows = []
@@ -35,7 +40,7 @@ class Recorder(object):
         self.values = {'Real': [], 'Integer': [], 'Boolean': [], 'String': []}
 
         for sv in md.modelVariables:
-            if (output is None and sv.causality == 'output') or (output is not None and sv.name in output):
+            if (variableNames is None and sv.causality == 'output') or (variableNames is not None and sv.name in variableNames):
                 self.values['Integer' if sv.type == 'Enumeration' else sv.type].append((sv.name, sv.valueReference))
 
         if len(self.values['Real']) > 0:
@@ -57,12 +62,17 @@ class Recorder(object):
         if len(self.values['Boolean']) > 0:
             boolean_names, boolean_vrs = zip(*self.values['Boolean'])
             self. boolean_vrs = (c_uint32 * len(boolean_vrs))(*boolean_vrs)
-            self.boolean_values = ((c_int8 if md.fmiVersion == '1.0' else c_int32) * len(boolean_vrs))()
-            self.cols += zip(boolean_names, ([np.int8] if md.fmiVersion == '1.0' else [np.int32]) * len(boolean_names))
+            self.boolean_values = ((c_int8 if is_fmi1 else c_int32) * len(boolean_vrs))()
+            self.cols += zip(boolean_names, ([np.int8] if is_fmi1 else [np.int32]) * len(boolean_names))
         else:
             self.boolean_vrs = []
 
-    def sample(self, time):
+    def sample(self, time: float, force: bool = False):
+
+        if not force and self.interval is not None and len(self.rows) > 0:
+            last = self.rows[-1][0]
+            if time - last < self.interval:
+                return
 
         row = [time]
 
@@ -75,7 +85,8 @@ class Recorder(object):
             row += list(self.integer_values)
 
         if len(self.boolean_vrs) > 0:
-            status = self._getBoolean(self.fmu.component, self.boolean_vrs, len(self.boolean_vrs), self.boolean_values)
+            status = self._getBoolean(self.fmu.component, self.boolean_vrs, len(self.boolean_vrs),
+                                      cast(self.boolean_values, POINTER(self._bool_type)))
             row += list(self.boolean_values)
 
         self.rows.append(tuple(row))
@@ -98,10 +109,12 @@ class Input(object):
             self._setReal = fmu.fmi1SetReal
             self._setInteger = fmu.fmi1SetInteger
             self._setBoolean = fmu.fmi1SetBoolean
+            self._bool_type = fmi1Boolean
         else:
             self._setReal = fmu.fmi2SetReal
             self._setInteger = fmu.fmi2SetInteger
             self._setBoolean = fmu.fmi2SetBoolean
+            self._bool_type = fmi2Boolean
 
         self.values = {'Real': [], 'Integer': [], 'Boolean': [], 'String': []}
 
@@ -133,6 +146,9 @@ class Input(object):
 
     def apply(self, time):
 
+        if self.signals is None:
+            return
+
         if len(self.real_vrs) > 0:
             for i, f in enumerate(self.real_fun):
                 self.real_values[i] = f(time)
@@ -146,10 +162,11 @@ class Input(object):
         if len(self.boolean_vrs) > 0:
             for i, f in enumerate(self.boolean_fun):
                 self.boolean_values[i] = f(time)
-            status = self._setBoolean(self.fmu.component, self.boolean_vrs, len(self.boolean_vrs), self.boolean_values)
+            status = self._setBoolean(self.fmu.component, self.boolean_vrs, len(self.boolean_vrs),
+                                      cast(self.boolean_values, POINTER(self._bool_type)))
 
 
-def simulate(filename, start_time=None, stop_time=None, step_size=None, fmiType=None, start_values={}, input=None, output=None):
+def simulate(filename, start_time=None, stop_time=None, step_size=None, sample_interval=None, fmiType=None, start_values={}, input=None, output=None):
 
     modelDescription = read_model_description(filename)
 
@@ -190,8 +207,11 @@ def simulate(filename, start_time=None, stop_time=None, step_size=None, fmiType=
     else:
         simfun = simulateME2 if fmiType is FMIType.MODEL_EXCHANGE else simulateCS2
 
+    if sample_interval is None:
+        sample_interval = (stop_time - start_time) / 500
+
     # simulate the FMU
-    result = simfun(modelDescription, unzipdir, start_time, stop_time, step_size, input, output)
+    result = simfun(modelDescription, unzipdir, start_time, stop_time, step_size, input, output, sample_interval)
 
     # clean up
     shutil.rmtree(unzipdir)
@@ -199,14 +219,14 @@ def simulate(filename, start_time=None, stop_time=None, step_size=None, fmiType=
     return result
 
 
-def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, input, output):
+def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, input_signals, output, output_interval):
 
     fmu = FMU1Model(modelDescription=modelDescription, unzipDirectory=unzipdir)
     fmu.instantiate()
     fmu.setTime(start_time)
     fmu.initialize()
 
-    recorder = Recorder(fmu=fmu, output=output)
+    recorder = Recorder(fmu=fmu, variableNames=output, interval=output_interval)
 
     prez  = np.zeros_like(fmu.z)
 
@@ -248,26 +268,33 @@ def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, in
 
         recorder.sample(time)
 
+    recorder.sample(time, force=True)
+
     fmu.terminate()
     fmu.freeInstance()
 
     return recorder.result()
 
 
-def simulateCS1(modelDescription, unzipdir, start_time, stop_time, step_size, input, output):
+def simulateCS1(modelDescription, unzipdir, start_time, stop_time, step_size, input_signals, output, output_interval):
 
     fmu = FMU1Slave(modelDescription=modelDescription, unzipDirectory=unzipdir)
     fmu.instantiate("rectifier1")
     fmu.initialize()
 
-    recorder = Recorder(fmu=fmu, output=output)
+    input = Input(fmu, input_signals)
+
+    recorder = Recorder(fmu=fmu, variableNames=output, interval=output_interval)
 
     time = start_time
 
     while time < stop_time:
         recorder.sample(time)
         status = fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
+        input.apply(time)
         time += step_size
+
+    recorder.sample(time, force=True)
 
     fmu.terminate()
     fmu.freeInstance()
@@ -275,7 +302,7 @@ def simulateCS1(modelDescription, unzipdir, start_time, stop_time, step_size, in
     return recorder.result()
 
 
-def simulateME2(modelDescription, unzipdir, start_time, stop_time, step_size, input, output):
+def simulateME2(modelDescription, unzipdir, start_time, stop_time, step_size, input_signals, output, output_interval):
 
     fmu = FMU2Model(modelDescription=modelDescription, unzipDirectory=unzipdir)
     fmu.instantiate()
@@ -293,7 +320,9 @@ def simulateME2(modelDescription, unzipdir, start_time, stop_time, step_size, in
 
     fmu.enterContinuousTimeMode()
 
-    recorder = Recorder(fmu=fmu, output=output)
+    input = Input(fmu, input_signals)
+
+    recorder = Recorder(fmu=fmu, variableNames=output, interval=output_interval)
 
     prez  = np.zeros_like(fmu.z)
 
@@ -308,6 +337,8 @@ def simulateME2(modelDescription, unzipdir, start_time, stop_time, step_size, in
 
         tPre = time
         time = min(time + step_size, stop_time)
+
+        input.apply(time)
 
         timeEvent = fmu.eventInfo.nextEventTimeDefined != fmi2False and fmu.eventInfo.nextEventTime <= time
 
@@ -347,13 +378,15 @@ def simulateME2(modelDescription, unzipdir, start_time, stop_time, step_size, in
 
         recorder.sample(time)
 
+    recorder.sample(time, force=True)
+
     fmu.terminate()
     fmu.freeInstance()
 
     return recorder.result()
 
 
-def simulateCS2(modelDescription, unzipdir, start_time, stop_time, step_size, input, output):
+def simulateCS2(modelDescription, unzipdir, start_time, stop_time, step_size, input_signals, output, output_interval):
 
     fmu = FMU2Slave(modelDescription=modelDescription, unzipDirectory=unzipdir)
     fmu.instantiate()
@@ -361,21 +394,19 @@ def simulateCS2(modelDescription, unzipdir, start_time, stop_time, step_size, in
     fmu.enterInitializationMode()
     fmu.exitInitializationMode()
 
-    if input is not None:
-        inp = Input(fmu, input)
-    else:
-        inp = None
+    input = Input(fmu, input_signals)
 
-    recorder = Recorder(fmu=fmu, output=output)
+    recorder = Recorder(fmu=fmu, variableNames=output, interval=output_interval)
 
     time = start_time
 
     while time < stop_time:
         recorder.sample(time)
         fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
-        if inp is not None:
-            inp.apply(time)
+        input.apply(time)
         time += step_size
+
+    recorder.sample(time, force=True)
 
     fmu.terminate()
     fmu.freeInstance()

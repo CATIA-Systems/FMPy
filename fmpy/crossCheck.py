@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from collections import Iterable
 from fmpy.simulate import simulate
 
-def simulateFMU(path: str, fmu_filename: str, reference_filename: str, input_filename=None):
+def simulateFMU(path: str, fmu_filename: str, reference_filename: str, input_filename=None, batch_filename=None):
 
     print(path, fmu_filename)
 
@@ -15,9 +15,29 @@ def simulateFMU(path: str, fmu_filename: str, reference_filename: str, input_fil
     else:
         input = None
 
-    stop_time = ref['time'][-1]
+    time = ref['time']
 
-    res = simulate(os.path.join(path, fmu_filename), stop_time=stop_time, output=ref.dtype.names[1:], input=input)
+    sample_interval = time[1] - time[0]
+    stop_time = time[-1]
+
+    step_size = stop_time / 1000
+
+    if batch_filename is not None:
+
+        with open(os.path.join(path, batch_filename), 'r') as file:
+            for line in file:
+                args = line.split(' ')
+                if '-h' in args:
+                    i = args.index('-h')
+                    step_size = float(args[i+1])
+                    break
+
+    res = simulate(filename=os.path.join(path, fmu_filename),
+                   stop_time=stop_time,
+                   step_size=step_size,
+                   output=ref.dtype.names[1:],
+                   sample_interval=sample_interval,
+                   input=input)
 
     plot_result(res, ref)
 
@@ -79,7 +99,10 @@ if __name__ == '__main__':
 
     #test_fmu_dir = r'Z:\Development\FMI\branches\public\Test_FMUs\FMI_2.0\ModelExchange\win64\FMUSDK\2.0.4'
     #test_fmu_dir = r'Z:\Development\FMI\branches\public\Test_FMUs\FMI_2.0\CoSimulation\win64\FMIToolbox_MATLAB\2.3'
-    test_fmu_dir = r'Z:\Development\FMI\branches\public\Test_FMUs\FMI_2.0\CoSimulation\win64\Dymola\2017'
+    #test_fmu_dir = r'Z:\Development\FMI\branches\public\Test_FMUs\FMI_2.0\ModelExchange\win64\Dymola\2017'
+    #test_fmu_dir = r'Z:\Development\FMI\branches\public\Test_FMUs\FMI_2.0\ModelExchange\win64\MapleSim\2016.2'
+    #test_fmu_dir = r'Z:\Development\FMI\branches\public\Test_FMUs\FMI_2.0\ModelExchange\win64\SimulationX\3.7.41138'
+    test_fmu_dir = r'Z:\Development\FMI\branches\public\Test_FMUs\FMI_2.0\ModelExchange\win64\DS_FMU_Export_from_Simulink\2.3.0'
 
     for subdir, dirs, files in os.walk(test_fmu_dir):
 
@@ -95,6 +118,9 @@ if __name__ == '__main__':
 
             if file.endswith('_cc.csv'):
                 args['reference_filename'] = file
+
+            if file.endswith('_cc.bat'):
+                args['batch_filename'] = file
 
         if 'fmu_filename' in args:
             simulateFMU(**args)

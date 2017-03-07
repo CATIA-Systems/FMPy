@@ -102,6 +102,9 @@ class Input(object):
         self.fmu = fmu
         self.signals = signals
 
+        if signals is None:
+            return
+
         is_fmi1 = fmu.modelDescription.fmiVersion == '1.0'
 
         # get the setters
@@ -119,6 +122,10 @@ class Input(object):
         self.values = {'Real': [], 'Integer': [], 'Boolean': [], 'String': []}
 
         for sv in fmu.modelDescription.modelVariables:
+
+            if sv.name is None:
+                continue
+
             if sv.causality == 'input':
                 if not sv.name in self.signals.dtype.names:
                     print("Warning: missing input for " + sv.name)
@@ -158,16 +165,20 @@ class Input(object):
             status = self._setReal(self.fmu.component, self.real_vrs, len(self.real_vrs), self.real_values)
 
         if len(self.integer_vrs) > 0:
+            #status = self.fmu.fmi1GetInteger(self.fmu.component, self.integer_vrs, len(self.integer_vrs), self.integer_values)
+            #print(time, self.integer_values[0], status)
+
             for i, f in enumerate(self.integer_fun):
                 self.integer_values[i] = f(time)
             status = self._setInteger(self.fmu.component, self.integer_vrs, len(self.integer_vrs), self.integer_values)
+            #print(time, f(time), self.integer_values[0], status)
 
         if len(self.boolean_vrs) > 0:
             for i, f in enumerate(self.boolean_fun):
                 self.boolean_values[i] = f(time)
             status = self._setBoolean(self.fmu.component, self.boolean_vrs, len(self.boolean_vrs),
                                       cast(self.boolean_values, POINTER(self._bool_type)))
-            #print(time, self.boolean_values[0], status)
+            # print(time, f(time), self.boolean_values[0], status)
 
 
 def simulate(filename, start_time=None, stop_time=None, step_size=None, sample_interval=None, fmiType=None, start_values={}, input=None, output=None):
@@ -227,23 +238,27 @@ def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, in
 
     fmu = FMU1Model(modelDescription=modelDescription, unzipDirectory=unzipdir)
     fmu.instantiate()
-    fmu.setTime(start_time)
-    fmu.initialize()
+
+    time = start_time
+
+    fmu.setTime(time)
 
     input = Input(fmu, input_signals)
+
+    input.apply(time)
+
+    fmu.initialize()
 
     recorder = Recorder(fmu=fmu, variableNames=output, interval=output_interval)
 
     prez  = np.zeros_like(fmu.z)
 
-    time = start_time
-
     while time < stop_time:
+
+        input.apply(time)
 
         fmu.getContinuousStates()
         fmu.getDerivatives()
-
-        input.apply(time)
 
         tPre = time;
         time = min(time + step_size, stop_time);
@@ -298,8 +313,8 @@ def simulateCS1(modelDescription, unzipdir, start_time, stop_time, step_size, in
 
     while time < stop_time:
         recorder.sample(time)
-        status = fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
         input.apply(time)
+        status = fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
         time += step_size
 
     recorder.sample(time, force=True)
@@ -410,8 +425,8 @@ def simulateCS2(modelDescription, unzipdir, start_time, stop_time, step_size, in
 
     while time < stop_time:
         recorder.sample(time)
-        fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
         input.apply(time)
+        fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
         time += step_size
 
     recorder.sample(time, force=True)
@@ -435,7 +450,9 @@ if __name__ == '__main__':
 
     filename = sys.argv[1]
 
-    result = simulate(filename=filename, output=['h'], stop_time=0.02)
+    input = np.genfromtxt(r'Z:\Development\FMI\branches\public\Test_FMUs\FMI_1.0\ModelExchange\win64\Dymola\2017\BooleanNetwork1\BooleanNetwork1_in.csv', delimiter=',', names=True)
+
+    result = simulate(filename=filename, output=['step', 'y'], step_size=0.01, stop_time=10, input=input)
 
     time = result['time']
     names = result.dtype.names[1:]

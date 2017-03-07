@@ -9,8 +9,6 @@ from scipy.interpolate import interp1d
 
 def simulateFMU(path: str, reportDir=None):
 
-    # , fmu_filename: str, reference_filename: str, input_filename = None, batch_filename = None
-
     input_filename = None
 
     for file in os.listdir(path):
@@ -21,7 +19,7 @@ def simulateFMU(path: str, reportDir=None):
         if file.endswith('_in.csv'):
             input_filename = file
 
-        if file.endswith('_cc.csv'):
+        if file.endswith('_ref.csv'):
             reference_filename = file
 
         if file.endswith('_cc.bat'):
@@ -84,6 +82,8 @@ def simulateFMU(path: str, reportDir=None):
     #     plot_result(res, ref)
 
     if reportDir is not None:
+        header = ','.join(map(lambda s: '"' + s + '"', res.dtype.names))
+        np.savetxt(os.path.join(reportDir, 'result.csv'), res, delimiter=',', header=header, comments='', fmt='%g')
         plot_result(res, ref, filename=os.path.join(reportDir, 'result.png'))
 
     return outliers
@@ -91,15 +91,17 @@ def simulateFMU(path: str, reportDir=None):
 
 def get_limits(y_ref, margin=0.02):
 
-    dy = y_ref.max() * margin
+    dy = np.abs(y_ref).max() * margin
 
-    _, S = np.meshgrid(range(3), y_ref, indexing='ij')
+    _, S = np.meshgrid(range(5), y_ref, indexing='ij')
 
-    # S[0, :-2] = y_ref[2:]
-    S[0, :-1] = y_ref[1:]
-    S[1, :] = y_ref
-    S[2, 1:] = y_ref[:-1]
-    # S[4, 2:] = y_ref[:-2]
+    # S[0, :-3] = y_ref[3:]
+    S[0, :-2] = y_ref[2:]
+    S[1, :-1] = y_ref[1:]
+    S[2, :]   = y_ref
+    S[3, 1:]  = y_ref[:-1]
+    S[4, 2:]  = y_ref[:-2]
+    # S[6, 3:]  = y_ref[:-3]
 
     lower = np.min(S, axis=0) - dy
     upper = np.max(S, axis=0) + dy
@@ -171,8 +173,6 @@ def plot_result(result, reference=None, filename=None):
 
 class TestSimulateFMU(TestCase):
 
-    # self.addTest(test_me)
-
     def __init__(self, *args, **kwargs):
 
         super(TestSimulateFMU, self).__init__(*args, **kwargs)
@@ -190,23 +190,28 @@ class TestSimulateFMU(TestCase):
     def tearDownClass(cls):
         cls.html.write('</table></body></html>')
 
-    def test_fmi1_cs(self):
-        pass
-
 
 def test_generator(baseDir, modelPath):
     def test(self):
         outliers = simulateFMU(os.path.join(baseDir, modelPath), reportDir=os.path.join(reportDir, modelPath))
         self.html.write('<tr><td><a href="' + os.path.join(modelPath, 'result.png') + '">' + modelPath + '</a></td><td>' + str(outliers) + '</td></tr>\n')
-        self.assertTrue(outliers == 0, 'Outliers: %s' % outliers)
+        self.assertTrue(outliers < 10, "Too many outliers: " + str(outliers))
     return test
 
 
 fmiVersions = ['fmi1', 'fmi2']
 fmiTypes = ['me', 'cs']
 testFMUsDirectory = r'Z:\Development\FMI\branches\public\Test_FMUs'
-tools = ['Dymola'] #['DS_FMU_Export_from_Simulink']
-models = None #['BooleanNetwork1']
+tools = ['Dymola']
+# tools = ['DS_FMU_Export_from_Simulink']
+# tools = ['FMIToolbox_MATLAB']
+# tools = ['MapleSim']
+# tools = ['SimulationX']
+# tools = ['OpenModelica']
+# models = ['fullRobot']
+models = ['BooleanNetwork1']
+# models = ['ControlledTemperature']
+# models = None
 reportDir = r'Z:\Development\FMPy\CrossCheck'
 
 for fmiVersion in fmiVersions:
@@ -219,20 +224,29 @@ for fmiVersion in fmiVersions:
                                    fmpy.platform)
 
         for tool in os.listdir(platformDir):
-            if not tool in tools:
+
+            if tools is not None and not tool in tools:
                 continue
+
             toolDir = os.path.join(platformDir, tool)
             versions = os.listdir(toolDir)
             version = sorted(versions)[-1]
             versionDir = os.path.join(toolDir, version)
+
             for model in os.listdir(versionDir):
+
                 if models is not None and model not in models:
                     continue
+
                 modelDir = os.path.join(versionDir, model)
-                # dev = simulateFMU(modelDir)
+
+                if not os.path.isdir(modelDir):
+                    continue
+
                 test = test_generator(testFMUsDirectory, os.path.join('FMI_1.0' if fmiVersion == 'fmi1' else 'FMI_2.0',
                                    'ModelExchange' if fmiType == 'me' else 'CoSimulation',
                                    fmpy.platform, tool, version, model))
+
                 setattr(TestSimulateFMU, 'test_' + fmiVersion + '_' + fmiType + '_' + tool +'_' + model, test)
 
 

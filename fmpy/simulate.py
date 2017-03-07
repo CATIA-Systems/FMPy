@@ -120,6 +120,9 @@ class Input(object):
 
         for sv in fmu.modelDescription.modelVariables:
             if sv.causality == 'input':
+                if not sv.name in self.signals.dtype.names:
+                    print("Warning: missing input for " + sv.name)
+                    continue
                 f = interpolate.interp1d(self.signals['time'], self.signals[sv.name], kind='linear' if sv.type == 'Real' else 'zero')
                 self.values['Integer' if sv.type == 'Enumeration' else sv.type].append((f, sv.valueReference))
 
@@ -164,6 +167,7 @@ class Input(object):
                 self.boolean_values[i] = f(time)
             status = self._setBoolean(self.fmu.component, self.boolean_vrs, len(self.boolean_vrs),
                                       cast(self.boolean_values, POINTER(self._bool_type)))
+            #print(time, self.boolean_values[0], status)
 
 
 def simulate(filename, start_time=None, stop_time=None, step_size=None, sample_interval=None, fmiType=None, start_values={}, input=None, output=None):
@@ -226,6 +230,8 @@ def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, in
     fmu.setTime(start_time)
     fmu.initialize()
 
+    input = Input(fmu, input_signals)
+
     recorder = Recorder(fmu=fmu, variableNames=output, interval=output_interval)
 
     prez  = np.zeros_like(fmu.z)
@@ -236,6 +242,8 @@ def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, in
 
         fmu.getContinuousStates()
         fmu.getDerivatives()
+
+        input.apply(time)
 
         tPre = time;
         time = min(time + step_size, stop_time);

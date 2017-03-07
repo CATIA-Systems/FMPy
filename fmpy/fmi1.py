@@ -253,6 +253,9 @@ class FMU1Model(_FMU1):
     def getContinuousStates(self):
         status = self.fmi1GetContinuousStates(self.component, self._px, self.x.size)
 
+    def setContinuousStates(self):
+        status = self.fmi1SetContinuousStates(self.component, self._px, self.x.size)
+
     def getDerivatives(self):
         status = self.fmi1GetDerivatives(self.component, self._pdx, self.dx.size)
 

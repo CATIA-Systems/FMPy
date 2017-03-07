@@ -75,7 +75,9 @@ def read_model_description(filename):
     modelDescription.generationTool = root.get('generationTool')
     modelDescription.generationDateAndTime = root.get('generationDateAndTime')
     modelDescription.variableNamingConvention = root.get('variableNamingConvention')
-    modelDescription.numberOfEventIndicators = int(root.get('numberOfEventIndicators'))
+
+    if root.get('numberOfEventIndicators') is not None:
+        modelDescription.numberOfEventIndicators = int(root.get('numberOfEventIndicators'))
 
     if modelDescription.fmiVersion == '1.0':
         modelDescription.numberOfContinuousStates = int(root.get('numberOfContinuousStates'))

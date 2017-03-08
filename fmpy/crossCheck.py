@@ -204,9 +204,13 @@ def test_generator(baseDir, modelPath):
         self.assertTrue(outliers < 10, "Too many outliers: " + str(outliers))
     return test
 
-# x = os.environ['TEST_FMUS_DIR']
-testFMUsDirectory = r'Z:\Development\FMI\branches\public\Test_FMUs'
-reportDir = r'Z:\Development\FMPy\CrossCheck'
+
+for v in ['TEST_FMUS_DIR', 'REPORT_DIR']:
+    if v not in os.environ:
+        raise Exception('Missing environment variable ' + v)
+
+testFMUsDirectory = os.environ['TEST_FMUS_DIR']
+reportDir = os.environ['REPORT_DIR']
 
 fmiVersions = ['fmi1', 'fmi2']
 fmiTypes = ['me', 'cs']

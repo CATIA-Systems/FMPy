@@ -4,8 +4,10 @@ import matplotlib.pyplot as plt
 from collections import Iterable
 from fmpy.simulate import simulate
 from unittest import TestCase
+import unittest
 import fmpy
 from scipy.interpolate import interp1d
+import sys
 
 def simulateFMU(path: str, reportDir=None):
 
@@ -85,6 +87,14 @@ def simulateFMU(path: str, reportDir=None):
         header = ','.join(map(lambda s: '"' + s + '"', res.dtype.names))
         np.savetxt(os.path.join(reportDir, 'result.csv'), res, delimiter=',', header=header, comments='', fmt='%g')
         plot_result(res, ref, filename=os.path.join(reportDir, 'result.png'))
+
+        if outliers < 10:
+            passedFile = os.path.join(reportDir, 'passed')
+            with open(passedFile, 'a'):
+                os.utime(passedFile, None)
+
+        with open(os.path.join(reportDir, 'ReadMe.txt'), 'w') as f:
+            f.write("See FMPy documentation for how to run simulate FMUs\n")
 
     return outliers
 
@@ -174,11 +184,7 @@ def plot_result(result, reference=None, filename=None):
 class TestSimulateFMU(TestCase):
 
     def __init__(self, *args, **kwargs):
-
         super(TestSimulateFMU, self).__init__(*args, **kwargs)
-
-        self.testFMUsDirectory = r'Z:\Development\FMI\branches\public\Test_FMUs'
-        self.tools = ['DS_FMU_Export_from_Simulink']
 
     @classmethod
     def setUpClass(cls):
@@ -198,10 +204,12 @@ def test_generator(baseDir, modelPath):
         self.assertTrue(outliers < 10, "Too many outliers: " + str(outliers))
     return test
 
+# x = os.environ['TEST_FMUS_DIR']
+testFMUsDirectory = r'Z:\Development\FMI\branches\public\Test_FMUs'
+reportDir = r'Z:\Development\FMPy\CrossCheck'
 
 fmiVersions = ['fmi1', 'fmi2']
 fmiTypes = ['me', 'cs']
-testFMUsDirectory = r'Z:\Development\FMI\branches\public\Test_FMUs'
 tools = ['Dymola']
 # tools = ['DS_FMU_Export_from_Simulink']
 # tools = ['FMIToolbox_MATLAB']
@@ -212,7 +220,6 @@ tools = ['Dymola']
 models = ['BooleanNetwork1']
 # models = ['ControlledTemperature']
 # models = None
-reportDir = r'Z:\Development\FMPy\CrossCheck'
 
 for fmiVersion in fmiVersions:
 
@@ -251,164 +258,4 @@ for fmiVersion in fmiVersions:
 
 
 if __name__ == '__main__':
-
-    #test_fmu_dir = r'Z:\Development\FMI\branches\public\Test_FMUs\FMI_2.0\ModelExchange\win64\FMUSDK\2.0.4'
-    #test_fmu_dir = r'Z:\Development\FMI\branches\public\Test_FMUs\FMI_2.0\CoSimulation\win64\FMIToolbox_MATLAB\2.3'
-    #test_fmu_dir = r'Z:\Development\FMI\branches\public\Test_FMUs\FMI_2.0\ModelExchange\win64\Dymola\2017'
-    #test_fmu_dir = r'Z:\Development\FMI\branches\public\Test_FMUs\FMI_2.0\ModelExchange\win64\MapleSim\2016.2'
-    #test_fmu_dir = r'Z:\Development\FMI\branches\public\Test_FMUs\FMI_2.0\ModelExchange\win64\SimulationX\3.7.41138'
-    #test_fmu_dir = r'Z:\Development\FMI\branches\public\Test_FMUs\FMI_2.0\ModelExchange\win64\DS_FMU_Export_from_Simulink\2.3.0'
-
-    #test_fmu_dir = r'Z:\Development\FMI\branches\public\Test_FMUs\FMI_2.0\CoSimulation\win64\AMESim\15'
-
-    test_fmu_dir = r'Z:\Development\FMI\branches\public\Test_FMUs'
-
-    fmu_paths = [
-
-        # Windows 64-bit
-
-        # FMI 1.0
-
-        # Co-Simulation
-
-        r'FMI_1.0\CoSimulation\win64\AMESim\14\fuelrail_cs',
-        r'FMI_1.0\CoSimulation\win64\AMESim\14\MIS_cs',
-        r'FMI_1.0\CoSimulation\win64\AMESim\14\steam_plant',
-
-        r'FMI_1.0\CoSimulation\win64\AVL_Cruise\v2014\Battery',
-        r'FMI_1.0\CoSimulation\win64\AVL_Cruise\v2014\DMF', # some signals different
-        # r'FMI_1.0\CoSimulation\win64\AVL_Cruise\v2014\EngineTestBed',
-        r'FMI_1.0\CoSimulation\win64\AVL_Cruise\v2014\Man4WD', # different sample times?
-
-        # line endings of the CSVs inconsistent:
-        #           r'FMI_1.0\CoSimulation\win64\CATIA\R2015x\BooleanNetwork1',
-        #           r'FMI_1.0\CoSimulation\win64\CATIA\R2015x\ControlledTemperature',
-        #           r'FMI_1.0\CoSimulation\win64\CATIA\R2015x\CoupledClutches',
-        #           r'FMI_1.0\CoSimulation\win64\CATIA\R2015x\DFFREG',
-        #           r'FMI_1.0\CoSimulation\win64\CATIA\R2015x\MixtureGases',
-        #           r'FMI_1.0\CoSimulation\win64\CATIA\R2015x\Rectifier',
-
-        r'FMI_1.0\CoSimulation\win64\MapleSim\2016.1\ControlledTemperature',
-        r'FMI_1.0\CoSimulation\win64\MapleSim\2016.1\CoupledClutches',
-        r'FMI_1.0\CoSimulation\win64\MapleSim\2016.1\Rectifier',
-
-        r'FMI_1.0\CoSimulation\win64\DS_FMU_Export_from_Simulink\2.2.0\BouncingBalls_sf',
-        r'FMI_1.0\CoSimulation\win64\DS_FMU_Export_from_Simulink\2.2.0\TestModel1_sf',
-        r'FMI_1.0\CoSimulation\win64\DS_FMU_Export_from_Simulink\2.2.0\TestModel2_sf',
-        r'FMI_1.0\CoSimulation\win64\DS_FMU_Export_from_Simulink\2.2.0\TriggeredSubsystems_sf',
-
-        r'FMI_1.0\CoSimulation\win64\Dymola\2017\BooleanNetwork1',
-        r'FMI_1.0\CoSimulation\win64\Dymola\2017\ControlledTemperature',
-        r'FMI_1.0\CoSimulation\win64\Dymola\2017\CoupledClutches',
-        r'FMI_1.0\CoSimulation\win64\Dymola\2017\DFFREG',
-        r'FMI_1.0\CoSimulation\win64\Dymola\2017\Engine1b',
-        r'FMI_1.0\CoSimulation\win64\Dymola\2017\fullRobot',
-        r'FMI_1.0\CoSimulation\win64\Dymola\2017\IntegerNetwork1',
-        r'FMI_1.0\CoSimulation\win64\Dymola\2017\MixtureGases',
-        r'FMI_1.0\CoSimulation\win64\Dymola\2017\Rectifier',
-
-        r'FMI_1.0\CoSimulation\win64\SimulationX\3.6\ControlledTemperature',
-        r'FMI_1.0\CoSimulation\win64\SimulationX\3.6\CoupledClutches',
-        r'FMI_1.0\CoSimulation\win64\SimulationX\3.6\DFFREG',
-        r'FMI_1.0\CoSimulation\win64\SimulationX\3.6\Engine1b',
-        r'FMI_1.0\CoSimulation\win64\SimulationX\3.6\Rectifier',
-
-        # model exchange
-        r'FMI_1.0\ModelExchange\win64\DS_FMU_Export_from_Simulink\2.2.0\BouncingBalls_sf',
-        r'FMI_1.0\ModelExchange\win64\DS_FMU_Export_from_Simulink\2.2.0\TestModel1_sf',
-        r'FMI_1.0\ModelExchange\win64\DS_FMU_Export_from_Simulink\2.2.0\TestModel2_sf',
-        r'FMI_1.0\ModelExchange\win64\DS_FMU_Export_from_Simulink\2.2.0\TriggeredSubsystems_sf',
-
-        r'FMI_1.0\ModelExchange\win64\Dymola\2017\BooleanNetwork1',
-        r'FMI_1.0\ModelExchange\win64\Dymola\2017\ControlledTemperature',
-        r'FMI_1.0\ModelExchange\win64\Dymola\2017\CoupledClutches',
-        r'FMI_1.0\ModelExchange\win64\Dymola\2017\DFFREG',
-        r'FMI_1.0\ModelExchange\win64\Dymola\2017\Engine1b',
-        r'FMI_1.0\ModelExchange\win64\Dymola\2017\fullRobot',
-        r'FMI_1.0\ModelExchange\win64\Dymola\2017\IntegerNetwork1',
-        r'FMI_1.0\ModelExchange\win64\Dymola\2017\MixtureGases',
-        r'FMI_1.0\ModelExchange\win64\Dymola\2017\Rectifier',
-
-        r'FMI_1.0\ModelExchange\win64\MapleSim\2016.1\ControlledTemperature',
-        r'FMI_1.0\ModelExchange\win64\MapleSim\2016.1\CoupledClutches',
-        r'FMI_1.0\ModelExchange\win64\MapleSim\2016.1\Rectifier',
-
-        r'FMI_1.0\ModelExchange\win64\SimulationX\3.6\ControlledTemperature',
-        r'FMI_1.0\ModelExchange\win64\SimulationX\3.6\CoupledClutches',
-        r'FMI_1.0\ModelExchange\win64\SimulationX\3.6\DFFREG',
-        r'FMI_1.0\ModelExchange\win64\SimulationX\3.6\Engine1b',
-        r'FMI_1.0\ModelExchange\win64\SimulationX\3.6\Rectifier',
-
-        # FMI 2.0
-
-        # co-simulation
-
-        r'FMI_2.0\CoSimulation\win64\DS_FMU_Export_from_Simulink\2.2.0\BouncingBalls_sf',
-        r'FMI_2.0\CoSimulation\win64\DS_FMU_Export_from_Simulink\2.2.0\TestModel1_sf',
-        r'FMI_2.0\CoSimulation\win64\DS_FMU_Export_from_Simulink\2.2.0\TestModel2_sf',
-        r'FMI_2.0\CoSimulation\win64\DS_FMU_Export_from_Simulink\2.2.0\TriggeredSubsystems_sf',
-
-        r'FMI_2.0\CoSimulation\win64\Dymola\2017\BooleanNetwork1',
-        r'FMI_2.0\CoSimulation\win64\Dymola\2017\ControlledTemperature',
-        r'FMI_2.0\CoSimulation\win64\Dymola\2017\CoupledClutches',
-        r'FMI_2.0\CoSimulation\win64\Dymola\2017\DFFREG',
-        r'FMI_2.0\CoSimulation\win64\Dymola\2017\IntegerNetwork1',
-        r'FMI_2.0\CoSimulation\win64\Dymola\2017\MixtureGases',
-        r'FMI_2.0\CoSimulation\win64\Dymola\2017\Rectifier',
-
-        r'FMI_2.0\CoSimulation\win64\MapleSim\2016.1\ControlledTemperature',
-        r'FMI_2.0\CoSimulation\win64\MapleSim\2016.1\CoupledClutches',
-        r'FMI_2.0\CoSimulation\win64\MapleSim\2016.1\Rectifier',
-
-        # model exchange
-
-        r'FMI_2.0\ModelExchange\win64\DS_FMU_Export_from_Simulink\2.2.0\BouncingBalls_sf',
-        r'FMI_2.0\ModelExchange\win64\DS_FMU_Export_from_Simulink\2.2.0\TestModel1_sf',
-        r'FMI_2.0\ModelExchange\win64\DS_FMU_Export_from_Simulink\2.2.0\TestModel2_sf',
-        r'FMI_2.0\ModelExchange\win64\DS_FMU_Export_from_Simulink\2.2.0\TriggeredSubsystems_sf',
-
-        r'FMI_2.0\ModelExchange\win64\Dymola\2017\BooleanNetwork1',
-        r'FMI_2.0\ModelExchange\win64\Dymola\2017\ControlledTemperature',
-        r'FMI_2.0\ModelExchange\win64\Dymola\2017\CoupledClutches',
-        r'FMI_2.0\ModelExchange\win64\Dymola\2017\DFFREG',
-        r'FMI_2.0\ModelExchange\win64\Dymola\2017\IntegerNetwork1',
-        r'FMI_2.0\ModelExchange\win64\Dymola\2017\MixtureGases',
-        r'FMI_2.0\ModelExchange\win64\Dymola\2017\Rectifier',
-
-        r'FMI_2.0\ModelExchange\win64\MapleSim\2016.1\ControlledTemperature',
-        r'FMI_2.0\ModelExchange\win64\MapleSim\2016.1\CoupledClutches',
-        r'FMI_2.0\ModelExchange\win64\MapleSim\2016.1\Rectifier',
-    ]
-
-
-    with open('report.html', 'w') as html:
-
-        html.write('<html><body><table>')
-
-        for path in fmu_paths:
-
-            subdir = os.path.join(test_fmu_dir, path)
-
-            subdi2 = r'Z:\Development\FMI\branches\public\Test_FMUs\FMI_1.0\CoSimulation\win64\MapleSim\2016.1\ControlledTemperature'
-
-            args = {'path': subdir}
-
-            for file in os.listdir(subdir):
-
-                if file.endswith('.fmu'):
-                    args['fmu_filename'] = file
-
-                if file.endswith('_in.csv'):
-                    args['input_filename'] = file
-
-                if file.endswith('_cc.csv'):
-                    args['reference_filename'] = file
-
-                if file.endswith('_cc.bat'):
-                    args['batch_filename'] = file
-
-            if 'fmu_filename' in args:
-                dev = simulateFMU(**args)
-                html.write('<tr><td>' + path + '</td><td>' + '%.2f' % (dev * 100) + ' %</td></tr>\n')
-
-        html.write('</table></body></html>')
+    unittest.main()

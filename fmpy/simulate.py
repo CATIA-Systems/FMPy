@@ -450,9 +450,7 @@ if __name__ == '__main__':
 
     filename = sys.argv[1]
 
-    input = np.genfromtxt(r'Z:\Development\FMI\branches\public\Test_FMUs\FMI_1.0\ModelExchange\win64\Dymola\2017\BooleanNetwork1\BooleanNetwork1_in.csv', delimiter=',', names=True)
-
-    result = simulate(filename=filename, output=['step', 'y'], step_size=0.01, stop_time=10, input=input)
+    result = simulate(filename=filename)
 
     time = result['time']
     names = result.dtype.names[1:]

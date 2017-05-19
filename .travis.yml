@@ -1,7 +1,7 @@
 language: python
 
 script:
-  - python setup.py sdist --format=zip
+  - python setup.py sdist
 
 deploy:
   provider: pypi

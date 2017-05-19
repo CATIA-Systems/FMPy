@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/CATIA-Systems/FMPy.svg?branch=feature/travis-ci)](https://travis-ci.org/CATIA-Systems/FMPy)
+
 FMPy
 ====
 

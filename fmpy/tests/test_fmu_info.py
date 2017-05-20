@@ -7,20 +7,30 @@ class TestFMUInfo(unittest.TestCase):
 
     def test_fmu_info(self):
 
-        url = 'https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_2.0/CoSimulation/win64/FMUSDK/2.0.4/BouncingBall/bouncingBall.fmu'
+        test_fmus_repository = 'https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/'
 
-        print('Downloading FMU...')
+        fmu = 'CoupledClutches.fmu'
+
+        url = test_fmus_repository + 'FMI_2.0/CoSimulation/' + fmpy.platform + '/MapleSim/2016.2/CoupledClutches/' + fmu
+
+        print('Downloading ' + fmu)
 
         response = requests.get(url)
 
-        with open('bouncingBall.fmu', 'wb') as f:
+        with open(fmu, 'wb') as f:
             f.write(response.content)
 
-        print('done.')
-
-        version, interfaces = fmpy.fmu_info('bouncingBall.fmu')
+        # get fmu info
+        version, interfaces = fmpy.fmu_info(fmu)
 
         self.assertEqual(version, '2.0')
+
+        print('Simulating ' + fmu)
+
+        res = fmpy.simulate(fmu)
+
+        print('Result length: %d' % res['time'].size)
+        print('Result signals: ' + ', '.join(res.dtype.names))
 
 
 if __name__ == '__main__':

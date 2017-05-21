@@ -18,6 +18,6 @@ deploy:
   user: t-sommer
   password:
     secure: RtZwusGhtS/Ly+EuGWGiw4sFBdQakT/8R+VdeTh/sEVM57BixHedK4VpDWD9DN0STzaftEHERciTr8iIZwZtceHYh7CMjCmpFKRvYUwZ0svVWclqysXUxmEfm96VSMWN+bsy+tz1XP97LmRrim831Oauyttvc/Sz4/bP5UgXGdjb59gJUXK+Esk5bn8lvtkMPY6ZkEgALIGJZY5Y140ogdQEndqq1fDCJJn5L4W4QnNS0bOnh8QUnpR6hsZKSBjVrsluVETZpfbWnf/JO4Y8sBbR7TjEHCWC4OVV7wHwS9OrLBv6JToLkCkpxpw0Y9aned9DY5Curlmo7Em7w1lBnLnApTJgwpsR+f60Ld0ohs/THbJRN8R+IW0izpI+OkbEZjGm35Opf2FXpSmHtyeNdpAueWfM8Tm5iQIrTAzAqNZE7XRjfV8SlTeTRgftEZlsJuKJtnIq6Iib4mYIYwiQfkG/cXtFf1RcSDg4rhl+zuc6nHWyaS6pryl2Cxozs5g71D/bATJJ0GElrSy3qA3G+m5s0G008+hAV3FLUZeju/ianHdhEUMsHJmXcOZn8T6Szo/jZXUTpbaFSsHPoz5epEy30Mph/nTDA2pmy77k5HaTR4q9JHBqzjNYB0FwPfMfxjo9CdIq9H/pHJFYRf7OnSJXGK3foBlHkA4cyH72lGE=
-  on:
-    all_branches: true
+#  on:
+#    all_branches: true
   skip_cleanup: true

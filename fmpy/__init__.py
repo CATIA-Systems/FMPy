@@ -51,3 +51,5 @@ def fmu_info(filename):
     version = root.get('fmiVersion')
 
     return version, ['Co-Simulation']
+
+from .simulate import simulate

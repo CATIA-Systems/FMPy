@@ -1,2 +1,2 @@
-include LICENSE.txt README.md
+include LICENSE.txt README.rst
 recursive-include fmpy *

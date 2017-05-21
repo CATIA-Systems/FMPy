@@ -8,9 +8,9 @@ python:
 
 script:
 #  - python setup.py sdist
-  - pip install .
-  - cd tests
-  - python -m unittest
+#  - pip install .
+#  - cd tests
+  - python -m unittest discover -s tests
 
 deploy:
   provider: pypi

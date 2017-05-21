@@ -31,6 +31,6 @@ or install the latest development version from source
 
 ------------------------------------
 
-Copyright |copy| 2017 Dassault Sytèmes. All rights reserved.
+Copyright |copy| 2017 Dassault Systèmes
 
 .. |copy|   unicode:: U+000A9

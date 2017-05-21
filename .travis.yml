@@ -7,8 +7,10 @@ python:
 # install: "pip install -r requirements.txt"
 
 script:
-  - python setup.py sdist
-  - python -m unittest discover -s tests
+#  - python setup.py sdist
+  - pip install .
+  - cd tests
+  - python -m unittest
 
 deploy:
   provider: pypi

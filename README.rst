@@ -6,8 +6,8 @@ FMPy
 
 FMPy is a Python library to simulate Functional Mockup Units (FMUs) that
 
-- supports FMI 2.0 Co-Simulation
-- runs on Windows and Linux (32 & 64 bit)
+- supports FMI versions 1.0 and 2.0, Co-Simulation and Model Exchange
+- runs on Windows and Linux
 - validates the modelDescription.xml
 - is pure Python (with ctypes)
 
@@ -15,29 +15,22 @@ FMPy is a Python library to simulate Functional Mockup Units (FMUs) that
 Installation
 ------------
 
-```
-pip install fmpy
-```
+Install the latest release from PyPI
 
+::
 
-Tutorial
---------
+    pip install fmpy
 
-The FMU used in this tutorial can be downloaded from the [fmi-standard.org](https://trac.fmi-standard.org/browser/branches/public/Test_FMUs/FMI_2.0/CoSimulation/win32/FMUSDK/2.0.3) website.
+or install the latest development version from source
 
-### Simulate an FMU
+::
 
-```
-import matplotlib.pyplot as plt
-from fmpy.simulate import simulate
+    git clone -b develop https://github.com/CATIA-Systems/FMPy.git
+    cd fmpy
+    pip install .
 
-result = simulate(filename='bouncingBall.fmu', start_values={'h': 1.5})
+------------------------------------
 
-plt.plot(result['time'], result['h'])
-plt.plot(result['time'], result['der(h)'])
+Copyright |copy| 2017 Dassault Sytèmes. All rights reserved.
 
-plt.show()
-```
-
-
-Copyright (c) 2017 Dassault Sytemes
+.. |copy|   unicode:: U+000A9

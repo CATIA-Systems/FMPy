@@ -7,6 +7,8 @@ class TestFMUInfo(unittest.TestCase):
 
     def test_fmu_info(self):
 
+        print(fmpy.__file__)
+
         test_fmus_repository = 'https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/'
 
         fmu = 'CoupledClutches.fmu'
@@ -34,4 +36,5 @@ class TestFMUInfo(unittest.TestCase):
 
 
 if __name__ == '__main__':
+
     unittest.main()

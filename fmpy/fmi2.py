@@ -1,10 +1,8 @@
 # noinspection PyPep8
 
-import os
 from ctypes import *
 from itertools import combinations
-from lxml import etree
-from . import free, freeLibrary, platform, sharedLibraryExtension, calloc, FMIType
+from . import free, freeLibrary, calloc, CO_SIMULATION, MODEL_EXCHANGE
 from .fmi1 import _FMU
 import numpy as np
 
@@ -146,7 +144,7 @@ class _FMU2(_FMU):
 
     def instantiate(self):
 
-        kind = fmi2ModelExchange if self.fmiType == FMIType.MODEL_EXCHANGE else fmi2CoSimulation
+        kind = fmi2ModelExchange if self.fmiType == MODEL_EXCHANGE else fmi2CoSimulation
 
         self.component = self.fmi2Instantiate(self.instanceName.encode('utf-8'),
                                               kind,
@@ -200,7 +198,7 @@ class FMU2Model(_FMU2):
 
     def __init__(self, modelDescription, unzipDirectory, instanceName=None):
 
-        super(FMU2Model, self).__init__(modelDescription, unzipDirectory, instanceName, FMIType.MODEL_EXCHANGE)
+        super(FMU2Model, self).__init__(modelDescription, unzipDirectory, instanceName, MODEL_EXCHANGE)
 
         self.eventInfo = fmi2EventInfo()
 
@@ -216,7 +214,7 @@ class FMU2Model(_FMU2):
         self._pz  = self.z.ctypes.data_as(POINTER(fmi2Real))
 
         self.fmi2NewDiscreteStates = getattr(self.dll, 'fmi2NewDiscreteStates')
-        self.fmi2NewDiscreteStates.argtypes = [fmi2Component, fmi2EventInfo]
+        self.fmi2NewDiscreteStates.argtypes = [fmi2Component, POINTER(fmi2EventInfo)]
         self.fmi2NewDiscreteStates.restype = fmi2Status
 
         self.fmi2EnterContinuousTimeMode = getattr(self.dll, 'fmi2EnterContinuousTimeMode')
@@ -252,7 +250,7 @@ class FMU2Model(_FMU2):
         self.fmi2CompletedIntegratorStep.restype = fmi2Status
 
     def newDiscreteStates(self):
-        status = self.fmi2NewDiscreteStates(self.component, self.eventInfo)
+        status = self.fmi2NewDiscreteStates(self.component, byref(self.eventInfo))
         return status
 
     def enterContinuousTimeMode(self):
@@ -289,7 +287,7 @@ class FMU2Slave(_FMU2):
 
     def __init__(self, modelDescription, unzipDirectory, instanceName=None):
 
-        super(FMU2Slave, self).__init__(modelDescription, unzipDirectory, instanceName, FMIType.CO_SIMULATION)
+        super(FMU2Slave, self).__init__(modelDescription, unzipDirectory, instanceName, CO_SIMULATION)
 
         self.fmi2DoStep          = getattr(self.dll, 'fmi2DoStep')
         self.fmi2DoStep.argtypes = [fmi2Component, fmi2Real, fmi2Real, fmi2Boolean]

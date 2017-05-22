@@ -2,7 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import Iterable
-from fmpy.simulate import simulate
+from fmpy.simulation import simulate_fmu
 from unittest import TestCase
 import unittest
 import fmpy
@@ -53,12 +53,12 @@ def simulateFMU(path: str, reportDir=None):
                     step_size = float(args[i+1])
                     break
 
-    res = simulate(filename=os.path.join(path, fmu_filename),
-                   stop_time=stop_time,
-                   step_size=step_size,
-                   output=ref.dtype.names[1:],
-                   sample_interval=sample_interval,
-                   input=input)
+    res = simulate_fmu(filename=os.path.join(path, fmu_filename),
+                       stop_time=stop_time,
+                       step_size=step_size,
+                       output=ref.dtype.names[1:],
+                       sample_interval=sample_interval,
+                       input=input)
 
     names = res.dtype.names[1:]
 

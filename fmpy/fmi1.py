@@ -5,7 +5,7 @@ import pathlib
 import numpy as np
 from ctypes import *
 from itertools import combinations
-from . import free, freeLibrary, platform, sharedLibraryExtension, calloc, FMIType
+from . import free, freeLibrary, platform, sharedLibraryExtension, calloc, CO_SIMULATION, MODEL_EXCHANGE
 
 fmi1Component      = c_void_p
 fmi1ValueReference = c_uint
@@ -69,7 +69,7 @@ class _FMU(object):
         self.unzipDirectory = unzipDirectory
         self.fmiType = fmiType
 
-        if fmiType == FMIType.MODEL_EXCHANGE:
+        if fmiType == MODEL_EXCHANGE:
             self.modelIdentifier = modelDescription.modelExchange.modelIdentifier
         else:
             self.modelIdentifier = modelDescription.coSimulation.modelIdentifier
@@ -122,7 +122,7 @@ class FMU1Slave(_FMU1):
 
     def __init__(self, modelDescription, unzipDirectory, instanceName=None):
 
-        super(FMU1Slave, self).__init__(modelDescription, unzipDirectory, instanceName, FMIType.CO_SIMULATION)
+        super(FMU1Slave, self).__init__(modelDescription, unzipDirectory, instanceName, CO_SIMULATION)
 
         # FMI 1.0 Co-Simulation functions
         self.fmi1InstantiateSlave = getattr(self.dll, self.modelIdentifier + '_fmiInstantiateSlave')
@@ -177,7 +177,7 @@ class FMU1Model(_FMU1):
 
     def __init__(self, modelDescription, unzipDirectory, instanceName=None):
 
-        super(FMU1Model, self).__init__(modelDescription, unzipDirectory, instanceName, FMIType.MODEL_EXCHANGE)
+        super(FMU1Model, self).__init__(modelDescription, unzipDirectory, instanceName, MODEL_EXCHANGE)
 
         self.eventInfo = fmi1EventInfo()
 
@@ -243,7 +243,7 @@ class FMU1Model(_FMU1):
                                                    callbacks,
                                                    loggingOn)
 
-    def setTime(self, time: float):
+    def setTime(self, time):
         status = self.fmi1SetTime(self.component, time)
 
     def initialize(self, toleranceControlled=fmi1False, relativeTolerance=0.0):

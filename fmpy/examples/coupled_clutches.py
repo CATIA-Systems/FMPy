@@ -1,19 +1,20 @@
-import fmpy
+from fmpy import CO_SIMULATION, MODEL_EXCHANGE, simulate_fmu, platform
 import requests
 import os
 import numpy as np
 
 
-def simulate_coupled_clutches(show_plot=True):
+def simulate_coupled_clutches(fmi_version='2.0', fmi_type=CO_SIMULATION, show_plot=True):
 
     # download the FMU and input file
     for filename in ['CoupledClutches.fmu', 'CoupledClutches_in.csv']:
-        if not os.path.isfile(filename):
-            url = 'https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_2.0/CoSimulation/' + fmpy.platform + '/MapleSim/2016.2/CoupledClutches/' + filename
-            print('Downloading ' + filename)
-            response = requests.get(url)
-            with open(filename, 'wb') as f:
-                f.write(response.content)
+        url = 'https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_' + fmi_version + '/'
+        url += ('CoSimulation' if fmi_type == CO_SIMULATION else 'ModelExchange') + '/'
+        url += platform + '/MapleSim/2016.2/CoupledClutches/' + filename
+        print('Downloading ' + url)
+        response = requests.get(url)
+        with open(filename, 'wb') as f:
+            f.write(response.content)
 
     print("Loading input...")
     input = np.genfromtxt('CoupledClutches_in.csv', delimiter=',', names=True)
@@ -25,14 +26,14 @@ def simulate_coupled_clutches(show_plot=True):
         'stop_time': 1.5,
         'step_size': 1e-3,
         'sample_interval': 2e-3,
-        'fmi_type': fmpy.CO_SIMULATION,
+        'fmi_type': fmi_type,
         'start_values': {},
         'input': input,
         'output': ['inputs', 'outputs[1]', 'outputs[2]', 'outputs[3]', 'outputs[4]'],
     }
 
-    print("Simulating...")
-    result = fmpy.simulate_fmu(**args)
+    print("Simulating %s (FMI %s, %s)..." % (filename, fmi_version, 'Co-Simulation' if fmi_type == CO_SIMULATION else 'Model Exchange'))
+    result = simulate_fmu(**args)
 
     if show_plot:
 

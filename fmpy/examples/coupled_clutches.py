@@ -2,7 +2,6 @@ import fmpy
 import requests
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 def simulate_coupled_clutches(show_plot=True):
@@ -38,6 +37,8 @@ def simulate_coupled_clutches(show_plot=True):
     if show_plot:
 
         print("Plotting results...")
+
+        import matplotlib.pyplot as plt
 
         time = result['time']
         names = result.dtype.names[1:]

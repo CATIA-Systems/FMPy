@@ -52,4 +52,5 @@ def fmu_info(filename):
 
     return version, ['Co-Simulation']
 
-from .simulate import simulate
+# make the functions available in the fmpy module
+from .model_description import read_model_description

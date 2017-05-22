@@ -4,36 +4,34 @@
 FMPy
 ====
 
-FMPy is a Python library to simulate Functional Mockup Units (FMUs) that
+FMPy is a Python library to simulate `Functional Mockup Units (FMUs) <http://fmi-standard.org/>`_ that...
 
 - supports FMI versions 1.0 and 2.0, Co-Simulation and Model Exchange
 - runs on Windows and Linux
 - validates the modelDescription.xml
 - is pure Python (with ctypes)
 
-Getting Started
----------------
 
 Installation
-^^^^^^^^^^^^
+------------
 
 Install the latest release from PyPI
 
 ::
 
-    pip install fmpy
+    $ sudo pip install fmpy
 
 or install the latest development version from source
 
 ::
 
-    git clone -b develop https://github.com/CATIA-Systems/FMPy.git
-    cd fmpy
-    sudo pip install .
+    $ git clone -b develop https://github.com/CATIA-Systems/FMPy.git
+    $ cd fmpy
+    $ sudo pip install .
 
 
 Simulate an FMU from the command line
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------------
 
 The following commands will download an FMU and simulate it using the settings
 provided in the default experiment.
@@ -45,7 +43,7 @@ provided in the default experiment.
 
 
 Simulate an FMU in Python
-^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------
 
 For an example of how to simulate an FMU in Python see `coupled_clutches.py <fmpy/examples/coupled_clutches.py>`_.
 To run the script type

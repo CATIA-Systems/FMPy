@@ -66,7 +66,7 @@ class Recorder(object):
         else:
             self.boolean_vrs = []
 
-    def sample(self, time: float, force: bool = False):
+    def sample(self, time, force = False):
 
         if not force and self.interval is not None and len(self.rows) > 0:
             last = self.rows[-1][0]

@@ -13,7 +13,7 @@ if sys.platform == 'win32':
     calloc = cdll.msvcrt.calloc
     free = cdll.msvcrt.free
     freeLibrary = _ctypes.FreeLibrary
-elif sys.platform == 'linux':
+elif sys.platform.startswith('linux'):
     platform = 'linux'
     sharedLibraryExtension = '.so'
     from ctypes.util import find_library

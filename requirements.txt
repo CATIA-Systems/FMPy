@@ -1,3 +1,7 @@
+enum
 lxml
+matplotlib
+numpy
+pathlib
 requests
 scipy

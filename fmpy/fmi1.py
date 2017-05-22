@@ -243,7 +243,7 @@ class FMU1Model(_FMU1):
                                                    callbacks,
                                                    loggingOn)
 
-    def setTime(self, time: float):
+    def setTime(self, time):
         status = self.fmi1SetTime(self.component, time)
 
     def initialize(self, toleranceControlled=fmi1False, relativeTolerance=0.0):

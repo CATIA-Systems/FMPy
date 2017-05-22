@@ -24,15 +24,15 @@ def simulate_coupled_clutches(fmi_version='2.0', fmi_type=CO_SIMULATION, show_pl
         'filename': 'CoupledClutches.fmu',
         'start_time': 0,
         'stop_time': 1.5,
-        'step_size': 1e-3,
-        'sample_interval': 2e-3,
+        'step_size': 1e-2,
+        'sample_interval': 2e-2,
         'fmi_type': fmi_type,
         'start_values': {},
         'input': input,
         'output': ['inputs', 'outputs[1]', 'outputs[2]', 'outputs[3]', 'outputs[4]'],
     }
 
-    print("Simulating %s (FMI %s, %s)..." % (filename, fmi_version, 'Co-Simulation' if fmi_type == CO_SIMULATION else 'Model Exchange'))
+    print("Simulating CoupledClutches.fmu (FMI %s, %s)..." % (fmi_version, 'Co-Simulation' if fmi_type == CO_SIMULATION else 'Model Exchange'))
     result = simulate_fmu(**args)
 
     if show_plot:

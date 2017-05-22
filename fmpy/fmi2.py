@@ -214,7 +214,7 @@ class FMU2Model(_FMU2):
         self._pz  = self.z.ctypes.data_as(POINTER(fmi2Real))
 
         self.fmi2NewDiscreteStates = getattr(self.dll, 'fmi2NewDiscreteStates')
-        self.fmi2NewDiscreteStates.argtypes = [fmi2Component, fmi2EventInfo]
+        self.fmi2NewDiscreteStates.argtypes = [fmi2Component, POINTER(fmi2EventInfo)]
         self.fmi2NewDiscreteStates.restype = fmi2Status
 
         self.fmi2EnterContinuousTimeMode = getattr(self.dll, 'fmi2EnterContinuousTimeMode')
@@ -250,7 +250,7 @@ class FMU2Model(_FMU2):
         self.fmi2CompletedIntegratorStep.restype = fmi2Status
 
     def newDiscreteStates(self):
-        status = self.fmi2NewDiscreteStates(self.component, self.eventInfo)
+        status = self.fmi2NewDiscreteStates(self.component, byref(self.eventInfo))
         return status
 
     def enterContinuousTimeMode(self):

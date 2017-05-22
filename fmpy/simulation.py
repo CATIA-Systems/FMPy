@@ -6,6 +6,7 @@ from tempfile import mkdtemp
 from fmpy.model_description import read_model_description
 from .fmi1 import *
 from .fmi2 import *
+from . import CO_SIMULATION, MODEL_EXCHANGE
 import numpy as np
 from scipy import interpolate
 import sys
@@ -180,13 +181,13 @@ class Input(object):
             # print(time, f(time), self.boolean_values[0], status)
 
 
-def simulate_fmu(filename, start_time=None, stop_time=None, step_size=None, sample_interval=None, fmiType=None, start_values={}, input=None, output=None):
+def simulate_fmu(filename, start_time=None, stop_time=None, step_size=None, sample_interval=None, fmi_type=None, start_values={}, input=None, output=None):
 
     modelDescription = read_model_description(filename)
 
-    if fmiType is None:
+    if fmi_type is None:
         # determine the FMI type automatically
-        fmiType = FMIType.CO_SIMULATION if modelDescription.coSimulation is not None else FMIType.MODEL_EXCHANGE
+        fmi_type = CO_SIMULATION if modelDescription.coSimulation is not None else MODEL_EXCHANGE
 
     defaultExperiment = modelDescription.defaultExperiment
 
@@ -217,9 +218,9 @@ def simulate_fmu(filename, start_time=None, stop_time=None, step_size=None, samp
         fmufile.extractall(unzipdir)
 
     if modelDescription.fmiVersion == '1.0':
-        simfun = simulateME1 if fmiType is FMIType.MODEL_EXCHANGE else simulateCS1
+        simfun = simulateME1 if fmi_type is MODEL_EXCHANGE else simulateCS1
     else:
-        simfun = simulateME2 if fmiType is FMIType.MODEL_EXCHANGE else simulateCS2
+        simfun = simulateME2 if fmi_type is MODEL_EXCHANGE else simulateCS2
 
     if sample_interval is None:
         sample_interval = (stop_time - start_time) / 500

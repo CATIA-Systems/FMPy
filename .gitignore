@@ -1,5 +1,6 @@
-# FMUs
+# FMUs and input files
 *.fmu
+*.csv
 
 # compiled files
 *.py[cod]

@@ -34,9 +34,9 @@ if sys.maxsize > 2**32:
 else:
     platform += '32'
 
-class FMIType(Enum):
-    MODEL_EXCHANGE = 0
-    CO_SIMULATION = 1
+# FMI type constants
+MODEL_EXCHANGE = 0
+CO_SIMULATION = 1
 
 def fmu_info(filename):
     """ Read the FMI version and supported interfaces from an FMU without extracting it """
@@ -54,3 +54,4 @@ def fmu_info(filename):
 
 # make the functions available in the fmpy module
 from .model_description import read_model_description
+from .simulation import simulate_fmu

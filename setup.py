@@ -7,5 +7,5 @@ setup(name = "FMPy",
       author_email = "torsten.sommer@3ds.com",
       url = "https://github.com/CATIA-Systems/FMPy",
       license = "Standard 3-clause BSD",
-      packages = ['fmpy']
+      packages = ['fmpy', 'fmpy.examples']
 )

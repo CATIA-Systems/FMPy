@@ -5,9 +5,9 @@ import fmpy
 
 def check_csv_file(file_path, variable_names):
 
-    # read the trajectories
     try:
-        traj = np.genfromtxt(file_path, delimiter=',', names=True)
+        # pass an empty string as deletechars to preserve special characters
+        traj = np.genfromtxt(file_path, delimiter=',', names=True, deletechars='')
     except:
         return "Failed to read CSV"
 
@@ -24,15 +24,15 @@ def check_csv_file(file_path, variable_names):
     # get the trajectory names (without the time)
     traj_names = traj.dtype.names[1:]
 
-    # check if the trajectory names match the variable names
-    for traj_name in traj_names:
-        if traj_name not in variable_names:
-            return "Trajectory '" + traj_name + "' does not match any variable name"
+    # # check if the trajectory names match the variable names
+    # for traj_name in traj_names:
+    #     if traj_name not in variable_names:
+    #         return "Trajectory '" + traj_name + "' does not match any variable name"
 
     # check if the variable names match the trajectory names
     for variable_name in variable_names:
         if variable_name not in traj_names:
-            return "Variable '" + variable_name + "' does not match any trajectory name"
+            return "Trajectory of '" + variable_name + "' is missing"
 
     return None
 
@@ -68,25 +68,25 @@ def check_exported_fmu(fmu_filename):
 
     # check the options file
     try:
-        ref_opts = read_ref_opt_file(os.path.join(test_fmu_dir, fmu_name + '_ref.opt'))
+        read_ref_opt_file(os.path.join(test_fmu_dir, fmu_name + '_ref.opt'))
         ref_opt = None
     except Exception as e:
         ref_opt = str(e)
 
-    # check reference file
-    ref_path = os.path.join(test_fmu_dir, fmu_name + '_ref.csv')
-    ref_csv = check_csv_file(ref_path, output_variables)
-
-    # check reference file
-    cc_path = os.path.join(test_fmu_dir, fmu_name + '_cc.csv')
-    cc_csv = check_csv_file(cc_path, output_variables)
-
-    # check input file
+    # check the input file
     if input_variables:
         in_path = os.path.join(test_fmu_dir, fmu_name + '_in.csv')
         in_csv = check_csv_file(in_path, input_variables)
     else:
         in_csv = None
+
+    # check the reference file
+    ref_path = os.path.join(test_fmu_dir, fmu_name + '_ref.csv')
+    ref_csv = check_csv_file(ref_path, output_variables)
+
+    # check the compliance checker file
+    cc_path = os.path.join(test_fmu_dir, fmu_name + '_cc.csv')
+    cc_csv = check_csv_file(cc_path, output_variables)
 
     return xml, ref_opt, in_csv, ref_csv, cc_csv
 
@@ -164,7 +164,7 @@ if __name__ == '__main__':
     </head>
     <body>
         <table>''')
-    html.write('<tr><th>Model</th><th>XML</th><th>_ref.opt</th><th>_in.csv</th><th>_cc.csv</th><th>_ref.csv</th><th>simulation</th></tr>\n')
+    html.write('<tr><th>Model</th><th>XML</th><th>_ref.opt</th><th>_in.csv</th><th>_ref.csv</th><th>_cc.csv</th><th>simulation</th></tr>\n')
 
     for root, dirs, files in os.walk(args.fmus_dir):
 

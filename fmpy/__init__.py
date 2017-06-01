@@ -38,19 +38,73 @@ else:
 MODEL_EXCHANGE = 0
 CO_SIMULATION = 1
 
-def fmu_info(filename):
-    """ Read the FMI version and supported interfaces from an FMU without extracting it """
+
+def supported_platforms(filename):
+    """ Get the platforms supported by the FMU without extracting it """
+
+    import zipfile
+
+    platforms = []
+
+    # open the FMU
+    with zipfile.ZipFile(filename, 'r') as zf:
+
+        # get the supported platforms
+        names = zf.namelist()
+
+        # check for the C-sources
+        for name in names:
+            if name.startswith('sources/'):
+                platforms.append('c-code')
+                break
+
+        # check for binary platforms
+        for platform in ['darwin64', 'linux32', 'linux64', 'win32', 'win64']:
+            for name in names:
+                if name.startswith('binaries/' + platform):
+                    platforms.append(platform)
+                    break
+
+    return platforms
+
+
+def fmi_info(filename):
+    """ Read the FMI version and supported FMI types from the FMU without extracting it """
 
     from lxml import etree
     import zipfile
 
-    zf = zipfile.ZipFile(filename, 'r')
-    md = zf.open('modelDescription.xml')
-    tree = etree.parse(md)
-    root = tree.getroot()
-    version = root.get('fmiVersion')
+    fmi_types = []
 
-    return version, ['Co-Simulation']
+    # open the FMU
+    with zipfile.ZipFile(filename, 'r') as zf:
+
+        # read the model description
+        md = zf.open('modelDescription.xml')
+        tree = etree.parse(md)
+        root = tree.getroot()
+        fmi_version = root.get('fmiVersion')
+
+        # get the supported FMI types
+        if fmi_version == '1.0':
+
+            if root.find('Implementation') is not None:
+                fmi_types.append('CoSimulation')
+            else:
+                fmi_types.append('ModelExchange')
+
+        elif fmi_version == '2.0':
+
+            if root.find('ModelExchange') is not None:
+                fmi_types.append('ModelExchange')
+
+            if root.find('CoSimulation') is not None:
+                fmi_types.append('CoSimulation')
+
+        else:
+            raise Exception("Unsupported FMI version %s" % fmi_version)
+
+    return fmi_version, fmi_types
 
 # make the functions available in the fmpy module
 from .model_description import read_model_description

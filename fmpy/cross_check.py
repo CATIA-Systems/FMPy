@@ -37,22 +37,15 @@ def check_csv_file(file_path, variable_names):
     return None
 
 
-def check_exported_fmu(test_fmu_dir):
+def check_exported_fmu(fmu_filename):
+
+    test_fmu_dir, fmu_name_ = os.path.split(fmu_filename)
 
     for file in os.listdir(test_fmu_dir):
 
         if file.endswith('.fmu'):
             fmu_filename = file
             fmu_name, _ = os.path.splitext(fmu_filename)
-
-        # if file.endswith('_in.csv'):
-        #     input_filename = file
-        #
-        # if file.endswith('_ref.csv'):
-        #     reference_filename = file
-        #
-        # if file.endswith('_cc.bat'):
-        #     batch_filename = file
 
     # read the model description
     try:
@@ -116,20 +109,20 @@ def read_ref_opt_file(filename):
 
 
 if __name__ == '__main__':
-    """ Usage: python -m fmpy.cross_check <test_fmu_dir> """
+    """ Run the FMI cross-check """
 
-    if len(sys.argv) > 1:
-        testFMUsDirectory = sys.argv[1]
-    else:
-        testFMUsDirectory = os.getcwd()
+    import argparse
 
-    fmiVersions = ['fmi1', 'fmi2']
-    fmiTypes = ['me', 'cs']
-    platforms = ['c-code', 'darwin64', 'linux32', 'linux64', 'win32', 'win64']
-    tools = None
-    models = None
+    parser = argparse.ArgumentParser(description='run the FMI cross-check')
 
-    html = open('report.html', 'w')
+    parser.add_argument('--fmus_dir', default=os.getcwd(), help='the directory that contains the test FMUs')
+    parser.add_argument('--report', default='report.html', help='name of the report file')
+    parser.add_argument('--include', nargs='+', default=[], help='path segments to include')
+    parser.add_argument('--exclude', nargs='+', default=['_FMIModelicaTest'], help='path segments to exclude')
+
+    args = parser.parse_args()
+
+    html = open(args.report, 'w')
     html.write('''<html>
     <head>
         <style>
@@ -173,92 +166,70 @@ if __name__ == '__main__':
         <table>''')
     html.write('<tr><th>Model</th><th>XML</th><th>_ref.opt</th><th>_in.csv</th><th>_cc.csv</th><th>_ref.csv</th><th>simulation</th></tr>\n')
 
-    for fmiVersion in fmiVersions:
+    for root, dirs, files in os.walk(args.fmus_dir):
 
-        for fmiType in fmiTypes:
+        fmu_filename = None
 
-            for platform in platforms:
+        for file in files:
+            if file.endswith('.fmu'):
+                fmu_filename = os.path.join(root, file)
+                break
 
-                platformDir = os.path.join(testFMUsDirectory,
-                                           'FMI_1.0' if fmiVersion == 'fmi1' else 'FMI_2.0',
-                                           'ModelExchange' if fmiType == 'me' else 'CoSimulation',
-                                           platform)
+        if fmu_filename is None:
+            continue
 
-                if not os.path.isdir(platformDir):
-                    continue
+        def skip(include, exclude):
 
-                for tool in os.listdir(platformDir):
+            for pattern in exclude:
+                if pattern in fmu_filename:
+                    return True
 
-                    if tools is not None and not tool in tools:
-                        continue
+            for pattern in include:
+                if pattern not in fmu_filename:
+                    return True
 
-                    if tool == 'AMESim':
-                        continue
+            return False
 
-                    toolDir = os.path.join(platformDir, tool)
+        if skip(include=args.include, exclude=args.exclude):
+            continue
 
-                    if not os.path.isdir(toolDir):
-                        continue
+        platformDir = root
+        print(platformDir)
 
-                    versions = os.listdir(toolDir)
-                    version = sorted(versions)[-1] # take only the latest version
-                    versionDir = os.path.join(toolDir, version)
+        xml, ref_opt, in_csv, ref_csv, cc_csv = check_exported_fmu(fmu_filename)
 
-                    for model in os.listdir(versionDir):
+        supported_platforms = fmpy.supported_platforms(fmu_filename)
 
-                        if models is not None and model not in models:
-                            continue
+        if ref_opt is not None:
+            sim_cell = '<td class="status" title="Failed to read *_ref.opt file"><span class="label label-default">skipped</span></td>'
+        elif fmpy.platform not in supported_platforms:
+            sim_cell = '<td class="status" title="The current platform (' + fmpy.platform + ') is not supported by the FMU (' + ', '.join(supported_platforms) + ')"><span class="label label-default">skipped</span></td>'
+        else:
+            fmu_simple_filename = os.path.basename(fmu_filename)
+            model_name, _ = os.path.splitext(fmu_simple_filename)
 
-                        modelDir = os.path.join(versionDir, model)
+            ref_opts = read_ref_opt_file(os.path.join(root, model_name + '_ref.opt'))
 
-                        if not os.path.isdir(modelDir):
-                            continue
+            try:
+                # simulate the FMU
+                result = fmpy.simulate_fmu(filename=fmu_filename, validate=False, step_size=ref_opts['StepSize'], stop_time=ref_opts['StepSize'])
+                sim_cell = '<td class="status"><span class="label label-success">passed</span></td>'
+            except Exception as e:
+                sim_cell =  '<td class="status"><span class="label label-danger" title="' + str(e) + '">failed</span></td>'
 
-                        test_fmu_dir = os.path.join('FMI_1.0' if fmiVersion == 'fmi1' else 'FMI_2.0',
-                                                          'ModelExchange' if fmiType == 'me' else 'CoSimulation',
-                                                          platform, tool, version, model)
+        def cell(text):
+            if text is not None:
+                return '<td class="status"><span class="label label-danger" title="' + text + '">failed</span></td>'
+            else:
+                return '<td class="status"><span class="label label-success">passed</span></td>'
 
-                        print(test_fmu_dir)
-
-                        modelPath = 'modelPath'
-
-                        xml, ref_opt, in_csv, ref_csv, cc_csv = check_exported_fmu(os.path.join(testFMUsDirectory, test_fmu_dir))
-
-                        sim_cell = '<td class="status"><span class="label label-default">skipped</span></td>'
-
-                        if ref_opt is None and platform == fmpy.platform:
-
-                            # find the FMU
-                            for file in os.listdir(os.path.join(testFMUsDirectory, test_fmu_dir)):
-                                if file.endswith('.fmu'):
-                                    fmu_filename = file
-                                    fmu_name, _ = os.path.splitext(fmu_filename)
-
-                            ref_opts = read_ref_opt_file(os.path.join(testFMUsDirectory, test_fmu_dir, fmu_name + '_ref.opt'))
-
-                            print("Simulating " + fmu_filename)
-                            fmu = os.path.join(testFMUsDirectory, test_fmu_dir, fmu_filename)
-                            try:
-                                result = fmpy.simulate_fmu(filename=fmu, validate=False, step_size=ref_opts['StepSize'], stop_time=ref_opts['StepSize'])
-                                print("done.")
-                                sim_cell = '<td class="status"><span class="label label-success">passed</span></td>'
-                            except Exception as e:
-                                print("failed.")
-                                sim_cell =  '<td class="status"><span class="label label-danger" title="' + str(e) + '">failed</span></td>'
-
-                        def cell(text):
-                            if text is not None:
-                                return '<td class="status"><span class="label label-danger" title="' + text + '">failed</span></td>'
-                            else:
-                                return '<td class="status"><span class="label label-success">passed</span></td>'
-
-                        html.write('<tr><td>' + test_fmu_dir + '</td>')
-                        html.write(cell(xml))
-                        html.write(cell(ref_opt))
-                        html.write(cell(in_csv))
-                        html.write(cell(ref_csv))
-                        html.write(cell(cc_csv))
-                        html.write(sim_cell)
-                        html.write('</tr>\n')
+        html.write('<tr><td>' + root + '</td>')
+        html.write(cell(xml))
+        html.write(cell(ref_opt))
+        html.write(cell(in_csv))
+        html.write(cell(ref_csv))
+        html.write(cell(cc_csv))
+        html.write(sim_cell)
+        html.write('</tr>\n')
 
     html.write('</table></body></html>')

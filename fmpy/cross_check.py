@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import sys
 import fmpy
 
 def check_csv_file(file_path, variable_names):
@@ -42,18 +41,17 @@ def check_exported_fmu(fmu_filename):
     test_fmu_dir, fmu_name_ = os.path.split(fmu_filename)
 
     for file in os.listdir(test_fmu_dir):
-
         if file.endswith('.fmu'):
-            fmu_filename = file
-            fmu_name, _ = os.path.splitext(fmu_filename)
+            fmu_name, _ = os.path.splitext(file)
+            break
 
     # read the model description
     try:
-        model_description = fmpy.read_model_description(os.path.join(test_fmu_dir, fmu_filename))
+        model_description = fmpy.read_model_description(fmu_filename)
         xml = None
     except Exception as e:
         # try again without validation
-        model_description = fmpy.read_model_description(os.path.join(test_fmu_dir, fmu_filename), validate=False)
+        model_description = fmpy.read_model_description(fmu_filename, validate=False)
         xml = str(e)
 
     input_variables = []
@@ -68,8 +66,11 @@ def check_exported_fmu(fmu_filename):
 
     # check the options file
     try:
-        read_ref_opt_file(os.path.join(test_fmu_dir, fmu_name + '_ref.opt'))
+        ref_opts = read_ref_opt_file(os.path.join(test_fmu_dir, fmu_name + '_ref.opt'))
         ref_opt = None
+
+        # if 'CoSimulation' in test_fmu_dir and ref_opts['StepSize'] == 0.0:
+        #     ref_opt = "Co-simulation FMU is requesting variable-step solver"
     except Exception as e:
         ref_opt = str(e)
 
@@ -101,9 +102,20 @@ def read_ref_opt_file(filename):
             if len(segments) == 2:
                 opts[segments[0]] = float(segments[1])
 
+    # check for required elements
     for element in ['StepSize', 'StartTime', 'StopTime', 'RelTol']:
         if not element in opts:
             raise Exception("Missing element '%s'" % element)
+
+    start_time = opts['StartTime']
+    stop_time = opts['StopTime']
+    step_size = opts['StepSize']
+
+    if start_time >= stop_time:
+        raise Exception("StartTime must be < StopTime")
+
+    if step_size < 0 or step_size > (stop_time - start_time):
+        raise Exception("StepSize must be >= 0 and <= (StopTime - StartTime)")
 
     return opts
 
@@ -216,7 +228,14 @@ if __name__ == '__main__':
             fmu_simple_filename = os.path.basename(fmu_filename)
             model_name, _ = os.path.splitext(fmu_simple_filename)
 
+            # read the reference options
             ref_opts = read_ref_opt_file(os.path.join(root, model_name + '_ref.opt'))
+
+            step_size = ref_opts['StepSize']
+
+            if step_size == 0:
+                # variable step solvers are currently not supported
+                step_size = None
 
             try:
                 # simulate the FMU

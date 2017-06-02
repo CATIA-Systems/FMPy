@@ -1,7 +1,7 @@
 # noinspection PyPep8
 
 import sys
-from enum import Enum
+import os
 from ctypes import *
 import _ctypes
 
@@ -54,14 +54,31 @@ def supported_platforms(filename):
 
         # check for the C-sources
         for name in names:
-            if name.startswith('sources/'):
+            head, tail = os.path.split(name)
+            if head == 'sources' and tail.endswith('.c'):
                 platforms.append('c-code')
                 break
 
-        # check for binary platforms
-        for platform in ['darwin64', 'linux32', 'linux64', 'win32', 'win64']:
+        # check for *.dylib on Mac
+        for name in names:
+            head, tail = os.path.split(name)
+            if head == 'binaries/darwin64' and tail.endswith('.dylib'):
+                platforms.append('darwin64')
+                break
+
+        # check for *.so on Linux
+        for platform in ['linux32', 'linux64']:
             for name in names:
-                if name.startswith('binaries/' + platform):
+                head, tail = os.path.split(name)
+                if head == 'binaries/' + platform and tail.endswith('.so'):
+                    platforms.append(platform)
+                    break
+
+        # check for *.dll on Windows
+        for platform in ['win32', 'win64']:
+            for name in names:
+                head, tail = os.path.split(name)
+                if head == 'binaries/' + platform and tail.endswith('.dll'):
                     platforms.append(platform)
                     break
 

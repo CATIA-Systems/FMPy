@@ -302,7 +302,7 @@ def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, in
 def simulateCS1(modelDescription, unzipdir, start_time, stop_time, step_size, input_signals, output, output_interval):
 
     fmu = FMU1Slave(modelDescription=modelDescription, unzipDirectory=unzipdir)
-    fmu.instantiate("rectifier1")
+    fmu.instantiate("instance1")
     fmu.initialize()
 
     input = Input(fmu, input_signals)

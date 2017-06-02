@@ -167,25 +167,31 @@ class _FMU2(_FMU):
 
         status = self.fmi2SetupExperiment(self.component, toleranceDefined, tolerance, startTime, stopTimeDefined,
                                           stopTime)
+        # TODO: check status
 
     def enterInitializationMode(self):
         status = self.fmi2EnterInitializationMode(self.component)
+        # TODO: check status
         return status
 
     def exitInitializationMode(self):
         status = self.fmi2ExitInitializationMode(self.component)
+        # TODO: check status
         return status
 
     def getReal(self, vr):
         value = (fmi2Real * len(vr))()
         status = self.fmi2GetReal(self.component, vr, len(vr), value)
+        # TODO: check status
         return list(value)
 
     def setReal(self, vr, value):
         status = self.fmi2SetReal(self.component, vr, len(vr), value)
+        # TODO: check status
 
     def terminate(self):
         status = self.fmi2Terminate(self.component)
+        # TODO: check status
 
     def freeInstance(self):
         self.fmi2FreeInstance(self.component)
@@ -251,35 +257,44 @@ class FMU2Model(_FMU2):
 
     def newDiscreteStates(self):
         status = self.fmi2NewDiscreteStates(self.component, byref(self.eventInfo))
+        # TODO: check status
         return status
 
     def enterContinuousTimeMode(self):
         status = self.fmi2EnterContinuousTimeMode(self.component)
+        # TODO: check status
         return status
 
     def enterEventMode(self):
         status = self.fmi2EnterEventMode(self.component)
+        # TODO: check status
         return status
 
     def getContinuousStates(self):
         status = self.fmi2GetContinuousStates(self.component, self._px, self.x.size)
+        # TODO: check status
 
     def setContinuousStates(self):
         status = self.fmi2SetContinuousStates(self.component, self._px, self.x.size)
+        # TODO: check status
 
     def getDerivatives(self):
         status = self.fmi2GetDerivatives(self.component, self._pdx, self.dx.size)
+        # TODO: check status
 
     def getEventIndicators(self):
         status = self.fmi2GetEventIndicators(self.component, self._pz, self.z.size)
+        # TODO: check status
 
     def setTime(self, time):
         status = self.fmi2SetTime(self.component, time)
+        # TODO: check status
 
     def completedIntegratorStep(self, noSetFMUStatePriorToCurrentPoint=fmi2True):
         enterEventMode = fmi2Boolean()
         terminateSimulation = fmi2Boolean()
         status = self.fmi2CompletedIntegratorStep(self.component, noSetFMUStatePriorToCurrentPoint, byref(enterEventMode), byref(terminateSimulation))
+        # TODO: check status
         return enterEventMode, terminateSimulation
 
 
@@ -299,9 +314,11 @@ class FMU2Slave(_FMU2):
 
     def doStep(self, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint=fmi2True):
         status = self.fmi2DoStep(self.component, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint)
+        # TODO: check status
         return status
 
     def getBooleanStatus(self, kind):
         value = fmi2Boolean(fmi2False)
         status = self.fmi2GetBooleanStatus(self.component, kind, byref(value))
+        # TODO: check status
         return value

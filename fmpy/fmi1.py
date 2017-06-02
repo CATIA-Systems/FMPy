@@ -4,7 +4,6 @@ import os
 import pathlib
 import numpy as np
 from ctypes import *
-from itertools import combinations
 from . import free, freeLibrary, platform, sharedLibraryExtension, calloc, CO_SIMULATION, MODEL_EXCHANGE
 
 fmi1Component      = c_void_p
@@ -24,8 +23,8 @@ fmi1Status = c_int
 fmi1CallbackLoggerTYPE         = CFUNCTYPE(None, fmi1Component, fmi1String, fmi1Status, fmi1String, fmi1String)
 fmi1CallbackAllocateMemoryTYPE = CFUNCTYPE(c_void_p, c_size_t, c_size_t)
 fmi1CallbackFreeMemoryTYPE     = CFUNCTYPE(None, c_void_p)
-#fmi1StepFinishedTYPE           = CFUNCTYPE(None, fmi1Component, fmi1Status)
-fmi1StepFinishedTYPE           = c_void_p
+fmi1StepFinishedTYPE           = CFUNCTYPE(None, fmi1Component, fmi1Status)
+#fmi1StepFinishedTYPE           = c_void_p
 
 class fmi1CallbackFunctions(Structure):
     _fields_ = [('logger',         fmi1CallbackLoggerTYPE),
@@ -51,13 +50,13 @@ def freeMemory(obj):
     free(obj)
 
 def stepFinished(componentEnvironment, status):
-    print(combinations, status)
+    print(componentEnvironment, status)
 
 callbacks = fmi1CallbackFunctions()
 callbacks.logger               = fmi1CallbackLoggerTYPE(logger)
 callbacks.allocateMemory       = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
 callbacks.freeMemory           = fmi1CallbackFreeMemoryTYPE(freeMemory)
-#callbacks.stepFinished         = fmi1StepFinishedTYPE(stepFinished)
+callbacks.stepFinished         = fmi1StepFinishedTYPE(stepFinished)
 #callbacks.stepFinished = None
 
 
@@ -80,6 +79,8 @@ class _FMU(object):
 
         # load the shared library
         self.dll = cdll.LoadLibrary(os.path.join(unzipDirectory, 'binaries', platform, self.modelIdentifier + sharedLibraryExtension))
+
+        self.component = None
 
 
 class _FMU1(_FMU):
@@ -113,10 +114,6 @@ class _FMU1(_FMU):
         self.fmi1SetBoolean.argtypes = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Boolean)]
         self.fmi1SetBoolean.restype = fmi1Status
 
-    def doStep(self, currentCommunicationPoint, communicationStepSize, newStep=fmi1True):
-        status = self.fmi1DoStep(self.component, currentCommunicationPoint, communicationStepSize, newStep)
-        return status
-
 
 class FMU1Slave(_FMU1):
 
@@ -145,7 +142,7 @@ class FMU1Slave(_FMU1):
         self.fmi1FreeSlaveInstance.argtypes = [fmi1Component]
         self.fmi1FreeSlaveInstance.restype = fmi1Status
 
-    def instantiate(self, mimeType="application/x-fmu-sharedlibrary", timeout=0, visible=fmi1False,
+    def instantiate(self, mimeType='application/x-fmu-sharedlibrary', timeout=0, visible=fmi1False,
                     interactive=fmi1False, functions=callbacks, loggingOn=fmi1False):
 
         self.component = self.fmi1InstantiateSlave(self.instanceName.encode('UTF-8'),
@@ -155,22 +152,27 @@ class FMU1Slave(_FMU1):
                                                    timeout,
                                                    visible,
                                                    interactive,
-                                                   callbacks,
+                                                   functions,
                                                    loggingOn)
 
     def initialize(self, tStart=0.0, stopTime=None):
         stopTimeDefined = stopTime is not None
-        tStop = stopTime if stopTimeDefined else 0
+        tStop = stopTime if stopTimeDefined else 0.0
         status = self.fmi1InitializeSlave(self.component, tStart, stopTimeDefined, tStop)
         return status
 
     def terminate(self):
         status = self.fmi1TerminateSlave(self.component)
+        return status
 
     def freeInstance(self):
         self.fmi1FreeSlaveInstance(self.component)
         # unload the shared library
         freeLibrary(self.dll._handle)
+
+    def doStep(self, currentCommunicationPoint, communicationStepSize, newStep=fmi1True):
+        status = self.fmi1DoStep(self.component, currentCommunicationPoint, communicationStepSize, newStep)
+        return status
 
 
 class FMU1Model(_FMU1):
@@ -240,11 +242,12 @@ class FMU1Model(_FMU1):
     def instantiate(self, functions=callbacks, loggingOn=fmi1False):
         self.component = self.fmi1InstantiateModel(self.instanceName.encode('UTF-8'),
                                                    self.modelDescription.guid.encode('UTF-8'),
-                                                   callbacks,
+                                                   functions,
                                                    loggingOn)
 
     def setTime(self, time):
         status = self.fmi1SetTime(self.component, time)
+        return status
 
     def initialize(self, toleranceControlled=fmi1False, relativeTolerance=0.0):
         status = self.fmi1Initialize(self.component, toleranceControlled, relativeTolerance, self.eventInfo)
@@ -252,26 +255,33 @@ class FMU1Model(_FMU1):
 
     def getContinuousStates(self):
         status = self.fmi1GetContinuousStates(self.component, self._px, self.x.size)
+        # TODO: check status
 
     def setContinuousStates(self):
         status = self.fmi1SetContinuousStates(self.component, self._px, self.x.size)
+        # TODO: check status
 
     def getDerivatives(self):
         status = self.fmi1GetDerivatives(self.component, self._pdx, self.dx.size)
+        # TODO: check status
 
     def completedIntegratorStep(self):
         stepEvent = fmi1Boolean()
         status = self.fmi1CompletedIntegratorStep(self.component, byref(stepEvent))
+        # TODO: check status
         return stepEvent != fmi1False
 
     def getEventIndicators(self):
         status = self.fmi1GetEventIndicators(self.component, self._pz, self.z.size)
+        # TODO: check status
 
     def eventUpdate(self, intermediateResults=fmi1False):
         status = self.fmi1EventUpdate(self.component, intermediateResults, self.eventInfo)
+        # TODO: check status
 
     def terminate(self):
         status = self.fmi1Terminate(self.component)
+        # TODO: check status
 
     def freeInstance(self):
         self.fmi1FreeModelInstance(self.component)

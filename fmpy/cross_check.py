@@ -188,6 +188,14 @@ if __name__ == '__main__':
                 if pattern not in fmu_filename:
                     return True
 
+            # AMESim MIS_cs does not return from exitInitializationMode()
+            if 'MIS_cs' in fmu_filename:
+                return True
+
+            # FMIToolbox_MATLAB FMUs get stuck in release mode
+            if 'FMIToolbox_MATLAB' in fmu_filename:
+                return True
+
             return False
 
         if skip(include=args.include, exclude=args.exclude):
@@ -233,3 +241,5 @@ if __name__ == '__main__':
         html.write('</tr>\n')
 
     html.write('</table></body></html>')
+
+    print("Done.")

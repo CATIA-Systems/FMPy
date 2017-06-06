@@ -1,6 +1,6 @@
 from lxml import etree
 import zipfile
-
+import os
 
 class ModelDescription(object):
 
@@ -58,7 +58,7 @@ class ScalarVariable(object):
         return '%s "%s"' % (self.type, self.name)
 
 
-def read_model_description(filename):
+def read_model_description(filename, validate=True):
 
     with zipfile.ZipFile(filename, 'r') as zf:
         xml = zf.open('modelDescription.xml')
@@ -66,10 +66,29 @@ def read_model_description(filename):
 
     root = tree.getroot()
 
-    modelDescription = ModelDescription()
+    fmiVersion = root.get('fmiVersion')
 
+    if not fmiVersion in ['1.0', '2.0']:
+        raise Exception("Unsupported FMI version: %s" % fmiVersion)
+
+    if validate:
+
+        module_dir, _ = os.path.split(__file__)
+
+        if fmiVersion == '1.0':
+            schema = etree.XMLSchema(file=os.path.join(module_dir, 'schema', 'fmi1', 'fmiModelDescription.xsd'))
+        else:
+            schema = etree.XMLSchema(file=os.path.join(module_dir, 'schema', 'fmi2', 'fmi2ModelDescription.xsd'))
+
+        if not schema.validate(root):
+            message = "Failed to validate modelDescription.xml:"
+            for entry in schema.error_log:
+                message += "\n%s (line %d, column %d): %s" % (entry.level_name, entry.line, entry.column, entry.message)
+            raise Exception(message)
+
+    modelDescription = ModelDescription()
+    modelDescription.fmiVersion = fmiVersion
     modelDescription.guid = root.get('guid')
-    modelDescription.fmiVersion = root.get('fmiVersion')
     modelDescription.modelName = root.get('modelName')
     modelDescription.description = root.get('description')
     modelDescription.generationTool = root.get('generationTool')
@@ -87,10 +106,20 @@ def read_model_description(filename):
     defaultExperiment = root.find('DefaultExperiment')
 
     if defaultExperiment is not None:
+
         modelDescription.defaultExperiment = DefaultExperiment()
-        modelDescription.defaultExperiment.startTime = float(defaultExperiment.get('startTime'))
-        modelDescription.defaultExperiment.stopTime = float(defaultExperiment.get('stopTime'))
-        #modelDescription.defaultExperiment.tolerance = float(defaultExperiment.get('tolerance'))
+
+        startTime = defaultExperiment.get('startTime')
+        if startTime is not None:
+            modelDescription.defaultExperiment.startTime = float(startTime)
+
+        stopTime = defaultExperiment.get('stopTime')
+        if stopTime is not None:
+            modelDescription.defaultExperiment.stopTime = float(stopTime)
+
+        tolerance = defaultExperiment.get('tolerance')
+        if tolerance is not None:
+            modelDescription.defaultExperiment.tolerance = float(tolerance)
 
     if modelDescription.fmiVersion == "1.0":
 

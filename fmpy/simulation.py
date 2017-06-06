@@ -181,9 +181,9 @@ class Input(object):
             # print(time, f(time), self.boolean_values[0], status)
 
 
-def simulate_fmu(filename, start_time=None, stop_time=None, step_size=None, sample_interval=None, fmi_type=None, start_values={}, input=None, output=None):
+def simulate_fmu(filename, validate=True, start_time=None, stop_time=None, step_size=None, sample_interval=None, fmi_type=None, start_values={}, input=None, output=None):
 
-    modelDescription = read_model_description(filename)
+    modelDescription = read_model_description(filename, validate=validate)
 
     if fmi_type is None:
         # determine the FMI type automatically
@@ -192,7 +192,7 @@ def simulate_fmu(filename, start_time=None, stop_time=None, step_size=None, samp
     defaultExperiment = modelDescription.defaultExperiment
 
     if start_time is None:
-        if defaultExperiment is not None:
+        if defaultExperiment is not None and defaultExperiment.startTime is not None:
             start_time = defaultExperiment.startTime
         else:
             start_time = 0.0
@@ -302,7 +302,7 @@ def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, in
 def simulateCS1(modelDescription, unzipdir, start_time, stop_time, step_size, input_signals, output, output_interval):
 
     fmu = FMU1Slave(modelDescription=modelDescription, unzipDirectory=unzipdir)
-    fmu.instantiate("rectifier1")
+    fmu.instantiate("instance1")
     fmu.initialize()
 
     input = Input(fmu, input_signals)

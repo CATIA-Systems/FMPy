@@ -1,2 +1,2 @@
 include LICENSE.txt README.rst
-recursive-include fmpy *
+recursive-include fmpy *.py

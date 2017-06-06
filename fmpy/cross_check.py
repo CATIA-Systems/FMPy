@@ -120,6 +120,69 @@ def read_ref_opt_file(filename):
     return opts
 
 
+def plot_result(result, reference=None, filename=None):
+
+    import matplotlib.pylab as pylab
+    import matplotlib.pyplot as plt
+    from collections import Iterable
+
+    params = {
+            # 'legend.fontsize': 'medium',
+            #'figure.figsize': (10, 8),
+            'legend.fontsize': 'small',
+            'axes.labelsize': 'small',
+            #   'axes.titlesize': 'medium',
+            'xtick.labelsize': 'small',
+            'ytick.labelsize': 'small'
+    }
+
+    pylab.rcParams.update(params)
+
+    time = result['time']
+    names = result.dtype.names[1:]
+
+    if len(names) > 0:
+
+        fig, axes = plt.subplots(len(names), sharex=True)
+
+        fig.set_facecolor('white')
+
+        if not isinstance(axes, Iterable):
+            axes = [axes]
+
+        for ax, name in zip(axes, names):
+
+            ax.grid(b=True, which='both', color='0.8', linestyle='-', zorder=0)
+
+            if reference is not None and name in reference.dtype.names:
+                t_ref = reference[reference.dtype.names[0]]
+                y_ref = reference[name]
+                ax.plot(t_ref, y_ref, color=(1, 0.5, 0.5), linewidth=5, label='result', zorder=101)
+
+            ax.plot(time, result[name], 'b', label='result', zorder=101)
+
+            ax.set_ylabel(name)
+
+            ax.margins(x=0, y=0.1)
+
+        if reference is not None:
+            #ax.legend()
+            plt.legend(bbox_to_anchor=(0, -0.4, 1., 0.1), loc=8, ncol=2, mode="normal", borderaxespad=0.5)
+
+
+        fig.set_size_inches(w=12, h=8, forward=True)
+        plt.tight_layout()
+        fig.subplots_adjust(bottom=0.08)
+
+        if filename is None:
+            plt.show()
+        else:
+            dir, file = os.path.split(filename)
+            if not os.path.isdir(dir):
+                os.makedirs(dir)
+            fig.savefig(filename=filename)
+
+
 if __name__ == '__main__':
     """ Run the FMI cross-check """
 
@@ -129,8 +192,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--fmus_dir', default=os.getcwd(), help='the directory that contains the test FMUs')
     parser.add_argument('--report', default='report.html', help='name of the report file')
+    parser.add_argument('--result_dir', help='the directory to store the results')
     parser.add_argument('--include', nargs='+', default=[], help='path segments to include')
-    parser.add_argument('--exclude', nargs='+', default=['_FMIModelicaTest'], help='path segments to exclude')
+    parser.add_argument('--exclude', nargs='+', default=['_FMIModelicaTest', 'AMESim', 'JModelica', 'ControlBuild', 'fullRobot'], help='path segments to exclude')
 
     args = parser.parse_args()
 
@@ -176,7 +240,7 @@ if __name__ == '__main__':
     </head>
     <body>
         <table>''')
-    html.write('<tr><th>Model</th><th>XML</th><th>_ref.opt</th><th>_in.csv</th><th>_ref.csv</th><th>_cc.csv</th><th>simulation</th></tr>\n')
+    html.write('<tr><th>Model</th><th>XML</th><th>_ref.opt</th><th>_in.csv</th><th>_ref.csv</th><th>_cc.csv</th><th>simulation</th><th></th><th></th></tr>\n')
 
     for root, dirs, files in os.walk(args.fmus_dir):
 
@@ -220,8 +284,12 @@ if __name__ == '__main__':
 
         supported_platforms = fmpy.supported_platforms(fmu_filename)
 
+        result = None
+
         if ref_opt is not None:
             sim_cell = '<td class="status" title="Failed to read *_ref.opt file"><span class="label label-default">skipped</span></td>'
+        elif in_csv is not None:
+            sim_cell = '<td class="status" title="Input file is invalid"><span class="label label-default">skipped</span></td>'
         elif fmpy.platform not in supported_platforms:
             sim_cell = '<td class="status" title="The current platform (' + fmpy.platform + ') is not supported by the FMU (' + ', '.join(supported_platforms) + ')"><span class="label label-default">skipped</span></td>'
         else:
@@ -231,15 +299,23 @@ if __name__ == '__main__':
             # read the reference options
             ref_opts = read_ref_opt_file(os.path.join(root, model_name + '_ref.opt'))
 
+            # read the input
+            input_filename = os.path.join(root, model_name + '_in.csv')
+
+            if os.path.isfile(input_filename):
+                input = np.genfromtxt(input_filename, delimiter=',', names=True, deletechars='')
+            else:
+                input = None
+
             step_size = ref_opts['StepSize']
 
+            # variable step solvers are currently not supported
             if step_size == 0:
-                # variable step solvers are currently not supported
                 step_size = None
 
             try:
                 # simulate the FMU
-                result = fmpy.simulate_fmu(filename=fmu_filename, validate=False, step_size=ref_opts['StepSize'], stop_time=ref_opts['StepSize'])
+                result = fmpy.simulate_fmu(filename=fmu_filename, validate=False, step_size=step_size, stop_time=ref_opts['StopTime'], input=input)
                 sim_cell = '<td class="status"><span class="label label-success">passed</span></td>'
             except Exception as e:
                 sim_cell =  '<td class="status"><span class="label label-danger" title="' + str(e) + '">failed</span></td>'
@@ -257,6 +333,46 @@ if __name__ == '__main__':
         html.write(cell(ref_csv))
         html.write(cell(cc_csv))
         html.write(sim_cell)
+
+        # this will remove any trailing (back)slashes
+        fmus_dir = os.path.normpath(args.fmus_dir)
+
+        model_path = fmu_filename[len(fmus_dir)+1:]
+
+        model_path = os.path.dirname(model_path)
+
+        if args.result_dir is not None and result is not None:
+
+            fmu_result_dir = os.path.join(args.result_dir, model_path)
+
+            if not os.path.exists(fmu_result_dir):
+                 os.makedirs(fmu_result_dir)
+
+            header = ','.join(map(lambda s: '"' + s + '"', result.dtype.names))
+            result_filename = os.path.join(fmu_result_dir, 'result.csv')
+            np.savetxt(result_filename, result, delimiter=',', header=header, comments='', fmt='%g')
+
+            reference_filename = os.path.join(fmus_dir, model_path, model_name + '_ref.csv')
+
+            if os.path.isfile(reference_filename):
+                # load the reference trajectories
+                reference = np.genfromtxt(reference_filename, delimiter=',', names=True, deletechars='')
+            else:
+                reference = None
+
+            plot_filename = os.path.join(fmu_result_dir, 'result.png')
+            plot_result(result, reference, filename=plot_filename)
+
+            with open(os.path.join(fmu_result_dir, 'ReadMe.txt'), 'w') as f:
+                f.write("See FMPy documentation for how to run simulate FMUs\n")
+
+            html.write('<td><a href="file://' + result_filename + '">result.csv</td>\n')
+            html.write('<td><a href="file://' + plot_filename + '">result.png</td>\n')
+
+        else:
+            html.write('<td>n/a</td>\n')
+            html.write('<td>n/a</td>\n')
+
         html.write('</tr>\n')
 
     html.write('</table></body></html>')

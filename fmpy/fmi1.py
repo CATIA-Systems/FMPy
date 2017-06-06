@@ -23,8 +23,8 @@ fmi1Status = c_int
 fmi1CallbackLoggerTYPE         = CFUNCTYPE(None, fmi1Component, fmi1String, fmi1Status, fmi1String, fmi1String)
 fmi1CallbackAllocateMemoryTYPE = CFUNCTYPE(c_void_p, c_size_t, c_size_t)
 fmi1CallbackFreeMemoryTYPE     = CFUNCTYPE(None, c_void_p)
-fmi1StepFinishedTYPE           = CFUNCTYPE(None, fmi1Component, fmi1Status)
-#fmi1StepFinishedTYPE           = c_void_p
+#fmi1StepFinishedTYPE           = CFUNCTYPE(None, fmi1Component, fmi1Status)
+fmi1StepFinishedTYPE           = c_void_p
 
 class fmi1CallbackFunctions(Structure):
     _fields_ = [('logger',         fmi1CallbackLoggerTYPE),
@@ -56,8 +56,8 @@ callbacks = fmi1CallbackFunctions()
 callbacks.logger               = fmi1CallbackLoggerTYPE(logger)
 callbacks.allocateMemory       = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
 callbacks.freeMemory           = fmi1CallbackFreeMemoryTYPE(freeMemory)
-callbacks.stepFinished         = fmi1StepFinishedTYPE(stepFinished)
-#callbacks.stepFinished = None
+#callbacks.stepFinished         = fmi1StepFinishedTYPE(stepFinished)
+callbacks.stepFinished = None
 
 
 class _FMU(object):

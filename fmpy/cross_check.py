@@ -194,7 +194,8 @@ if __name__ == '__main__':
     parser.add_argument('--report', default='report.html', help='name of the report file')
     parser.add_argument('--result_dir', help='the directory to store the results')
     parser.add_argument('--include', nargs='+', default=[], help='path segments to include')
-    parser.add_argument('--exclude', nargs='+', default=['_FMIModelicaTest', 'AMESim', 'JModelica', 'ControlBuild', 'fullRobot'], help='path segments to exclude')
+    parser.add_argument('--exclude', nargs='+', default=[], help='path segments to exclude')
+    parser.add_argument('--simulate', action='store_true', help='simulate the FMU')
 
     args = parser.parse_args()
 
@@ -286,7 +287,9 @@ if __name__ == '__main__':
 
         result = None
 
-        if ref_opt is not None:
+        if not args.simulate:
+            sim_cell = '<td class="status" title="Simulation is disabled"><span class="label label-default">skipped</span></td>'
+        elif ref_opt is not None:
             sim_cell = '<td class="status" title="Failed to read *_ref.opt file"><span class="label label-default">skipped</span></td>'
         elif in_csv is not None:
             sim_cell = '<td class="status" title="Input file is invalid"><span class="label label-default">skipped</span></td>'
@@ -370,8 +373,8 @@ if __name__ == '__main__':
             html.write('<td><a href="file://' + plot_filename + '">result.png</td>\n')
 
         else:
-            html.write('<td>n/a</td>\n')
-            html.write('<td>n/a</td>\n')
+            html.write('<td></td>\n')
+            html.write('<td></td>\n')
 
         html.write('</tr>\n')
 

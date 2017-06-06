@@ -30,6 +30,7 @@ def simulate_coupled_clutches(fmi_version='2.0', fmi_type=CO_SIMULATION, show_pl
         'start_values': {},
         'input': input,
         'output': ['inputs', 'outputs[1]', 'outputs[2]', 'outputs[3]', 'outputs[4]'],
+        'validate': False
     }
 
     print("Simulating CoupledClutches.fmu (FMI %s, %s)..." % (fmi_version, 'Co-Simulation' if fmi_type == CO_SIMULATION else 'Model Exchange'))

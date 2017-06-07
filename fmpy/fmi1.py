@@ -20,6 +20,12 @@ fmi1UndefinedValueReference = -1
 
 fmi1Status = c_int
 
+fmi1OK      = 0
+fmi1Warning = 1
+fmi1Discard = 2
+fmi1Error   = 3
+fmi1Fatal   = 4
+
 fmi1CallbackLoggerTYPE         = CFUNCTYPE(None, fmi1Component, fmi1String, fmi1Status, fmi1String, fmi1String)
 fmi1CallbackAllocateMemoryTYPE = CFUNCTYPE(c_void_p, c_size_t, c_size_t)
 fmi1CallbackFreeMemoryTYPE     = CFUNCTYPE(None, c_void_p)
@@ -40,8 +46,8 @@ class fmi1EventInfo(Structure):
                 ('upcomingTimeEvent',           fmi1Boolean),
                 ('nextEventTime',               fmi1Real)]
 
-def logger(a, b, c, d, e):
-    print(a, b, c, d, e)
+def logger(component, instanceName, status, category, message):
+    pass
 
 def allocateMemory(nobj, size):
     return calloc(nobj, size)
@@ -50,7 +56,7 @@ def freeMemory(obj):
     free(obj)
 
 def stepFinished(componentEnvironment, status):
-    print(componentEnvironment, status)
+    pass
 
 callbacks = fmi1CallbackFunctions()
 callbacks.logger               = fmi1CallbackLoggerTYPE(logger)
@@ -90,29 +96,94 @@ class _FMU1(_FMU):
         super(_FMU1, self).__init__(modelDescription, unzipDirectory, instanceName, fmiType)
 
         # common FMI 1.0 functions
-        self.fmi1GetReal          = getattr(self.dll, self.modelIdentifier  + '_fmiGetReal')
-        self.fmi1GetReal.argtypes = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Real)]
-        self.fmi1GetReal.restype  = fmi1Status
+        self.fmi1GetReal             = getattr(self.dll, self.modelIdentifier  + '_fmiGetReal')
+        self.fmi1GetReal.argtypes    = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Real)]
+        self.fmi1GetReal.restype     = fmi1Status
 
-        self.fmi1GetInteger = getattr(self.dll, self.modelIdentifier  + '_fmiGetInteger')
+        self.fmi1GetInteger          = getattr(self.dll, self.modelIdentifier  + '_fmiGetInteger')
         self.fmi1GetInteger.argtypes = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Integer)]
-        self.fmi1GetInteger.restype = fmi1Status
+        self.fmi1GetInteger.restype  = fmi1Status
 
-        self.fmi1GetBoolean = getattr(self.dll, self.modelIdentifier  + '_fmiGetBoolean')
+        self.fmi1GetBoolean          = getattr(self.dll, self.modelIdentifier  + '_fmiGetBoolean')
         self.fmi1GetBoolean.argtypes = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Boolean)]
-        self.fmi1GetBoolean.restype = fmi1Status
+        self.fmi1GetBoolean.restype  = fmi1Status
 
-        self.fmi1SetReal = getattr(self.dll, self.modelIdentifier  + '_fmiSetReal')
-        self.fmi1SetReal.argtypes = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Real)]
-        self.fmi1SetReal.restype = fmi1Status
+        self.fmi1GetString           = getattr(self.dll, self.modelIdentifier  + '_fmiGetString')
+        self.fmi1GetString.argtypes  = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1String)]
+        self.fmi1GetString.restype   = fmi1Status
 
-        self.fmi1SetInteger = getattr(self.dll, self.modelIdentifier  + '_fmiSetInteger')
+        self.fmi1SetReal             = getattr(self.dll, self.modelIdentifier  + '_fmiSetReal')
+        self.fmi1SetReal.argtypes    = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Real)]
+        self.fmi1SetReal.restype     = fmi1Status
+
+        self.fmi1SetInteger          = getattr(self.dll, self.modelIdentifier  + '_fmiSetInteger')
         self.fmi1SetInteger.argtypes = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Integer)]
-        self.fmi1SetInteger.restype = fmi1Status
+        self.fmi1SetInteger.restype  = fmi1Status
 
-        self.fmi1SetBoolean = getattr(self.dll, self.modelIdentifier  + '_fmiSetBoolean')
+        self.fmi1SetBoolean          = getattr(self.dll, self.modelIdentifier  + '_fmiSetBoolean')
         self.fmi1SetBoolean.argtypes = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Boolean)]
-        self.fmi1SetBoolean.restype = fmi1Status
+        self.fmi1SetBoolean.restype  = fmi1Status
+
+        self.fmi1SetString           = getattr(self.dll, self.modelIdentifier  + '_fmiSetString')
+        self.fmi1SetString.argtypes  = [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1String)]
+        self.fmi1SetString.restype   = fmi1Status
+
+    def assertNoError(self, status):
+        if status not in [fmi1OK, fmi1Warning]:
+            raise Exception("FMI call failed")
+
+    def getReal(self, vr):
+        vr = (fmi1ValueReference * len(vr))(*vr)
+        value = (fmi1Real * len(vr))()
+        status = self.fmi1GetReal(self.component, vr, len(vr), value)
+        self.assertNoError(status)
+        return list(value)
+
+    def getInteger(self, vr):
+        vr = (fmi1ValueReference * len(vr))(*vr)
+        value = (fmi1Integer * len(vr))()
+        status = self.fmi1GetInteger(self.component, vr, len(vr), value)
+        self.assertNoError(status)
+        return list(value)
+
+    def getBoolean(self, vr):
+        vr = (fmi1ValueReference * len(vr))(*vr)
+        value = (fmi1Boolean * len(vr))()
+        status = self.fmi1GetBoolean(self.component, vr, len(vr), value)
+        self.assertNoError(status)
+        return list(map(lambda b: 0 if b == fmi1False else 1, value))
+
+    def getString(self, vr):
+        vr = (fmi1ValueReference * len(vr))(*vr)
+        value = (fmi1String * len(vr))()
+        status = self.fmi1GetString(self.component, vr, len(vr), value)
+        self.assertNoError(status)
+        return list(value)
+
+    def setReal(self, vr, value):
+        vr = (fmi1ValueReference * len(vr))(*vr)
+        value = (fmi1Real * len(vr))(*value)
+        status = self.fmi1SetReal(self.component, vr, len(vr), value)
+        self.assertNoError(status)
+
+    def setInteger(self, vr, value):
+        vr = (fmi1ValueReference * len(vr))(*vr)
+        value = (fmi1Integer * len(vr))(*value)
+        status = self.fmi1SetInteger(self.component, vr, len(vr), value)
+        self.assertNoError(status)
+
+    def setBoolean(self, vr, value):
+        vr = (fmi1ValueReference * len(vr))(*vr)
+        value = (fmi1Boolean * len(vr))(*value)
+        status = self.fmi1SetBoolean(self.component, vr, len(vr), value)
+        self.assertNoError(status)
+
+    def setString(self, vr, value):
+        vr = (fmi1ValueReference * len(vr))(*vr)
+        value = map(lambda s: s.encode('utf-8'), value)
+        value = (fmi1String * len(vr))(*value)
+        status = self.fmi1SetString(self.component, vr, len(vr), value)
+        self.assertNoError(status)
 
 
 class FMU1Slave(_FMU1):

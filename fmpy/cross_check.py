@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import fmpy
+import zipfile
 
 def check_csv_file(file_path, variable_names):
 
@@ -45,6 +46,8 @@ def check_exported_fmu(fmu_filename):
             fmu_name, _ = os.path.splitext(file)
             break
 
+    model_description = None
+
     # read the model description
     try:
         model_description = fmpy.read_model_description(fmu_filename)
@@ -53,6 +56,22 @@ def check_exported_fmu(fmu_filename):
         # try again without validation
         model_description = fmpy.read_model_description(fmu_filename, validate=False)
         xml = str(e)
+
+    doc = "Failed to determine documentation location"
+
+    if model_description is not None:
+        if model_description.fmiVersion == '1.0':
+            doc_path = 'documentation/_main.html'
+        else:
+            doc_path = 'documentation/index.html'
+
+        doc = doc_path + " is missing"
+
+    # check for documentation
+    with zipfile.ZipFile(fmu_filename, 'r') as zf:
+        if doc_path in zf.namelist():
+            doc = None
+            # TODO: validate HTML
 
     input_variables = []
     output_variables = []
@@ -89,7 +108,7 @@ def check_exported_fmu(fmu_filename):
     cc_path = os.path.join(test_fmu_dir, fmu_name + '_cc.csv')
     cc_csv = check_csv_file(cc_path, output_variables)
 
-    return xml, ref_opt, in_csv, ref_csv, cc_csv
+    return xml, ref_opt, in_csv, ref_csv, cc_csv, doc
 
 
 def read_ref_opt_file(filename):
@@ -241,7 +260,7 @@ if __name__ == '__main__':
     </head>
     <body>
         <table>''')
-    html.write('<tr><th>Model</th><th>XML</th><th>_ref.opt</th><th>_in.csv</th><th>_ref.csv</th><th>_cc.csv</th><th>simulation</th><th></th><th></th></tr>\n')
+    html.write('<tr><th>Model</th><th>XML</th><th>_ref.opt</th><th>_in.csv</th><th>_ref.csv</th><th>_cc.csv</th><th>doc</th><th>simulation</th><th></th><th></th></tr>\n')
 
     for root, dirs, files in os.walk(args.fmus_dir):
 
@@ -281,7 +300,7 @@ if __name__ == '__main__':
         platformDir = root
         print(platformDir)
 
-        xml, ref_opt, in_csv, ref_csv, cc_csv = check_exported_fmu(fmu_filename)
+        xml, ref_opt, in_csv, ref_csv, cc_csv, doc = check_exported_fmu(fmu_filename)
 
         supported_platforms = fmpy.supported_platforms(fmu_filename)
 
@@ -335,6 +354,7 @@ if __name__ == '__main__':
         html.write(cell(in_csv))
         html.write(cell(ref_csv))
         html.write(cell(cc_csv))
+        html.write(cell(doc))
         html.write(sim_cell)
 
         # this will remove any trailing (back)slashes
@@ -369,8 +389,8 @@ if __name__ == '__main__':
             with open(os.path.join(fmu_result_dir, 'ReadMe.txt'), 'w') as f:
                 f.write("See FMPy documentation for how to run simulate FMUs\n")
 
-            html.write('<td><a href="file://' + result_filename + '">result.csv</td>\n')
-            html.write('<td><a href="file://' + plot_filename + '">result.png</td>\n')
+            html.write('<td><a href="file://' + result_filename + '">result.csv</a></td>\n')
+            html.write('<td><a href="file://' + plot_filename + '">result.png</a></td>\n')
 
         else:
             html.write('<td></td>\n')

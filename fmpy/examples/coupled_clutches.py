@@ -27,7 +27,7 @@ def simulate_coupled_clutches(fmi_version='2.0', fmi_type=CO_SIMULATION, show_pl
         'step_size': 1e-2,
         'sample_interval': 2e-2,
         'fmi_type': fmi_type,
-        'start_values': {},
+        'start_values': {'CoupledClutches1_freqHz': 0.4},
         'input': input,
         'output': ['inputs', 'outputs[1]', 'outputs[2]', 'outputs[3]', 'outputs[4]'],
         'validate': False

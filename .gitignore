@@ -1,6 +1,7 @@
-# FMUs and input files
+# FMUs, input files and report files
 *.fmu
 *.csv
+*.html
 
 # compiled files
 *.py[cod]
@@ -10,11 +11,8 @@ build/
 dist/
 MANIFEST
 
-# PyCharm user-specific stuff:
-.idea/**/workspace.xml
-.idea/**/tasks.xml
-.idea/dictionaries
-.idea/inspectionProfiles
+# PyCharm project
+.idea/
 
-# File-based project format:
+# file-based project format
 *.iws

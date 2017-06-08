@@ -173,7 +173,7 @@ def simulate_fmu(filename, validate=True, start_time=None, stop_time=None, step_
     unzipdir = mkdtemp()
 
     # expand the 8.3 paths on windows
-    if sys.platform == 'win32':
+    if sys.platform.startswith('win'):
         import win32file
         unzipdir = win32file.GetLongPathName(unzipdir)
 

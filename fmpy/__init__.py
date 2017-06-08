@@ -7,22 +7,31 @@ import _ctypes
 
 
 # determine the platform
-if sys.platform == 'win32':
+if sys.platform.startswith('win'):
     platform = 'win'
     sharedLibraryExtension = '.dll'
-    calloc = cdll.msvcrt.calloc
-    free = cdll.msvcrt.free
-    freeLibrary = _ctypes.FreeLibrary
 elif sys.platform.startswith('linux'):
     platform = 'linux'
     sharedLibraryExtension = '.so'
+elif sys.platform.startswith('darwin'):
+    platform = 'darwin'
+    sharedLibraryExtension = '.dylib'
+else:
+    raise Exception("Unsupported platform: " + sys.platform)
+
+
+# load the C library functions
+if sys.platform.startswith('win'):
+    calloc = cdll.msvcrt.calloc
+    free = cdll.msvcrt.free
+    freeLibrary = _ctypes.FreeLibrary
+else:
     from ctypes.util import find_library
     libc = CDLL(find_library("c"))
     calloc = libc.calloc
     free = libc.free
     freeLibrary = _ctypes.dlclose
-else:
-    raise Exception("Usupported platfrom: " + sys.platform)
+
 
 calloc.argtypes = [c_size_t, c_size_t]
 calloc.restype = c_void_p

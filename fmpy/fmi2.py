@@ -46,17 +46,39 @@ fmi2LastSuccessfulTime = 2
 fmi2Terminated         = 3
 
 
-def logger(componentEnvironment, instanceName, status, category, message):
-    pass
+def fmi2Call(func):
+
+    def func_wrapper(self, *args, **kwargs):
+
+        status = func(self, *args, **kwargs)
+
+        if status not in [fmi2OK, fmi2Warning]:
+            # TODO: terminate FMU
+            # TODO: log this
+            values = list(args)
+            values += map(lambda it: "%s=%s" % (it[0], it[1]), kwargs.items())
+            raise Exception("FMI call %s(%s) returned status %d" % (func.__name__, ', '.join(values), status))
+
+        return status
+
+    return func_wrapper
+
+
+def logger(componentEnvironment, instanceName, status, category, message, va_list):
+    print(componentEnvironment, instanceName, status, category, message, va_list)
+
 
 def allocateMemory(nobj, size):
     return calloc(nobj, size)
 
+
 def freeMemory(obj):
     free(obj)
 
+
 def stepFinished(componentEnvironment, status):
     pass
+
 
 class fmi2CallbackFunctions(Structure):
     _fields_ = [('logger',               fmi2CallbackLoggerTYPE),
@@ -80,7 +102,9 @@ class fmi2EventInfo(Structure):
                 ('nextEventTimeDefined',              fmi2Boolean),
                 ('nextEventTime',                     fmi2Real)]
 
+
 variables = {}
+
 
 class ScalarVariable(object):
 
@@ -173,6 +197,7 @@ class _FMU2(_FMU):
                                               byref(callbacks), fmi2False,
                                               fmi2False)
 
+    # @fmiCall
     def setupExperiment(self, tolerance, startTime, stopTime=None):
 
         toleranceDefined = tolerance is not None
@@ -187,7 +212,7 @@ class _FMU2(_FMU):
 
         status = self.fmi2SetupExperiment(self.component, toleranceDefined, tolerance, startTime, stopTimeDefined,
                                           stopTime)
-        # TODO: check status
+        return status
 
     def enterInitializationMode(self):
         status = self.fmi2EnterInitializationMode(self.component)
@@ -234,19 +259,6 @@ class _FMU2(_FMU):
         self.assertNoError(status)
 
     def setInteger(self, vr, value):
-        vr = (fmi2ValueReference * len(vr))(*vr)
-        value = (fmi2Integer * len(vr))(*value)
-        status = self.fmi2SetInteger(self.component, vr, len(vr), value)
-        self.assertNoError(status)
-
-    def setBoolean(self, vr, value):
-        vr = (fmi2ValueReference * len(vr))(*vr)
-        value = (fmi2Boolean * len(vr))(*value)
-        status = self.fmi2SetBoolean(self.component, vr, len(vr), value)
-        self.assertNoError(status)
-
-    def setString(self, vr, value):
-        vr = (fmi2ValueReference * len(vr))(*vr)
         value = map(lambda s: s.encode('utf-8'), value)
         value = (fmi2String * len(vr))(*value)
         status = self.fmi2SetString(self.component, vr, len(vr), value)
@@ -318,23 +330,21 @@ class FMU2Model(_FMU2):
         self.fmi2CompletedIntegratorStep.argtypes = [fmi2Component, fmi2Boolean, POINTER(fmi2Boolean), POINTER(fmi2Boolean)]
         self.fmi2CompletedIntegratorStep.restype = fmi2Status
 
+    @fmi2Call
     def newDiscreteStates(self):
-        status = self.fmi2NewDiscreteStates(self.component, byref(self.eventInfo))
-        # TODO: check status
-        return status
+        return self.fmi2NewDiscreteStates(self.component, byref(self.eventInfo))
 
+    @fmi2Call
     def enterContinuousTimeMode(self):
-        status = self.fmi2EnterContinuousTimeMode(self.component)
-        # TODO: check status
-        return status
+        return self.fmi2EnterContinuousTimeMode(self.component)
 
+    @fmi2Call
     def enterEventMode(self):
-        status = self.fmi2EnterEventMode(self.component)
-        # TODO: check status
-        return status
+        return self.fmi2EnterEventMode(self.component)
 
+    @fmi2Call
     def getContinuousStates(self):
-        status = self.fmi2GetContinuousStates(self.component, self._px, self.x.size)
+        return self.fmi2GetContinuousStates(self.component, self._px, self.x.size)
         # TODO: check status
 
     def setContinuousStates(self):
@@ -375,9 +385,9 @@ class FMU2Slave(_FMU2):
         self.fmi2GetBooleanStatus.argtypes = [fmi2Component, fmi2StatusKind, POINTER(fmi2Boolean)]
         self.fmi2GetBooleanStatus.restype  = fmi2Status
 
+    @fmi2Call
     def doStep(self, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint=fmi2True):
         status = self.fmi2DoStep(self.component, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint)
-        # TODO: check status
         return status
 
     def getBooleanStatus(self, kind):

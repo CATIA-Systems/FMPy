@@ -134,32 +134,80 @@ class Input(object):
         else:
             self.boolean_vrs = []
 
-    def apply(self, time):
+    def apply(self, time, continuous=True, discrete=True):
 
         if self.signals is None:
             return
 
         t = self.signals['time']
 
-        # TODO: check for event
-        index = np.argmax(t >= time)
+        # find the left insert index
+        i0 = np.searchsorted(t, time)
 
-        if len(self.real_vrs) > 0:
-            # TODO: interpolate
-            self.real_values[:] = self.real_table[:, index]
+        # TODO: check for event
+
+        if len(self.real_vrs) > 0 and continuous:
+            self.real_values[:] = self.interpolate(time=time, t=t, table=self.real_table)
             status = self._setReal(self.fmu.component, self.real_vrs, len(self.real_vrs), self.real_values)
             self.fmu.assertNoError(status)
 
-        if len(self.integer_vrs) > 0:
-            self.integer_values[:] = self.integer_table[:, index]
+        # TODO: discrete apply Reals
+
+        if len(self.integer_vrs) > 0 and discrete:
+            self.integer_values[:] = self.interpolate(time=time, t=t, table=self.integer_table, discrete=True)
             status = self._setInteger(self.fmu.component, self.integer_vrs, len(self.integer_vrs), self.integer_values)
             self.fmu.assertNoError(status)
 
-        if len(self.boolean_vrs) > 0:
-            self.boolean_values[:] = self.boolean_table[:, index]
+        if len(self.boolean_vrs) > 0 and discrete:
+            self.boolean_values[:] = self.interpolate(time=time, t=t, table=self.boolean_table, discrete=True)
             status = self._setBoolean(self.fmu.component, self.boolean_vrs, len(self.boolean_vrs),
                                       cast(self.boolean_values, POINTER(self._bool_type)))
             self.fmu.assertNoError(status)
+
+    @staticmethod
+    def interpolate(time, t, table, discrete=False, after_event=False):
+
+        # find the left insert index
+        i0 = np.searchsorted(t, time)
+
+        # check for event
+        is_event = i0 < len(t) - 1 and t[i0] == t[i0 + 1]
+
+        if is_event:
+            if after_event:
+                return table[:, i0 + 1]
+            else:
+                return table[:, i0]
+
+        if i0 >= len(t):
+            # extrapolate right
+            i0 = len(t) - 2
+        elif i0 > 0:
+            # interpolate
+            i0 -= 1
+
+        # take the value after the event
+        while i0 < len(t) - 1 and t[i0] == t[i0 + 1]:
+            i0 += 1
+
+        i1 = i0 + 1
+
+        if discrete:
+            return table[:, i0]
+
+        t0 = t[i0]
+        t1 = t[i1]
+
+        w0 = (t1 - time) / (t1 - t0)
+        w1 = 1 - w0
+
+        v0 = table[:, i0]
+        v1 = table[:, i1]
+
+        # interpolate the input value
+        v = w0 * v0 + w1 * v1
+
+        return v
 
 
 def apply_start_values(fmu, start_values):

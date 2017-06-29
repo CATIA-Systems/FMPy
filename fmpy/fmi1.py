@@ -117,7 +117,8 @@ class _FMU(object):
         os.chdir(library_dir)
 
         # load the shared library
-        self.dll = cdll.LoadLibrary(os.path.join(library_dir, self.modelIdentifier + sharedLibraryExtension))
+        library_path = str(os.path.join(library_dir, self.modelIdentifier + sharedLibraryExtension))
+        self.dll = cdll.LoadLibrary(library_path)
 
         # change back to the working directory
         os.chdir(work_dir)
@@ -264,8 +265,8 @@ class FMU1Slave(_FMU1):
 
     @fmi1Call
     def initialize(self, tStart=0.0, stopTime=None):
-        stopTimeDefined = stopTime is not None
-        tStop = stopTime if stopTimeDefined else 0.0
+        stopTimeDefined = fmi1True if stopTime is not None else fmi1False
+        tStop = stopTime if stopTime is not None else 0.0
         return self.fmi1InitializeSlave(self.component, tStart, stopTimeDefined, tStop)
 
     @fmi1Call

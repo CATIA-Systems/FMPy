@@ -116,7 +116,7 @@ def validate_result(result, reference):
         y_ref = reference[name]
         y_res = result[name]
         _, _, _, outliers = validate_signal(t=t_res, y=y_res, t_ref=t_ref, y_ref=y_ref)
-        rel_out = np.max([np.sum(outliers) / len(outliers), rel_out])
+        rel_out = np.max([np.sum(outliers) / float(len(outliers)), rel_out])
 
     return rel_out
 

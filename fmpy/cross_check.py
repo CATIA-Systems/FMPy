@@ -78,7 +78,11 @@ def validate_signal(t, y, t_ref, y_ref, num=1000, dx=20, dy=0.1):
 
     # re-sample the reference signal into a uniform grid
     t_band = np.linspace(start=t_ref[0], stop=t_ref[-1], num=num)
-    y_band = np.interp(x=t_band, xp=t_ref, fp=y_ref)
+
+    # sort out the duplicate samples before the interpolation
+    m = np.concatenate(([True], np.diff(t_ref) > 0))
+
+    y_band = np.interp(x=t_band, xp=t_ref[m], fp=y_ref[m])
 
     y_band_min = np.min(y_band)
     y_band_max = np.max(y_band)
@@ -416,6 +420,10 @@ if __name__ == '__main__':
 
         def skip_simulation():
             """ Sort out the FMUs that crash the process """
+
+            # fullRobot w/ ModelExchange
+            if 'ModelExchange' in fmu_filename and 'fullRobot' in fmu_filename:
+                return True  # cannot be solved w/ Euler
 
             # win64
             if r'FMI_2.0\CoSimulation\win64\FMIToolbox_MATLAB\2.1' in fmu_filename:

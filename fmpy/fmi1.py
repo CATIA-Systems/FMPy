@@ -68,6 +68,7 @@ class fmi1EventInfo(Structure):
 
 
 def logger(component, instanceName, status, category, message):
+    # print(component, instanceName, status, category, message)
     pass
 
 
@@ -312,7 +313,7 @@ class FMU1Model(_FMU1):
         self.fmi1SetTime.restype = fmi1Status
 
         self.fmi1Initialize = getattr(self.dll, self.modelIdentifier + '_fmiInitialize')
-        self.fmi1Initialize.argtypes = [fmi1Component, fmi1Boolean, fmi1Real, fmi1EventInfo]
+        self.fmi1Initialize.argtypes = [fmi1Component, fmi1Boolean, fmi1Real, POINTER(fmi1EventInfo)]
         self.fmi1Initialize.restype = fmi1Status
 
         self.fmi1GetContinuousStates = getattr(self.dll, self.modelIdentifier + '_fmiGetContinuousStates')
@@ -336,7 +337,7 @@ class FMU1Model(_FMU1):
         self.fmi1GetEventIndicators.restype = fmi1Status
 
         self.fmi1EventUpdate = getattr(self.dll, self.modelIdentifier + '_fmiEventUpdate')
-        self.fmi1EventUpdate.argtypes = [fmi1Component, fmi1Boolean, fmi1EventInfo]
+        self.fmi1EventUpdate.argtypes = [fmi1Component, fmi1Boolean, POINTER(fmi1EventInfo)]
         self.fmi1EventUpdate.restype = fmi1Status
 
         self.fmi1Terminate = getattr(self.dll, self.modelIdentifier + '_fmiTerminate')
@@ -359,7 +360,7 @@ class FMU1Model(_FMU1):
 
     @fmi1Call
     def initialize(self, toleranceControlled=fmi1False, relativeTolerance=0.0):
-        return self.fmi1Initialize(self.component, toleranceControlled, relativeTolerance, self.eventInfo)
+        return self.fmi1Initialize(self.component, toleranceControlled, relativeTolerance, byref(self.eventInfo))
 
     @fmi1Call
     def getContinuousStates(self):
@@ -385,7 +386,7 @@ class FMU1Model(_FMU1):
 
     @fmi1Call
     def eventUpdate(self, intermediateResults=fmi1False):
-        return self.fmi1EventUpdate(self.component, intermediateResults, self.eventInfo)
+        return self.fmi1EventUpdate(self.component, intermediateResults, byref(self.eventInfo))
 
     @fmi1Call
     def terminate(self):

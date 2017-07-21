@@ -197,8 +197,7 @@ class _FMU2(_FMU):
                                               byref(callbacks), fmi2False,
                                               fmi2False)
 
-    # @fmiCall
-    def setupExperiment(self, tolerance, startTime, stopTime=None):
+    def setupExperiment(self, tolerance=None, startTime=0.0, stopTime=None):
 
         toleranceDefined = tolerance is not None
 

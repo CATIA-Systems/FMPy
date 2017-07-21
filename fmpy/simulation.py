@@ -1,12 +1,10 @@
 # noinspection PyPep8
 
 import shutil
-import zipfile
-from tempfile import mkdtemp
 from fmpy.model_description import read_model_description
 from .fmi1 import *
 from .fmi2 import *
-from . import CO_SIMULATION, MODEL_EXCHANGE
+from . import CO_SIMULATION, MODEL_EXCHANGE, extract
 import numpy as np
 import sys
 from time import time as current_time
@@ -226,7 +224,7 @@ def apply_start_values(fmu, start_values):
             elif sv.type == 'Boolean':
                 fmu.setBoolean([vr], [value])
             elif sv.type == 'String':
-                pass # TODO: implement this
+                pass  # TODO: implement this
 
 
 def simulate_fmu(filename, validate=True, start_time=None, stop_time=None, step_size=None, sample_interval=None, fmi_type=None, start_values={}, input=None, output=None, timeout=None):
@@ -255,15 +253,7 @@ def simulate_fmu(filename, validate=True, start_time=None, stop_time=None, step_
         total_time = stop_time - start_time
         step_size = 10 ** (np.round(np.log10(0.09)) - 3)
 
-    unzipdir = mkdtemp()
-
-    # expand the 8.3 paths on windows
-    if sys.platform.startswith('win'):
-        import win32file
-        unzipdir = win32file.GetLongPathName(unzipdir)
-
-    with zipfile.ZipFile(filename, 'r') as fmufile:
-        fmufile.extractall(unzipdir)
+    unzipdir = extract(filename)
 
     if modelDescription.fmiVersion == '1.0':
         simfun = simulateME1 if fmi_type is MODEL_EXCHANGE else simulateCS

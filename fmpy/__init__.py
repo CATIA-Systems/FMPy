@@ -4,7 +4,8 @@ import sys
 import os
 from ctypes import *
 import _ctypes
-
+import zipfile
+from tempfile import mkdtemp
 
 # determine the platform
 if sys.platform.startswith('win'):
@@ -131,6 +132,23 @@ def fmi_info(filename):
             raise Exception("Unsupported FMI version %s" % fmi_version)
 
     return fmi_version, fmi_types
+
+
+def extract(filename):
+    """ Extract a ZIP file to a temporary directory """
+
+    unzipdir = mkdtemp()
+
+    # expand the 8.3 paths on windows
+    if sys.platform.startswith('win'):
+        import win32file
+        unzipdir = win32file.GetLongPathName(unzipdir)
+
+    with zipfile.ZipFile(filename, 'r') as fmufile:
+        fmufile.extractall(unzipdir)
+
+    return unzipdir
+
 
 # make the functions available in the fmpy module
 from .model_description import read_model_description

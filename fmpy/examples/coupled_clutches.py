@@ -12,7 +12,19 @@ def simulate_coupled_clutches(fmi_version='2.0', fmi_type=CO_SIMULATION, show_pl
         url += ('CoSimulation' if fmi_type == CO_SIMULATION else 'ModelExchange') + '/'
         url += platform + '/MapleSim/2016.2/CoupledClutches/' + filename
         print('Downloading ' + url)
-        response = requests.get(url)
+
+        status_code = -1
+
+        # try to download the file three times
+        for _ in range(3):
+            if status_code != 200:
+                response = requests.get(url)
+                status_code = response.status_code
+
+        if status_code != 200:
+            print("Download failed (return code %d)" % status_code)
+            return None
+
         with open(filename, 'wb') as f:
             f.write(response.content)
 
@@ -58,6 +70,7 @@ def simulate_coupled_clutches(fmi_version='2.0', fmi_type=CO_SIMULATION, show_pl
 
     print("Done.")
 
+    return result
 
 if __name__ == '__main__':
 

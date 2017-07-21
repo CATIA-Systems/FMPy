@@ -16,9 +16,13 @@ class ExamplesTest(unittest.TestCase):
 
         for fmi_version in fmi_versions:
             for fmi_type in [CO_SIMULATION, MODEL_EXCHANGE]:
-                simulate_coupled_clutches(fmi_version=fmi_version, fmi_type=fmi_type, show_plot=False)
+                
+                result = simulate_coupled_clutches(fmi_version=fmi_version, fmi_type=fmi_type, show_plot=False)
 
-        # TODO: add assertions
+                if result is not None:  # sometimes the download fails
+                    inputs = result['inputs']
+                    self.assertAlmostEqual(inputs[0], 0.0)
+                    self.assertAlmostEqual(inputs[-1], 1.0)
 
 
 if __name__ == '__main__':

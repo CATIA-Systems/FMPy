@@ -1,6 +1,9 @@
 .. image:: https://travis-ci.org/CATIA-Systems/FMPy.svg?branch=master
     :target: https://travis-ci.org/CATIA-Systems/FMPy
 
+.. image:: https://ci.appveyor.com/api/projects/status/github/CATIA-Systems/FMPy?branch=master&svg=true
+
+
 FMPy
 ====
 

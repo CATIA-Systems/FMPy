@@ -4,7 +4,8 @@ import os
 import numpy as np
 
 
-def simulate_coupled_clutches(fmi_version='2.0', fmi_type=CO_SIMULATION, show_plot=True):
+def simulate_coupled_clutches(fmi_version='2.0', fmi_type=CO_SIMULATION, show_plot=True,
+                              output=['outputs[1]', 'outputs[2]', 'outputs[3]', 'outputs[4]']):
 
     # download the FMU and input file
     for filename in ['CoupledClutches.fmu', 'CoupledClutches_in.csv']:
@@ -16,13 +17,16 @@ def simulate_coupled_clutches(fmi_version='2.0', fmi_type=CO_SIMULATION, show_pl
         status_code = -1
 
         # try to download the file three times
-        for _ in range(3):
-            if status_code != 200:
-                response = requests.get(url)
-                status_code = response.status_code
+        try:
+            for _ in range(3):
+                if status_code != 200:
+                    response = requests.get(url)
+                    status_code = response.status_code
+        except:
+            pass
 
         if status_code != 200:
-            print("Download failed (return code %d)" % status_code)
+            print("Download failed")
             return None
 
         with open(filename, 'wb') as f:
@@ -38,10 +42,9 @@ def simulate_coupled_clutches(fmi_version='2.0', fmi_type=CO_SIMULATION, show_pl
         'stop_time': 1.5,
         'step_size': 1e-2,
         'sample_interval': 2e-2,
-        'fmi_type': fmi_type,
         'start_values': {'CoupledClutches1_freqHz': 0.4},
         'input': input,
-        'output': ['inputs', 'outputs[1]', 'outputs[2]', 'outputs[3]', 'outputs[4]'],
+        'output': output,
         'validate': False
     }
 

@@ -6,7 +6,6 @@ from .fmi1 import *
 from .fmi2 import *
 from . import CO_SIMULATION, MODEL_EXCHANGE, extract
 import numpy as np
-import sys
 from time import time as current_time
 
 
@@ -210,21 +209,27 @@ class Input(object):
 
 def apply_start_values(fmu, start_values):
 
-    for sv in fmu.modelDescription.modelVariables:
+    variables = {}
 
-        if sv.name in start_values:
+    for v in fmu.modelDescription.modelVariables:
+        variables[v.name] = v
 
-            vr = sv.valueReference
-            value = start_values[sv.name]
+    for name, value in start_values.items():
 
-            if sv.type == 'Real':
-                fmu.setReal([vr], [value])
-            elif sv.type in ['Integer', 'Enumeration']:
-                fmu.setInteger([vr], [value])
-            elif sv.type == 'Boolean':
-                fmu.setBoolean([vr], [value])
-            elif sv.type == 'String':
-                pass  # TODO: implement this
+        if name not in variables:
+            raise Exception("The variable '%s' could not be set because it does not exist in the FMU." % name)
+
+        v = variables[name]
+        vr = v.valueReference
+
+        if v.type == 'Real':
+            fmu.setReal([vr], [value])
+        elif v.type in ['Integer', 'Enumeration']:
+            fmu.setInteger([vr], [value])
+        elif v.type == 'Boolean':
+            fmu.setBoolean([vr], [value])
+        elif v.type == 'String':
+            raise NotImplementedError("String parameters are not supported yet.")
 
 
 def simulate_fmu(filename, validate=True, start_time=None, stop_time=None, step_size=None, sample_interval=None, fmi_type=None, start_values={}, input=None, output=None, timeout=None):

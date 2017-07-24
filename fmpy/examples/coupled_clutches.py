@@ -62,6 +62,9 @@ def simulate_coupled_clutches(fmi_version='2.0', fmi_type=CO_SIMULATION, show_pl
 
         fig, axes = plt.subplots(len(names), sharex=True)
 
+        if len(names) == 1:
+            axes = [axes]
+
         for ax, name in zip(axes, names):
             ax.plot(time, result[name])
             ax.set_ylabel(name)

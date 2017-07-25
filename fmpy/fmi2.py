@@ -21,6 +21,13 @@ fmi2Byte                 = c_char
 
 fmi2Status = c_int
 
+fmi2OK      = 0
+fmi2Warning = 1
+fmi2Discard = 2
+fmi2Error   = 3
+fmi2Fatal   = 4
+fmi2Pending = 5
+
 fmi2CallbackLoggerTYPE         = CFUNCTYPE(None, fmi2ComponentEnvironment, fmi2String, fmi2Status, fmi2String, fmi2String, fmi2String)
 fmi2CallbackAllocateMemoryTYPE = CFUNCTYPE(c_void_p, c_size_t, c_size_t)
 fmi2CallbackFreeMemoryTYPE     = CFUNCTYPE(None, c_void_p)
@@ -39,17 +46,42 @@ fmi2LastSuccessfulTime = 2
 fmi2Terminated         = 3
 
 
-def logger(a, b, c, d, e, f):
-    print(a, b, c, d, e, f)
+def fmi2Call(func):
+
+    def func_wrapper(self, *args, **kwargs):
+
+        status = func(self, *args, **kwargs)
+
+        if status not in [fmi2OK, fmi2Warning]:
+            # TODO: terminate FMU
+            # TODO: log this
+            values = list(args)
+            values += map(lambda it: "%s=%s" % (it[0], it[1]), kwargs.items())
+            raise Exception("FMI call %s(%s) returned status %d" % (func.__name__, ', '.join(values), status))
+
+        return status
+
+    return func_wrapper
+
+
+def logger(componentEnvironment, instanceName, status, category, message, va_list):
+    if status == fmi2Warning:
+        print('[WARNING]', message)
+    elif status > fmi2Warning:
+        print('[ERROR]', message)
+
 
 def allocateMemory(nobj, size):
     return calloc(nobj, size)
 
+
 def freeMemory(obj):
     free(obj)
 
+
 def stepFinished(componentEnvironment, status):
-    print(combinations, status)
+    pass
+
 
 class fmi2CallbackFunctions(Structure):
     _fields_ = [('logger',               fmi2CallbackLoggerTYPE),
@@ -73,7 +105,9 @@ class fmi2EventInfo(Structure):
                 ('nextEventTimeDefined',              fmi2Boolean),
                 ('nextEventTime',                     fmi2Real)]
 
+
 variables = {}
+
 
 class ScalarVariable(object):
 
@@ -122,6 +156,10 @@ class _FMU2(_FMU):
         self.fmi2GetBoolean.argtypes = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Boolean)]
         self.fmi2GetBoolean.restype  = fmi2Status
 
+        self.fmi2GetString           = getattr(self.dll, 'fmi2GetString')
+        self.fmi2GetString.argtypes  = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2String)]
+        self.fmi2GetString.restype   = fmi2Status
+
         self.fmi2SetReal          = getattr(self.dll, 'fmi2SetReal')
         self.fmi2SetReal.argtypes = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Real)]
         self.fmi2SetReal.restype  = fmi2Status
@@ -134,6 +172,10 @@ class _FMU2(_FMU):
         self.fmi2SetBoolean.argtypes = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Boolean)]
         self.fmi2SetBoolean.restype  = fmi2Status
 
+        self.fmi2SetString           = getattr(self.dll, 'fmi2SetString')
+        self.fmi2SetString.argtypes  = [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2String)]
+        self.fmi2SetString.restype   = fmi2Status
+
         self.fmi2Terminate          = getattr(self.dll, 'fmi2Terminate')
         self.fmi2Terminate.argtypes = [fmi2Component]
         self.fmi2Terminate.restype  = fmi2Status
@@ -141,6 +183,11 @@ class _FMU2(_FMU):
         self.fmi2FreeInstance          = getattr(self.dll, 'fmi2FreeInstance')
         self.fmi2FreeInstance.argtypes = [fmi2Component]
         self.fmi2FreeInstance.restype  = None
+
+
+    def assertNoError(self, status):
+        if status not in [fmi2OK, fmi2Warning]:
+            raise Exception("FMI call failed")
 
     def instantiate(self):
 
@@ -153,7 +200,7 @@ class _FMU2(_FMU):
                                               byref(callbacks), fmi2False,
                                               fmi2False)
 
-    def setupExperiment(self, tolerance, startTime, stopTime=None):
+    def setupExperiment(self, tolerance=None, startTime=0.0, stopTime=None):
 
         toleranceDefined = tolerance is not None
 
@@ -167,31 +214,61 @@ class _FMU2(_FMU):
 
         status = self.fmi2SetupExperiment(self.component, toleranceDefined, tolerance, startTime, stopTimeDefined,
                                           stopTime)
-        # TODO: check status
+        return status
 
     def enterInitializationMode(self):
         status = self.fmi2EnterInitializationMode(self.component)
-        # TODO: check status
+        self.assertNoError(status)
         return status
 
     def exitInitializationMode(self):
         status = self.fmi2ExitInitializationMode(self.component)
-        # TODO: check status
+        self.assertNoError(status)
         return status
 
     def getReal(self, vr):
+        vr = (fmi2ValueReference * len(vr))(*vr)
         value = (fmi2Real * len(vr))()
         status = self.fmi2GetReal(self.component, vr, len(vr), value)
-        # TODO: check status
+        self.assertNoError(status)
+        return list(value)
+
+    def getInteger(self, vr):
+        vr = (fmi2ValueReference * len(vr))(*vr)
+        value = (fmi2Integer * len(vr))()
+        status = self.fmi2GetInteger(self.component, vr, len(vr), value)
+        self.assertNoError(status)
+        return list(value)
+
+    def getBoolean(self, vr):
+        vr = (fmi2ValueReference * len(vr))(*vr)
+        value = (fmi2Boolean * len(vr))()
+        status = self.fmi2GetBoolean(self.component, vr, len(vr), value)
+        self.assertNoError(status)
+        return list(value)
+
+    def getString(self, vr):
+        vr = (fmi2ValueReference * len(vr))(*vr)
+        value = (fmi2String * len(vr))()
+        status = self.fmi2GetString(self.component, vr, len(vr), value)
+        self.assertNoError(status)
         return list(value)
 
     def setReal(self, vr, value):
+        vr = (fmi2ValueReference * len(vr))(*vr)
+        value = (fmi2Real * len(vr))(*value)
         status = self.fmi2SetReal(self.component, vr, len(vr), value)
-        # TODO: check status
+        self.assertNoError(status)
+
+    def setInteger(self, vr, value):
+        value = map(lambda s: s.encode('utf-8'), value)
+        value = (fmi2String * len(vr))(*value)
+        status = self.fmi2SetString(self.component, vr, len(vr), value)
+        self.assertNoError(status)
 
     def terminate(self):
         status = self.fmi2Terminate(self.component)
-        # TODO: check status
+        self.assertNoError(status)
 
     def freeInstance(self):
         self.fmi2FreeInstance(self.component)
@@ -255,23 +332,21 @@ class FMU2Model(_FMU2):
         self.fmi2CompletedIntegratorStep.argtypes = [fmi2Component, fmi2Boolean, POINTER(fmi2Boolean), POINTER(fmi2Boolean)]
         self.fmi2CompletedIntegratorStep.restype = fmi2Status
 
+    @fmi2Call
     def newDiscreteStates(self):
-        status = self.fmi2NewDiscreteStates(self.component, byref(self.eventInfo))
-        # TODO: check status
-        return status
+        return self.fmi2NewDiscreteStates(self.component, byref(self.eventInfo))
 
+    @fmi2Call
     def enterContinuousTimeMode(self):
-        status = self.fmi2EnterContinuousTimeMode(self.component)
-        # TODO: check status
-        return status
+        return self.fmi2EnterContinuousTimeMode(self.component)
 
+    @fmi2Call
     def enterEventMode(self):
-        status = self.fmi2EnterEventMode(self.component)
-        # TODO: check status
-        return status
+        return self.fmi2EnterEventMode(self.component)
 
+    @fmi2Call
     def getContinuousStates(self):
-        status = self.fmi2GetContinuousStates(self.component, self._px, self.x.size)
+        return self.fmi2GetContinuousStates(self.component, self._px, self.x.size)
         # TODO: check status
 
     def setContinuousStates(self):
@@ -312,9 +387,9 @@ class FMU2Slave(_FMU2):
         self.fmi2GetBooleanStatus.argtypes = [fmi2Component, fmi2StatusKind, POINTER(fmi2Boolean)]
         self.fmi2GetBooleanStatus.restype  = fmi2Status
 
+    @fmi2Call
     def doStep(self, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint=fmi2True):
         status = self.fmi2DoStep(self.component, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint)
-        # TODO: check status
         return status
 
     def getBooleanStatus(self, kind):

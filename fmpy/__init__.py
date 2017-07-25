@@ -4,25 +4,35 @@ import sys
 import os
 from ctypes import *
 import _ctypes
-
+import zipfile
+from tempfile import mkdtemp
 
 # determine the platform
-if sys.platform == 'win32':
+if sys.platform.startswith('win'):
     platform = 'win'
     sharedLibraryExtension = '.dll'
-    calloc = cdll.msvcrt.calloc
-    free = cdll.msvcrt.free
-    freeLibrary = _ctypes.FreeLibrary
 elif sys.platform.startswith('linux'):
     platform = 'linux'
     sharedLibraryExtension = '.so'
+elif sys.platform.startswith('darwin'):
+    platform = 'darwin'
+    sharedLibraryExtension = '.dylib'
+else:
+    raise Exception("Unsupported platform: " + sys.platform)
+
+
+# load the C library functions
+if sys.platform.startswith('win'):
+    calloc = cdll.msvcrt.calloc
+    free = cdll.msvcrt.free
+    freeLibrary = _ctypes.FreeLibrary
+else:
     from ctypes.util import find_library
     libc = CDLL(find_library("c"))
     calloc = libc.calloc
     free = libc.free
     freeLibrary = _ctypes.dlclose
-else:
-    raise Exception("Usupported platfrom: " + sys.platform)
+
 
 calloc.argtypes = [c_size_t, c_size_t]
 calloc.restype = c_void_p
@@ -122,6 +132,23 @@ def fmi_info(filename):
             raise Exception("Unsupported FMI version %s" % fmi_version)
 
     return fmi_version, fmi_types
+
+
+def extract(filename):
+    """ Extract a ZIP file to a temporary directory """
+
+    unzipdir = mkdtemp()
+
+    # expand the 8.3 paths on windows
+    if sys.platform.startswith('win'):
+        import win32file
+        unzipdir = win32file.GetLongPathName(unzipdir)
+
+    with zipfile.ZipFile(filename, 'r') as fmufile:
+        fmufile.extractall(unzipdir)
+
+    return unzipdir
+
 
 # make the functions available in the fmpy module
 from .model_description import read_model_description

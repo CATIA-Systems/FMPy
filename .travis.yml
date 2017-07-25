@@ -9,6 +9,7 @@ script:
   - pip install .
   - cd tests
   - python -m unittest discover
+  - cd ..
 
 deploy:
   provider: pypi

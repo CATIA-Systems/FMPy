@@ -61,6 +61,7 @@ To run the script type::
 
 ------------------------------------
 
-|copy| 2017 Dassault Systèmes
+|copyright| 2017 |Dassault Systemes|
 
-.. |copy|   unicode:: U+000A9
+.. |copyright|   unicode:: U+000A9
+.. |Dassault Systemes| unicode:: Dassault U+0020 Syst U+00E8 mes

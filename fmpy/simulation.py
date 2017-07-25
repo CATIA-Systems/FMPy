@@ -256,7 +256,7 @@ def simulate_fmu(filename, validate=True, start_time=None, stop_time=None, step_
 
     if step_size is None:
         total_time = stop_time - start_time
-        step_size = 10 ** (np.round(np.log10(0.09)) - 3)
+        step_size = 10 ** (np.round(np.log10(total_time)) - 3)
 
     unzipdir = extract(filename)
 

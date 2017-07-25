@@ -68,8 +68,10 @@ class fmi1EventInfo(Structure):
 
 
 def logger(component, instanceName, status, category, message):
-    # print(component, instanceName, status, category, message)
-    pass
+    if status == fmi1Warning:
+        print('[WARNING]', message)
+    elif status > fmi1Warning:
+        print('[ERROR]', message)
 
 
 def allocateMemory(nobj, size):

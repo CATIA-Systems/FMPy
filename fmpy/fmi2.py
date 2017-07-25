@@ -65,7 +65,10 @@ def fmi2Call(func):
 
 
 def logger(componentEnvironment, instanceName, status, category, message, va_list):
-    print(componentEnvironment, instanceName, status, category, message, va_list)
+    if status == fmi2Warning:
+        print('[WARNING]', message)
+    elif status > fmi2Warning:
+        print('[ERROR]', message)
 
 
 def allocateMemory(nobj, size):

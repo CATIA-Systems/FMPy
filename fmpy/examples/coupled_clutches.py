@@ -1,16 +1,18 @@
-from fmpy import CO_SIMULATION, MODEL_EXCHANGE, simulate_fmu, platform
+from fmpy import simulate_fmu, platform
 import requests
-import os
 import numpy as np
 
 
-def simulate_coupled_clutches(fmi_version='2.0', fmi_type=CO_SIMULATION, show_plot=True,
-                              output=['outputs[1]', 'outputs[2]', 'outputs[3]', 'outputs[4]']):
+def simulate_coupled_clutches(fmi_version='2.0',
+                              fmi_type='CoSimulation',
+                              output=['outputs[1]', 'outputs[2]', 'outputs[3]', 'outputs[4]'],
+                              fmi_logging=False,
+                              show_plot=True):
 
     # download the FMU and input file
     for filename in ['CoupledClutches.fmu', 'CoupledClutches_in.csv']:
         url = 'https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_' + fmi_version + '/'
-        url += ('CoSimulation' if fmi_type == CO_SIMULATION else 'ModelExchange') + '/'
+        url += fmi_type + '/'
         url += platform + '/MapleSim/2016.2/CoupledClutches/' + filename
         print('Downloading ' + url)
 
@@ -45,10 +47,11 @@ def simulate_coupled_clutches(fmi_version='2.0', fmi_type=CO_SIMULATION, show_pl
         'start_values': {'CoupledClutches1_freqHz': 0.4},
         'input': input,
         'output': output,
-        'validate': False
+        'validate': False,
+        'fmi_logging': fmi_logging
     }
 
-    print("Simulating CoupledClutches.fmu (FMI %s, %s)..." % (fmi_version, 'Co-Simulation' if fmi_type == CO_SIMULATION else 'Model Exchange'))
+    print("Simulating CoupledClutches.fmu (FMI %s, %s)..." % (fmi_version, fmi_type))
     result = simulate_fmu(**args)
 
     if show_plot:

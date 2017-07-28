@@ -44,10 +44,6 @@ if sys.maxsize > 2**32:
 else:
     platform += '32'
 
-# FMI type constants
-MODEL_EXCHANGE = 0
-CO_SIMULATION = 1
-
 
 def supported_platforms(filename):
     """ Get the platforms supported by the FMU without extracting it """

@@ -6,7 +6,7 @@ def readme():
         return f.read()
 
 setup(name="FMPy",
-      version="0.0.6",
+      version="0.0.7",
       description="Simulate Functional Mockup Units (FMUs) in Python",
       long_description=readme(),
       author="Torsten Sommer",

@@ -1,6 +1,6 @@
 import unittest
 from fmpy.examples.coupled_clutches import simulate_coupled_clutches
-from fmpy import CO_SIMULATION, MODEL_EXCHANGE, platform
+from fmpy import platform
 import numpy as np
 import sys
 
@@ -20,7 +20,7 @@ class ExamplesTest(unittest.TestCase):
             self.fail('Platform not supported')
 
         for fmi_version in fmi_versions:
-            for fmi_type in [CO_SIMULATION, MODEL_EXCHANGE]:
+            for fmi_type in ['CoSimulation', 'ModelExchange']:
 
                 result = simulate_coupled_clutches(fmi_version=fmi_version, fmi_type=fmi_type, show_plot=False,
                                                    output=['inputs', 'CoupledClutches1_freqHz'])

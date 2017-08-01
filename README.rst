@@ -36,7 +36,7 @@ Simulate an FMU on the command line
 To simulate CoupledClutches.fmu and plot the results download the FMU for your platform
 and run the following command in the folder where you downloaded the FMU::
 
-    $ python -m fmpy.simulate CoupledClutches.fmu
+    python -m fmpy.simulate CoupledClutches.fmu
 
 
 +---------------------+---------------------+---------------------+-------------------+-------------------+--------+
@@ -56,7 +56,7 @@ Simulate an FMU in Python
 For an example of how to simulate an FMU in Python see `coupled_clutches.py <fmpy/examples/coupled_clutches.py>`_.
 To run the script type::
 
-    $ python -m fmpy.examples.coupled_clutches
+    python -m fmpy.examples.coupled_clutches
 
 
 ------------------------------------

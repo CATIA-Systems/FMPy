@@ -1,5 +1,6 @@
 # noinspection PyPep8
 
+import pathlib
 from ctypes import *
 from . import free, freeLibrary, calloc
 from .fmi1 import _FMU
@@ -203,13 +204,14 @@ class _FMU2(_FMU):
     def instantiate(self, visible=False, loggingOn=False):
 
         kind = fmi2ModelExchange if isinstance(self, FMU2Model) else fmi2CoSimulation
+        resourceLocation = pathlib.Path(self.unzipDirectory, 'resources').as_uri()
         visible = fmi2True if visible else fmi2False
         loggingOn = fmi2True if loggingOn else fmi2False
 
         self.component = self.fmi2Instantiate(self.instanceName.encode('utf-8'),
                                               kind,
                                               self.guid.encode('utf-8'),
-                                              self.fmuLocation.encode('utf-8'),
+                                              resourceLocation.encode('utf-8'),
                                               byref(callbacks),
                                               visible,
                                               loggingOn)

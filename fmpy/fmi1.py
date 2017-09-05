@@ -310,15 +310,11 @@ class FMU1Slave(_FMU1):
                            [fmi1Component, fmi1Real, fmi1Real, fmi1Boolean],
                            fmi1Status)
 
-        self._fmi1Function('TerminateSlave',
-                           ['component'],
-                           [fmi1Component],
-                           fmi1Status)
+        self._fmi1Function('TerminateSlave', ['component'], [fmi1Component], fmi1Status)
 
-        self._fmi1Function('FreeSlaveInstance',
-                           ['component'],
-                           [fmi1Component],
-                           None)
+        self._fmi1Function('ResetSlave', ['component'], [fmi1Component], fmi1Status)
+
+        self._fmi1Function('FreeSlaveInstance', ['component'], [fmi1Component], None)
 
     def instantiate(self, mimeType='application/x-fmu-sharedlibrary', timeout=0, visible=fmi1False,
                     interactive=fmi1False, functions=callbacks, loggingOn=fmi1False):
@@ -340,6 +336,9 @@ class FMU1Slave(_FMU1):
 
     def terminate(self):
         return self.fmi1TerminateSlave(self.component)
+
+    def reset(self):
+        return self.fmi1ResetSlave(self.component)
 
     def freeInstance(self):
         self.fmi1FreeSlaveInstance(self.component)

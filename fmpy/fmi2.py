@@ -18,7 +18,7 @@ fmi2String               = c_char_p
 fmi2Type                 = c_int
 fmi2Byte                 = c_char
 
-fmi2Status = c_int
+fmi2Status  = c_int
 
 fmi2OK      = 0
 fmi2Warning = 1
@@ -114,21 +114,21 @@ class _FMU2(_FMU):
                             fmi2Boolean],
                            fmi2Component)
 
+        # Enter and exit initialization mode, terminate and reset
         self._fmi2Function('fmi2SetupExperiment',
                            ['component', 'toleranceDefined', 'tolerance', 'startTime', 'stopTimeDefined', 'stopTime'],
                            [fmi2Component, fmi2Boolean, fmi2Real, fmi2Real, fmi2Boolean, fmi2Real],
                            fmi2Status)
 
-        self._fmi2Function('fmi2EnterInitializationMode',
-                           ['component'],
-                           [fmi2Component],
-                           fmi2Status)
+        self._fmi2Function('fmi2EnterInitializationMode', ['component'], [fmi2Component], fmi2Status)
 
-        self._fmi2Function('fmi2ExitInitializationMode',
-                           ['component'],
-                           [fmi2Component],
-                           fmi2Status)
+        self._fmi2Function('fmi2ExitInitializationMode', ['component'], [fmi2Component], fmi2Status)
 
+        self._fmi2Function('fmi2Terminate', ['component'], [fmi2Component], fmi2Status)
+
+        self._fmi2Function('fmi2Reset', ['component'], [fmi2Component], fmi2Status)
+
+        # Getting and setting variable values
         self._fmi2Function('fmi2GetReal',
                            ['component', 'vr', 'nvr', 'value'],
                            [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Real)],
@@ -169,15 +169,14 @@ class _FMU2(_FMU):
                            [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2String)],
                            fmi2Status)
 
-        self._fmi2Function('fmi2Terminate',
-                           ['component'],
-                           [fmi2Component],
-                           fmi2Status)
+        # Getting and setting the internal FMU state
+        self._fmi2Function('fmi2GetFMUstate', ['component', 'state'], [fmi2Component, POINTER(fmi2FMUstate)], fmi2Status)
 
-        self._fmi2Function('fmi2FreeInstance',
-                           ['component'],
-                           [fmi2Component],
-                           None)
+        self._fmi2Function('fmi2SetFMUstate', ['component', 'state'], [fmi2Component, fmi2FMUstate], fmi2Status)
+
+        self._fmi2Function('fmi2FreeFMUstate', ['component', 'state'], [fmi2Component, POINTER(fmi2FMUstate)], fmi2Status)
+
+        self._fmi2Function('fmi2FreeInstance', ['component'], [fmi2Component], None)
 
     def _fmi2Function(self, fname, argnames, argtypes, restype):
 
@@ -235,6 +234,12 @@ class _FMU2(_FMU):
     def exitInitializationMode(self):
         return self.fmi2ExitInitializationMode(self.component)
 
+    def reset(self):
+        return self.fmi2Reset(self.component)
+
+    def terminate(self):
+        return self.fmi2Terminate(self.component)
+
     def getReal(self, vr):
         vr = (fmi2ValueReference * len(vr))(*vr)
         value = (fmi2Real * len(vr))()
@@ -269,8 +274,16 @@ class _FMU2(_FMU):
         value = (fmi2String * len(vr))(*value)
         self.fmi2SetString(self.component, vr, len(vr), value)
 
-    def terminate(self):
-        return self.fmi2Terminate(self.component)
+    def getFMUstate(self):
+        state = fmi2FMUstate()
+        self.fmi2GetFMUstate(self.component, byref(state))
+        return state
+
+    def setFMUstate(self, state):
+        self.fmi2SetFMUstate(self.component, state)
+
+    def freeFMUstate(self, state):
+        self.fmi2FreeFMUstate(self.component, byref(state))
 
     def freeInstance(self):
         self.fmi2FreeInstance(self.component)

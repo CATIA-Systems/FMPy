@@ -5,6 +5,7 @@ import zipfile
 from scipy.ndimage.filters import maximum_filter1d, minimum_filter1d
 import matplotlib.transforms as mtransforms
 import time
+import sys
 
 
 class ValidationError(Exception):
@@ -473,7 +474,7 @@ if __name__ == '__main__':
 
                 # simulate the FMU
                 result = fmpy.simulate_fmu(filename=fmu_filename, validate=False, step_size=step_size,
-                                           stop_time=ref_opts['StopTime'], input=input, output=output_variable_names, timeout=10)
+                                           stop_time=ref_opts['StopTime'], input=input, output=output_variable_names, timeout=None)
 
                 sim_cell = '<td class="status"><span class="label label-success">%.2f s</span></td>' % (time.time() - start_time)
 
@@ -520,6 +521,27 @@ if __name__ == '__main__':
             if not os.path.exists(fmu_result_dir):
                 os.makedirs(fmu_result_dir)
 
+            # write the indicator file
+            if skipped:
+                indicator_filename = 'rejected'
+            elif rel_out < 0.1:
+                indicator_filename = 'passed'
+            else:
+                indicator_filename = 'failed'
+
+            with open(os.path.join(fmu_result_dir, indicator_filename), 'w') as f:
+                pass
+
+            # write the ReadMe.txt file
+            with open(os.path.join(fmu_result_dir, 'ReadMe.txt'), 'w') as f:
+                f.write("""The cross-check results have been generated with the fmpy.cross_check module.
+To get more information install FMPy and enter the following command:
+python -m fmpy.cross_check --help
+
+Python version used for this simulation:
+
+""" + sys.version)
+
             result_filename = os.path.join(fmu_result_dir, 'result.csv')
 
             header = ','.join(map(lambda s: '"' + s + '"', result.dtype.names))
@@ -535,9 +557,6 @@ if __name__ == '__main__':
 
             plot_filename = os.path.join(fmu_result_dir, 'result.png')
             plot_result(result, reference, filename=plot_filename)
-
-            with open(os.path.join(fmu_result_dir, 'ReadMe.txt'), 'w') as f:
-                f.write("See FMPy documentation for how to run simulate FMUs\n")
 
             html.write(r'<td><div class="tooltip">' + res_cell + '<span class="tooltiptext"><img src="'
                        + os.path.join(model_path, 'result.png').replace('\\', '/') + '"/></span ></div></td>')

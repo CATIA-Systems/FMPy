@@ -204,6 +204,27 @@ def plot_result(result, reference=None, filename=None):
             plt.close(fig)
 
 
+def fmu_path_info(path):
+
+    head = path
+    values = []
+
+    while True:
+        head, tail = os.path.split(head)
+
+        if not tail:
+            break
+
+        values.append(tail)
+
+        if tail == 'FMI_1.0' or tail == 'FMI_2.0':
+            break
+
+    keys = ['model_name', 'tool_version', 'tool_name', 'platform', 'fmi_type', 'fmi_version']
+
+    return dict(zip(keys, values))
+
+
 if __name__ == '__main__':
     """ Run the FMI cross-check """
 
@@ -516,7 +537,14 @@ if __name__ == '__main__':
 
         if args.result_dir is not None and result is not None:
 
-            fmu_result_dir = os.path.join(args.result_dir, model_path)
+            # try to extract the cross-check info from the path
+            p_seg = fmu_path_info(root)
+
+            relative_result_dir = os.path.join(args.result_dir,
+                                               p_seg['fmi_version'], p_seg['fmi_type'], p_seg['platform'], 'FMPy', fmpy.__version__,
+                                               p_seg['tool_name'], p_seg['tool_version'], p_seg['model_name'])
+
+            fmu_result_dir = os.path.join(args.result_dir, relative_result_dir)
 
             if not os.path.exists(fmu_result_dir):
                 os.makedirs(fmu_result_dir)
@@ -536,13 +564,14 @@ if __name__ == '__main__':
             with open(os.path.join(fmu_result_dir, 'ReadMe.txt'), 'w') as f:
                 f.write("""The cross-check results have been generated with the fmpy.cross_check module.
 To get more information install FMPy and enter the following command:
+
 python -m fmpy.cross_check --help
 
 Python version used for this simulation:
 
 """ + sys.version)
 
-            result_filename = os.path.join(fmu_result_dir, 'result.csv')
+            result_filename = os.path.join(fmu_result_dir, model_name + '_out.csv')
 
             header = ','.join(map(lambda s: '"' + s + '"', result.dtype.names))
             np.savetxt(result_filename, result, delimiter=',', header=header, comments='', fmt='%g')
@@ -559,7 +588,7 @@ Python version used for this simulation:
             plot_result(result, reference, filename=plot_filename)
 
             html.write(r'<td><div class="tooltip">' + res_cell + '<span class="tooltiptext"><img src="'
-                       + os.path.join(model_path, 'result.png').replace('\\', '/') + '"/></span ></div></td>')
+                       + os.path.join(relative_result_dir, 'result.png').replace('\\', '/') + '"/></span ></div></td>')
         else:
             plot_filename = None
             html.write('<td class="status">' + res_cell + '</td>\n')

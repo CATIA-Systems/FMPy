@@ -28,7 +28,7 @@ fmi2Error   = 3
 fmi2Fatal   = 4
 fmi2Pending = 5
 
-fmi2CallbackLoggerTYPE         = CFUNCTYPE(None, fmi2ComponentEnvironment, fmi2String, fmi2Status, fmi2String, fmi2String, fmi2String)
+fmi2CallbackLoggerTYPE         = CFUNCTYPE(None, fmi2ComponentEnvironment, fmi2String, fmi2Status, fmi2String, fmi2String)
 fmi2CallbackAllocateMemoryTYPE = CFUNCTYPE(c_void_p, c_size_t, c_size_t)
 fmi2CallbackFreeMemoryTYPE     = CFUNCTYPE(None, c_void_p)
 fmi2StepFinishedTYPE           = CFUNCTYPE(None, fmi2ComponentEnvironment, fmi2Status)
@@ -46,7 +46,7 @@ fmi2LastSuccessfulTime = 2
 fmi2Terminated         = 3
 
 
-def logger(componentEnvironment, instanceName, status, category, message, va_list):
+def logger(componentEnvironment, instanceName, status, category, message):
     if status == fmi2Warning:
         print('[WARNING]', message)
     elif status > fmi2Warning:

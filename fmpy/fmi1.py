@@ -77,6 +77,7 @@ callbacks.stepFinished = None
 
 
 class _FMU(object):
+    """ Base class for all FMUs """
 
     def __init__(self, guid, modelIdentifier, unzipDirectory, instanceName, logFMICalls=False):
 
@@ -84,7 +85,6 @@ class _FMU(object):
         self.modelIdentifier = modelIdentifier
         self.unzipDirectory = unzipDirectory
         self.instanceName = instanceName if instanceName is not None else self.modelIdentifier
-        self.fmuLocation = pathlib.Path(self.unzipDirectory).as_uri()
         self.logFMICalls = logFMICalls
 
         # remember the current working directory
@@ -310,22 +310,20 @@ class FMU1Slave(_FMU1):
                            [fmi1Component, fmi1Real, fmi1Real, fmi1Boolean],
                            fmi1Status)
 
-        self._fmi1Function('TerminateSlave',
-                           ['component'],
-                           [fmi1Component],
-                           fmi1Status)
+        self._fmi1Function('TerminateSlave', ['component'], [fmi1Component], fmi1Status)
 
-        self._fmi1Function('FreeSlaveInstance',
-                           ['component'],
-                           [fmi1Component],
-                           None)
+        self._fmi1Function('ResetSlave', ['component'], [fmi1Component], fmi1Status)
+
+        self._fmi1Function('FreeSlaveInstance', ['component'], [fmi1Component], None)
 
     def instantiate(self, mimeType='application/x-fmu-sharedlibrary', timeout=0, visible=fmi1False,
                     interactive=fmi1False, functions=callbacks, loggingOn=fmi1False):
 
+        fmuLocation = pathlib.Path(self.unzipDirectory).as_uri()
+
         self.component = self.fmi1InstantiateSlave(self.instanceName.encode('UTF-8'),
                                                    self.guid.encode('UTF-8'),
-                                                   self.fmuLocation.encode('UTF-8'),
+                                                   fmuLocation.encode('UTF-8'),
                                                    mimeType.encode('UTF-8'),
                                                    timeout,
                                                    visible,
@@ -340,6 +338,9 @@ class FMU1Slave(_FMU1):
 
     def terminate(self):
         return self.fmi1TerminateSlave(self.component)
+
+    def reset(self):
+        return self.fmi1ResetSlave(self.component)
 
     def freeInstance(self):
         self.fmi1FreeSlaveInstance(self.component)

@@ -1,3 +1,5 @@
+""" Simulate Functional Mockup Units (FMUs) in Python """
+
 # noinspection PyPep8
 
 import sys
@@ -6,6 +8,9 @@ from ctypes import *
 import _ctypes
 import zipfile
 from tempfile import mkdtemp
+
+__version__ = '0.0.8'
+
 
 # determine the platform
 if sys.platform.startswith('win'):

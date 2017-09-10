@@ -21,13 +21,11 @@ Installation
 
 To install the latest release from PyPI or update an existing installation type::
 
-    pip install --upgrade fmpy
+    python -m pip install --upgrade fmpy
 
-on the command line or install the latest development version from source::
+or, to install the latest development version::
 
-    git clone -b develop https://github.com/CATIA-Systems/FMPy.git
-    cd fmpy
-    pip install --upgrade --no-deps --force-reinstall .
+    python -m pip install --upgrade https://github.com/CATIA-Systems/FMPy/archive/develop.zip
 
 
 Simulate an FMU on the command line

@@ -5,6 +5,7 @@ import zipfile
 from scipy.ndimage.filters import maximum_filter1d, minimum_filter1d
 import matplotlib.transforms as mtransforms
 import time
+import sys
 
 
 class ValidationError(Exception):
@@ -201,6 +202,27 @@ def plot_result(result, reference=None, filename=None):
                 os.makedirs(dir)
             fig.savefig(filename=filename)
             plt.close(fig)
+
+
+def fmu_path_info(path):
+
+    head = path
+    values = []
+
+    while True:
+        head, tail = os.path.split(head)
+
+        if not tail:
+            break
+
+        values.append(tail)
+
+        if tail == 'FMI_1.0' or tail == 'FMI_2.0':
+            break
+
+    keys = ['model_name', 'tool_version', 'tool_name', 'platform', 'fmi_type', 'fmi_version']
+
+    return dict(zip(keys, values))
 
 
 if __name__ == '__main__':
@@ -426,9 +448,6 @@ if __name__ == '__main__':
                 return True  # cannot be solved w/ Euler
 
             # win64
-            if r'FMI_2.0\CoSimulation\win64\FMIToolbox_MATLAB\2.1' in fmu_filename:
-                return True  # instantiate() does not return in release mode
-
             if r'FMI_2.0\CoSimulation\win64\AMESim\15\MIS_cs' in fmu_filename:
                 return True  # exitInitializationMode() does not return in release mode
 
@@ -473,7 +492,7 @@ if __name__ == '__main__':
 
                 # simulate the FMU
                 result = fmpy.simulate_fmu(filename=fmu_filename, validate=False, step_size=step_size,
-                                           stop_time=ref_opts['StopTime'], input=input, output=output_variable_names, timeout=10)
+                                           stop_time=ref_opts['StopTime'], input=input, output=output_variable_names, timeout=None)
 
                 sim_cell = '<td class="status"><span class="label label-success">%.2f s</span></td>' % (time.time() - start_time)
 
@@ -515,12 +534,41 @@ if __name__ == '__main__':
 
         if args.result_dir is not None and result is not None:
 
-            fmu_result_dir = os.path.join(args.result_dir, model_path)
+            # try to extract the cross-check info from the path
+            p_seg = fmu_path_info(root)
+
+            relative_result_dir = os.path.join(args.result_dir,
+                                               p_seg['fmi_version'], p_seg['fmi_type'], p_seg['platform'], 'FMPy', fmpy.__version__,
+                                               p_seg['tool_name'], p_seg['tool_version'], p_seg['model_name'])
+
+            fmu_result_dir = os.path.join(args.result_dir, relative_result_dir)
 
             if not os.path.exists(fmu_result_dir):
                 os.makedirs(fmu_result_dir)
 
-            result_filename = os.path.join(fmu_result_dir, 'result.csv')
+            # write the indicator file
+            if skipped:
+                indicator_filename = 'rejected'
+            elif rel_out < 0.1:
+                indicator_filename = 'passed'
+            else:
+                indicator_filename = 'failed'
+
+            with open(os.path.join(fmu_result_dir, indicator_filename), 'w') as f:
+                pass
+
+            # write the ReadMe.txt file
+            with open(os.path.join(fmu_result_dir, 'ReadMe.txt'), 'w') as f:
+                f.write("""The cross-check results have been generated with the fmpy.cross_check module.
+To get more information install FMPy and enter the following command:
+
+python -m fmpy.cross_check --help
+
+Python version used for this simulation:
+
+""" + sys.version)
+
+            result_filename = os.path.join(fmu_result_dir, model_name + '_out.csv')
 
             header = ','.join(map(lambda s: '"' + s + '"', result.dtype.names))
             np.savetxt(result_filename, result, delimiter=',', header=header, comments='', fmt='%g')
@@ -536,11 +584,8 @@ if __name__ == '__main__':
             plot_filename = os.path.join(fmu_result_dir, 'result.png')
             plot_result(result, reference, filename=plot_filename)
 
-            with open(os.path.join(fmu_result_dir, 'ReadMe.txt'), 'w') as f:
-                f.write("See FMPy documentation for how to run simulate FMUs\n")
-
             html.write(r'<td><div class="tooltip">' + res_cell + '<span class="tooltiptext"><img src="'
-                       + os.path.join(model_path, 'result.png').replace('\\', '/') + '"/></span ></div></td>')
+                       + os.path.join(relative_result_dir, 'result.png').replace('\\', '/') + '"/></span ></div></td>')
         else:
             plot_filename = None
             html.write('<td class="status">' + res_cell + '</td>\n')

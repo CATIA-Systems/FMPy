@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.0.8] - 2017-09-10
 
 ### Fixed
 - resourceLocation in FMU2.instantiate() now points to resources directory instead of unzip directory

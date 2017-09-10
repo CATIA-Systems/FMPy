@@ -68,6 +68,7 @@ def stepFinished(componentEnvironment, status):
 
 
 class fmi2CallbackFunctions(Structure):
+
     _fields_ = [('logger',               fmi2CallbackLoggerTYPE),
                 ('allocateMemory',       fmi2CallbackAllocateMemoryTYPE),
                 ('freeMemory',           fmi2CallbackFreeMemoryTYPE),
@@ -81,7 +82,9 @@ callbacks.allocateMemory       = fmi2CallbackAllocateMemoryTYPE(allocateMemory)
 callbacks.freeMemory           = fmi2CallbackFreeMemoryTYPE(freeMemory)
 #callbacks.componentEnvironment = None
 
+
 class fmi2EventInfo(Structure):
+
     _fields_ = [('newDiscreteStatesNeeded',           fmi2Boolean),
                 ('terminateSimulation',               fmi2Boolean),
                 ('nominalsOfContinuousStatesChanged', fmi2Boolean),
@@ -180,6 +183,10 @@ class _FMU2(_FMU):
         self._fmi2Function('fmi2FreeInstance', ['component'], [fmi2Component], None)
 
     def _fmi2Function(self, fname, argnames, argtypes, restype):
+
+        if not hasattr(self.dll, fname):
+            setattr(self, fname, None)
+            return
 
         f = getattr(self.dll, fname)
         f.argtypes = argtypes

@@ -448,9 +448,6 @@ if __name__ == '__main__':
                 return True  # cannot be solved w/ Euler
 
             # win64
-            if r'FMI_2.0\CoSimulation\win64\FMIToolbox_MATLAB\2.1' in fmu_filename:
-                return True  # instantiate() does not return in release mode
-
             if r'FMI_2.0\CoSimulation\win64\AMESim\15\MIS_cs' in fmu_filename:
                 return True  # exitInitializationMode() does not return in release mode
 

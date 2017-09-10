@@ -9,7 +9,7 @@ import _ctypes
 import zipfile
 from tempfile import mkdtemp
 
-__version__ = '0.7.0'
+__version__ = '0.0.8'
 
 
 # determine the platform

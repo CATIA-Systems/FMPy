@@ -1,4 +1,4 @@
-from fmpy import simulate_fmu, platform
+from fmpy import simulate_fmu, platform, download_test_file
 import requests
 import numpy as np
 
@@ -11,28 +11,7 @@ def simulate_coupled_clutches(fmi_version='2.0',
 
     # download the FMU and input file
     for filename in ['CoupledClutches.fmu', 'CoupledClutches_in.csv']:
-        url = 'https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_' + fmi_version + '/'
-        url += fmi_type + '/'
-        url += platform + '/MapleSim/2016.2/CoupledClutches/' + filename
-        print('Downloading ' + url)
-
-        status_code = -1
-
-        # try to download the file three times
-        try:
-            for _ in range(3):
-                if status_code != 200:
-                    response = requests.get(url)
-                    status_code = response.status_code
-        except:
-            pass
-
-        if status_code != 200:
-            print("Download failed")
-            return None
-
-        with open(filename, 'wb') as f:
-            f.write(response.content)
+        download_test_file(fmi_version, fmi_type, 'MapleSim', '2016.2', 'CoupledClutches', filename)
 
     print("Loading input...")
     input = np.genfromtxt('CoupledClutches_in.csv', delimiter=',', names=True)

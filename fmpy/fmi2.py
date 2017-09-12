@@ -1,4 +1,4 @@
-# noinspection PyPep8
+""" FMI 2.0 interface """
 
 import pathlib
 from ctypes import *
@@ -279,9 +279,14 @@ class _FMU2(_FMU):
         self.fmi2SetReal(self.component, vr, len(vr), value)
 
     def setInteger(self, vr, value):
-        value = map(lambda s: s.encode('utf-8'), value)
-        value = (fmi2String * len(vr))(*value)
-        self.fmi2SetString(self.component, vr, len(vr), value)
+        vr = (fmi2ValueReference * len(vr))(*vr)
+        value = (fmi2Integer * len(vr))(*value)
+        self.fmi2SetInteger(self.component, vr, len(vr), value)
+
+    def setBoolean(self, vr, value):
+        vr = (fmi2ValueReference * len(vr))(*vr)
+        value = (fmi2Boolean * len(vr))(*value)
+        self.fmi2SetBoolean(self.component, vr, len(vr), value)
 
     def getFMUstate(self):
         state = fmi2FMUstate()

@@ -1,7 +1,5 @@
 """ Simulate Functional Mockup Units (FMUs) in Python """
 
-# noinspection PyPep8
-
 import sys
 import os
 from ctypes import *
@@ -149,6 +147,36 @@ def extract(filename):
         fmufile.extractall(unzipdir)
 
     return unzipdir
+
+
+def download_test_file(fmi_version, fmi_type, tool_name, tool_version, model_name, filename):
+    """ Download a file from the Test FMUs repository to the current directory """
+
+    import requests
+
+    # download the FMU and input file
+    url = 'https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_' + fmi_version
+    url = '/'.join([url, fmi_type, platform, tool_name, tool_version, model_name, filename])
+
+    print('Downloading ' + url)
+
+    status_code = -1
+
+    # try to download the file three times
+    try:
+        for _ in range(3):
+            if status_code != 200:
+                response = requests.get(url)
+                status_code = response.status_code
+    except:
+        pass
+
+    if status_code != 200:
+        raise Exception("Failed to download %s (status code: %d)" % (url, status_code))
+
+    # write the file
+    with open(filename, 'wb') as f:
+        f.write(response.content)
 
 
 # make the functions available in the fmpy module

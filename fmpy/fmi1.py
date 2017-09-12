@@ -1,10 +1,11 @@
-# noinspection PyPep8
+""" FMI 1.0 interface """
 
 import os
 import pathlib
 import numpy as np
 from ctypes import *
 from . import free, freeLibrary, platform, sharedLibraryExtension, calloc
+
 
 fmi1Component      = c_void_p
 fmi1ValueReference = c_uint
@@ -275,8 +276,13 @@ class _FMU1(_FMU):
         self.assertNoError(status)
 
     def setBoolean(self, vr, value):
+        # convert value to a byte string
+        s = b''
+        for v in value:
+            s += fmi1True if v else fmi1False
+
         vr = (fmi1ValueReference * len(vr))(*vr)
-        value = (fmi1Boolean * len(vr))(*value)
+        value = (fmi1Boolean * len(vr))(s)
         status = self.fmi1SetBoolean(self.component, vr, len(vr), value)
         self.assertNoError(status)
 

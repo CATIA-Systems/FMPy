@@ -288,6 +288,12 @@ class _FMU2(_FMU):
         value = (fmi2Boolean * len(vr))(*value)
         self.fmi2SetBoolean(self.component, vr, len(vr), value)
 
+    def setString(self, vr, value):
+        vr = (fmi2ValueReference * len(vr))(*vr)
+        value = map(lambda s: s.encode('utf-8'), value)
+        value = (fmi2String * len(vr))(*value)
+        self.fmi2SetString(self.component, vr, len(vr), value)
+
     def getFMUstate(self):
         state = fmi2FMUstate()
         self.fmi2GetFMUstate(self.component, byref(state))

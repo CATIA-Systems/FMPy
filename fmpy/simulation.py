@@ -227,7 +227,7 @@ def apply_start_values(fmu, modelDescription, start_values):
         elif v.type == 'Boolean':
             fmu.setBoolean([vr], [value])
         elif v.type == 'String':
-            raise NotImplementedError("String parameters are not supported yet.")
+            fmu.setString([vr], [value])
 
 
 def simulate_fmu(filename,

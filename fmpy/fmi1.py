@@ -231,49 +231,39 @@ class _FMU1(_FMU):
 
         setattr(self, 'fmi1' + name, w)
 
-    def assertNoError(self, status):
-        if status not in [fmi1OK, fmi1Warning]:
-            raise Exception("FMI call failed")
-
     def getReal(self, vr):
         vr = (fmi1ValueReference * len(vr))(*vr)
         value = (fmi1Real * len(vr))()
-        status = self.fmi1GetReal(self.component, vr, len(vr), value)
-        self.assertNoError(status)
+        self.fmi1GetReal(self.component, vr, len(vr), value)
         return list(value)
 
     def getInteger(self, vr):
         vr = (fmi1ValueReference * len(vr))(*vr)
         value = (fmi1Integer * len(vr))()
-        status = self.fmi1GetInteger(self.component, vr, len(vr), value)
-        self.assertNoError(status)
+        self.fmi1GetInteger(self.component, vr, len(vr), value)
         return list(value)
 
     def getBoolean(self, vr):
         vr = (fmi1ValueReference * len(vr))(*vr)
         value = (fmi1Boolean * len(vr))()
-        status = self.fmi1GetBoolean(self.component, vr, len(vr), value)
-        self.assertNoError(status)
+        self.fmi1GetBoolean(self.component, vr, len(vr), value)
         return list(map(lambda b: 0 if b == fmi1False else 1, value))
 
     def getString(self, vr):
         vr = (fmi1ValueReference * len(vr))(*vr)
         value = (fmi1String * len(vr))()
-        status = self.fmi1GetString(self.component, vr, len(vr), value)
-        self.assertNoError(status)
+        self.fmi1GetString(self.component, vr, len(vr), value)
         return list(value)
 
     def setReal(self, vr, value):
         vr = (fmi1ValueReference * len(vr))(*vr)
         value = (fmi1Real * len(vr))(*value)
-        status = self.fmi1SetReal(self.component, vr, len(vr), value)
-        self.assertNoError(status)
+        self.fmi1SetReal(self.component, vr, len(vr), value)
 
     def setInteger(self, vr, value):
         vr = (fmi1ValueReference * len(vr))(*vr)
         value = (fmi1Integer * len(vr))(*value)
-        status = self.fmi1SetInteger(self.component, vr, len(vr), value)
-        self.assertNoError(status)
+        self.fmi1SetInteger(self.component, vr, len(vr), value)
 
     def setBoolean(self, vr, value):
         # convert value to a byte string
@@ -283,15 +273,13 @@ class _FMU1(_FMU):
 
         vr = (fmi1ValueReference * len(vr))(*vr)
         value = (fmi1Boolean * len(vr))(s)
-        status = self.fmi1SetBoolean(self.component, vr, len(vr), value)
-        self.assertNoError(status)
+        self.fmi1SetBoolean(self.component, vr, len(vr), value)
 
     def setString(self, vr, value):
         vr = (fmi1ValueReference * len(vr))(*vr)
         value = map(lambda s: s.encode('utf-8'), value)
         value = (fmi1String * len(vr))(*value)
-        status = self.fmi1SetString(self.component, vr, len(vr), value)
-        self.assertNoError(status)
+        self.fmi1SetString(self.component, vr, len(vr), value)
 
 
 class FMU1Slave(_FMU1):

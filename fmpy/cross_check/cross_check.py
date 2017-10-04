@@ -2,246 +2,14 @@ import os
 import numpy as np
 import fmpy
 import zipfile
-from scipy.ndimage.filters import maximum_filter1d, minimum_filter1d
-import matplotlib.transforms as mtransforms
 import time
 import sys
+from .utilities import read_csv, fmu_path_info, plot_result, read_ref_opt_file, validate_result
 
 
-class ValidationError(Exception):
+def cross_check(fmus_dir, report, result_dir, simulate, tool_name, tool_version, skip):
 
-    pass
-
-
-def read_csv(filename, variable_names=[], validate=True):
-
-    # pass an empty string as deletechars to preserve special characters
-    traj = np.genfromtxt(filename, delimiter=',', names=True, deletechars='')
-
-    if not validate:
-        return traj
-
-    # get the time
-    time = traj[traj.dtype.names[0]]
-
-    # check if the time is monotonically increasing
-    if np.any(np.diff(time) < 0):
-        raise ValidationError("Values in first column (time) are not monotonically increasing")
-
-    # get the trajectory names (without the time)
-    traj_names = traj.dtype.names[1:]
-
-    # check if the variable names match the trajectory names
-    for variable_name in variable_names:
-        if variable_name not in traj_names:
-            raise ValidationError("Trajectory of '" + variable_name + "' is missing")
-
-    return traj
-
-
-def read_ref_opt_file(filename):
-
-    opts = {}
-
-    with open(filename, 'r') as f:
-        for line in f:
-            segments = line.split(',')
-            if len(segments) == 2:
-                opts[segments[0]] = float(segments[1])
-
-    # check for required elements
-    for element in ['StepSize', 'StartTime', 'StopTime', 'RelTol']:
-        if not element in opts:
-            raise Exception("Missing element '%s'" % element)
-
-    start_time = opts['StartTime']
-    stop_time = opts['StopTime']
-    step_size = opts['StepSize']
-
-    if start_time >= stop_time:
-        raise Exception("StartTime must be < StopTime")
-
-    if step_size < 0 or step_size > (stop_time - start_time):
-        raise Exception("StepSize must be >= 0 and <= (StopTime - StartTime)")
-
-    return opts
-
-
-def validate_signal(t, y, t_ref, y_ref, num=1000, dx=20, dy=0.1):
-    """ Validate a signal y(t) against a reference signal y_ref(t_ref)
-
-        t       time of the signal
-        y       values of the signal
-        t_ref   time of the reference signal
-        y_ref   values of the reference signal
-
-    """
-
-    # re-sample the reference signal into a uniform grid
-    t_band = np.linspace(start=t_ref[0], stop=t_ref[-1], num=num)
-
-    # sort out the duplicate samples before the interpolation
-    m = np.concatenate(([True], np.diff(t_ref) > 0))
-
-    y_band = np.interp(x=t_band, xp=t_ref[m], fp=y_ref[m])
-
-    y_band_min = np.min(y_band)
-    y_band_max = np.max(y_band)
-
-    # calculate the width of the band
-    if y_band_min == y_band_max:
-        w = 0.5 if y_band_min == 0 else np.abs(y_band_min) * dy
-    else:
-        w = (y_band_max - y_band_min) * dy
-
-    # calculate the lower and upper limits
-    y_min = minimum_filter1d(input=y_band, size=dx) - w
-    y_max = maximum_filter1d(input=y_band, size=dx) + w
-
-    # find outliers
-    y_min_i = np.interp(x=t, xp=t_band, fp=y_min)
-    y_max_i = np.interp(x=t, xp=t_band, fp=y_max)
-    i_out = np.logical_or(y < y_min_i, y > y_max_i)
-
-    return t_band, y_min, y_max, i_out
-
-
-def validate_result(result, reference):
-
-    t_ref = reference[reference.dtype.names[0]]
-    t_res = result[result.dtype.names[0]]
-
-    rel_out = 0
-
-    for name in result.dtype.names[1:]:
-
-        if name not in reference.dtype.names:
-            continue
-
-        y_ref = reference[name]
-        y_res = result[name]
-        _, _, _, outliers = validate_signal(t=t_res, y=y_res, t_ref=t_ref, y_ref=y_ref)
-        rel_out = np.max([np.sum(outliers) / float(len(outliers)), rel_out])
-
-    return rel_out
-
-
-# noinspection PyPackageRequirements
-def plot_result(result, reference=None, filename=None):
-
-    import matplotlib.pylab as pylab
-    import matplotlib.pyplot as plt
-    from collections import Iterable
-
-    params = {
-            # 'legend.fontsize': 'medium',
-            # 'figure.figsize': (10, 8),
-            'legend.fontsize': 8,
-            'axes.labelsize': 8,
-            # 'axes.titlesize': 'medium',
-            'xtick.labelsize': 8,
-            'ytick.labelsize': 8,
-            'axes.linewidth': 0.5,
-    }
-
-    pylab.rcParams.update(params)
-
-    time = result['time']
-
-    # plat at most 20 signals
-    names = result.dtype.names[1:20]
-
-    if len(names) > 0:
-
-        fig, axes = plt.subplots(len(names), sharex=True)
-
-        fig.set_facecolor('white')
-
-        if not isinstance(axes, Iterable):
-            axes = [axes]
-
-        for ax, name in zip(axes, names):
-
-            y = result[name]
-
-            ax.grid(b=True, which='both', color='0.8', linestyle='-', zorder=0)
-
-            if reference is not None and name in reference.dtype.names:
-                t_ref = reference[reference.dtype.names[0]]
-                y_ref = reference[name]
-
-                t_band, y_min, y_max, i_out = validate_signal(t=time, y=y, t_ref=t_ref, y_ref=y_ref)
-
-                ax.fill_between(t_band, y_min, y_max, facecolor=(0, 0.5, 0), alpha=0.1)
-                ax.plot(t_band, y_min, color=(0, 0.5, 0), linewidth=1, label='lower bound', zorder=101, alpha=0.5)
-                ax.plot(t_band, y_max, color=(0, 0.5, 0), linewidth=1, label='upper bound', zorder=101, alpha=0.5)
-
-                # mark the outliers
-                # use the data coordinates for the x-axis and the axes coordinates for the y-axis
-                trans = mtransforms.blended_transform_factory(ax.transData, ax.transAxes)
-                ax.fill_between(time, 0, 1, where=i_out, facecolor='red', alpha=0.5, transform=trans)
-
-            ax.plot(time, y, 'b', label='result', zorder=101)
-
-            if len(name) < 18:
-                ax.set_ylabel(name)
-            else:
-                # shorten long variable names
-                ax.set_ylabel('...' + name[-15:])
-
-            ax.margins(x=0, y=0.05)
-
-        fig.set_size_inches(w=8, h=1.5*len(names), forward=True)
-        plt.tight_layout()
-
-        if filename is None:
-            plt.show()
-        else:
-            dir, _ = os.path.split(filename)
-            if not os.path.isdir(dir):
-                os.makedirs(dir)
-            fig.savefig(filename=filename)
-            plt.close(fig)
-
-
-def fmu_path_info(path):
-
-    head = path
-    values = []
-
-    while True:
-        head, tail = os.path.split(head)
-
-        if not tail:
-            break
-
-        values.append(tail)
-
-        if tail == 'FMI_1.0' or tail == 'FMI_2.0':
-            break
-
-    keys = ['model_name', 'tool_version', 'tool_name', 'platform', 'fmi_type', 'fmi_version']
-
-    return dict(zip(keys, values))
-
-
-if __name__ == '__main__':
-    """ Run the FMI cross-check """
-
-    import argparse
-
-    parser = argparse.ArgumentParser(description='run the FMI cross-check')
-
-    parser.add_argument('--fmus_dir', default=os.getcwd(), help='the directory that contains the test FMUs')
-    parser.add_argument('--report', default='report.html', help='name of the report file')
-    parser.add_argument('--result_dir', help='the directory to store the results')
-    parser.add_argument('--include', nargs='+', default=[], help='path segments to include')
-    parser.add_argument('--exclude', nargs='+', default=[], help='path segments to exclude')
-    parser.add_argument('--simulate', action='store_true', help='simulate the FMU')
-
-    args = parser.parse_args()
-
-    html = open(args.report, 'w')
+    html = open(report, 'w')
     html.write('''<html>
     <head>
         <style>
@@ -316,7 +84,7 @@ if __name__ == '__main__':
         <table>''')
     html.write('<tr><th>Model</th><th>FMU</th><th>Opts</th><th>In</th><th>Ref</th><th>Doc</th><th>Sim</th><th>Res</th></tr>\n')
 
-    for root, dirs, files in os.walk(args.fmus_dir):
+    for root, dirs, files in os.walk(fmus_dir):
 
         fmu_filename = None
 
@@ -329,19 +97,17 @@ if __name__ == '__main__':
         if fmu_filename is None:
             continue
 
-        def skip(include, exclude):
+        # dictionary that contains the information about the FMU
+        options = {'fmu_filename': fmu_filename}
 
-            for pattern in exclude:
-                if pattern in fmu_filename:
-                    return True
+        # extract the cross-check info from the path
+        options.update(fmu_path_info(root))
 
-            for pattern in include:
-                if pattern not in fmu_filename:
-                    return True
+        # skip FMUs in _FMIModelicaTest and other directories
+        if options['fmi_version'] not in ['FMI_1.0', 'FMI_2.0']:
+            continue
 
-            return False
-
-        if skip(include=args.include, exclude=args.exclude):
+        if skip(options):
             continue
 
         print(root)
@@ -418,16 +184,17 @@ if __name__ == '__main__':
             in_path = os.path.join(root, fmu_name + '_in.csv')
             input, in_csv_cell = check_csv_file(filename=in_path, variables=input_variables)
         else:
+            in_path = None
             in_csv_cell = '<td class="status"><span class="label label-default">n/a</span></td>'
 
         # check the reference file
         ref_path = os.path.join(root, fmu_name + '_ref.csv')
         reference, ref_csv_cell = check_csv_file(filename=ref_path, variables=output_variables)
 
-        supported_platforms = fmpy.supported_platforms(fmu_filename)
+        # supported_platforms = fmpy.supported_platforms(fmu_filename)
 
         # this will remove any trailing (back)slashes
-        fmus_dir = os.path.normpath(args.fmus_dir)
+        fmus_dir = os.path.normpath(fmus_dir)
         model_path = fmu_filename[len(fmus_dir) + 1:]
         model_path = os.path.dirname(model_path)
         fmu_simple_filename = os.path.basename(fmu_filename)
@@ -440,47 +207,28 @@ if __name__ == '__main__':
         # SIMULATION #
         ##############
 
-        def skip_simulation():
-            """ Sort out the FMUs that crash the process """
-
-            # fullRobot w/ ModelExchange
-            if 'ModelExchange' in fmu_filename and 'fullRobot' in fmu_filename:
-                return True  # cannot be solved w/ Euler
-
-            # win64
-            if r'FMI_2.0\CoSimulation\win64\AMESim\15\MIS_cs' in fmu_filename:
-                return True  # exitInitializationMode() does not return in release mode
-
-            # linux64
-            if 'FMI_1.0/ModelExchange/linux64/JModelica.org/1.15' in fmu_filename:
-                return True  # exit code 139 (interrupted by signal 11: SIGSEGV)
-
-            if 'FMI_1.0/ModelExchange/linux64/AMESim' in fmu_filename:
-                return True  # exit code 139 (interrupted by signal 11: SIGSEGV)
-
-            return False
-
         skipped = True
 
-        if not args.simulate:
+        if simulate is None:
             sim_cell = '<td class="status" title="Simulation is disabled"><span class="label label-default">skipped</span></td>'
         elif ref_opts is None:
             sim_cell = '<td class="status" title="Failed to read *_ref.opt file"><span class="label label-default">skipped</span></td>'
         elif input_variables and input is None:
             sim_cell = '<td class="status" title="Input file is invalid"><span class="label label-default">skipped</span></td>'
-        elif fmpy.platform not in supported_platforms:
-            sim_cell = '<td class="status" title="The current platform (' + fmpy.platform + ') is not supported by the FMU (' + ', '.join(supported_platforms) + ')"><span class="label label-default">skipped</span></td>'
-        elif skip_simulation():
-            sim_cell = '<td class="status" title="FMU not supported (yet)"><span class="label label-warning">n/s</span></td>'
-            print("Skipping simulation")
+        # elif fmpy.platform not in supported_platforms:
+        #     sim_cell = '<td class="status" title="The current platform (' + fmpy.platform + ') is not supported by the FMU (' + ', '.join(supported_platforms) + ')"><span class="label label-default">skipped</span></td>'
+        # elif skip():
+        #     sim_cell = '<td class="status" title="FMU not supported (yet)"><span class="label label-warning">n/s</span></td>'
+        #     print("Skipping simulation")
         else:
             skipped = False
 
             step_size = ref_opts['StepSize']
+            stop_time = ref_opts['StopTime']
 
             # variable step solvers are currently not supported
-            if step_size == 0:
-                step_size = None
+            # if step_size == 0:
+            #     step_size = None
 
             if reference is not None:
                 output_variable_names = reference.dtype.names[1:]
@@ -490,9 +238,17 @@ if __name__ == '__main__':
             try:
                 start_time = time.time()
 
+                options['fmu_filename'] = fmu_filename
+                options['step_size'] = step_size
+                options['stop_time'] = stop_time
+
+                if in_path is not None:
+                    options['input_filename'] = in_path
+
+                options['output_variable_names'] = output_variable_names
+
                 # simulate the FMU
-                result = fmpy.simulate_fmu(filename=fmu_filename, validate=False, step_size=step_size,
-                                           stop_time=ref_opts['StopTime'], input=input, output=output_variable_names, timeout=None)
+                result = simulate(options)
 
                 sim_cell = '<td class="status"><span class="label label-success">%.2f s</span></td>' % (time.time() - start_time)
 
@@ -523,7 +279,7 @@ if __name__ == '__main__':
             res_cell += '">%d %%</span>' % np.floor((1.0 - rel_out) * 100)
 
         # this will remove any trailing (back)slashes
-        fmus_dir = os.path.normpath(args.fmus_dir)
+        fmus_dir = os.path.normpath(fmus_dir)
 
         model_path = fmu_filename[len(fmus_dir)+1:]
 
@@ -532,16 +288,13 @@ if __name__ == '__main__':
         html.write('<tr><td>' + root + '</td>')
         html.write('\n'.join([xml_cell, ref_opts_cell, in_csv_cell, ref_csv_cell, doc_cell, sim_cell]))
 
-        if args.result_dir is not None and result is not None:
+        if result_dir is not None and result is not None:
 
-            # try to extract the cross-check info from the path
-            p_seg = fmu_path_info(root)
+            relative_result_dir = os.path.join(result_dir, options['fmi_version'], options['fmi_type'],
+                                               options['platform'], tool_name, tool_version, options['tool_name'],
+                                               options['tool_version'], options['model_name'])
 
-            relative_result_dir = os.path.join(args.result_dir,
-                                               p_seg['fmi_version'], p_seg['fmi_type'], p_seg['platform'], 'FMPy', fmpy.__version__,
-                                               p_seg['tool_name'], p_seg['tool_version'], p_seg['model_name'])
-
-            fmu_result_dir = os.path.join(args.result_dir, relative_result_dir)
+            fmu_result_dir = os.path.join(result_dir, relative_result_dir)
 
             if not os.path.exists(fmu_result_dir):
                 os.makedirs(fmu_result_dir)

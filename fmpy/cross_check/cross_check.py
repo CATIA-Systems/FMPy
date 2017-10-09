@@ -4,7 +4,7 @@ import fmpy
 import zipfile
 import time
 import sys
-from .utilities import read_csv, fmu_path_info, plot_result, read_ref_opt_file, validate_result
+from ..util import *
 
 
 def cross_check(fmus_dir, report, result_dir, simulate, tool_name, tool_version, skip):
@@ -225,10 +225,6 @@ def cross_check(fmus_dir, report, result_dir, simulate, tool_name, tool_version,
 
             step_size = ref_opts['StepSize']
             stop_time = ref_opts['StopTime']
-
-            # variable step solvers are currently not supported
-            # if step_size == 0:
-            #     step_size = None
 
             if reference is not None:
                 output_variable_names = reference.dtype.names[1:]

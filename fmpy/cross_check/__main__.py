@@ -1,7 +1,7 @@
 import argparse
 import os
 import fmpy
-from fmpy.cross_check.utilities import read_csv
+from fmpy.util import read_csv
 from fmpy.cross_check.cross_check import cross_check
 
 parser = argparse.ArgumentParser(description='run the FMI cross-check')
@@ -61,12 +61,20 @@ def simulate(options):
 
     step_size = options['step_size']
 
-    if step_size == 0:
-        step_size = None
+    # select solver based on step_size
+    if step_size > 0:
+        solver = 'Euler'
+    else:
+        solver = 'CVode'
 
     # simulate the FMU
-    result = fmpy.simulate_fmu(filename=options['fmu_filename'], validate=False, step_size=step_size,
-                               stop_time=options['stop_time'], input=input, output=options['output_variable_names'])
+    result = fmpy.simulate_fmu(filename=options['fmu_filename'],
+                               validate=False,
+                               solver=solver,
+                               step_size=step_size,
+                               stop_time=options['stop_time'],
+                               input=input,
+                               output=options['output_variable_names'])
 
     return result
 

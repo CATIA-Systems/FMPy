@@ -17,5 +17,10 @@ setup(name="FMPy",
       author_email="torsten.sommer@3ds.com",
       url="https://github.com/CATIA-Systems/FMPy",
       license="Standard 3-clause BSD",
-      packages=['fmpy', 'fmpy.cross_check', 'fmpy.examples'],
-      package_data={'fmpy': ['schema/fmi1/*.xsd', 'schema/fmi2/*.xsd']})
+      packages=['fmpy', 'fmpy.cross_check', 'fmpy.examples', 'fmpy.sundials'],
+      package_data={'fmpy': ['schema/fmi1/*.xsd',
+                             'schema/fmi2/*.xsd',
+                             'sundials/darwin64/*.dylib',
+                             'sundials/linux64/*.so',
+                             'sundials/win32/*.dll',
+                             'sundials/win64/*.dll']})

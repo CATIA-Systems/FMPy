@@ -1,5 +1,13 @@
 # Changelog
 
+## unreleased
+
+### Fixed
+- set start values of type String
+
+### Added
+- CVode variable-step solver
+
 ## [0.0.8] - 2017-09-10
 
 ### Fixed

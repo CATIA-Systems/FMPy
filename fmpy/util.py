@@ -1,7 +1,5 @@
 import os
 import numpy as np
-from scipy.ndimage.filters import maximum_filter1d, minimum_filter1d
-import matplotlib.transforms as mtransforms
 
 
 class ValidationError(Exception):
@@ -10,6 +8,7 @@ class ValidationError(Exception):
 
 
 def read_csv(filename, variable_names=[], validate=True):
+    """ Read a CSV file that conforms to the FMI cross-check rules """
 
     # pass an empty string as deletechars to preserve special characters
     traj = np.genfromtxt(filename, delimiter=',', names=True, deletechars='')
@@ -33,6 +32,12 @@ def read_csv(filename, variable_names=[], validate=True):
             raise ValidationError("Trajectory of '" + variable_name + "' is missing")
 
     return traj
+
+
+def write_csv(filename, result):
+    """ Save results as a CSV """
+    header = ','.join(map(lambda s: '"' + s + '"', result.dtype.names))
+    np.savetxt(filename, result, delimiter=',', header=header, comments='', fmt='%g')
 
 
 def read_ref_opt_file(filename):
@@ -72,6 +77,8 @@ def validate_signal(t, y, t_ref, y_ref, num=1000, dx=20, dy=0.1):
         y_ref   values of the reference signal
 
     """
+
+    from scipy.ndimage.filters import maximum_filter1d, minimum_filter1d
 
     # re-sample the reference signal into a uniform grid
     t_band = np.linspace(start=t_ref[0], stop=t_ref[-1], num=num)
@@ -122,18 +129,19 @@ def validate_result(result, reference):
     return rel_out
 
 
-# noinspection PyPackageRequirements
-def plot_result(result, reference=None, filename=None):
+def plot_result(result, reference=None, filename=None, window_title=None):
     """ Plot a collection of time series.
 
     Arguments:
-        :param result:      structured NumPy Array that contains the time series to plot where 'time' is the independent variable
-        :param reference:   optional reference signals with the same structure as `result`
-        :param filename:    when provided the plot is saved as `filename` instead of showing the figure
+        :param result:       structured NumPy Array that contains the time series to plot where 'time' is the independent variable
+        :param reference:    optional reference signals with the same structure as `result`
+        :param filename:     when provided the plot is saved as `filename` instead of showing the figure
+        :param window_title: the title for the figure window
     """
 
     import matplotlib.pylab as pylab
     import matplotlib.pyplot as plt
+    import matplotlib.transforms as mtransforms
     from collections import Iterable
 
     params = {
@@ -198,6 +206,10 @@ def plot_result(result, reference=None, filename=None):
             ax.get_yaxis().set_label_coords(-0.07, 0.5)
 
             ax.margins(x=0, y=0.05)
+
+        # set the window title
+        if window_title is not None:
+            fig.canvas.set_window_title(window_title)
 
         # update layout when plot is resized
         def onresize(event):

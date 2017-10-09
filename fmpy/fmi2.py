@@ -2,9 +2,8 @@
 
 import pathlib
 from ctypes import *
-from . import free, freeLibrary, calloc
+from . import free, calloc
 from .fmi1 import _FMU
-import numpy as np
 
 
 fmi2Component            = c_void_p
@@ -307,26 +306,16 @@ class _FMU2(_FMU):
 
     def freeInstance(self):
         self.fmi2FreeInstance(self.component)
-
-        # unload the shared library
-        freeLibrary(self.dll._handle)
+        self.freeLibrary()
 
 
 class FMU2Model(_FMU2):
 
-    def __init__(self, numberOfContinuousStates, numberOfEventIndicators, **kwargs):
+    def __init__(self, **kwargs):
 
         super(FMU2Model, self).__init__(**kwargs)
 
         self.eventInfo = fmi2EventInfo()
-
-        self.x  = np.zeros(numberOfContinuousStates)
-        self.dx = np.zeros(numberOfContinuousStates)
-        self.z  = np.zeros(numberOfEventIndicators)
-
-        self._px  = self.x.ctypes.data_as(POINTER(fmi2Real))
-        self._pdx = self.dx.ctypes.data_as(POINTER(fmi2Real))
-        self._pz  = self.z.ctypes.data_as(POINTER(fmi2Real))
 
         self._fmi2Function('fmi2NewDiscreteStates',
                            ['component', 'eventInfo'],
@@ -382,17 +371,17 @@ class FMU2Model(_FMU2):
     def enterEventMode(self):
         return self.fmi2EnterEventMode(self.component)
 
-    def getContinuousStates(self):
-        return self.fmi2GetContinuousStates(self.component, self._px, self.x.size)
+    def getContinuousStates(self, x, nx):
+        return self.fmi2GetContinuousStates(self.component, x, nx)
 
-    def setContinuousStates(self):
-        return self.fmi2SetContinuousStates(self.component, self._px, self.x.size)
+    def setContinuousStates(self, x, nx):
+        return self.fmi2SetContinuousStates(self.component, x, nx)
 
-    def getDerivatives(self):
-        return self.fmi2GetDerivatives(self.component, self._pdx, self.dx.size)
+    def getDerivatives(self, dx, nx):
+        return self.fmi2GetDerivatives(self.component, dx, nx)
 
-    def getEventIndicators(self):
-        return self.fmi2GetEventIndicators(self.component, self._pz, self.z.size)
+    def getEventIndicators(self, z, nz):
+        return self.fmi2GetEventIndicators(self.component, z, nz)
 
     def setTime(self, time):
         return self.fmi2SetTime(self.component, time)

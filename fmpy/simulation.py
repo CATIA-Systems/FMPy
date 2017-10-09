@@ -81,7 +81,7 @@ class Input(object):
         if signals is None:
             return
 
-        is_fmi1 = isinstance(fmu, _FMU1)  # fmu.modelDescription.fmiVersion == '1.0'
+        is_fmi1 = isinstance(fmu, _FMU1)
 
         # get the setters
         if is_fmi1:
@@ -230,10 +230,53 @@ def apply_start_values(fmu, modelDescription, start_values):
             fmu.setString([vr], [value])
 
 
+class ForwardEuler(object):
+
+    def __init__(self, fmu, numberOfContinuousStates, numberOfEventIndicators):
+        self.fmu = fmu
+
+        self.x    = np.zeros(numberOfContinuousStates)
+        self.dx   = np.zeros(numberOfContinuousStates)
+        self.z    = np.zeros(numberOfEventIndicators)
+        self.prez = np.zeros(numberOfEventIndicators)
+
+        self._px    = self.x.ctypes.data_as(POINTER(c_double))
+        self._pdx   = self.dx.ctypes.data_as(POINTER(c_double))
+        self._pz    = self.z.ctypes.data_as(POINTER(c_double))
+        self._pprez = self.z.ctypes.data_as(POINTER(c_double))
+
+        # initialize the event indicators
+        self.fmu.getEventIndicators(self._pz, self.z.size)
+
+    def step(self, t, tNext):
+
+        # get the current states and derivatives
+        self.fmu.getContinuousStates(self._px, self.x.size)
+        self.fmu.getDerivatives(self._pdx, self.dx.size)
+
+        # perform one step
+        dt = tNext - t
+        self.x += dt * self.dx
+
+        # set the continuous states
+        self.fmu.setContinuousStates(self._px, self.x.size)
+
+        # check for state event
+        self.prez[:] = self.z
+        self.fmu.getEventIndicators(self._pz, self.z.size)
+        stateEvent = np.any((self.prez * self.z) < 0)
+
+        return stateEvent, tNext
+
+    def reset(self, time):
+        pass  # nothing to do
+
+
 def simulate_fmu(filename,
                  validate=True,
                  start_time=None,
                  stop_time=None,
+                 solver='CVode',
                  step_size=None,
                  sample_interval=None,
                  fmi_type=None,
@@ -270,17 +313,25 @@ def simulate_fmu(filename,
     unzipdir = extract(filename)
 
     if fmi_type == 'ModelExchange':
-        simfun = simulateME1 if modelDescription.fmiVersion == '1.0' else simulateME2
+        simfun = simulateME
+        modelIdentifier = modelDescription.modelExchange.modelIdentifier
     elif fmi_type == 'CoSimulation':
         simfun = simulateCS
+        modelIdentifier = modelDescription.coSimulation.modelIdentifier
     else:
         raise Exception('fmi_tpye must be either "ModelExchange" or "CoSimulation"')
 
     if sample_interval is None:
         sample_interval = (stop_time - start_time) / 500
 
+    fmu_args = {'guid': modelDescription.guid,
+                'modelIdentifier': modelIdentifier,
+                'unzipDirectory': unzipdir,
+                'instanceName': None,
+                'logFMICalls': fmi_logging}
+
     # simulate_fmu the FMU
-    result = simfun(modelDescription, unzipdir, start_time, stop_time, step_size, start_values, input, output, sample_interval, timeout, fmi_logging)
+    result = simfun(modelDescription, fmu_args, start_time, stop_time, solver, step_size, start_values, input, output, sample_interval, timeout, fmi_logging)
 
     # clean up
     shutil.rmtree(unzipdir)
@@ -288,213 +339,135 @@ def simulate_fmu(filename,
     return result
 
 
-def simulateME1(modelDescription, unzipdir, start_time, stop_time, step_size, start_values, input_signals, output, output_interval, timeout, fmi_logging):
+def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name, step_size, start_values, input_signals, output, output_interval, timeout, fmi_logging):
 
     sim_start = current_time()
 
-    args = {'numberOfContinuousStates': modelDescription.numberOfContinuousStates,
-            'numberOfEventIndicators': modelDescription.numberOfEventIndicators,
-            'guid': modelDescription.guid,
-            'modelIdentifier': modelDescription.modelExchange.modelIdentifier,
-            'unzipDirectory': unzipdir,
-            'instanceName': None,
-            'logFMICalls': fmi_logging}
-
-    fmu = FMU1Model(**args)
-
-    fmu.instantiate()
-
     time = start_time
 
-    fmu.setTime(time)
+    is_fmi1 = modelDescription.fmiVersion == '1.0'
 
+    if is_fmi1:
+        fmu = FMU1Model(**fmu_kwargs)
+        fmu.instantiate()
+        fmu.setTime(time)
+    else:
+        fmu = FMU2Model(**fmu_kwargs)
+        fmu.instantiate()
+        fmu.setupExperiment(startTime=start_time)
+
+    # set the start values
     apply_start_values(fmu, modelDescription, start_values)
 
     input = Input(fmu, modelDescription, input_signals)
-
     input.apply(time)
 
-    fmu.initialize()
+    if is_fmi1:
+        fmu.initialize()
+    else:
+        fmu.enterInitializationMode()
+        fmu.exitInitializationMode()
+
+        # event iteration
+        fmu.eventInfo.newDiscreteStatesNeeded = fmi2True
+        fmu.eventInfo.terminateSimulation = fmi2False
+
+        while fmu.eventInfo.newDiscreteStatesNeeded == fmi2True and fmu.eventInfo.terminateSimulation == fmi2False:
+            # update discrete states
+            fmu.newDiscreteStates()
+
+        fmu.enterContinuousTimeMode()
+
+    # select the solver
+    if solver_name == 'Euler':
+        solver = ForwardEuler(fmu, modelDescription.numberOfContinuousStates, modelDescription.numberOfEventIndicators)
+    elif solver_name is None or solver_name == 'CVode':
+        from .sundials import CVodeSolver
+        solver = CVodeSolver(fmu, modelDescription.numberOfContinuousStates, modelDescription.numberOfEventIndicators)
+        step_size = output_interval
+    else:
+        raise Exception('Unknown solver: %s. Must be one of "Euler" or "CVode".' % solver_name)
 
     recorder = Recorder(fmu=fmu, modelDescription=modelDescription, variableNames=output, interval=output_interval)
 
-    prez = np.zeros_like(fmu.z)
-
-    try:
-
-        while time < stop_time:
-
-            if timeout is not None and (current_time() - sim_start) > timeout:
-                break
-
-            input.apply(time)
-
-            fmu.getContinuousStates()
-            fmu.getDerivatives()
-
-            tPre = time;
-            time = min(time + step_size, stop_time);
-
-            timeEvent = fmu.eventInfo.upcomingTimeEvent != fmi1False and fmu.eventInfo.nextEventTime <= time;
-
-            if timeEvent:
-                time = fmu.eventInfo.nextEventTime
-
-            dt = time - tPre
-
-            fmu.setTime(time)
-
-            # forward Euler
-            fmu.x += dt * fmu.dx
-
-            fmu.setContinuousStates()
-
-            # check for step event, e.g.dynamic state selection
-            stepEvent = fmu.completedIntegratorStep()
-
-            # check for state event
-            prez[:] = fmu.z
-            fmu.getEventIndicators()
-            stateEvent = np.any((prez * fmu.z) < 0)
-
-            # handle events
-            if timeEvent or stateEvent or stepEvent:
-                fmu.eventUpdate()
-
-            recorder.sample(time)
-
-        recorder.sample(time, force=True)
-
-        fmu.terminate()
-
-    except Exception as e:
-        print("Simulation aborted. " + str(e))
-    finally:
-        fmu.freeInstance()
-
-    return recorder.result()
-
-
-def simulateME2(modelDescription, unzipdir, start_time, stop_time, step_size, start_values, input_signals, output, output_interval, timeout, fmi_logging):
-
-    sim_start = current_time()
-
-    args = {'numberOfContinuousStates': modelDescription.numberOfContinuousStates,
-            'numberOfEventIndicators': modelDescription.numberOfEventIndicators,
-            'guid': modelDescription.guid,
-            'modelIdentifier': modelDescription.modelExchange.modelIdentifier,
-            'unzipDirectory': unzipdir,
-            'instanceName': None,
-            'logFMICalls': fmi_logging}
-
-    fmu = FMU2Model(**args)
-    fmu.instantiate()
-    fmu.setupExperiment(startTime=start_time)
-
-    apply_start_values(fmu, modelDescription, start_values)
-
-    fmu.enterInitializationMode()
-    fmu.exitInitializationMode()
-
-    # event iteration
-    fmu.eventInfo.newDiscreteStatesNeeded = fmi2True
-    fmu.eventInfo.terminateSimulation = fmi2False
-
-    while fmu.eventInfo.newDiscreteStatesNeeded == fmi2True and fmu.eventInfo.terminateSimulation == fmi2False:
-        # update discrete states
-        status = fmu.newDiscreteStates()
-
-    fmu.enterContinuousTimeMode()
-
-    input = Input(fmu, modelDescription, input_signals)
-
-    recorder = Recorder(fmu=fmu, modelDescription=modelDescription, variableNames=output, interval=output_interval)
-
-    prez = np.zeros_like(fmu.z)
-
-    time = start_time
-
-    recorder.sample(time)
-
+    # simulation loop
     while time < stop_time:
 
         if timeout is not None and (current_time() - sim_start) > timeout:
             break
 
-        fmu.getContinuousStates()
-        fmu.getDerivatives()
-
-        tPre = time
-        time = min(time + step_size, stop_time)
-
         input.apply(time)
 
-        timeEvent = fmu.eventInfo.nextEventTimeDefined != fmi2False and fmu.eventInfo.nextEventTime <= time
+        tNext = min(time + step_size, stop_time)
+
+        if is_fmi1:
+            timeEvent = fmu.eventInfo.upcomingTimeEvent != fmi1False and fmu.eventInfo.nextEventTime <= time
+        else:
+            timeEvent = fmu.eventInfo.nextEventTimeDefined != fmi2False and fmu.eventInfo.nextEventTime <= time
 
         if timeEvent:
-            time = fmu.eventInfo.nextEventTime
+            tNext = fmu.eventInfo.nextEventTime
 
-        dt = time - tPre
+        # perform one step
+        stateEvent, time = solver.step(time, tNext)
 
+        # set the time
         fmu.setTime(time)
 
-        # forward Euler
-        fmu.x += dt * fmu.dx
+        # check for step event, e.g.dynamic state selection
+        if is_fmi1:
+            stepEvent = fmu.completedIntegratorStep()
+        else:
+            stepEvent, terminateSimulation = fmu.completedIntegratorStep()
+            stepEvent = stepEvent != fmi2False
 
-        fmu.setContinuousStates()
-
-        # check for state event
-        prez[:] = fmu.z
-        fmu.getEventIndicators()
-        stateEvent = np.any((prez * fmu.z) < 0)
-
-        # check for step event
-        stepEvent, terminateSimulation = fmu.completedIntegratorStep()
-
-        if timeEvent or stateEvent or stepEvent != fmi2False:
-
-            # handle events
-            fmu.enterEventMode()
-
-            fmu.eventInfo.newDiscreteStatesNeeded = fmi2True
-            fmu.eventInfo.terminateSimulation = fmi2False
-
-            # update discrete states
-            while fmu.eventInfo.newDiscreteStatesNeeded != fmi2False and fmu.eventInfo.terminateSimulation == fmi2False:
-                fmu.newDiscreteStates()
-
-            fmu.enterContinuousTimeMode()
-
+        # record the values for this step
         recorder.sample(time)
+
+        # handle events
+        if timeEvent or stateEvent or stepEvent:
+
+            if is_fmi1:
+                fmu.eventUpdate()
+            else:
+                # handle events
+                fmu.enterEventMode()
+
+                fmu.eventInfo.newDiscreteStatesNeeded = fmi2True
+                fmu.eventInfo.terminateSimulation = fmi2False
+
+                # update discrete states
+                while fmu.eventInfo.newDiscreteStatesNeeded != fmi2False and fmu.eventInfo.terminateSimulation == fmi2False:
+                    fmu.newDiscreteStates()
+
+                fmu.enterContinuousTimeMode()
+
+            solver.reset(time)
+            # record values after the event
+            recorder.sample(time)
 
     recorder.sample(time, force=True)
 
     fmu.terminate()
+
     fmu.freeInstance()
+
+    del solver
 
     return recorder.result()
 
 
-def simulateCS(modelDescription, unzipdir, start_time, stop_time, step_size, start_values, input_signals, output, output_interval, timeout, fmi_logging):
+def simulateCS(modelDescription, fmu_kwargs, start_time, stop_time, solver_name, step_size, start_values, input_signals, output, output_interval, timeout, fmi_logging):
 
     sim_start = current_time()
 
-    guid = modelDescription.guid
-    modelIdentifier = modelDescription.coSimulation.modelIdentifier
-
-    args = {'guid': guid,
-            'modelIdentifier': modelIdentifier,
-            'unzipDirectory': unzipdir,
-            'instanceName': None,
-            'logFMICalls': fmi_logging}
-
     if modelDescription.fmiVersion == '1.0':
-        fmu = FMU1Slave(**args)
+        fmu = FMU1Slave(**fmu_kwargs)
         fmu.instantiate("instance1")
         apply_start_values(fmu, modelDescription, start_values)
         fmu.initialize()
     else:
-        fmu = FMU2Slave(**args)
+        fmu = FMU2Slave(**fmu_kwargs)
         fmu.instantiate(loggingOn=False)
         fmu.setupExperiment(tolerance=None, startTime=start_time)
         apply_start_values(fmu, modelDescription, start_values)
@@ -506,19 +479,24 @@ def simulateCS(modelDescription, unzipdir, start_time, stop_time, step_size, sta
 
     time = start_time
 
-    try:
-        while time < stop_time:
-            if timeout is not None and (current_time() - sim_start) > timeout:
-                break
-            recorder.sample(time)
-            input.apply(time)
-            fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
-            time += step_size
-        recorder.sample(time, force=True)
-        fmu.terminate()
-    except Exception as e:
-        print("Simulation aborted. " + str(e))
-    finally:
-        fmu.freeInstance()
+    # simulation loop
+    while time < stop_time:
+
+        if timeout is not None and (current_time() - sim_start) > timeout:
+            break
+
+        recorder.sample(time)
+
+        input.apply(time)
+
+        fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
+
+        time += step_size
+
+    recorder.sample(time, force=True)
+
+    fmu.terminate()
+
+    fmu.freeInstance()
 
     return recorder.result()

@@ -1,9 +1,13 @@
-from distutils.core import setup
+from setuptools import setup
 
 
 def readme():
+    """ Get the content of README.rst without the CI badges """
     with open('README.rst') as f:
-        return f.read()
+        lines = f.readlines()
+        while not lines[0].startswith('FMPy'):
+            lines = lines[1:]
+        return ''.join(lines)
 
 setup(name="FMPy",
       version="0.0.8",

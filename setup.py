@@ -10,7 +10,7 @@ def readme():
         return ''.join(lines)
 
 setup(name="FMPy",
-      version="0.0.8",
+      version="0.0.9",
       description="Simulate Functional Mockup Units (FMUs) in Python",
       long_description=readme(),
       author="Torsten Sommer",

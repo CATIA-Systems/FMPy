@@ -1,13 +1,10 @@
-import os
-import numpy as np
 import fmpy
 import zipfile
 import time
-import sys
 from ..util import *
 
 
-def cross_check(fmus_dir, report, result_dir, simulate, tool_name, tool_version, skip):
+def cross_check(fmus_dir, report, result_dir, simulate, tool_name, tool_version, skip, readme):
 
     html = open(report, 'w')
     html.write('''<html>
@@ -176,7 +173,6 @@ def cross_check(fmus_dir, report, result_dir, simulate, tool_name, tool_version,
 
             return traj, cell
 
-
         # check the input file
         input = None
 
@@ -215,11 +211,6 @@ def cross_check(fmus_dir, report, result_dir, simulate, tool_name, tool_version,
             sim_cell = '<td class="status" title="Failed to read *_ref.opt file"><span class="label label-default">skipped</span></td>'
         elif input_variables and input is None:
             sim_cell = '<td class="status" title="Input file is invalid"><span class="label label-default">skipped</span></td>'
-        # elif fmpy.platform not in supported_platforms:
-        #     sim_cell = '<td class="status" title="The current platform (' + fmpy.platform + ') is not supported by the FMU (' + ', '.join(supported_platforms) + ')"><span class="label label-default">skipped</span></td>'
-        # elif skip():
-        #     sim_cell = '<td class="status" title="FMU not supported (yet)"><span class="label label-warning">n/s</span></td>'
-        #     print("Skipping simulation")
         else:
             skipped = False
 
@@ -306,16 +297,10 @@ def cross_check(fmus_dir, report, result_dir, simulate, tool_name, tool_version,
             with open(os.path.join(fmu_result_dir, indicator_filename), 'w') as f:
                 pass
 
-            # write the ReadMe.txt file
-            with open(os.path.join(fmu_result_dir, 'ReadMe.txt'), 'w') as f:
-                f.write("""The cross-check results have been generated with the fmpy.cross_check module.
-To get more information install FMPy and enter the following command:
-
-python -m fmpy.cross_check --help
-
-Python version used for this simulation:
-
-""" + sys.version)
+            if readme is not None:
+                # write the ReadMe.txt file
+                with open(os.path.join(fmu_result_dir, 'ReadMe.txt'), 'w') as f:
+                    f.write(readme())
 
             result_filename = os.path.join(fmu_result_dir, model_name + '_out.csv')
 
@@ -336,7 +321,6 @@ Python version used for this simulation:
             html.write(r'<td><div class="tooltip">' + res_cell + '<span class="tooltiptext"><img src="'
                        + os.path.join(relative_result_dir, 'result.png').replace('\\', '/') + '"/></span ></div></td>')
         else:
-            plot_filename = None
             html.write('<td class="status">' + res_cell + '</td>\n')
 
         html.write('</tr>\n')

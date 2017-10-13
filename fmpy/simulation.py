@@ -278,7 +278,7 @@ def simulate_fmu(filename,
                  stop_time=None,
                  solver='CVode',
                  step_size=None,
-                 sample_interval=None,
+                 output_interval=None,
                  fmi_type=None,
                  start_values={},
                  input=None,
@@ -291,6 +291,9 @@ def simulate_fmu(filename,
     if fmi_type is None:
         # determine the FMI type automatically
         fmi_type = 'CoSimulation' if modelDescription.coSimulation is not None else 'ModelExchange'
+
+    if fmi_type not in ['ModelExchange', 'CoSimulation']:
+        raise Exception('fmi_tpye must be one of "ModelExchange" or "CoSimulation"')
 
     defaultExperiment = modelDescription.defaultExperiment
 
@@ -312,26 +315,22 @@ def simulate_fmu(filename,
 
     unzipdir = extract(filename)
 
-    if fmi_type == 'ModelExchange':
-        simfun = simulateME
-        modelIdentifier = modelDescription.modelExchange.modelIdentifier
-    elif fmi_type == 'CoSimulation':
-        simfun = simulateCS
-        modelIdentifier = modelDescription.coSimulation.modelIdentifier
-    else:
-        raise Exception('fmi_tpye must be either "ModelExchange" or "CoSimulation"')
+    if output_interval is None:
+        output_interval = (stop_time - start_time) / 500
 
-    if sample_interval is None:
-        sample_interval = (stop_time - start_time) / 500
-
+    # common FMU constructor arguments
     fmu_args = {'guid': modelDescription.guid,
-                'modelIdentifier': modelIdentifier,
                 'unzipDirectory': unzipdir,
                 'instanceName': None,
                 'logFMICalls': fmi_logging}
 
     # simulate_fmu the FMU
-    result = simfun(modelDescription, fmu_args, start_time, stop_time, solver, step_size, start_values, input, output, sample_interval, timeout, fmi_logging)
+    if fmi_type == 'ModelExchange':
+        fmu_args['modelIdentifier'] = modelDescription.modelExchange.modelIdentifier
+        result = simulateME(modelDescription, fmu_args, start_time, stop_time, solver, step_size, start_values, input, output, output_interval, timeout, fmi_logging)
+    elif fmi_type == 'CoSimulation':
+        fmu_args['modelIdentifier'] = modelDescription.coSimulation.modelIdentifier
+        result = simulateCS(modelDescription, fmu_args, start_time, stop_time, start_values, input, output, output_interval, timeout, fmi_logging)
 
     # clean up
     shutil.rmtree(unzipdir)
@@ -408,8 +407,12 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
         if timeEvent:
             tNext = fmu.eventInfo.nextEventTime
 
-        # perform one step
-        stateEvent, time = solver.step(time, tNext)
+        if tNext - time > 1e-13:
+            # perform one step
+            stateEvent, time = solver.step(time, tNext)
+        else:
+            # skip
+            time = tNext
 
         # set the time
         fmu.setTime(time)
@@ -457,7 +460,7 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
     return recorder.result()
 
 
-def simulateCS(modelDescription, fmu_kwargs, start_time, stop_time, solver_name, step_size, start_values, input_signals, output, output_interval, timeout, fmi_logging):
+def simulateCS(modelDescription, fmu_kwargs, start_time, stop_time, start_values, input_signals, output, output_interval, timeout, fmi_logging):
 
     sim_start = current_time()
 
@@ -489,9 +492,9 @@ def simulateCS(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
 
         input.apply(time)
 
-        fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
+        fmu.doStep(currentCommunicationPoint=time, communicationStepSize=output_interval)
 
-        time += step_size
+        time += output_interval
 
     recorder.sample(time, force=True)
 

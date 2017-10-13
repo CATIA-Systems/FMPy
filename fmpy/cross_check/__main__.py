@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 import fmpy
 from fmpy.util import read_csv
 from fmpy.cross_check.cross_check import cross_check
@@ -67,6 +68,8 @@ def simulate(options):
     else:
         solver = 'CVode'
 
+    solver = 'CVode'
+
     # simulate the FMU
     result = fmpy.simulate_fmu(filename=options['fmu_filename'],
                                validate=False,
@@ -74,9 +77,21 @@ def simulate(options):
                                step_size=step_size,
                                stop_time=options['stop_time'],
                                input=input,
-                               output=options['output_variable_names'])
+                               output=options['output_variable_names'],
+                               timeout=5)
 
     return result
 
 
-cross_check(args.fmus_dir, args.report, args.result_dir, simulate, 'FMPy', fmpy.__version__, skip)
+def readme():
+    return """The cross-check results have been generated with the fmpy.cross_check module.
+    To get more information install FMPy and enter the following command:
+    
+    python -m fmpy.cross_check --help
+    
+    Python version used for this simulation:
+    
+    """ + sys.version
+
+
+cross_check(args.fmus_dir, args.report, args.result_dir, simulate, 'FMPy', fmpy.__version__, skip, readme)

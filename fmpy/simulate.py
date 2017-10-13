@@ -43,7 +43,7 @@ if __name__ == '__main__':
                           stop_time=args.stop_time,
                           solver=args.solver,
                           step_size=args.step_size,
-                          sample_interval=None,
+                          output_interval=None,
                           fmi_type=None,
                           start_values={},
                           input=input,

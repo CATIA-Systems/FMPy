@@ -213,4 +213,3 @@ class CVodeSolver(object):
     def __del__(self):
         # clean up
         CVodeFree(byref(c_void_p(self.cvode_mem)))
-        print('CVodeSolver __del__() called.')

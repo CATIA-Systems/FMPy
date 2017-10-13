@@ -1,6 +1,9 @@
+""" Object model and loader for the modelDescription.xml """
+
 from lxml import etree
 import zipfile
 import os
+
 
 class ModelDescription(object):
 
@@ -68,7 +71,7 @@ def read_model_description(filename, validate=True):
 
     fmiVersion = root.get('fmiVersion')
 
-    if not fmiVersion in ['1.0', '2.0']:
+    if fmiVersion not in ['1.0', '2.0']:
         raise Exception("Unsupported FMI version: %s" % fmiVersion)
 
     if validate:
@@ -146,7 +149,6 @@ def read_model_description(filename, validate=True):
             modelDescription.coSimulation = CoSimulation()
             modelDescription.coSimulation.modelIdentifier = cs.get('modelIdentifier')
 
-
     modelVariables = root.find('ModelVariables')
 
     for variable in modelVariables:
@@ -174,6 +176,5 @@ def read_model_description(filename, validate=True):
                 sv.start = start
 
         modelDescription.modelVariables.append(sv)
-
 
     return modelDescription

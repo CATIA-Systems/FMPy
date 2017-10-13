@@ -1,10 +1,9 @@
-# noinspection PyPep8
+""" FMI 2.0 interface """
 
 import pathlib
 from ctypes import *
-from . import free, freeLibrary, calloc
+from . import free, calloc
 from .fmi1 import _FMU
-import numpy as np
 
 
 fmi2Component            = c_void_p
@@ -279,6 +278,17 @@ class _FMU2(_FMU):
         self.fmi2SetReal(self.component, vr, len(vr), value)
 
     def setInteger(self, vr, value):
+        vr = (fmi2ValueReference * len(vr))(*vr)
+        value = (fmi2Integer * len(vr))(*value)
+        self.fmi2SetInteger(self.component, vr, len(vr), value)
+
+    def setBoolean(self, vr, value):
+        vr = (fmi2ValueReference * len(vr))(*vr)
+        value = (fmi2Boolean * len(vr))(*value)
+        self.fmi2SetBoolean(self.component, vr, len(vr), value)
+
+    def setString(self, vr, value):
+        vr = (fmi2ValueReference * len(vr))(*vr)
         value = map(lambda s: s.encode('utf-8'), value)
         value = (fmi2String * len(vr))(*value)
         self.fmi2SetString(self.component, vr, len(vr), value)
@@ -296,26 +306,16 @@ class _FMU2(_FMU):
 
     def freeInstance(self):
         self.fmi2FreeInstance(self.component)
-
-        # unload the shared library
-        freeLibrary(self.dll._handle)
+        self.freeLibrary()
 
 
 class FMU2Model(_FMU2):
 
-    def __init__(self, numberOfContinuousStates, numberOfEventIndicators, **kwargs):
+    def __init__(self, **kwargs):
 
         super(FMU2Model, self).__init__(**kwargs)
 
         self.eventInfo = fmi2EventInfo()
-
-        self.x  = np.zeros(numberOfContinuousStates)
-        self.dx = np.zeros(numberOfContinuousStates)
-        self.z  = np.zeros(numberOfEventIndicators)
-
-        self._px  = self.x.ctypes.data_as(POINTER(fmi2Real))
-        self._pdx = self.dx.ctypes.data_as(POINTER(fmi2Real))
-        self._pz  = self.z.ctypes.data_as(POINTER(fmi2Real))
 
         self._fmi2Function('fmi2NewDiscreteStates',
                            ['component', 'eventInfo'],
@@ -371,17 +371,17 @@ class FMU2Model(_FMU2):
     def enterEventMode(self):
         return self.fmi2EnterEventMode(self.component)
 
-    def getContinuousStates(self):
-        return self.fmi2GetContinuousStates(self.component, self._px, self.x.size)
+    def getContinuousStates(self, x, nx):
+        return self.fmi2GetContinuousStates(self.component, x, nx)
 
-    def setContinuousStates(self):
-        return self.fmi2SetContinuousStates(self.component, self._px, self.x.size)
+    def setContinuousStates(self, x, nx):
+        return self.fmi2SetContinuousStates(self.component, x, nx)
 
-    def getDerivatives(self):
-        return self.fmi2GetDerivatives(self.component, self._pdx, self.dx.size)
+    def getDerivatives(self, dx, nx):
+        return self.fmi2GetDerivatives(self.component, dx, nx)
 
-    def getEventIndicators(self):
-        return self.fmi2GetEventIndicators(self.component, self._pz, self.z.size)
+    def getEventIndicators(self, z, nz):
+        return self.fmi2GetEventIndicators(self.component, z, nz)
 
     def setTime(self, time):
         return self.fmi2SetTime(self.component, time)

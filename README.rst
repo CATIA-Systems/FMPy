@@ -7,12 +7,13 @@
 FMPy
 ====
 
-FMPy is a Python library to simulate `Functional Mockup Units (FMUs) <http://fmi-standard.org/>`_ that...
+FMPy is a free Python library to simulate `Functional Mockup Units (FMUs) <http://fmi-standard.org/>`_ that...
 
 - supports FMI 1.0 and 2.0
 - supports Co-Simulation and Model Exchange
 - runs on Windows, Linux and macOS
 - can validate FMUs
+- provides fixed and variable-step solvers
 - is pure Python (with ctypes)
 
 
@@ -31,21 +32,27 @@ or, to install the latest development version::
 Simulate an FMU on the command line
 -----------------------------------
 
-To simulate CoupledClutches.fmu and plot the results download the FMU for your platform
+To simulate Rectifier.fmu and plot the results download the FMU for your platform
 and run the following command in the folder where you downloaded the FMU::
 
-    python -m fmpy.simulate CoupledClutches.fmu
+    python -m fmpy.simulate Rectifier.fmu --show-plot
 
 
-+---------------------+---------------------+---------------------+-------------------+-------------------+--------+
-| CoupledClutches.fmu | `Windows (32-bit)`_ | `Windows (64-bit)`_ | `Linux (32-bit)`_ | `Linux (64-bit)`_ | macOS_ |
-+---------------------+---------------------+---------------------+-------------------+-------------------+--------+
++---------------+---------------------+---------------------+-------------------+-------------------+--------+
+| Rectifier.fmu | `Windows (32-bit)`_ | `Windows (64-bit)`_ | `Linux (32-bit)`_ | `Linux (64-bit)`_ | macOS_ |
++---------------+---------------------+---------------------+-------------------+-------------------+--------+
 
-.. _Windows (32-bit): https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_2.0/CoSimulation/win32/MapleSim/2016.2/CoupledClutches/CoupledClutches.fmu
-.. _Windows (64-bit): https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_2.0/CoSimulation/win64/MapleSim/2016.2/CoupledClutches/CoupledClutches.fmu
-.. _Linux (32-bit): https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_2.0/CoSimulation/linux32/MapleSim/2016.2/CoupledClutches/CoupledClutches.fmu
-.. _Linux (64-bit): https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_2.0/CoSimulation/linux64/MapleSim/2016.2/CoupledClutches/CoupledClutches.fmu
-.. _macOS: https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_2.0/CoSimulation/darwin64/MapleSim/2016.2/CoupledClutches/CoupledClutches.fmu
+.. _Windows (32-bit): https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_2.0/CoSimulation/win32/MapleSim/2016.2/Rectifier/Rectifier.fmu
+.. _Windows (64-bit): https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_2.0/CoSimulation/win64/MapleSim/2016.2/Rectifier/Rectifier.fmu
+.. _Linux (32-bit): https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_2.0/CoSimulation/linux32/MapleSim/2016.2/Rectifier/Rectifier.fmu
+.. _Linux (64-bit): https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_2.0/CoSimulation/linux64/MapleSim/2016.2/Rectifier/Rectifier.fmu
+.. _macOS: https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_2.0/CoSimulation/darwin64/MapleSim/2016.2/Rectifier/Rectifier.fmu
+
+.. image:: Rectifier_result.png
+
+To get more information about the available options type::
+
+    python -m fmpy.simulate --help
 
 
 Simulate an FMU in Python

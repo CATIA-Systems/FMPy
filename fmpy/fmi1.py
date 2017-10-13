@@ -1,10 +1,11 @@
-# noinspection PyPep8
+""" FMI 1.0 interface """
 
 import os
 import pathlib
 import numpy as np
 from ctypes import *
 from . import free, freeLibrary, platform, sharedLibraryExtension, calloc
+
 
 fmi1Component      = c_void_p
 fmi1ValueReference = c_uint
@@ -103,6 +104,10 @@ class _FMU(object):
         os.chdir(work_dir)
 
         self.component = None
+
+    def freeLibrary(self):
+        # unload the shared library
+        freeLibrary(self.dll._handle)
 
     def _print_fmi_args(self, fname, argnames, argtypes, args, restype, res):
 
@@ -230,62 +235,55 @@ class _FMU1(_FMU):
 
         setattr(self, 'fmi1' + name, w)
 
-    def assertNoError(self, status):
-        if status not in [fmi1OK, fmi1Warning]:
-            raise Exception("FMI call failed")
-
     def getReal(self, vr):
         vr = (fmi1ValueReference * len(vr))(*vr)
         value = (fmi1Real * len(vr))()
-        status = self.fmi1GetReal(self.component, vr, len(vr), value)
-        self.assertNoError(status)
+        self.fmi1GetReal(self.component, vr, len(vr), value)
         return list(value)
 
     def getInteger(self, vr):
         vr = (fmi1ValueReference * len(vr))(*vr)
         value = (fmi1Integer * len(vr))()
-        status = self.fmi1GetInteger(self.component, vr, len(vr), value)
-        self.assertNoError(status)
+        self.fmi1GetInteger(self.component, vr, len(vr), value)
         return list(value)
 
     def getBoolean(self, vr):
         vr = (fmi1ValueReference * len(vr))(*vr)
         value = (fmi1Boolean * len(vr))()
-        status = self.fmi1GetBoolean(self.component, vr, len(vr), value)
-        self.assertNoError(status)
+        self.fmi1GetBoolean(self.component, vr, len(vr), value)
         return list(map(lambda b: 0 if b == fmi1False else 1, value))
 
     def getString(self, vr):
         vr = (fmi1ValueReference * len(vr))(*vr)
         value = (fmi1String * len(vr))()
-        status = self.fmi1GetString(self.component, vr, len(vr), value)
-        self.assertNoError(status)
+        self.fmi1GetString(self.component, vr, len(vr), value)
         return list(value)
 
     def setReal(self, vr, value):
         vr = (fmi1ValueReference * len(vr))(*vr)
         value = (fmi1Real * len(vr))(*value)
-        status = self.fmi1SetReal(self.component, vr, len(vr), value)
-        self.assertNoError(status)
+        self.fmi1SetReal(self.component, vr, len(vr), value)
 
     def setInteger(self, vr, value):
         vr = (fmi1ValueReference * len(vr))(*vr)
         value = (fmi1Integer * len(vr))(*value)
-        status = self.fmi1SetInteger(self.component, vr, len(vr), value)
-        self.assertNoError(status)
+        self.fmi1SetInteger(self.component, vr, len(vr), value)
 
     def setBoolean(self, vr, value):
+        # convert value to a byte string
+        s = b''
+        for v in value:
+            s += fmi1True if v else fmi1False
+
         vr = (fmi1ValueReference * len(vr))(*vr)
-        value = (fmi1Boolean * len(vr))(*value)
-        status = self.fmi1SetBoolean(self.component, vr, len(vr), value)
-        self.assertNoError(status)
+        value = (fmi1Boolean * len(vr))(s)
+        self.fmi1SetBoolean(self.component, vr, len(vr), value)
 
     def setString(self, vr, value):
         vr = (fmi1ValueReference * len(vr))(*vr)
         value = map(lambda s: s.encode('utf-8'), value)
         value = (fmi1String * len(vr))(*value)
-        status = self.fmi1SetString(self.component, vr, len(vr), value)
-        self.assertNoError(status)
+        self.fmi1SetString(self.component, vr, len(vr), value)
 
 
 class FMU1Slave(_FMU1):
@@ -344,8 +342,7 @@ class FMU1Slave(_FMU1):
 
     def freeInstance(self):
         self.fmi1FreeSlaveInstance(self.component)
-        # unload the shared library
-        freeLibrary(self.dll._handle)
+        self.freeLibrary()
 
     def doStep(self, currentCommunicationPoint, communicationStepSize, newStep=fmi1True):
         return self.fmi1DoStep(self.component, currentCommunicationPoint, communicationStepSize, newStep)
@@ -353,19 +350,11 @@ class FMU1Slave(_FMU1):
 
 class FMU1Model(_FMU1):
 
-    def __init__(self, numberOfContinuousStates, numberOfEventIndicators, **kwargs):
+    def __init__(self, **kwargs):
 
         super(FMU1Model, self).__init__(**kwargs)
 
         self.eventInfo = fmi1EventInfo()
-
-        self.x = np.zeros(numberOfContinuousStates)
-        self.dx = np.zeros(numberOfContinuousStates)
-        self.z = np.zeros(numberOfEventIndicators)
-
-        self._px = self.x.ctypes.data_as(POINTER(fmi1Real))
-        self._pdx = self.dx.ctypes.data_as(POINTER(fmi1Real))
-        self._pz = self.z.ctypes.data_as(POINTER(fmi1Real))
 
         self._fmi1Function('InstantiateModel',
                            ['instanceName', 'guid', 'functions', 'loggingOn'],
@@ -434,22 +423,22 @@ class FMU1Model(_FMU1):
     def initialize(self, toleranceControlled=fmi1False, relativeTolerance=0.0):
         return self.fmi1Initialize(self.component, toleranceControlled, relativeTolerance, byref(self.eventInfo))
 
-    def getContinuousStates(self):
-        return self.fmi1GetContinuousStates(self.component, self._px, self.x.size)
+    def getContinuousStates(self, states, size):
+        return self.fmi1GetContinuousStates(self.component, states, size)
 
-    def setContinuousStates(self):
-        return self.fmi1SetContinuousStates(self.component, self._px, self.x.size)
+    def setContinuousStates(self, states, size):
+        return self.fmi1SetContinuousStates(self.component, states, size)
 
-    def getDerivatives(self):
-        return self.fmi1GetDerivatives(self.component, self._pdx, self.dx.size)
+    def getDerivatives(self, derivatives, size):
+        return self.fmi1GetDerivatives(self.component, derivatives, size)
 
     def completedIntegratorStep(self):
         stepEvent = fmi1Boolean()
-        status = self.fmi1CompletedIntegratorStep(self.component, byref(stepEvent))
+        self.fmi1CompletedIntegratorStep(self.component, byref(stepEvent))
         return stepEvent != fmi1False
 
-    def getEventIndicators(self):
-        return self.fmi1GetEventIndicators(self.component, self._pz, self.z.size)
+    def getEventIndicators(self, eventIndicators, size):
+        return self.fmi1GetEventIndicators(self.component, eventIndicators, size)
 
     def eventUpdate(self, intermediateResults=fmi1False):
         return self.fmi1EventUpdate(self.component, intermediateResults, byref(self.eventInfo))
@@ -459,5 +448,4 @@ class FMU1Model(_FMU1):
 
     def freeInstance(self):
         self.fmi1FreeModelInstance(self.component)
-        # unload the shared library
-        freeLibrary(self.dll._handle)
+        self.freeLibrary()

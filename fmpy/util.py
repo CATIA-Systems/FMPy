@@ -20,7 +20,7 @@ def read_csv(filename, variable_names=[], validate=True):
     time = traj[traj.dtype.names[0]]
 
     # check if the time is monotonically increasing
-    if np.any(np.diff(time) < 0):
+    if traj.size > 1 and np.any(np.diff(time) < 0):
         raise ValidationError("Values in first column (time) are not monotonically increasing")
 
     # get the trajectory names (without the time)
@@ -69,13 +69,25 @@ def read_ref_opt_file(filename):
 
 
 def validate_signal(t, y, t_ref, y_ref, num=1000, dx=20, dy=0.1):
-    """ Validate a signal y(t) against a reference signal y_ref(t_ref)
+    """ Validate a signal y(t) against a reference signal y_ref(t_ref) by creating a band
+    around y_ref and finding the values in y outside the band
+
+    Parameters:
 
         t       time of the signal
         y       values of the signal
         t_ref   time of the reference signal
         y_ref   values of the reference signal
+        num     number of samples for the band
+        dx      horizontal width of the band in samples
+        dy      vertical distance of the band to y_ref
 
+    Returns:
+
+        t_band  time values of the band
+        y_min   lower limit of the band
+        y_max   upper limit of the band
+        i_out   indices of the values in y outside the band
     """
 
     from scipy.ndimage.filters import maximum_filter1d, minimum_filter1d
@@ -105,6 +117,10 @@ def validate_signal(t, y, t_ref, y_ref, num=1000, dx=20, dy=0.1):
     y_min_i = np.interp(x=t, xp=t_band, fp=y_min)
     y_max_i = np.interp(x=t, xp=t_band, fp=y_max)
     i_out = np.logical_or(y < y_min_i, y > y_max_i)
+
+    # do not count outliers outside the t_ref
+    i_out = np.logical_and(i_out, t > t_band[0])
+    i_out = np.logical_and(i_out, t < t_band[-1])
 
     return t_band, y_min, y_max, i_out
 

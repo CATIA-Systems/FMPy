@@ -1,5 +1,6 @@
 import unittest
 from fmpy.examples.coupled_clutches import simulate_coupled_clutches
+from fmpy.examples.custom_input import simulate_custom_input
 from fmpy import platform
 import numpy as np
 import sys
@@ -7,10 +8,12 @@ import sys
 
 class ExamplesTest(unittest.TestCase):
 
-    def test_coupled_clutches_example(self):
-
+    @classmethod
+    def setUpClass(cls):
         print("Python:")
         print(sys.version)
+
+    def test_coupled_clutches_example(self):
 
         if platform.startswith('win'):
             fmi_versions = ['1.0', '2.0']
@@ -45,6 +48,12 @@ class ExamplesTest(unittest.TestCase):
                         inputs = result['inputs']
                         self.assertAlmostEqual(inputs[0], 0)
                         self.assertAlmostEqual(inputs[-1], 1)
+
+    def test_custom_input_example(self):
+
+        end_time = simulate_custom_input(show_plot=False)
+
+        self.assertAlmostEquals(end_time, 1.1)
 
 
 if __name__ == '__main__':

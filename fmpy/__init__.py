@@ -134,7 +134,16 @@ def fmi_info(filename):
 
 
 def extract(filename):
-    """ Extract a ZIP file to a temporary directory """
+    """ Extract a ZIP archive to a temporary directory
+
+    Parameters:
+
+        filename    filename of the ZIP archive
+
+    Returns:
+
+        unzipdir    the path to the directory that contains the extracted files
+    """
 
     unzipdir = mkdtemp()
 
@@ -143,8 +152,9 @@ def extract(filename):
         import win32file
         unzipdir = win32file.GetLongPathName(unzipdir)
 
-    with zipfile.ZipFile(filename, 'r') as fmufile:
-        fmufile.extractall(unzipdir)
+    # extract the archive
+    with zipfile.ZipFile(filename, 'r') as zf:
+        zf.extractall(unzipdir)
 
     return unzipdir
 

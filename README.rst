@@ -64,6 +64,13 @@ To run the script type::
     python -m fmpy.examples.coupled_clutches
 
 
+Connect an FMU to custom input
+------------------------------
+
+The `custom_input.py <fmpy/examples/custom_input.py>`_ example shows how to use the FMU class directly to build a custom
+simulation loop and how to get and set model variables to control the simulation.
+
+
 ------------------------------------
 
 |copyright| 2017 |Dassault Systemes|

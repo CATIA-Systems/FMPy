@@ -17,10 +17,6 @@ def simulate_custom_input(show_plot=True):
     stop_time = 2.0
     step_size = 1e-3
 
-    # define a custom input function
-    def input_signal(time):
-        return 0.0 if time < 0.9 else 2.0
-
     # download the FMU
     download_test_file('2.0', 'CoSimulation', 'MapleSim', '2016.2', 'CoupledClutches', 'CoupledClutches.fmu')
 

@@ -125,13 +125,31 @@ def validate_signal(t, y, t_ref, y_ref, num=1000, dx=20, dy=0.1):
     return t_band, y_min, y_max, i_out
 
 
-def validate_result(result, reference):
+def validate_result(result, reference, stop_time=None):
+    """ Validate a simulation result agains a reference result
+
+    Parameters:
+        result      structured NumPy array where the first column is the time
+        reference   same as result
+
+    Returns:
+        rel_out     the largest relative deviation of all signals
+    """
 
     t_ref = reference[reference.dtype.names[0]]
     t_res = result[result.dtype.names[0]]
 
+    # at least two samples are required
+    if result.size < 2:
+        return 1
+
+    # check if stop time has been reached
+    if stop_time is not None and t_res[-1] < stop_time:
+        return 1
+
     rel_out = 0
 
+    # find the signal with the most outliers
     for name in result.dtype.names[1:]:
 
         if name not in reference.dtype.names:
@@ -161,14 +179,14 @@ def plot_result(result, reference=None, filename=None, window_title=None):
     from collections import Iterable
 
     params = {
-            # 'legend.fontsize': 'medium',
-            # 'figure.figsize': (10, 8),
-            'legend.fontsize': 8,
-            'axes.labelsize': 8,
-            # 'axes.titlesize': 'medium',
-            'xtick.labelsize': 8,
-            'ytick.labelsize': 8,
-            'axes.linewidth': 0.5,
+        # 'legend.fontsize': 'medium',
+        # 'figure.figsize': (10, 8),
+        'legend.fontsize': 8,
+        'axes.labelsize': 8,
+        # 'axes.titlesize': 'medium',
+        'xtick.labelsize': 8,
+        'ytick.labelsize': 8,
+        'axes.linewidth': 0.5,
     }
 
     pylab.rcParams.update(params)
@@ -233,7 +251,7 @@ def plot_result(result, reference=None, filename=None, window_title=None):
 
         fig.canvas.mpl_connect('resize_event', onresize)
 
-        fig.set_size_inches(w=8, h=1.5*len(names), forward=True)
+        fig.set_size_inches(w=8, h=1.5 * len(names), forward=True)
         plt.tight_layout()
 
         if filename is None:
@@ -247,7 +265,7 @@ def plot_result(result, reference=None, filename=None, window_title=None):
 
 
 def fmu_path_info(path):
-
+    
     head = path
     values = []
 

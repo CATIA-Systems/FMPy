@@ -18,7 +18,7 @@ def simulate_custom_input(show_plot=True):
     step_size = 1e-3
 
     # download the FMU
-    download_test_file('2.0', 'CoSimulation', 'MapleSim', '2016.2', 'CoupledClutches', 'CoupledClutches.fmu')
+    download_test_file('2.0', 'CoSimulation', 'MapleSim', '2016.2', 'CoupledClutches', fmu_filename)
 
     # read the model description
     model_description = read_model_description(fmu_filename)

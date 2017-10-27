@@ -1,4 +1,5 @@
 import unittest
+from unittest import skipIf
 from fmpy.examples.coupled_clutches import simulate_coupled_clutches
 from fmpy.examples.custom_input import simulate_custom_input
 from fmpy.examples.parameter_variation import run_experiment
@@ -51,15 +52,12 @@ class ExamplesTest(unittest.TestCase):
                         self.assertAlmostEqual(inputs[-1], 1)
 
     def test_custom_input_example(self):
-
         end_time = simulate_custom_input(show_plot=False)
-
         self.assertAlmostEqual(end_time, 1.1)
 
+    @skipIf(platform not in ['win32', 'win64'], "FMU only available for Windows")
     def test_parameter_variation(self):
-
         LOSSES = run_experiment(show_plot=False)
-
         self.assertTrue(np.all(LOSSES > 0))
 
 

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
+    xmlns:sss="http://www.pmsf.net/xsd/SystemStructureSignalDictionaryDraft"
+    xmlns:ssc="http://www.pmsf.net/xsd/SystemStructureCommonDraft"
+    targetNamespace="http://www.pmsf.net/xsd/SystemStructureSignalDictionaryDraft">
+    <xs:annotation>
+        <xs:documentation xml:lang="en">
+            This is a draft schema proposal for the MAP-SSP SystemStructureSignalDictionary format
+            and is subject to change at any time for any reason. Note that the target namespace is
+            a placeholder and will change upon adoption.
+            
+            <!-- Rationale:
+                 
+                 The following definition of SSS file formats and XML content embedded in SSD file formats
+                 is intended to be a very minimalistic exchange format for signal dictionaries, i.e.
+                 sets of pre-defined signals with types, units, etc., that can be referenced in system
+                 definitions in order to set up connections through the signal dictionary.
+                 
+                 The format is intended as an interchange format between different tools, not
+                 as a replacement for tool-specific formats, and is focused on the exchange of
+                 information on systems needed for their execution.  For the interchange of
+                 architectural information on systems between architecture tools other formats
+                 including more architectural information are likely more suited.
+            -->
+            
+            A signal dictionary can be provided either as a stand-alone XML file (conventionally
+            with a .sss file type) which can be referenced from SSD files, or it can be embedded
+            in the SignalDictionary element of the SSD directly.  In that case the DictionaryEntry
+            elements are directly contained in the SignalDictionary element of the SSD, without
+            use of the SignalDictionary element of this schema.
+                        
+            Version: 20170606
+            
+        </xs:documentation>
+    </xs:annotation>
+    
+    <xs:import namespace="http://www.pmsf.net/xsd/SystemStructureCommonDraft" schemaLocation="SystemStructureCommon.xsd"/>
+    
+    <xs:element name="SignalDictionary">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="DictionaryEntry" maxOccurs="unbounded" type="sss:TDictionaryEntry"/>
+                <xs:element name="Enumerations" minOccurs="0" type="ssc:TEnumerations"/>
+                <xs:element name="Units" minOccurs="0" type="ssc:TUnits"/>
+                <xs:element name="Annotations" minOccurs="0" type="ssc:TAnnotations"/>
+            </xs:sequence>
+            <xs:attribute name="version" type="xs:normalizedString" use="required" fixed="Draft20170606">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en">
+                        Version of SSS format, fixed at 1.0 for the actual release.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attributeGroup ref="ssc:ABaseElement"/>
+            <xs:attributeGroup ref="ssc:ATopLevelMetaData"/>
+        </xs:complexType>
+    </xs:element>
+    
+    <xs:complexType name="TDictionaryEntry">
+        <xs:sequence>
+            <xs:group ref="ssc:GTypeChoice"/>
+            <xs:element name="Annotations" minOccurs="0" type="ssc:TAnnotations"/>
+        </xs:sequence>
+        <xs:attributeGroup ref="ssc:ABaseElement"/>
+        <xs:attribute name="name" use="required">
+            <xs:annotation>
+                <xs:documentation xml:lang="en">
+                    This attribute gives the dictionary entry a name, which
+                    shall be unique within the signal dictionary.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+       
+</xs:schema>

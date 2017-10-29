@@ -163,16 +163,18 @@ def validate_result(result, reference, stop_time=None):
     return rel_out
 
 
-def plot_result(result, reference=None, filename=None, window_title=None):
+def plot_result(result, reference=None, names=None, filename=None, window_title=None):
     """ Plot a collection of time series.
 
     Arguments:
         :param result:       structured NumPy Array that contains the time series to plot where 'time' is the independent variable
         :param reference:    optional reference signals with the same structure as `result`
+        :param columns:      columns to plot
         :param filename:     when provided the plot is saved as `filename` instead of showing the figure
         :param window_title: the title for the figure window
     """
 
+    import matplotlib
     import matplotlib.pylab as pylab
     import matplotlib.pyplot as plt
     import matplotlib.transforms as mtransforms
@@ -193,10 +195,14 @@ def plot_result(result, reference=None, filename=None, window_title=None):
 
     time = result['time']
 
-    # plat at most 20 signals
-    names = result.dtype.names[1:20]
+    if names is None:
+        # plot at most 20 signals
+        names = result.dtype.names[1:20]
 
     if len(names) > 0:
+
+        # indent label 0.02 inch / character
+        label_x = -0.02 * np.max(list(map(len, names)) + [8])
 
         fig, axes = plt.subplots(len(names), sharex=True)
 
@@ -230,14 +236,13 @@ def plot_result(result, reference=None, filename=None, window_title=None):
 
             ax.plot(time, y, color='b', linewidth=0.9, label='result', zorder=101)
 
-            if len(name) < 18:
-                ax.set_ylabel(name)
-            else:
-                # shorten long variable names
-                ax.set_ylabel('...' + name[-15:])
+            if time.size < 200:
+                ax.scatter(time, y, color='b', s=5, zorder=101)
+
+            ax.set_ylabel(name, horizontalalignment='left', rotation=0)
 
             # align the y-labels
-            ax.get_yaxis().set_label_coords(-0.07, 0.5)
+            ax.get_yaxis().set_label_coords(label_x, 0.5)
 
             ax.margins(x=0, y=0.05)
 
@@ -245,13 +250,29 @@ def plot_result(result, reference=None, filename=None, window_title=None):
         if window_title is not None:
             fig.canvas.set_window_title(window_title)
 
-        # update layout when plot is resized
         def onresize(event):
+            fig = plt.gcf()
+
+            w = fig.get_figwidth()
+
+            # tight_layout() crashes on very small figures
+            if w < 3:
+                return
+
+            x = label_x * (8.0 / w)
+
+            # update label coordinates
+            for ax in fig.get_axes():
+                ax.get_yaxis().set_label_coords(x, 0.5)
+
+            # update layout
             plt.tight_layout()
 
+        # update layout when the plot is re-sized
         fig.canvas.mpl_connect('resize_event', onresize)
 
         fig.set_size_inches(w=8, h=1.5 * len(names), forward=True)
+
         plt.tight_layout()
 
         if filename is None:

@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
+    xmlns:ssc="http://www.pmsf.net/xsd/SystemStructureCommonDraft"
+    targetNamespace="http://www.pmsf.net/xsd/SystemStructureCommonDraft">
+    <xs:annotation>
+        <xs:documentation xml:lang="en">
+            This is a draft schema proposal for the MAP-SSP SystemStructure format common content
+            and is subject to change at any time for any reason. Note that the target namespace is
+            a placeholder and will change upon adoption.
+            
+            <!-- Rationale:
+                 
+                 This schema contains parts that are common across all SSP schemas and are thus
+                 defined centrally in this namespace and schema, to be referenced by all other
+                 schemas in the SSP group.
+            -->
+                                    
+            Version: 20170606
+            
+        </xs:documentation>
+    </xs:annotation>
+    
+    <xs:attributeGroup name="ABaseElement">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                This attribute group specifies the attributes common to all model elements.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="id" type="xs:ID" use="optional">
+            <xs:annotation>
+                <xs:documentation xml:lang="en">
+                    This attribute gives the model element a file-wide unique id which can
+                    be referenced from other elements or via URI fragment identifier.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="description" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation xml:lang="en">
+                    This attribute gives a human readable longer description of the
+                    model element, which can be shown to the user where appropriate. 
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:attributeGroup>
+    
+    <xs:attributeGroup name="ATopLevelMetaData">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                This attribute group specifies the optional meta-data attributes common to 
+                all top-level container elements of all defined file formats.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="author" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation xml:lang="en">
+                    This attribute gives the name of the author of this file's content. 
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="fileversion" type="xs:normalizedString" use="optional">
+            <xs:annotation>
+                <xs:documentation xml:lang="en">
+                    This attribute gives a version number for this file's content. 
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="copyright" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation xml:lang="en">
+                    This attribute gives copyright information for this file's content. 
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="license" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation xml:lang="en">
+                    This attribute gives license information for this file's content. 
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="generationTool" type="xs:normalizedString">
+            <xs:annotation>
+                <xs:documentation xml:lang="en">
+                    This attribute gives the name of the tool that generated this file. 
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="generationDateAndTime" type="xs:dateTime">
+            <xs:annotation>
+                <xs:documentation xml:lang="en">
+                    This attribute gives the date and time this file was generated. 
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:attributeGroup>
+    
+    <xs:complexType name="TEnumerations">
+        <xs:sequence>
+            <xs:element name="Enumeration" minOccurs="1" maxOccurs="unbounded" type="ssc:TEnumeration"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="TEnumeration">
+        <xs:sequence>
+            <xs:element name="Item" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:attribute name="name" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation xml:lang="en">Name of the Enumeration Item</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="value" type="xs:int" use="required">
+                        <xs:annotation>
+                            <xs:documentation xml:lang="en">The Value of the Enumeration Item</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Annotations" minOccurs="0" type="ssc:TAnnotations"/>
+        </xs:sequence>
+        <xs:attributeGroup ref="ssc:ABaseElement"/>
+        <xs:attribute name="name" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation xml:lang="en">
+                    This attribute specifies the name of the enumeration in the system description,
+                    which must be unique within in the system description.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+    
+    <xs:complexType name="TUnits">
+        <xs:sequence>
+            <xs:element name="Unit" minOccurs="1" maxOccurs="unbounded" type="ssc:TUnit"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="TUnit">
+        <xs:sequence>
+            <xs:element name="BaseUnit">
+                <xs:complexType>
+                    <xs:attribute name="kg" type="xs:int" default="0">
+                        <xs:annotation>
+                            <xs:documentation>Exponent of SI base unit "kg"</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="m" type="xs:int" default="0">
+                        <xs:annotation>
+                            <xs:documentation>Exponent of SI base unit "m"</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="s" type="xs:int" default="0">
+                        <xs:annotation>
+                            <xs:documentation>Exponent of SI base unit "s"</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="A" type="xs:int" default="0">
+                        <xs:annotation>
+                            <xs:documentation>Exponent of SI base unit "A"</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="K" type="xs:int" default="0">
+                        <xs:annotation>
+                            <xs:documentation>Exponent of SI base unit "K"</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="mol" type="xs:int" default="0">
+                        <xs:annotation>
+                            <xs:documentation>Exponent of SI base unit "mol"</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="cd" type="xs:int" default="0">
+                        <xs:annotation>
+                            <xs:documentation>Exponent of SI base unit "cd"</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="rad" type="xs:int" default="0">
+                        <xs:annotation>
+                            <xs:documentation>Exponent of SI derived unit "rad"</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="factor" type="xs:double" default="1"/>
+                    <xs:attribute name="offset" type="xs:double" default="0"/>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Annotations" minOccurs="0" type="ssc:TAnnotations"/>
+        </xs:sequence>
+        <xs:attributeGroup ref="ssc:ABaseElement"/>
+        <xs:attribute name="name" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation xml:lang="en">
+                    This attribute specifies the name of the unit in the system description,
+                    which must be unique within in the system description.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+    
+    <xs:complexType name="TAnnotations">
+        <xs:sequence maxOccurs="unbounded">
+            <xs:element name="Annotation">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:any namespace="##any" processContents="lax" minOccurs="0"/>
+                    </xs:sequence>
+                    <xs:attribute name="type" type="xs:normalizedString" use="required">
+                        <xs:annotation>
+                            <xs:documentation xml:lang="en">
+                                The unique name of the type of the annotation.
+                                
+                                In order to ensure uniqueness all types should be identified
+                                with reverse domain name notation (cf. Java package names
+                                or Apple UTIs) of a domain that is controlled by the entity
+                                defining the semantics and content of the annotation.
+                                
+                                For vendor-specific annotations this would e.g. be a domain
+                                controlled by the tool vendor.
+                                
+                                For MAP-SSP defined annotations, this will be a domain under
+                                the org.modelica prefix.
+                                
+                                <!-- Rationale:
+                                     
+                                     The vendor annotations mechanism was initially patterned
+                                     after the one in FMI, for good or worse.  In order to
+                                     avoid some of the problems with that mechanism, annotations
+                                     are allowed on all model elements, so that no complex
+                                     mechanisms for mapping annotation information to model 
+                                     elements is needed.  The use of rDNS notation for type
+                                     names should at least alleviate the problem of clashing
+                                     tool names.
+                                     
+                                     In order to make this mechanism also usable for agreed
+                                     upon extensions to the base standard, it was deemed to
+                                     be useful to rename the mechanism to remove vendor and tool
+                                     from the names and to reserve some namespace for non-vendor-
+                                     specific extensions.
+                                -->
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:group name="GTypeChoice">
+        <xs:choice>
+            <xs:annotation>
+                <xs:documentation xml:lang="en">
+                    This element gives the type of a connector or signal dictionary entry
+                    (called entity below).
+                </xs:documentation>
+            </xs:annotation>
+            <xs:element name="Real">
+                <xs:complexType>
+                    <xs:attribute name="unit" type="xs:string" use="optional">
+                        <xs:annotation>
+                            <xs:documentation xml:lang="en">
+                                This attribute gives the unit of the entity and must
+                                reference one of the unit definitions provided in the Units
+                                element of the containing file.
+                                
+                                If a unit is not supplied, the unit is determined through
+                                default mechanisms: For FMU components, the unit of the
+                                underlying variable would be used, for systems the units
+                                of connected underlying connectors could be used if unambiguous.
+                                If a unit cannot be deduced unambinguously, the user should
+                                be informed of this error.
+                                
+                                <!-- TODO: Equally, if the unit of the connector
+                                           differs from the unit of the underlying FMU variable this
+                                           constitutes and error. OR: Allow overriding, require further
+                                           attribute to do so? -->
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Integer">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Boolean">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="String">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Enumeration">
+                <xs:complexType>
+                    <xs:attribute name="name" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation xml:lang="en">
+                                This attribute specifies the name of the enumeration
+                                which references into the set of defined enumerations
+                                of the system structure description, as contained in
+                                the Enumerations element of the root element.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Binary">
+                <xs:complexType>
+                    <xs:attribute name="mime-type" type="xs:string" default="application/octet-stream">
+                        <xs:annotation>
+                            <xs:documentation xml:lang="en">
+                                This optional attribute specifies the MIME type of the
+                                underlying binary data, which defaults to the non-specific
+                                application/octet-stream type.  This information can be
+                                used by the implementation to detect mismatches between
+                                connected binary connectors, or provide automatic means of
+                                conversion between different formats.  It should be noted
+                                that the implementation is not required to provide this
+                                service, i.e. it remains the responsibility of the operator 
+                                to ensure only compatible binary connectors are connected.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:choice>
+    </xs:group>
+    
+</xs:schema>

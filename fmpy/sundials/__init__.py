@@ -66,6 +66,11 @@ CVodeInit = getattr(sundials_cvode, 'CVodeInit')
 CVodeInit.argtypes = [c_void_p, CVRhsFn, realtype, N_Vector]
 CVodeInit.restype = c_int
 
+# int CVodeSetMaxStep(void *cvode_mem, realtype hmax);
+CVodeSetMaxStep = getattr(sundials_cvode, 'CVodeSetMaxStep')
+CVodeSetMaxStep.argtypes = [c_void_p, realtype]
+CVodeSetMaxStep.restype = c_int
+
 # void CVodeFree(void **cvode_mem)
 CVodeFree = getattr(sundials_cvode, 'CVodeFree')
 CVodeFree.argtypes = [POINTER(c_void_p)]
@@ -116,7 +121,14 @@ def NV_DATA_S(v):
 
 class CVodeSolver(object):
 
-    def __init__(self, fmu, numberOfContinuousStates, numberOfEventIndicators):
+    def __init__(self,
+                 fmu,
+                 numberOfContinuousStates,
+                 numberOfEventIndicators,
+                 startTime,
+                 stopTime,
+                 maxStep=None,
+                 relativeTolerance=1e-5):
 
         self.fmu = fmu
 
@@ -130,8 +142,9 @@ class CVodeSolver(object):
 
         self.nz = numberOfEventIndicators
 
-        RTOL = 1e-5
-        T0   = 0.0
+        if maxStep is None:
+            # perform at least 50 steps
+            maxStep = (stopTime - startTime) / 50.
 
         self.x      = N_VNew_Serial(self.nx)
         self.abstol = N_VNew_Serial(self.nx)
@@ -147,7 +160,7 @@ class CVodeSolver(object):
             self.fmu.getContinuousStates(self.px, self.nx)
 
         abstol = np.ctypeslib.as_array(self.pabstol, (self.nx,))
-        abstol[:] = RTOL
+        abstol[:] = relativeTolerance
 
         self.cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON)
 
@@ -155,13 +168,15 @@ class CVodeSolver(object):
         self.f_ = CVRhsFn(self.f)
         self.g_ = CVRootFn(self.g)
 
-        flag = CVodeInit(self.cvode_mem, self.f_, T0, self.x)
+        flag = CVodeInit(self.cvode_mem, self.f_, startTime, self.x)
 
         flag = CVodeRootInit(self.cvode_mem, self.nz, self.g_)
 
-        flag = CVodeSVtolerances(self.cvode_mem, RTOL, self.abstol)
+        flag = CVodeSVtolerances(self.cvode_mem, relativeTolerance, self.abstol)
 
         flag = CVDense(self.cvode_mem, self.nx)
+
+        flag = CVodeSetMaxStep(self.cvode_mem, maxStep)
 
     def f(self, t, y, ydot, user_data):
         """ Right-hand-side function """

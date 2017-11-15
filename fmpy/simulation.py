@@ -382,7 +382,11 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
         solver = ForwardEuler(fmu, modelDescription.numberOfContinuousStates, modelDescription.numberOfEventIndicators)
     elif solver_name is None or solver_name == 'CVode':
         from .sundials import CVodeSolver
-        solver = CVodeSolver(fmu, modelDescription.numberOfContinuousStates, modelDescription.numberOfEventIndicators)
+        solver = CVodeSolver(fmu,
+                             numberOfContinuousStates=modelDescription.numberOfContinuousStates,
+                             numberOfEventIndicators=modelDescription.numberOfEventIndicators,
+                             startTime=start_time,
+                             stopTime=stop_time)
         step_size = output_interval
     else:
         raise Exception('Unknown solver: %s. Must be one of "Euler" or "CVode".' % solver_name)

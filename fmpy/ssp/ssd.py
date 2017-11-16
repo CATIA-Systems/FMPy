@@ -351,10 +351,13 @@ def get_connections(system, connectors=None):
             # find the connection
             for connection in system.connections:
                 if connection.endElement is None and connection.endConnector == connector.name:
+                    start_p = build_path(system) + '.' + connection.startElement + '.' + connection.startConnector
+                    end_p = build_path(connector)
                     break
-
-            start_p = build_path(system) + '.' + connection.startElement + '.' + connection.startConnector
-            end_p = build_path(connector)
+                elif connection.startElement is None and connection.startConnector == connector.name:
+                    start_p = build_path(connector)
+                    end_p = build_path(system) + '.' + connection.startElement + '.' + connection.startConnector
+                    break
 
             cons.append((connectors[start_p], connectors[end_p]))
 
@@ -369,14 +372,17 @@ def get_connections(system, connectors=None):
                 # find the connection
                 for connection in system.connections:
                     if connection.endElement == element.name and connection.endConnector == connector.name:
+                        start_p = build_path(system)
+                        if connection.startElement is not None:
+                            start_p += '.' + connection.startElement
+                        start_p += '.' + connection.startConnector
                         break
-
-                start_p = build_path(system)
-
-                if connection.startElement is not None:
-                    start_p += '.' + connection.startElement
-
-                start_p += '.' + connection.startConnector
+                    elif connection.startElement == element.name and connection.startConnector == connector.name:
+                        start_p = build_path(system)
+                        if connection.endElement is not None:
+                            start_p += '.' + connection.endElement
+                        start_p += '.' + connection.endConnector
+                        break
 
                 cons.append((connectors[start_p], connectors[end_p]))
 

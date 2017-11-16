@@ -1,11 +1,3 @@
-"""
-Simulate an FMU
-===============
-
-.. image:: ../../Rectifier_result.png
-
-"""
-
 from fmpy import simulate_fmu, download_test_file
 import numpy as np
 
@@ -47,6 +39,7 @@ def simulate_coupled_clutches(fmi_version='2.0',
     print("Done.")
 
     return result
+
 
 if __name__ == '__main__':
 

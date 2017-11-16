@@ -8,18 +8,37 @@ from fmpy.fmi2 import FMU2Slave
 from fmpy.ssp.ssd import System, read_ssd, get_connections, find_connectors, find_components, build_path
 
 
-def get_real(component, name):
+def get_value(component, name):
     """ Get a Real variable from a component """
 
-    vr = component.vrs[name]
-    return component.fmu.getReal([vr])[0]
+    # vr = component.vrs[name]
+    variable = component.variables[name]
+
+    if variable.type == 'Real':
+        return component.fmu.getReal([variable.valueReference])[0]
+    elif variable.type in ['Integer', 'Enumeration']:
+        return component.fmu.getInteger([variable.valueReference])[0]
+    elif variable.type == 'Boolean':
+        value = component.fmu.getBoolean([variable.valueReference])[0]
+        # return 0.0 if value == 0 else 1.0
+        return value != 0
+    else:
+        raise Exception("Unsupported type: " + variable.type)
 
 
-def set_real(component, name, value):
+def set_value(component, name, value):
     """ Set a Real variable to a component """
 
-    vr = component.vrs[name]
-    component.fmu.setReal([vr], [value])
+    variable = component.variables[name]
+
+    if variable.type == 'Real':
+        component.fmu.setReal([variable.valueReference], [value])
+    elif variable.type in ['Integer', 'Enumeration']:
+        component.fmu.setInteger([variable.valueReference], [int(value)])[0]
+    elif variable.type == 'Boolean':
+        component.fmu.setBoolean([variable.valueReference], [value != 0.0])
+    else:
+        raise Exception("Unsupported type: " + variable.type)
 
 
 def add_path(element, path=''):
@@ -46,7 +65,7 @@ def set_parameters(component, parameters):
     for name, value in parameters.items():
         if name.startswith(path):
             variable_name = name[len(path) + 1:]
-            set_real(component, variable_name, value)
+            set_value(component, variable_name, value)
 
 
 def instantiate_fmu(component, ssp_unzipdir, start_time, parameters={}):
@@ -59,9 +78,10 @@ def instantiate_fmu(component, ssp_unzipdir, start_time, parameters={}):
     model_description = read_model_description(fmu_filename, validate=False)
 
     # collect the value references
-    component.vrs = {}
+    component.variables = {}
     for variable in model_description.modelVariables:
-        component.vrs[variable.name] = variable.valueReference
+        # component.vrs[variable.name] = variable.valueReference
+        component.variables[variable.name] = variable
 
     fmu_kwargs = {'guid': model_description.guid,
                   'unzipDirectory': component.unzipdir,
@@ -86,7 +106,10 @@ def free_fmu(component):
 
     component.fmu.terminate()
     component.fmu.freeInstance()
-    shutil.rmtree(component.unzipdir)
+    try:
+        shutil.rmtree(component.unzipdir)
+    except Exception as e:
+        print("Failed to remove unzip directory. " + str(e))
 
 
 def do_step(component, time, step_size):
@@ -94,7 +117,7 @@ def do_step(component, time, step_size):
     # set inputs
     for connector in component.connectors:
         if connector.kind == 'input':
-            set_real(component, connector.name, connector.value)
+            set_value(component, connector.name, connector.value)
 
     # do step
     component.fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
@@ -102,7 +125,7 @@ def do_step(component, time, step_size):
     # get outputs
     for connector in component.connectors:
         if connector.kind == 'output':
-            connector.value = get_real(component, connector.name)
+            connector.value = get_value(component, connector.name)
 
 
 def simulate_ssp(ssp_filename, start_time=0.0, stop_time=None, step_size=None, parameters={}, input={}):
@@ -116,13 +139,39 @@ def simulate_ssp(ssp_filename, start_time=0.0, stop_time=None, step_size=None, p
 
     ssd = read_ssd(ssp_filename)
 
-    ssp_unzipdir = extract(ssp_filename)
-
     add_path(ssd.system)
 
     components = find_components(ssd.system)
     connectors = find_connectors(ssd.system)
     connections = get_connections(ssd.system)
+
+    # resolve connections
+    connections_reversed = {}
+
+    for a, b in connections:
+        connections_reversed[b] = a
+
+    new_connections = []
+
+    # trace connections back to the actual start connector
+    for a, b in connections:
+
+        # if isinstance(b.parent, System):
+        #     continue
+
+        while isinstance(a.parent, System) and a.parent.parent is not None:
+            a = connections_reversed[a]
+
+        new_connections.append((a, b))
+
+    # for a, b in new_connections:
+    #     #print(type(a.parent), a.kind, '->', type(b.parent), b.kind)
+    #     print(a.path, '->', b.path)
+
+    connections = new_connections
+
+    # extract the SSP
+    ssp_unzipdir = extract(ssp_filename)
 
     # initialize the connectors
     for connector in connectors:
@@ -173,8 +222,13 @@ def simulate_ssp(ssp_filename, start_time=0.0, stop_time=None, step_size=None, p
 
     dtype = [('time', np.float64)]
 
-    for connector in connectors:
-        dtype.append((connector.path, np.float64))
+    for connector, value in zip(connectors, rows[0][1:]):
+        if type(value) == bool:
+            dtype.append((connector.path, np.bool_))
+        elif type(value) == int:
+            dtype.append((connector.path, np.int32))
+        else:
+            dtype.append((connector.path, np.float64))
 
     # convert the results to a structured NumPy array
     return np.array(rows, dtype=np.dtype(dtype))

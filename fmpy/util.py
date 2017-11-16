@@ -201,8 +201,8 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
 
     if len(names) > 0:
 
-        # indent label 0.02 inch / character
-        label_x = -0.02 * np.max(list(map(len, names)) + [8])
+        # indent label 0.015 inch / character
+        label_x = -0.015 * np.max(list(map(len, names)) + [8])
 
         fig, axes = plt.subplots(len(names), sharex=True)
 
@@ -234,7 +234,20 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
                 trans = mtransforms.blended_transform_factory(ax.transData, ax.transAxes)
                 ax.fill_between(time, 0, 1, where=i_out, facecolor='red', alpha=0.5, transform=trans)
 
-            ax.plot(time, y, color='b', linewidth=0.9, label='result', zorder=101)
+            if y.dtype == np.float64:
+                ax.plot(time, y, color='b', linewidth=0.9, label='result', zorder=101)
+            else:
+                ax.hlines(y, time[:-1], time[1:], colors='b', linewidth=1, label='result', zorder=101)
+                # ax.step(time, y, where='post', color='b', linewidth=0.9, label='result', zorder=101)
+
+            if y.dtype == bool:
+                # use fixed range and labels and fill area
+                ax.set_ylim(-0.25, 1.25)
+                ax.yaxis.set_ticks([0, 1])
+                ax.yaxis.set_ticklabels(['false', 'true'])
+                ax.fill_between(time, y, 0, step='post', facecolor='b', alpha=0.1)
+            else:
+                ax.margins(x=0, y=0.05)
 
             if time.size < 200:
                 ax.scatter(time, y, color='b', s=5, zorder=101)
@@ -243,8 +256,6 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
 
             # align the y-labels
             ax.get_yaxis().set_label_coords(label_x, 0.5)
-
-            ax.margins(x=0, y=0.05)
 
         # set the window title
         if window_title is not None:
@@ -305,3 +316,49 @@ def fmu_path_info(path):
 
     return dict(zip(keys, values))
 
+
+def download_file(url, checksum=None):
+    """ Download a file to the current directory """
+
+    filename = os.path.basename(url)
+
+    if checksum is not None:
+        hash = sha256_checksum(filename)
+        if hash.startswith(checksum):
+            return  # file already exists
+
+    import requests
+
+    print('Downloading ' + url)
+
+    status_code = -1
+
+    # try to download the file three times
+    try:
+        for _ in range(3):
+            if status_code != 200:
+                response = requests.get(url)
+                status_code = response.status_code
+    except:
+        pass
+
+    if status_code != 200:
+        raise Exception("Failed to download %s (status code: %d)" % (url, status_code))
+
+    # write the file
+    with open(filename, 'wb') as f:
+        f.write(response.content)
+
+
+def sha256_checksum(filename):
+    """ Create a SHA256 form a file """
+
+    import hashlib
+
+    sha256 = hashlib.sha256()
+
+    with open(filename, 'rb') as f:
+        for block in iter(lambda: f.read(65536), b''):
+            sha256.update(block)
+
+    return sha256.hexdigest()

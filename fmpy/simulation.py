@@ -45,7 +45,7 @@ class Recorder(object):
 
         self.cols += zip(real_names, [np.float64] * len(real_names))
         self.cols += zip(integer_names, [np.int32] * len(integer_names))
-        self.cols += zip(boolean_names, [np.int32] * len(boolean_names))
+        self.cols += zip(boolean_names, [np.bool_] * len(boolean_names))
 
     def sample(self, time, force = False):
 
@@ -232,38 +232,42 @@ def apply_start_values(fmu, modelDescription, start_values):
 
 class ForwardEuler(object):
 
-    def __init__(self, fmu, numberOfContinuousStates, numberOfEventIndicators):
-        self.fmu = fmu
+    def __init__(self, nx, nz, get_x, set_x, get_dx, get_z):
 
-        self.x    = np.zeros(numberOfContinuousStates)
-        self.dx   = np.zeros(numberOfContinuousStates)
-        self.z    = np.zeros(numberOfEventIndicators)
-        self.prez = np.zeros(numberOfEventIndicators)
+        self.get_x = get_x
+        self.set_x = set_x
+        self.get_dx = get_dx
+        self.get_z = get_z
 
-        self._px    = self.x.ctypes.data_as(POINTER(c_double))
-        self._pdx   = self.dx.ctypes.data_as(POINTER(c_double))
-        self._pz    = self.z.ctypes.data_as(POINTER(c_double))
+        self.x = np.zeros(nx)
+        self.dx = np.zeros(nx)
+        self.z = np.zeros(nz)
+        self.prez = np.zeros(nz)
+
+        self._px = self.x.ctypes.data_as(POINTER(c_double))
+        self._pdx = self.dx.ctypes.data_as(POINTER(c_double))
+        self._pz = self.z.ctypes.data_as(POINTER(c_double))
         self._pprez = self.z.ctypes.data_as(POINTER(c_double))
 
         # initialize the event indicators
-        self.fmu.getEventIndicators(self._pz, self.z.size)
+        self.get_z(self._pz, self.z.size)
 
     def step(self, t, tNext):
 
         # get the current states and derivatives
-        self.fmu.getContinuousStates(self._px, self.x.size)
-        self.fmu.getDerivatives(self._pdx, self.dx.size)
+        self.get_x(self._px, self.x.size)
+        self.get_dx(self._pdx, self.dx.size)
 
         # perform one step
         dt = tNext - t
         self.x += dt * self.dx
 
         # set the continuous states
-        self.fmu.setContinuousStates(self._px, self.x.size)
+        self.set_x(self._px, self.x.size)
 
         # check for state event
         self.prez[:] = self.z
-        self.fmu.getEventIndicators(self._pz, self.z.size)
+        self.get_z(self._pz, self.z.size)
         stateEvent = np.any((self.prez * self.z) < 0)
 
         return stateEvent, tNext
@@ -377,12 +381,31 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
 
         fmu.enterContinuousTimeMode()
 
+    # solver callbacks
+    def get_x(x, size):
+        fmu.getContinuousStates(x, size)
+
+    def set_x(x, size):
+        fmu.setContinuousStates(x, size)
+
+    def get_dx(dx, size):
+        fmu.getDerivatives(dx, size)
+
+    def get_z(z, size):
+        fmu.getEventIndicators(z, size)
+
+    def set_time(t):
+        fmu.setTime(t)
+
+    nx = modelDescription.numberOfContinuousStates
+    nz = modelDescription.numberOfEventIndicators
+
     # select the solver
     if solver_name == 'Euler':
-        solver = ForwardEuler(fmu, modelDescription.numberOfContinuousStates, modelDescription.numberOfEventIndicators)
+        solver = ForwardEuler(nx, nz, get_x, set_x, get_dx, get_z)
     elif solver_name is None or solver_name == 'CVode':
         from .sundials import CVodeSolver
-        solver = CVodeSolver(fmu, modelDescription.numberOfContinuousStates, modelDescription.numberOfEventIndicators)
+        solver = CVodeSolver(nx, nz, get_x, set_x, get_dx, get_z, set_time, start_time, stop_time)
         step_size = output_interval
     else:
         raise Exception('Unknown solver: %s. Must be one of "Euler" or "CVode".' % solver_name)

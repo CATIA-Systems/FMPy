@@ -1,8 +1,8 @@
 import unittest
-from fmpy import platform, download_test_file
-import fmpy
+from fmpy import platform, read_model_description, extract
 from fmpy.fmi1 import FMU1Slave
 from fmpy.fmi2 import FMU2Slave
+from fmpy.util import download_test_file
 import shutil
 
 
@@ -22,8 +22,8 @@ class GettersAndSettersTest(unittest.TestCase):
 
             download_test_file(fmi_version, 'CoSimulation', 'Dymola', '2017', model_name, filename)
 
-            modelDescription = fmpy.read_model_description(filename)
-            unzipdir = fmpy.extract(filename)
+            modelDescription = read_model_description(filename)
+            unzipdir = extract(filename)
 
             guid = modelDescription.guid
             modelIdentifier = modelDescription.coSimulation.modelIdentifier

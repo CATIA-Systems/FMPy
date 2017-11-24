@@ -5,7 +5,7 @@ python:
   - 3.6
 
 install:
-  - pip install -r requirements.txt
+  - pip install lxml requests scipy pathlib dask[complete]
 
 script:
   - pip install .
@@ -18,5 +18,5 @@ deploy:
   user: t-sommer
   password:
     secure: H4EFw/NtTmmFLOB2yjP8d3uqsPDCzG4WV7RbeEu3rRwz39cZxKkBEvBokKYVPo7tLRwWTQjYGbrwOaLME3hBNo0Mjc9d99Ivcy6UTeE4T6AUln//STDOjy2geJnkBCStZ5I21N+bVom6lzT0Oe0EUnJNBQWnJza7EuMSoTdaH3us5Obtc3F1dqbUensdvaUUvZw9Px7lIQ2C1drwgZvh3yArXX8rVAtxq9wpa601G6tKtrwRcgS4v1jAK8p7MJdFVA/9i5ZAXB/L4waE3pv+k52bjFJ9lcaYOwYcxBedqriKYV78q0+VmBn1TfMK0oNEDgg7abVjZwnx17oGvm389BeEFzN7GXX3RsoNNUlcMFXEEaFVuCWwXNG3Sx6HHsz9zyOE6jbhMt1ag4VHZsCoWO/UoXL7jbd46kBIOuixVgkPZlQSP6FA0/jch85940tYtPQXBxldOiwjYyFFUxv/47iTaB0aAt6Elm+2c/dxgDd0jS/FwmGdChrYcjLU8qjy2/ApMps1C2u00nxN6P/OxqbY0fIqgBFHQOsEgEoSe6sGDzPTOtQrsp/3pP3At1KR8czBkTUxWb+5Xa+ObM/qc4Jcy3QAoLRlGIyId9frOpViI/VgM4RpT+i0chaOwY4yFAexkWwGtWST58VKgvnzYTtnTQ/g+fRgFal3NtkEWUo=
-  distributions: sdist bdist_wheel
+  distributions: bdist_wheel --universal
   skip_cleanup: true

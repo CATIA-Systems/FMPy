@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
+    xmlns:ssv="http://www.pmsf.net/xsd/SystemStructureParameterValuesDraft"
+    xmlns:ssc="http://www.pmsf.net/xsd/SystemStructureCommonDraft"
+    targetNamespace="http://www.pmsf.net/xsd/SystemStructureParameterValuesDraft">
+    <xs:annotation>
+        <xs:documentation xml:lang="en">
+            This is a draft schema proposal for the MAP-SSP SystemStructureParameterValues format
+            and is subject to change at any time for any reason. Note that the target namespace is
+            a placeholder and will change upon adoption.
+            
+            <!-- Rationale:
+                 
+                 The following definition of SSV file formats and XML content embedded in SSD file formats
+                 is intended to be a very minimalistic exchange format for the values of parameters from
+                 various parameter sources (provided as parameter bindings in SSD files or through other
+                 mechanisms to the parameters of SSD systems and components.
+                 
+                 The format is intended as an interchange format between different tools, not
+                 as a replacement for tool-specific formats, and is focused on the exchange of
+                 information on systems needed for their execution.  For the interchange of
+                 architectural information on systems between architecture tools other formats
+                 including more architectural information are likely more suited.
+            -->
+            
+            A parameter set can be provided as a stand-alone XML file (conventionally with a .ssv file type)
+            which can be referenced from SSD files.
+                        
+            Version: 20170606
+            
+        </xs:documentation>
+    </xs:annotation>
+    
+    <xs:import namespace="http://www.pmsf.net/xsd/SystemStructureCommonDraft" schemaLocation="SystemStructureCommon.xsd"/>
+    
+    <xs:element name="ParameterSet">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Parameters" type="ssv:TParameters"/>
+                <xs:element name="Units" minOccurs="0" type="ssc:TUnits"/>
+                <xs:element name="Annotations" minOccurs="0" type="ssc:TAnnotations"/>
+            </xs:sequence>
+            <xs:attribute name="version" type="xs:normalizedString" use="required" fixed="Draft20170606">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en">
+                        Version of SSV format, fixed at 1.0 for the actual release.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attributeGroup ref="ssc:ABaseElement"/>
+            <xs:attribute name="name" type="xs:string" use="required">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en">
+                        Name of the Parameter Set.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attributeGroup ref="ssc:ATopLevelMetaData"/>
+        </xs:complexType>
+    </xs:element>
+        
+    <xs:complexType name="TParameters">
+        <xs:sequence>
+            <xs:element name="Parameter" minOccurs="0" maxOccurs="unbounded" type="ssv:TParameter"/>
+        </xs:sequence>
+    </xs:complexType>
+        
+    <xs:complexType name="TParameter">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="Real">
+                    <xs:complexType>
+                        <xs:attribute name="value" type="xs:double" use="required">
+                            <xs:annotation>
+                                <xs:documentation xml:lang="en">
+                                    This attribute gives the value of the parameter.
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:attribute>
+                        <xs:attribute name="unit" type="xs:string" use="optional">
+                            <xs:annotation>
+                                <xs:documentation xml:lang="en">
+                                    This attribute gives the unit of the parameter value and must
+                                    reference one of the unit definitions provided in the Units
+                                    element of the enclosing file.
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:attribute>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Integer">
+                    <xs:complexType>
+                        <xs:attribute name="value" type="xs:int" use="required">
+                            <xs:annotation>
+                                <xs:documentation xml:lang="en">
+                                    This attribute gives the value of the parameter.
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:attribute>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Boolean">
+                    <xs:complexType>
+                        <xs:attribute name="value" type="xs:boolean" use="required">
+                            <xs:annotation>
+                                <xs:documentation xml:lang="en">
+                                    This attribute gives the value of the parameter.
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:attribute>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="String">
+                    <xs:complexType>
+                        <xs:attribute name="value" type="xs:string" use="required">
+                            <xs:annotation>
+                                <xs:documentation xml:lang="en">
+                                    This attribute gives the value of the parameter.
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:attribute>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Enumeration">
+                    <xs:complexType>
+                        <xs:attribute name="value" type="xs:string" use="required">
+                            <xs:annotation>
+                                <xs:documentation xml:lang="en">
+                                    This attribute gives the value of the parameter as 
+                                    the enumeration item name.  Note that the actual
+                                    value of this at run time will depend on the item
+                                    mapping of the enumeration type of the variables
+                                    being parameterized.
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:attribute>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Binary">
+                    <xs:complexType>
+                        <xs:attribute name="mime-type" type="xs:string" default="application/octet-stream">
+                            <xs:annotation>
+                                <xs:documentation xml:lang="en">
+                                    This optional attribute specifies the MIME type of the
+                                    underlying binary data, which defaults to the non-specific
+                                    application/octet-stream type.  This information can be
+                                    used by the implementation to detect mismatches between
+                                    binary parameters, or provide automatic conversions
+                                    between different formats.  It should be noted that the
+                                    implementation is not required to provide this service,
+                                    i.e. it remains the responsibility of the operator to
+                                    ensure only compatible binary connectors/parameters are
+                                    connected.
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:attribute>
+                        <xs:attribute name="value" type="xs:hexBinary" use="required">
+                            <xs:annotation>
+                                <xs:documentation xml:lang="en">
+                                    This attribute gives the value of the parameter as a
+                                    hex encoded binary value.
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:attribute>
+                    </xs:complexType>
+                </xs:element>
+            </xs:choice>
+            <xs:element name="Annotations" minOccurs="0" type="ssc:TAnnotations"/>
+        </xs:sequence>
+        <xs:attributeGroup ref="ssc:ABaseElement"/>
+        <xs:attribute name="name" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation xml:lang="en">
+                    This attribute specifies the name of the parameter in the parameter set,
+                    which must be unique within in the parameter set.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+     
+</xs:schema>

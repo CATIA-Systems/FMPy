@@ -18,6 +18,7 @@ parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpForm
 parser.add_argument('fmu_filename', help="filename of the FMU to simulate")
 parser.add_argument('--solver', choices=['Euler', 'CVode'], default='CVode', help="solver to use for Model Exchange")
 parser.add_argument('--input-file', help="CSV file to use as input")
+parser.add_argument('--output-variables', nargs='+', help="Variables to record")
 parser.add_argument('--output-file', help="CSV to store the results")
 parser.add_argument('--num-samples', default=500, type=int, help="number of samples to record")
 parser.add_argument('--step-size', type=float, help="step size for fixed-step solvers")
@@ -47,7 +48,7 @@ if __name__ == '__main__':
                           fmi_type=None,
                           start_values={},
                           input=input,
-                          output=None,
+                          output=args.output_variables,
                           timeout=args.timeout,
                           fmi_logging=args.fmi_logging)
 

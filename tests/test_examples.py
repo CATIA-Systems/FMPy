@@ -1,5 +1,9 @@
 import unittest
+from unittest import skipIf
 from fmpy.examples.coupled_clutches import simulate_coupled_clutches
+from fmpy.examples.custom_input import simulate_custom_input
+from fmpy.examples.parameter_variation import run_experiment
+from fmpy.ssp.examples.controlled_drivetrain import simulate_controlled_drivetrain
 from fmpy import platform
 import numpy as np
 import sys
@@ -7,10 +11,12 @@ import sys
 
 class ExamplesTest(unittest.TestCase):
 
-    def test_coupled_clutches_example(self):
-
+    @classmethod
+    def setUpClass(cls):
         print("Python:")
         print(sys.version)
+
+    def test_coupled_clutches_example(self):
 
         if platform.startswith('win'):
             fmi_versions = ['1.0', '2.0']
@@ -45,6 +51,22 @@ class ExamplesTest(unittest.TestCase):
                         inputs = result['inputs']
                         self.assertAlmostEqual(inputs[0], 0)
                         self.assertAlmostEqual(inputs[-1], 1)
+
+    def test_custom_input_example(self):
+        end_time = simulate_custom_input(show_plot=False)
+        self.assertAlmostEqual(end_time, 1.1)
+
+    @skipIf(platform not in ['win32', 'win64'], "FMU only available for Windows")
+    def test_parameter_variation(self):
+        LOSSES = run_experiment(show_plot=False)
+        self.assertTrue(np.all(LOSSES > 0))
+
+    @skipIf(platform not in ['win32', 'win64'], "SSP only available for Windows")
+    def test_controlled_drivetrain_example(self):
+        result = simulate_controlled_drivetrain(show_plot=False)
+        self.assertAlmostEqual(result['time'][-1], 4)
+        self.assertTrue(result['controller.y'][-1] > -11)
+        self.assertTrue(result['controller.y'][-1] < -9)
 
 
 if __name__ == '__main__':

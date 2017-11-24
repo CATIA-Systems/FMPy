@@ -66,6 +66,11 @@ CVodeInit = getattr(sundials_cvode, 'CVodeInit')
 CVodeInit.argtypes = [c_void_p, CVRhsFn, realtype, N_Vector]
 CVodeInit.restype = c_int
 
+# int CVodeSetMaxStep(void *cvode_mem, realtype hmax);
+CVodeSetMaxStep = getattr(sundials_cvode, 'CVodeSetMaxStep')
+CVodeSetMaxStep.argtypes = [c_void_p, realtype]
+CVodeSetMaxStep.restype = c_int
+
 # void CVodeFree(void **cvode_mem)
 CVodeFree = getattr(sundials_cvode, 'CVodeFree')
 CVodeFree.argtypes = [POINTER(c_void_p)]
@@ -116,22 +121,32 @@ def NV_DATA_S(v):
 
 class CVodeSolver(object):
 
-    def __init__(self, fmu, numberOfContinuousStates, numberOfEventIndicators):
+    def __init__(self,
+                 nx, nz, get_x, set_x, get_dx, get_z, set_time,
+                 startTime,
+                 stopTime,
+                 maxStep=None,
+                 relativeTolerance=1e-5):
 
-        self.fmu = fmu
+        self.get_x = get_x
+        self.set_x = set_x
+        self.get_dx = get_dx
+        self.get_z = get_z
+        self.set_time = set_time
 
-        self.discrete = numberOfContinuousStates == 0
+        self.discrete = nx == 0
 
         if self.discrete:
             # insert a dummy state
             self.nx = 1
         else:
-            self.nx = numberOfContinuousStates
+            self.nx = nx
 
-        self.nz = numberOfEventIndicators
+        self.nz = nz
 
-        RTOL = 1e-5
-        T0   = 0.0
+        if maxStep is None:
+            # perform at least 50 steps
+            maxStep = (stopTime - startTime) / 50.
 
         self.x      = N_VNew_Serial(self.nx)
         self.abstol = N_VNew_Serial(self.nx)
@@ -144,10 +159,10 @@ class CVodeSolver(object):
             x = np.ctypeslib.as_array(self.px, (self.nx,))
             x[:] = 1.0
         else:
-            self.fmu.getContinuousStates(self.px, self.nx)
+            self.get_x(self.px, self.nx)
 
         abstol = np.ctypeslib.as_array(self.pabstol, (self.nx,))
-        abstol[:] = RTOL
+        abstol[:] = relativeTolerance
 
         self.cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON)
 
@@ -155,43 +170,45 @@ class CVodeSolver(object):
         self.f_ = CVRhsFn(self.f)
         self.g_ = CVRootFn(self.g)
 
-        flag = CVodeInit(self.cvode_mem, self.f_, T0, self.x)
+        flag = CVodeInit(self.cvode_mem, self.f_, startTime, self.x)
 
         flag = CVodeRootInit(self.cvode_mem, self.nz, self.g_)
 
-        flag = CVodeSVtolerances(self.cvode_mem, RTOL, self.abstol)
+        flag = CVodeSVtolerances(self.cvode_mem, relativeTolerance, self.abstol)
 
         flag = CVDense(self.cvode_mem, self.nx)
+
+        flag = CVodeSetMaxStep(self.cvode_mem, maxStep)
 
     def f(self, t, y, ydot, user_data):
         """ Right-hand-side function """
 
-        self.fmu.setTime(t)
+        self.set_time(t)
 
         if self.discrete:
             dx = np.ctypeslib.as_array(NV_DATA_S(ydot), (self.nx,))
             dx[:] = 0.0
         else:
-            self.fmu.setContinuousStates(NV_DATA_S(y), self.nx)
-            self.fmu.getDerivatives(NV_DATA_S(ydot), self.nx)
+            self.set_x(NV_DATA_S(y), self.nx)
+            self.get_dx(NV_DATA_S(ydot), self.nx)
         return 0
 
     def g(self, t, y, gout, user_data):
         """ Root function """
 
-        self.fmu.setTime(t)
+        self.set_time(t)
 
         if not self.discrete:
-            self.fmu.setContinuousStates(NV_DATA_S(y), self.nx)
+            self.set_x(NV_DATA_S(y), self.nx)
 
-        self.fmu.getEventIndicators(gout, self.nz)
+        self.get_z(gout, self.nz)
 
         return 0
 
     def step(self, t, tNext):
 
         if not self.discrete:
-            self.fmu.getContinuousStates(self.px, self.nx)
+            self.get_x(self.px, self.nx)
 
         tret = realtype(0.0)
 
@@ -205,7 +222,7 @@ class CVodeSolver(object):
     def reset(self, time):
 
         if not self.discrete:
-            self.fmu.getContinuousStates(self.px, self.nx)
+            self.get_x(self.px, self.nx)
 
         # reset the solver
         flag = CVodeReInit(self.cvode_mem, time, self.x)

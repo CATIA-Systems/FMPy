@@ -20,7 +20,7 @@ def read_csv(filename, variable_names=[], validate=True):
     time = traj[traj.dtype.names[0]]
 
     # check if the time is monotonically increasing
-    if np.any(np.diff(time) < 0):
+    if traj.size > 1 and np.any(np.diff(time) < 0):
         raise ValidationError("Values in first column (time) are not monotonically increasing")
 
     # get the trajectory names (without the time)
@@ -69,13 +69,25 @@ def read_ref_opt_file(filename):
 
 
 def validate_signal(t, y, t_ref, y_ref, num=1000, dx=20, dy=0.1):
-    """ Validate a signal y(t) against a reference signal y_ref(t_ref)
+    """ Validate a signal y(t) against a reference signal y_ref(t_ref) by creating a band
+    around y_ref and finding the values in y outside the band
+
+    Parameters:
 
         t       time of the signal
         y       values of the signal
         t_ref   time of the reference signal
         y_ref   values of the reference signal
+        num     number of samples for the band
+        dx      horizontal width of the band in samples
+        dy      vertical distance of the band to y_ref
 
+    Returns:
+
+        t_band  time values of the band
+        y_min   lower limit of the band
+        y_max   upper limit of the band
+        i_out   indices of the values in y outside the band
     """
 
     from scipy.ndimage.filters import maximum_filter1d, minimum_filter1d
@@ -106,16 +118,38 @@ def validate_signal(t, y, t_ref, y_ref, num=1000, dx=20, dy=0.1):
     y_max_i = np.interp(x=t, xp=t_band, fp=y_max)
     i_out = np.logical_or(y < y_min_i, y > y_max_i)
 
+    # do not count outliers outside the t_ref
+    i_out = np.logical_and(i_out, t > t_band[0])
+    i_out = np.logical_and(i_out, t < t_band[-1])
+
     return t_band, y_min, y_max, i_out
 
 
-def validate_result(result, reference):
+def validate_result(result, reference, stop_time=None):
+    """ Validate a simulation result agains a reference result
+
+    Parameters:
+        result      structured NumPy array where the first column is the time
+        reference   same as result
+
+    Returns:
+        rel_out     the largest relative deviation of all signals
+    """
 
     t_ref = reference[reference.dtype.names[0]]
     t_res = result[result.dtype.names[0]]
 
+    # at least two samples are required
+    if result.size < 2:
+        return 1
+
+    # check if stop time has been reached
+    if stop_time is not None and t_res[-1] < stop_time:
+        return 1
+
     rel_out = 0
 
+    # find the signal with the most outliers
     for name in result.dtype.names[1:]:
 
         if name not in reference.dtype.names:
@@ -129,40 +163,46 @@ def validate_result(result, reference):
     return rel_out
 
 
-def plot_result(result, reference=None, filename=None, window_title=None):
+def plot_result(result, reference=None, names=None, filename=None, window_title=None):
     """ Plot a collection of time series.
 
     Arguments:
         :param result:       structured NumPy Array that contains the time series to plot where 'time' is the independent variable
         :param reference:    optional reference signals with the same structure as `result`
+        :param columns:      columns to plot
         :param filename:     when provided the plot is saved as `filename` instead of showing the figure
         :param window_title: the title for the figure window
     """
 
+    import matplotlib
     import matplotlib.pylab as pylab
     import matplotlib.pyplot as plt
     import matplotlib.transforms as mtransforms
     from collections import Iterable
 
     params = {
-            # 'legend.fontsize': 'medium',
-            # 'figure.figsize': (10, 8),
-            'legend.fontsize': 8,
-            'axes.labelsize': 8,
-            # 'axes.titlesize': 'medium',
-            'xtick.labelsize': 8,
-            'ytick.labelsize': 8,
-            'axes.linewidth': 0.5,
+        # 'legend.fontsize': 'medium',
+        # 'figure.figsize': (10, 8),
+        'legend.fontsize': 8,
+        'axes.labelsize': 8,
+        # 'axes.titlesize': 'medium',
+        'xtick.labelsize': 8,
+        'ytick.labelsize': 8,
+        'axes.linewidth': 0.5,
     }
 
     pylab.rcParams.update(params)
 
     time = result['time']
 
-    # plat at most 20 signals
-    names = result.dtype.names[1:20]
+    if names is None:
+        # plot at most 20 signals
+        names = result.dtype.names[1:20]
 
     if len(names) > 0:
+
+        # indent label 0.015 inch / character
+        label_x = -0.015 * np.max(list(map(len, names)) + [8])
 
         fig, axes = plt.subplots(len(names), sharex=True)
 
@@ -194,30 +234,56 @@ def plot_result(result, reference=None, filename=None, window_title=None):
                 trans = mtransforms.blended_transform_factory(ax.transData, ax.transAxes)
                 ax.fill_between(time, 0, 1, where=i_out, facecolor='red', alpha=0.5, transform=trans)
 
-            ax.plot(time, y, color='b', linewidth=0.9, label='result', zorder=101)
-
-            if len(name) < 18:
-                ax.set_ylabel(name)
+            if y.dtype == np.float64:
+                ax.plot(time, y, color='b', linewidth=0.9, label='result', zorder=101)
             else:
-                # shorten long variable names
-                ax.set_ylabel('...' + name[-15:])
+                ax.hlines(y, time[:-1], time[1:], colors='b', linewidth=1, label='result', zorder=101)
+                # ax.step(time, y, where='post', color='b', linewidth=0.9, label='result', zorder=101)
+
+            if y.dtype == bool:
+                # use fixed range and labels and fill area
+                ax.set_ylim(-0.25, 1.25)
+                ax.yaxis.set_ticks([0, 1])
+                ax.yaxis.set_ticklabels(['false', 'true'])
+                ax.fill_between(time, y, 0, step='post', facecolor='b', alpha=0.1)
+            else:
+                ax.margins(x=0, y=0.05)
+
+            if time.size < 200:
+                ax.scatter(time, y, color='b', s=5, zorder=101)
+
+            ax.set_ylabel(name, horizontalalignment='left', rotation=0)
 
             # align the y-labels
-            ax.get_yaxis().set_label_coords(-0.07, 0.5)
-
-            ax.margins(x=0, y=0.05)
+            ax.get_yaxis().set_label_coords(label_x, 0.5)
 
         # set the window title
         if window_title is not None:
             fig.canvas.set_window_title(window_title)
 
-        # update layout when plot is resized
         def onresize(event):
+            fig = plt.gcf()
+
+            w = fig.get_figwidth()
+
+            # tight_layout() crashes on very small figures
+            if w < 3:
+                return
+
+            x = label_x * (8.0 / w)
+
+            # update label coordinates
+            for ax in fig.get_axes():
+                ax.get_yaxis().set_label_coords(x, 0.5)
+
+            # update layout
             plt.tight_layout()
 
+        # update layout when the plot is re-sized
         fig.canvas.mpl_connect('resize_event', onresize)
 
-        fig.set_size_inches(w=8, h=1.5*len(names), forward=True)
+        fig.set_size_inches(w=8, h=1.5 * len(names), forward=True)
+
         plt.tight_layout()
 
         if filename is None:
@@ -231,7 +297,7 @@ def plot_result(result, reference=None, filename=None, window_title=None):
 
 
 def fmu_path_info(path):
-
+    
     head = path
     values = []
 
@@ -250,3 +316,61 @@ def fmu_path_info(path):
 
     return dict(zip(keys, values))
 
+
+def sha256_checksum(filename):
+    """ Create a SHA256 checksum form a file """
+
+    import hashlib
+
+    sha256 = hashlib.sha256()
+
+    with open(filename, 'rb') as f:
+        for block in iter(lambda: f.read(65536), b''):
+            sha256.update(block)
+
+    return sha256.hexdigest()
+
+
+def download_file(url, checksum=None):
+    """ Download a file to the current directory """
+
+    filename = os.path.basename(url)
+
+    if checksum is not None and os.path.isfile(filename):
+        hash = sha256_checksum(filename)
+        if hash.startswith(checksum):
+            return  # file already exists
+
+    import requests
+
+    print('Downloading ' + url)
+
+    status_code = -1
+
+    # try to download the file three times
+    try:
+        for _ in range(3):
+            if status_code != 200:
+                response = requests.get(url)
+                status_code = response.status_code
+    except:
+        pass
+
+    if status_code != 200:
+        raise Exception("Failed to download %s (status code: %d)" % (url, status_code))
+
+    # write the file
+    with open(filename, 'wb') as f:
+        f.write(response.content)
+
+
+def download_test_file(fmi_version, fmi_type, tool_name, tool_version, model_name, filename):
+    """ Download a file from the Test FMUs repository to the current directory """
+
+    from . import platform
+
+    # build the URL
+    url = 'https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_' + fmi_version
+    url = '/'.join([url, fmi_type, platform, tool_name, tool_version, model_name, filename])
+
+    download_file(url)

@@ -390,7 +390,7 @@ class FMU2Model(_FMU2):
         enterEventMode = fmi2Boolean()
         terminateSimulation = fmi2Boolean()
         self.fmi2CompletedIntegratorStep(self.component, noSetFMUStatePriorToCurrentPoint, byref(enterEventMode), byref(terminateSimulation))
-        return enterEventMode, terminateSimulation
+        return enterEventMode.value, terminateSimulation.value
 
 
 class FMU2Slave(_FMU2):

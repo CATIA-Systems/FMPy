@@ -7,7 +7,7 @@
 FMPy
 ====
 
-FMPy is a free Python library to simulate `Functional Mockup Units (FMUs) <http://fmi-standard.org/>`_ that...
+FMPy is a free Python library to simulate `Functional Mock-up Units (FMUs) <http://fmi-standard.org/>`_ that...
 
 - supports FMI 1.0 and 2.0
 - supports Co-Simulation and Model Exchange
@@ -62,6 +62,13 @@ For an example of how to simulate an FMU in Python see `coupled_clutches.py <fmp
 To run the script type::
 
     python -m fmpy.examples.coupled_clutches
+
+
+Connect an FMU to custom input
+------------------------------
+
+The `custom_input.py <fmpy/examples/custom_input.py>`_ example shows how to use the FMU class directly to build a custom
+simulation loop and how to get and set model variables to control the simulation.
 
 
 ------------------------------------

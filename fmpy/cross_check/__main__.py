@@ -94,4 +94,11 @@ def readme():
     """ + sys.version
 
 
-cross_check(args.fmus_dir, args.report, args.result_dir, simulate, 'FMPy', fmpy.__version__, skip, readme)
+cross_check(fmus_dir=args.fmus_dir,
+            report=args.report,
+            result_dir=args.result_dir,
+            simulate=simulate if args.simulate else None,
+            tool_name='FMPy',
+            tool_version=fmpy.__version__,
+            skip=skip,
+            readme=readme)

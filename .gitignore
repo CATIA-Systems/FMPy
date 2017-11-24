@@ -1,5 +1,6 @@
-# FMUs, input files and report files
+# FMUs, SSPs, input files and report files
 *.fmu
+*.ssp
 *.csv
 *.html
 

@@ -7,7 +7,7 @@
 FMPy
 ====
 
-FMPy is a free Python library to simulate `Functional Mockup Units (FMUs) <http://fmi-standard.org/>`_ that...
+FMPy is a free Python library to simulate `Functional Mock-up Units (FMUs) <http://fmi-standard.org/>`_ that...
 
 - supports FMI 1.0 and 2.0
 - supports Co-Simulation and Model Exchange

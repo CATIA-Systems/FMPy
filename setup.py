@@ -11,7 +11,7 @@ def readme():
 
 
 setup(name="FMPy",
-      version="0.0.9",
+      version="0.1.0",
       description="Simulate Functional Mock-up Units (FMUs) in Python",
       long_description=readme(),
       author="Torsten Sommer",

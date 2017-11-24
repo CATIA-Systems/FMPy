@@ -1,3 +1,11 @@
+"""
+Simulate an FMU
+===============
+
+.. image:: ../../Rectifier_result.png
+
+"""
+
 from fmpy import simulate_fmu, download_test_file
 import numpy as np
 

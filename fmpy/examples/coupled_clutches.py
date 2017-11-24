@@ -1,4 +1,5 @@
-from fmpy import simulate_fmu, download_test_file
+from fmpy import simulate_fmu
+from fmpy.util import download_test_file
 import numpy as np
 
 

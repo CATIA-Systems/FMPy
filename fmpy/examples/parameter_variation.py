@@ -13,8 +13,9 @@ from dask.diagnostics import ProgressBar
 import numpy as np
 import fmpy
 from fmpy.fmi2 import FMU2Slave
+from fmpy import read_model_description
+from fmpy.util import download_test_file
 import shutil
-from fmpy import read_model_description, download_test_file
 
 
 fmu_filename = 'Rectifier.fmu'

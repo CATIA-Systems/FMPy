@@ -317,6 +317,20 @@ def fmu_path_info(path):
     return dict(zip(keys, values))
 
 
+def sha256_checksum(filename):
+    """ Create a SHA256 checksum form a file """
+
+    import hashlib
+
+    sha256 = hashlib.sha256()
+
+    with open(filename, 'rb') as f:
+        for block in iter(lambda: f.read(65536), b''):
+            sha256.update(block)
+
+    return sha256.hexdigest()
+
+
 def download_file(url, checksum=None):
     """ Download a file to the current directory """
 
@@ -350,15 +364,13 @@ def download_file(url, checksum=None):
         f.write(response.content)
 
 
-def sha256_checksum(filename):
-    """ Create a SHA256 form a file """
+def download_test_file(fmi_version, fmi_type, tool_name, tool_version, model_name, filename):
+    """ Download a file from the Test FMUs repository to the current directory """
 
-    import hashlib
+    from . import platform
 
-    sha256 = hashlib.sha256()
+    # build the URL
+    url = 'https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_' + fmi_version
+    url = '/'.join([url, fmi_type, platform, tool_name, tool_version, model_name, filename])
 
-    with open(filename, 'rb') as f:
-        for block in iter(lambda: f.read(65536), b''):
-            sha256.update(block)
-
-    return sha256.hexdigest()
+    download_file(url)

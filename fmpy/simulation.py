@@ -297,7 +297,7 @@ def simulate_fmu(filename,
         fmi_type = 'CoSimulation' if modelDescription.coSimulation is not None else 'ModelExchange'
 
     if fmi_type not in ['ModelExchange', 'CoSimulation']:
-        raise Exception('fmi_tpye must be one of "ModelExchange" or "CoSimulation"')
+        raise Exception('fmi_type must be one of "ModelExchange" or "CoSimulation"')
 
     defaultExperiment = modelDescription.defaultExperiment
 

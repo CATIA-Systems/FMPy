@@ -1,14 +1,54 @@
 language: python
 
-python:
-  - 2.7
-  - 3.6
+matrix:
+  include:
+    - os: linux
+      env:
+        - PYTHON_VERSION=2.7
+        - MINICONDA=Miniconda2-latest-Linux-x86_64.sh
+
+    - os: linux
+      env:
+        - PYTHON_VERSION=3.6
+        - MINICONDA=Miniconda3-latest-Linux-x86_64.sh
+
+    - os: osx
+      language: generic
+      env:
+        - PYTHON_VERSION=2.7
+        - MINICONDA=Miniconda2-latest-MacOSX-x86_64.sh
+
+    - os: osx
+      language: generic
+      env:
+        - PYTHON_VERSION=3.6
+        - MINICONDA=Miniconda3-latest-MacOSX-x86_64.sh
 
 install:
-  - pip install lxml requests scipy pathlib dask[complete]
+  # download and install miniconda
+  - wget https://repo.continuum.io/miniconda/$MINICONDA -O miniconda.sh
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+
+  # useful for debugging any issues with conda
+  - conda info -a
+
+  # install dependencies
+  - conda create -q -n test-env python=$PYTHON_VERSION numpy lxml pathlib requests dask
+  - source activate test-env
+  - python setup.py install
+
+  # build and install the Python wheel
+  - python setup.py bdist_wheel --universal
+  - |
+    for f in dist/FMPy-*.whl; do
+      pip install $f
+    done
 
 script:
-  - pip install .
   - cd tests
   - python -m unittest discover
   - cd ..

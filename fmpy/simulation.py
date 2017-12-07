@@ -331,10 +331,10 @@ def simulate_fmu(filename,
     # simulate_fmu the FMU
     if fmi_type == 'ModelExchange':
         fmu_args['modelIdentifier'] = modelDescription.modelExchange.modelIdentifier
-        result = simulateME(modelDescription, fmu_args, start_time, stop_time, solver, step_size, start_values, input, output, output_interval, timeout, fmi_logging)
+        result = simulateME(modelDescription, fmu_args, start_time, stop_time, solver, step_size, start_values, input, output, output_interval, timeout)
     elif fmi_type == 'CoSimulation':
         fmu_args['modelIdentifier'] = modelDescription.coSimulation.modelIdentifier
-        result = simulateCS(modelDescription, fmu_args, start_time, stop_time, start_values, input, output, output_interval, timeout, fmi_logging)
+        result = simulateCS(modelDescription, fmu_args, start_time, stop_time, start_values, input, output, output_interval, timeout)
 
     # clean up
     shutil.rmtree(unzipdir)
@@ -342,7 +342,7 @@ def simulate_fmu(filename,
     return result
 
 
-def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name, step_size, start_values, input_signals, output, output_interval, timeout, fmi_logging):
+def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name, step_size, start_values, input_signals, output, output_interval, timeout):
 
     sim_start = current_time()
 
@@ -483,7 +483,7 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
     return recorder.result()
 
 
-def simulateCS(modelDescription, fmu_kwargs, start_time, stop_time, start_values, input_signals, output, output_interval, timeout, fmi_logging):
+def simulateCS(modelDescription, fmu_kwargs, start_time, stop_time, start_values, input_signals, output, output_interval, timeout):
 
     sim_start = current_time()
 

@@ -20,11 +20,16 @@ FMPy is a free Python library to simulate `Functional Mock-up Units (FMUs) <http
 Installation
 ------------
 
-To install the latest release from PyPI or update an existing installation type::
+To install the latest release from `PyPI <https://pypi.python.org/pypi/fmpy/>`_ or update an existing installation::
 
     python -m pip install --upgrade fmpy
 
-or, to install the latest development version::
+To install from `conda-forge <https://conda-forge.org/>`_ into an exsisting `conda <https://conda.io/>`_ environment::
+
+    conda config --add channels conda-forge
+    conda install fmpy
+
+To install the latest development version::
 
     python -m pip install --upgrade https://github.com/CATIA-Systems/FMPy/archive/develop.zip
 

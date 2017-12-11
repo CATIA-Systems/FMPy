@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.1] - 2017-12-11
+
+### Added
+- dependency information in setup.py
+- platform check for parameter variation example
+
+### Fixed
+- FMI call logging
+- plot_result() now works with older matplotlib versions
+
+### Changed
+- timeout in cross-check removed
+
 ## [0.1.0] - 2017-11-24
 
 ### Added
@@ -8,7 +21,7 @@
 - experimental [System Structure and Parameterization](https://www.modelica.org/projects#ssp) support
 - max. step size parameter for CVode solver
 
-## Fixed
+### Fixed
 - return values in completedIntegratorStep()
 
 ## [0.0.9] - 2017-10-13

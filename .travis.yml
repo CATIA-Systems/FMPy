@@ -36,13 +36,14 @@ install:
   # useful for debugging any issues with conda
   - conda info -a
 
-  # install dependencies
-  - conda create -q -n test-env python=$PYTHON_VERSION numpy lxml pathlib requests dask
+  # create the conda environment
+  - conda create -q -n test-env python=$PYTHON_VERSION
   - source activate test-env
-  - python setup.py install
 
-  # build and install the Python wheel
+  # build the wheel
   - python setup.py bdist_wheel --universal
+
+  # install the wheel and its dependencies
   - |
     for f in dist/FMPy-*.whl; do
       pip install $f

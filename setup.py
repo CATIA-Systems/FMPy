@@ -30,4 +30,11 @@ setup(name="FMPy",
                                  'sundials/linux64/*.so',
                                  'sundials/win32/*.dll',
                                  'sundials/win64/*.dll'],
-                    'fmpy.ssp': ['schema/*.xsd']})
+                    'fmpy.ssp': ['schema/*.xsd']},
+      install_requires=['dask',
+                        'lxml',
+                        'matplotlib',
+                        'numpy',
+                        'pathlib',
+                        'requests',
+                        'pypiwin32;platform_system=="Windows"'])

@@ -292,7 +292,7 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
             dir, _ = os.path.split(filename)
             if not os.path.isdir(dir):
                 os.makedirs(dir)
-            fig.savefig(filename=filename)
+            fig.savefig(filename)
             plt.close(fig)
 
 

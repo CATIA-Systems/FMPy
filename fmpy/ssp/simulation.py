@@ -5,40 +5,40 @@ import numpy as np
 from fmpy import read_model_description, extract
 from fmpy.fmi1 import FMU1Slave
 from fmpy.fmi2 import FMU2Slave
-from fmpy.ssp.ssd import System, read_ssd, get_connections, find_connectors, find_components, build_path
+from fmpy.ssp.ssd import System, read_ssd, get_connections, find_connectors, find_components
 
 
 def get_value(component, name):
-    """ Get a Real variable from a component """
+    """ Get a variable from a component """
 
-    # vr = component.vrs[name]
     variable = component.variables[name]
+    vr = [variable.valueReference]
 
     if variable.type == 'Real':
-        return component.fmu.getReal([variable.valueReference])[0]
+        return component.fmu.getReal(vr)[0]
     elif variable.type in ['Integer', 'Enumeration']:
-        return component.fmu.getInteger([variable.valueReference])[0]
+        return component.fmu.getInteger(vr)[0]
     elif variable.type == 'Boolean':
-        value = component.fmu.getBoolean([variable.valueReference])[0]
-        # return 0.0 if value == 0 else 1.0
+        value = component.fmu.getBoolean(vr)[0]
         return value != 0
     else:
-        raise Exception("Unsupported type: " + variable.type)
+        raise Exception("Unsupported type: %s" % variable.type)
 
 
 def set_value(component, name, value):
-    """ Set a Real variable to a component """
+    """ Set a variable to a component """
 
     variable = component.variables[name]
+    vr = [variable.valueReference]
 
     if variable.type == 'Real':
-        component.fmu.setReal([variable.valueReference], [value])
+        component.fmu.setReal(vr, [value])
     elif variable.type in ['Integer', 'Enumeration']:
-        component.fmu.setInteger([variable.valueReference], [int(value)])[0]
+        component.fmu.setInteger(vr, [int(value)])[0]
     elif variable.type == 'Boolean':
-        component.fmu.setBoolean([variable.valueReference], [value != 0.0])
+        component.fmu.setBoolean(vr, [value != 0.0])
     else:
-        raise Exception("Unsupported type: " + variable.type)
+        raise Exception("Unsupported type: %s" % variable.type)
 
 
 def add_path(element, path=''):
@@ -76,6 +76,9 @@ def instantiate_fmu(component, ssp_unzipdir, start_time, parameters={}):
 
     # read the model description
     model_description = read_model_description(fmu_filename, validate=False)
+
+    if model_description.coSimulation is None:
+        raise Exception("%s does not support co-simulation." % component.source)
 
     # collect the value references
     component.variables = {}
@@ -156,17 +159,10 @@ def simulate_ssp(ssp_filename, start_time=0.0, stop_time=None, step_size=None, p
     # trace connections back to the actual start connector
     for a, b in connections:
 
-        # if isinstance(b.parent, System):
-        #     continue
-
         while isinstance(a.parent, System) and a.parent.parent is not None:
             a = connections_reversed[a]
 
         new_connections.append((a, b))
-
-    # for a, b in new_connections:
-    #     #print(type(a.parent), a.kind, '->', type(b.parent), b.kind)
-    #     print(a.path, '->', b.path)
 
     connections = new_connections
 

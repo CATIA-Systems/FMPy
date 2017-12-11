@@ -60,25 +60,13 @@ def simulate(options):
     else:
         input = None
 
-    step_size = options['step_size']
-
-    # select solver based on step_size
-    if step_size > 0:
-        solver = 'Euler'
-    else:
-        solver = 'CVode'
-
-    solver = 'CVode'
-
     # simulate the FMU
     result = fmpy.simulate_fmu(filename=options['fmu_filename'],
                                validate=False,
-                               solver=solver,
-                               step_size=step_size,
+                               step_size=options['step_size'],
                                stop_time=options['stop_time'],
                                input=input,
-                               output=options['output_variable_names'],
-                               timeout=5)
+                               output=options['output_variable_names'])
 
     return result
 

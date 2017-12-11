@@ -24,10 +24,19 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - conda create -q -n test-env python=%PYTHON_VERSION% numpy lxml pathlib requests pywin32 dask
+  - conda create -q -n test-env python=%PYTHON_VERSION%
   - activate test-env
 
+  # build the wheel
+  - python setup.py bdist_wheel --universal
+
+  # install the wheel and its dependencies
+  - for %%f in (dist\FMPy-*.whl) do pip install %%f
+
 test_script:
-  - pip install .
   - cd tests
   - python -m unittest discover
+
+artifacts:
+  # archive the generated wheel in the build report
+  - path: dist\*

@@ -11,7 +11,7 @@ def readme():
 
 
 setup(name="FMPy",
-      version="0.1.0",
+      version="0.1.1",
       description="Simulate Functional Mock-up Units (FMUs) in Python",
       long_description=readme(),
       author="Torsten Sommer",
@@ -30,4 +30,11 @@ setup(name="FMPy",
                                  'sundials/linux64/*.so',
                                  'sundials/win32/*.dll',
                                  'sundials/win64/*.dll'],
-                    'fmpy.ssp': ['schema/*.xsd']})
+                    'fmpy.ssp': ['schema/*.xsd']},
+      install_requires=['dask[bag]',
+                        'lxml',
+                        'matplotlib',
+                        'numpy',
+                        'pathlib',
+                        'requests',
+                        'pypiwin32;platform_system=="Windows"'])

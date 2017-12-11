@@ -35,19 +35,45 @@ fmi1StepFinishedTYPE           = c_void_p
 
 
 class fmi1CallbackFunctions(Structure):
+
     _fields_ = [('logger',         fmi1CallbackLoggerTYPE),
                 ('allocateMemory', fmi1CallbackAllocateMemoryTYPE),
                 ('freeMemory',     fmi1CallbackFreeMemoryTYPE),
                 ('stepFinished',   fmi1StepFinishedTYPE)]
 
+    def __str__(self):
+        return 'fmi1CallbackFunctions(' \
+               'logger=%s, ' \
+               'allocateMemory=%s, ' \
+               'freeMemory=%s, ' \
+               'stepFinished=%s)' % (self.logger,
+                                     self.allocateMemory,
+                                     self.freeMemory,
+                                     self.stepFinished)
+
 
 class fmi1EventInfo(Structure):
+
     _fields_ = [('iterationConverged',          fmi1Boolean),
                 ('stateValueReferencesChanged', fmi1Boolean),
                 ('stateValuesChanged',          fmi1Boolean),
                 ('terminateSimulation',         fmi1Boolean),
                 ('upcomingTimeEvent',           fmi1Boolean),
                 ('nextEventTime',               fmi1Real)]
+
+    def __str__(self):
+        return 'fmi1EventInfo(' \
+               'iterationConverged=%s, ' \
+               'stateValueReferencesChanged=%s, ' \
+               'stateValuesChanged=%s, ' \
+               'terminateSimulation=%s, ' \
+               'upcomingTimeEvent=%s, ' \
+               'nextEventTime=%s)' % (self.iterationConverged,
+                                      self.stateValueReferencesChanged,
+                                      self.stateValuesChanged,
+                                      self.terminateSimulation,
+                                      self.upcomingTimeEvent,
+                                      self.nextEventTime)
 
 
 def logger(component, instanceName, status, category, message):
@@ -115,25 +141,32 @@ class _FMU(object):
 
         l = []
 
-        for n, t, v in zip(argnames, argtypes, args):
+        for i, (n, t, v) in enumerate(zip(argnames, argtypes, args)):
 
             a = n + '='
 
-            if t == c_void_p:  # component pointer
+            if t == c_void_p:
+                # component pointer
                 a += hex(v)
-            elif t == POINTER(c_uint):  # value references
+            elif t == POINTER(c_uint):
+                # value references
                 a += '[' + ', '.join(map(str, v)) + ']'
             elif t == POINTER(c_double):
-                if hasattr(v, '__len__'):  # double array
+                if hasattr(v, '__len__'):
+                    # c_double_Array_N
                     a += '[' + ', '.join(map(str, v)) + ']'
-                elif v == self._px:  # continuous states
-                    a += '[' + ', '.join(map(str, self.x)) + ']'
-                elif v == self._pdx:  # derivatives
-                    a += '[' + ', '.join(map(str, self.dx)) + ']'
-                elif v == self._pz:  # event indicators
-                    a += '[' + ', '.join(map(str, self.z)) + ']'
                 else:
-                    a += str(v.contents.value)
+                    # double pointers are always flowed by the size of the array
+                    arr = np.ctypeslib.as_array(v, (args[i+1],))
+                    a += '[' + ', '.join(map(str, arr)) + ']'
+            elif hasattr(v, '_obj'):
+                # byref object
+                if hasattr(v._obj, 'value'):
+                    # pointer (e.g. c_char_p)
+                    a += str(v._obj.value)
+                else:
+                    # struct
+                    a += str(v._obj)
             else:
                 a += str(v)
 

@@ -13,7 +13,7 @@ from dask.diagnostics import ProgressBar
 import numpy as np
 import fmpy
 from fmpy.fmi2 import FMU2Slave
-from fmpy import read_model_description
+from fmpy import read_model_description, platform
 from fmpy.util import download_test_file
 import shutil
 
@@ -110,6 +110,9 @@ def simulate_fmu(args):
 
 
 def run_experiment(show_plot=True):
+
+    if platform not in ['win32', 'win64']:
+        raise Exception("Rectifier.fmu is only available for Windows")
 
     print("Parameter variation on %s:" % fmu_filename)
     print("  VAC", v_ac)

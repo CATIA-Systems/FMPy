@@ -167,25 +167,21 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
     """ Plot a collection of time series.
 
     Arguments:
-        :param result:       structured NumPy Array that contains the time series to plot where 'time' is the independent variable
-        :param reference:    optional reference signals with the same structure as `result`
-        :param columns:      columns to plot
-        :param filename:     when provided the plot is saved as `filename` instead of showing the figure
-        :param window_title: the title for the figure window
+        result:       structured NumPy Array that contains the time series to plot where 'time' is the independent variable
+        reference:    optional reference signals with the same structure as `result`
+        names:        variables to plot
+        filename:     when provided the plot is saved as `filename` instead of showing the figure
+        window_title: title for the figure window
     """
 
-    import matplotlib
     import matplotlib.pylab as pylab
     import matplotlib.pyplot as plt
     import matplotlib.transforms as mtransforms
     from collections import Iterable
 
     params = {
-        # 'legend.fontsize': 'medium',
-        # 'figure.figsize': (10, 8),
         'legend.fontsize': 8,
         'axes.labelsize': 8,
-        # 'axes.titlesize': 'medium',
         'xtick.labelsize': 8,
         'ytick.labelsize': 8,
         'axes.linewidth': 0.5,

@@ -4,8 +4,6 @@ import sys
 import os
 from ctypes import *
 import _ctypes
-import zipfile
-from tempfile import mkdtemp
 
 __version__ = '0.1.1'
 
@@ -49,7 +47,14 @@ else:
 
 
 def supported_platforms(filename):
-    """ Get the platforms supported by the FMU without extracting it """
+    """ Get the platforms supported by the FMU without extracting it
+
+    Parameters:
+        filename    filename of the FMU
+
+    Returns:
+        platforms   a list of supported platforms supported by the FMU
+    """
 
     import zipfile
 
@@ -95,7 +100,15 @@ def supported_platforms(filename):
 
 
 def fmi_info(filename):
-    """ Read the FMI version and supported FMI types from the FMU without extracting it """
+    """ Read the FMI version and supported FMI types from the FMU without extracting it
+
+    Parameters:
+        filename      filename of the FMU
+
+    Returns:
+        fmi_version   FMI version as a string ('1.0' or '2.0')
+        fmi_types     list of supported FMI types ('CoSimulation', 'ModelExchange')
+    """
 
     from lxml import etree
     import zipfile
@@ -137,13 +150,14 @@ def extract(filename):
     """ Extract a ZIP archive to a temporary directory
 
     Parameters:
-
         filename    filename of the ZIP archive
 
     Returns:
-
         unzipdir    the path to the directory that contains the extracted files
     """
+
+    from tempfile import mkdtemp
+    import zipfile
 
     unzipdir = mkdtemp()
 
@@ -157,6 +171,17 @@ def extract(filename):
         zf.extractall(unzipdir)
 
     return unzipdir
+
+
+def dump(filename):
+    """ Print the model information and variables of an FMU
+
+    Parameters:
+        filename    filename of the FMU
+    """
+
+    from .util import fmu_info
+    print(fmu_info(filename))
 
 
 # make the functions available in the fmpy module

@@ -1,9 +1,5 @@
 """ Object model and loader for the modelDescription.xml """
 
-from lxml import etree
-import zipfile
-import os
-
 
 class ModelDescription(object):
 
@@ -74,6 +70,7 @@ class ScalarVariable(object):
         self.valueReference = valueReference
         self.description = None
         self.type = None
+        self.unit = None
         self.start = None
         self.causality = None
         self.variability = None
@@ -179,6 +176,19 @@ def _copy_attributes(element, object, attributes):
 
 
 def read_model_description(filename, validate=True):
+    """ Read the model description from an FMU without extracting it
+
+    Parameters:
+        filename   filename of the FMU
+        validate   whether the model description should be validated
+
+    returns:
+        model_description   a ModelDescription object
+    """
+
+    import zipfile
+    from lxml import etree
+    import os
 
     with zipfile.ZipFile(filename, 'r') as zf:
         xml = zf.open('modelDescription.xml')
@@ -338,6 +348,9 @@ def read_model_description(filename, validate=True):
                 sv.start = start == 'true'
             else:
                 sv.start = start
+
+        if sv.type == 'Real':
+            sv.unit = value.get('unit')
 
         # resolve the declared type
         sv.declaredType = typeDefinitions[value.get('declaredType')]

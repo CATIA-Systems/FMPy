@@ -221,10 +221,13 @@ def apply_start_values(fmu, modelDescription, start_values):
         vr = v.valueReference
 
         if v.type == 'Real':
+            value = float(value)
             fmu.setReal([vr], [value])
         elif v.type in ['Integer', 'Enumeration']:
+            value = int(value)
             fmu.setInteger([vr], [value])
         elif v.type == 'Boolean':
+            value = bool(value)
             fmu.setBoolean([vr], [value])
         elif v.type == 'String':
             fmu.setString([vr], [value])

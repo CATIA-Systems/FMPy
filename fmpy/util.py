@@ -8,7 +8,15 @@ class ValidationError(Exception):
 
 
 def read_csv(filename, variable_names=[], validate=True):
-    """ Read a CSV file that conforms to the FMI cross-check rules """
+    """ Read a CSV file that conforms to the FMI cross-check rules
+
+    Parameters:
+        filename         name of the CSV file to read
+        variable_names   list of variables to read (default: read all)
+
+    Returns:
+        traj             the trajectoies read from the CSV file
+    """
 
     # pass an empty string as deletechars to preserve special characters
     traj = np.genfromtxt(filename, delimiter=',', names=True, deletechars='')
@@ -35,7 +43,12 @@ def read_csv(filename, variable_names=[], validate=True):
 
 
 def write_csv(filename, result):
-    """ Save results as a CSV """
+    """ Save simulation results as a CSV
+
+    Parameters:
+        filename  name of the CSV file to write
+        result    structured NumPy array that holds the results
+    """
     header = ','.join(map(lambda s: '"' + s + '"', result.dtype.names))
     np.savetxt(filename, result, delimiter=',', header=header, comments='', fmt='%g')
 
@@ -166,7 +179,7 @@ def validate_result(result, reference, stop_time=None):
 def plot_result(result, reference=None, names=None, filename=None, window_title=None):
     """ Plot a collection of time series.
 
-    Arguments:
+    Parameters:
         result:       structured NumPy Array that contains the time series to plot where 'time' is the independent variable
         reference:    optional reference signals with the same structure as `result`
         names:        variables to plot
@@ -293,6 +306,7 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
 
 
 def fmu_path_info(path):
+    """ Extract information from the FMU's file path """
     
     head = path
     values = []
@@ -370,3 +384,80 @@ def download_test_file(fmi_version, fmi_type, tool_name, tool_version, model_nam
     url = '/'.join([url, fmi_type, platform, tool_name, tool_version, model_name, filename])
 
     download_file(url)
+
+
+def fmu_info(filename, causalities=['input', 'output']):
+    """ Dump the info for an FMU """
+
+    from .model_description import read_model_description
+    from . import supported_platforms
+
+    md = read_model_description(filename, validate=False)
+    platforms = supported_platforms(filename)
+
+    l = []
+
+    l.append("")
+    l.append("Model Info")
+    l.append("")
+    l.append("  FMI Version       %s" % md.fmiVersion)
+    l.append("  Model Name        %s" % md.modelName)
+    l.append("  Description       %s" % md.description)
+    l.append("  Platforms         %s" % ', '.join(platforms))
+    l.append("  Continuous States %d" % md.numberOfContinuousStates)
+    l.append("  Event Indicators  %d" % md.numberOfEventIndicators)
+    l.append("  Variables         %d" % len(md.modelVariables))
+    l.append("  Generation Tool   %s" % md.generationTool)
+    l.append("  Generation Date   %s" % md.generationDateAndTime)
+
+    if md.defaultExperiment:
+
+        ex = md.defaultExperiment
+
+        l.append("")
+        l.append('Default Experiment')
+        l.append("")
+        if ex.startTime:
+            l.append("  Start Time        %g" % ex.startTime)
+        if ex.stopTime:
+            l.append("  Stop Time         %g" % ex.stopTime)
+        if ex.tolerance:
+            l.append("  Tolerance         %g" % ex.tolerance)
+        if ex.stepSize:
+            l.append("  Step Size         %g" % ex.stepSize)
+
+    inputs = []
+    outputs = []
+
+    for v in md.modelVariables:
+        if v.causality == 'input':
+            inputs.append(v.name)
+        if v.causality == 'output':
+            outputs.append(v.name)
+
+    l.append("")
+    l.append("Variables (%s)" % ', '.join(causalities))
+    l.append("")
+    l.append('Name                Causality          Start Value  Unit     Description')
+    for v in md.modelVariables:
+        if v.causality not in causalities:
+            continue
+
+        start = str(v.start) if v.start is not None else ''
+
+        if v.unit:
+            unit = v.unit
+        elif v.declaredType:
+            unit = v.declaredType.unit
+        else:
+            unit = ''
+
+        description = v.description if v.description else ''
+
+        l.append(v.name + ' ' * (20 - len(v.name)) + \
+              v.causality + ' ' * (10 - len(v.causality)) + \
+              ' ' * (20 - len(start)) + start + \
+              '  ' + unit + ' ' * (8 - len(unit)) + \
+              ' ' + description)
+
+    return '\n'.join(l)

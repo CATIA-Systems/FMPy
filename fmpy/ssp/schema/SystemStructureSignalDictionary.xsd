@@ -29,7 +29,7 @@
             elements are directly contained in the SignalDictionary element of the SSD, without
             use of the SignalDictionary element of this schema.
                         
-            Version: 20170606
+            Version: 20171219
             
         </xs:documentation>
     </xs:annotation>
@@ -44,7 +44,7 @@
                 <xs:element name="Units" minOccurs="0" type="ssc:TUnits"/>
                 <xs:element name="Annotations" minOccurs="0" type="ssc:TAnnotations"/>
             </xs:sequence>
-            <xs:attribute name="version" type="xs:normalizedString" use="required" fixed="Draft20170606">
+            <xs:attribute name="version" type="xs:normalizedString" use="required" fixed="Draft20171219">
                 <xs:annotation>
                     <xs:documentation xml:lang="en">
                         Version of SSS format, fixed at 1.0 for the actual release.

@@ -92,7 +92,7 @@
             be changed to support connectors with more complex causalities, e.g. if proper acausal
             connectors are supported in the underlying FMI standards.
             
-            Version: 20170606
+            Version: 20171219
             
         </xs:documentation>
     </xs:annotation>
@@ -105,9 +105,10 @@
                 <xs:element name="System" type="ssd:TSystem"/>
                 <xs:element name="Enumerations" minOccurs="0" type="ssc:TEnumerations"/>
                 <xs:element name="Units" minOccurs="0" type="ssc:TUnits"/>
+                <xs:element name="DefaultExperiment" minOccurs="0" type="ssd:TDefaultExperiment"/>
                 <xs:element name="Annotations" minOccurs="0" type="ssc:TAnnotations"/>
             </xs:sequence>
-            <xs:attribute name="version" type="xs:normalizedString" use="required" fixed="Draft20170606">
+            <xs:attribute name="version" type="xs:normalizedString" use="required" fixed="Draft20171219">
                 <xs:annotation>
                     <xs:documentation xml:lang="en">
                         Version of SSD format, fixed at 1.0 for the actual release.
@@ -210,6 +211,7 @@
         <xs:complexContent>
             <xs:extension base="ssd:TElement">
                 <xs:sequence>
+                    <xs:element name="SimulationInformation" minOccurs="0" type="ssd:TSimulationInformation"/>
                     <xs:element name="Annotations" minOccurs="0" type="ssc:TAnnotations"/>
                 </xs:sequence>
                 <xs:attribute name="type" type="xs:string" use="optional" default="application/x-fmu-sharedlibrary">
@@ -327,10 +329,39 @@
     <xs:complexType name="TSignalDictionaries">
         <xs:sequence>
             <xs:element name="SignalDictionary" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en">
+                        This element defines a signal dictionary, describing the signal dictionary
+                        entries present in the signal dictionary.
+                        
+                        The contents of the element can be used to provide a signal dictionary
+                        inline, in which case the source attribute of the SignalDictionary element
+                        must be empty.
+                        
+                        The contents must be an sss:SignalDictionary element, if the type attribute
+                        of this element is application/x-ssp-signal-dictionary, or any other valid 
+                        XML content if the type attribute references another MIME type (in that case
+                        there should be a layered specification that defines how embedding the content
+                        works for that MIME type).
+                    </xs:documentation>
+                </xs:annotation>
                 <xs:complexType>
-                    <xs:sequence>
+                    <xs:choice>
+                        <!-- NOTE: In XML Schema 1.1 this choice would also contain the following entry: 
+                                        
+                             <xs:element ref="sss:SignalDictionary"/>
+                                        
+                             which specifies the proper way to directly embed a SignalDictionary inline.
+                             Due to restrictions in XML Schema 1.0, this would lead to a violation of the
+                             unique particle attribution schema component constraint, since the embedded
+                             sss:SignalDictionary element would also be matched by the more generic xs:any
+                             specification.  Since XML Schema 1.1 validators are still rare compared with
+                             1.0 validators, the default schema files for SSP are still restricted to 1.0;
+                             however if you have access to a 1.1 validator/validating parser, you can
+                             use the 1.1 variant of these stylesheets instead.
+                        -->
                         <xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
-                    </xs:sequence>
+                    </xs:choice>
                     <xs:attributeGroup ref="ssc:ABaseElement"/>
                     <xs:attribute name="type" type="xs:string" use="optional" default="application/x-ssp-signal-dictionary"/>
                     <xs:attribute name="source" type="xs:anyURI" use="optional">
@@ -440,148 +471,29 @@
                                             For system to component connections the kinds of the connectors
                                             must match, i.e. either both are input or both output or both
                                             parameter or both calculatedParameter.
+                                            
+                                            <!-- Note:
+                                                 
+                                                 The above restrictions are found to be too restrictive, so an
+                                                 expanded set of connections are going to be allowed going forward.
+                                                 
+                                                 The set of allowable connections will be added to the documentation
+                                                 at a later date, without changing the XML Schema itself and its
+                                                 Draft version.
+                                                 -->
+                                                 
                                         </xs:documentation>
                                     </xs:annotation>
                                     <xs:complexType>
                                         <xs:sequence>
-                                            <xs:choice minOccurs="0" maxOccurs="1">
-                                                <xs:element name="LinearTransformation">
-                                                    <xs:complexType>
-                                                        <xs:attribute name="factor" type="xs:double" use="optional" default="1.0">
-                                                            <xs:annotation>
-                                                                <xs:documentation xml:lang="en">
-                                                                    This attribute specifies an optional factor value to use in a linear
-                                                                    transformation of the source value to the target value, i.e. in the
-                                                                    calculation target = factor * source + offset.
-                                                                    
-                                                                    Note that conversions based on different units are performed, unless
-                                                                    prevented by suppressUnitConversion, prior to the application of the
-                                                                    linear transformation, i.e. the value of source is already converted
-                                                                    to the target unit in the formula above.
-                                                                </xs:documentation>
-                                                            </xs:annotation>
-                                                        </xs:attribute>
-                                                        <xs:attribute name="offset" type="xs:double" use="optional" default="0.0">
-                                                            <xs:annotation>
-                                                                <xs:documentation xml:lang="en">
-                                                                    This attribute specifies an optional offset value to use in a linear
-                                                                    transformation of the source value to the target value, i.e. in the
-                                                                    calculation target = factor * source + offset.
-                                                                    
-                                                                    Note that conversions based on different units are performed, unless
-                                                                    prevented by suppressUnitConversion, prior to the application of the
-                                                                    linear transformation, i.e. the value of source is already converted
-                                                                    to the target unit in the formula above.
-                                                                </xs:documentation>
-                                                            </xs:annotation>
-                                                        </xs:attribute>
-                                                    </xs:complexType>
-                                                </xs:element>
-                                                <xs:element name="BooleanMappingTransformation">
-                                                    <xs:annotation>
-                                                        <xs:documentation xml:lang="en">
-                                                            This element provides for a transformation of boolean parameter values
-                                                            based on a mapping table and is valid for parameters of boolean type.
-                                                            Each mapping table entry is provided by a MapEntry element.
-                                                        </xs:documentation>
-                                                    </xs:annotation>
-                                                    <xs:complexType>
-                                                        <xs:sequence>
-                                                            <xs:element name="MapEntry" minOccurs="1" maxOccurs="unbounded">
-                                                                <xs:complexType>
-                                                                    <xs:attribute name="source" type="xs:boolean" use="required">
-                                                                        <xs:annotation>
-                                                                            <xs:documentation xml:lang="en">
-                                                                                This attribute gives the value of the parameter in the
-                                                                                parameter source that this entry applies to.
-                                                                            </xs:documentation>
-                                                                        </xs:annotation>
-                                                                    </xs:attribute>
-                                                                    <xs:attribute name="target" type="xs:boolean" use="required">
-                                                                        <xs:annotation>
-                                                                            <xs:documentation xml:lang="en">
-                                                                                This attribute gives the value of the parameter to use
-                                                                                when applying it to the system or component that is to be
-                                                                                parametrized.
-                                                                            </xs:documentation>
-                                                                        </xs:annotation>
-                                                                    </xs:attribute>
-                                                                </xs:complexType>
-                                                            </xs:element>
-                                                        </xs:sequence>
-                                                    </xs:complexType>
-                                                </xs:element>
-                                                <xs:element name="IntegerMappingTransformation">
-                                                    <xs:annotation>
-                                                        <xs:documentation xml:lang="en">
-                                                            This element provides for a transformation of integer parameter values
-                                                            based on a mapping table and is valid for parameters of integer and 
-                                                            enumeration type.  Each mapping table entry is provided by a MapEntry
-                                                            element.
-                                                        </xs:documentation>
-                                                    </xs:annotation>
-                                                    <xs:complexType>
-                                                        <xs:sequence>
-                                                            <xs:element name="MapEntry" minOccurs="1" maxOccurs="unbounded">
-                                                                <xs:complexType>
-                                                                    <xs:attribute name="source" type="xs:int" use="required">
-                                                                        <xs:annotation>
-                                                                            <xs:documentation xml:lang="en">
-                                                                                This attribute gives the value of the parameter in the
-                                                                                parameter source that this entry applies to.
-                                                                            </xs:documentation>
-                                                                        </xs:annotation>
-                                                                    </xs:attribute>
-                                                                    <xs:attribute name="target" type="xs:int" use="required">
-                                                                        <xs:annotation>
-                                                                            <xs:documentation xml:lang="en">
-                                                                                This attribute gives the value of the parameter to use
-                                                                                when applying it to the system or component that is to be
-                                                                                parametrized.
-                                                                            </xs:documentation>
-                                                                        </xs:annotation>
-                                                                    </xs:attribute>
-                                                                </xs:complexType>
-                                                            </xs:element>
-                                                        </xs:sequence>
-                                                    </xs:complexType>
-                                                </xs:element>
-                                                <xs:element name="EnumerationMappingTransformation">
-                                                    <xs:annotation>
-                                                        <xs:documentation xml:lang="en">
-                                                            This element provides for a transformation of enumeration parameter values
-                                                            based on a mapping table of their enumeration item names and is valid for
-                                                            parameters of enumeration type.  Each mapping table entry is provided by a
-                                                            MapEntry element.
-                                                        </xs:documentation>
-                                                    </xs:annotation>
-                                                    <xs:complexType>
-                                                        <xs:sequence>
-                                                            <xs:element name="MapEntry" minOccurs="1" maxOccurs="unbounded">
-                                                                <xs:complexType>
-                                                                    <xs:attribute name="source" type="xs:string" use="required">
-                                                                        <xs:annotation>
-                                                                            <xs:documentation xml:lang="en">
-                                                                                This attribute gives the value of the parameter in the
-                                                                                parameter source that this entry applies to.
-                                                                            </xs:documentation>
-                                                                        </xs:annotation>
-                                                                    </xs:attribute>
-                                                                    <xs:attribute name="target" type="xs:string" use="required">
-                                                                        <xs:annotation>
-                                                                            <xs:documentation xml:lang="en">
-                                                                                This attribute gives the value of the parameter to use
-                                                                                when applying it to the system or component that is to be
-                                                                                parametrized.
-                                                                            </xs:documentation>
-                                                                        </xs:annotation>
-                                                                    </xs:attribute>
-                                                                </xs:complexType>
-                                                            </xs:element>
-                                                        </xs:sequence>
-                                                    </xs:complexType>
-                                                </xs:element>
-                                            </xs:choice>
+                                            <xs:group ref="ssc:GTransformationChoice" minOccurs="0" maxOccurs="1">
+                                                <xs:annotation>
+                                                    <xs:documentation xml:lang="en">
+                                                        This optional element specifies a transformation that is to be applied to the
+                                                        source value prior to its conveyance to the target.
+                                                    </xs:documentation>
+                                                </xs:annotation>
+                                            </xs:group>
                                             <xs:element name="ConnectionGeometry" minOccurs="0">
                                                 <xs:annotation>
                                                     <xs:documentation xml:lang="en">
@@ -753,6 +665,7 @@
                             </xs:sequence>
                         </xs:complexType>
                     </xs:element>
+                    <xs:element name="SimulationInformation" minOccurs="0" type="ssd:TSimulationInformation"/>
                     <xs:element name="Annotations" minOccurs="0" type="ssc:TAnnotations"/>
                 </xs:sequence>
             </xs:extension>
@@ -917,9 +830,38 @@
                         bindings at a system level take precedence over bindings at a sub-system or component
                         level.
 
-                        It is currently still undefined whether and how components that reference other
-                        SSDs/SSPs will be handled in terms of parametrization, so use of parameter
-                        bindings is currently only allowed for components referencing FMUs.
+                        Parameter bindings for FMU components can be used to set any initial values in the
+                        FMU which are legal to change.  It is assumed that the parameterization is applied
+                        prior to initializing for FMI 1.0, or before entering initialization mode for FMI 2.0.
+                        This means that variables eligible for parameterization are those with:
+                          * either causality = "input" or a start value for FMI 1.0
+                          * variability != "constant" and initial = "exact" or "approx" for FMI 2.0
+
+                        All kinds of system connectors can be parameterized.  In case the system level connectors
+                        are connected to FMU components, the parameterization must be compatible with the variable
+                        in the connected FMU.
+
+                        <!-- Rationale:
+                            
+                             Allowing parameter bindings to set all start values makes them more disctinct from
+                             parameter connections. The movitation for this is that the parameter bindings
+                             define the initial values of the system, while parameter connections can be
+                             used to propagate calculated and/or tunable parameters during both simulation and
+                             initialization.
+
+                             An alternative would be to allow parameter connections to be made to any connector
+                             that can be parameterized by parameter binding, but this would complicate the
+                             definition of which connections are legal. Especially, it would make it possible
+                             to chain connectors, e.g connecting a parameter to a system input to set the start
+                             value and then connecting the input to a component.
+                             -->
+                        
+                        ParameterBindings that apply to a component that references another SSD/SSP are handled
+                        as if the top-level system of the SSD/SSP was present in the enclosing system instead of
+                        the component with one special case: Any parameter bindings in the component are treated
+                        as if they were present in the top-level system of the SSP/SSD after all parameter bindings
+                        of the system.  Therefore they take priority over any of the existing parameter bindings
+                        (for parameters with identical names).
 
                         <!-- Rationale:
                              
@@ -943,12 +885,31 @@
                                     This optional element can be used to provide parameter values inline
                                     to the parameter binding, in which case the source attribute of the
                                     ParameterBinding element must be empty.
+                                    
+                                    The contents must be an ssv:ParameterSet element, if the type attribute
+                                    of the ParameterBinding element is application/x-ssp-parameter-set, or
+                                    any other valid XML content if the type attribute references another
+                                    MIME type (in that case there should be a layered specification that
+                                    defines how embedding the content works for that MIME type).
                                 </xs:documentation>
                             </xs:annotation>
                             <xs:complexType>
-                                <xs:sequence>
+                                <xs:choice>
+                                    <!-- NOTE: In XML Schema 1.1 this choice would also contain the following entry: 
+                                        
+                                         <xs:element ref="ssv:ParameterSet"/>
+                                        
+                                         which specifies the proper way to directly embed a ParameterSet inline.
+                                         Due to restrictions in XML Schema 1.0, this would lead to a violation of the
+                                         unique particle attribution schema component constraint, since the embedded
+                                         ssv:ParameterSet element would also be matched by the more generic xs:any
+                                         specification.  Since XML Schema 1.1 validators are still rare compared with
+                                         1.0 validators, the default schema files for SSP are still restricted to 1.0;
+                                         however if you have access to a 1.1 validator/validating parser, you can
+                                         use the 1.1 variant of these stylesheets instead.
+                                    -->
                                     <xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
-                                </xs:sequence>
+                                </xs:choice>
                             </xs:complexType>
                         </xs:element>
                         <xs:element name="ParameterMapping" minOccurs="0">
@@ -960,12 +921,35 @@
                                     mapping is supplied, the parameter names of the parameter source must match
                                     the names of parameters in the component or system and the values of the
                                     parameter source are not transformed further before being applied.
+                                    
+                                    The contents of the element can be used to provide a parameter mapping
+                                    inline, in which case the source attribute of the ParameterMapping element
+                                    must be empty.
+                                    
+                                    The contents must be an ssm:ParameterMapping element, if the type attribute
+                                    of this element is application/x-ssp-parameter-mapping, or any other valid
+                                    XML content if the type attribute references another MIME type (in that case
+                                    there should be a layered specification that defines how embedding the content
+                                    works for that MIME type).
                                 </xs:documentation>
                             </xs:annotation>
                             <xs:complexType>
-                                <xs:sequence>
+                                <xs:choice>
+                                    <!-- NOTE: In XML Schema 1.1 this choice would also contain the following entry: 
+                                        
+                                         <xs:element ref="ssm:ParameterMapping"/>
+                                        
+                                         which specifies the proper way to directly embed a ParameterMapping inline.
+                                         Due to restrictions in XML Schema 1.0, this would lead to a violation of the
+                                         unique particle attribution schema component constraint, since the embedded
+                                         ssm:ParameterMapping element would also be matched by the more generic xs:any
+                                         specification.  Since XML Schema 1.1 validators are still rare compared with
+                                         1.0 validators, the default schema files for SSP are still restricted to 1.0;
+                                         however if you have access to a 1.1 validator/validating parser, you can
+                                         use the 1.1 variant of these stylesheets instead.
+                                    -->
                                     <xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
-                                </xs:sequence>
+                                </xs:choice>
                                 <xs:attributeGroup ref="ssc:ABaseElement"/>
                                 <xs:attribute name="type" type="xs:string" use="optional" default="application/x-ssp-parameter-mapping"/>
                                 <xs:attribute name="source" type="xs:anyURI" use="optional">
@@ -1073,4 +1057,121 @@
         </xs:sequence>
     </xs:complexType>
     
+    <xs:complexType name="TDefaultExperiment">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                The attributes of this element, if present, specify reasonable default values
+                for running an experiment of the given system.  Any tool is free to ignore this
+                information.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="Annotations" minOccurs="0" type="ssc:TAnnotations"/>
+        </xs:sequence>
+        <xs:attribute name="startTime" type="xs:double" use="optional">
+            <xs:annotation>
+                <xs:documentation xml:lang="en">Default start time of simulation</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="stopTime" type="xs:double" use="optional">
+            <xs:annotation>
+                <xs:documentation xml:lang="en">Default stop time of simulation</xs:documentation>
+            </xs:annotation>            
+        </xs:attribute>
+    </xs:complexType>
+    
+    <xs:complexType name="TSimulationInformation">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                This element provides default information for useful solvers/master algorithms
+                and their default settings for processing the given component or (sub-)system.
+                The information is purely an optional indicator of useful settings, any processing
+                tool is free to use, merge, or discard this information in any way it sees fit.
+                
+                Multiple child-elements are allowed here in order to supply different settings
+                for different kinds of solver/master algorithms.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="FixedStepSolver" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en">
+                        This element provides useful default settings for a fixed-step solver algorithm.
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:attribute name="description" type="xs:string" use="optional">
+                        <xs:annotation><xs:documentation xml:lang="en">Human-readable description of the solver algorithm.</xs:documentation></xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="stepSize" type="xs:double" use="optional">
+                        <xs:annotation><xs:documentation xml:lang="en">Fixed step size of Fixed Step Solver algorithm</xs:documentation></xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="VariableStepSolver" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en">
+                        This element provides useful default settings for a variable-step solver algorithm.
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:attribute name="description" type="xs:string" use="optional">
+                        <xs:annotation><xs:documentation xml:lang="en">Human-readable description of the solver algorithm.</xs:documentation></xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="absoluteTolerance" type="xs:double" use="optional">
+                        <xs:annotation><xs:documentation xml:lang="en">Absolute Integration Tolerance</xs:documentation></xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="relativeTolerance" type="xs:double" use="optional">
+                        <xs:annotation><xs:documentation xml:lang="en">Relative Integration Tolerance</xs:documentation></xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="minimumStepSize" type="xs:double" use="optional">
+                        <xs:annotation><xs:documentation xml:lang="en">Minimum step size of Variable Step Solver algorithm</xs:documentation></xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="maximumStepSize" type="xs:double" use="optional">
+                        <xs:annotation><xs:documentation xml:lang="en">Maximum step size of Variable Step Solver algorithm</xs:documentation></xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="initialStepSize" type="xs:double" use="optional">
+                        <xs:annotation><xs:documentation xml:lang="en">Initial step size of Variable Step Solver algorithm</xs:documentation></xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="FixedStepMaster" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en">
+                        This element provides useful default settings for a fixed-step co-simulation master algorithm.
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:attribute name="description" type="xs:string" use="optional">
+                        <xs:annotation><xs:documentation xml:lang="en">Human-readable description of the co-simulation master algorithm.</xs:documentation></xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="stepSize" type="xs:double" use="optional">
+                        <xs:annotation><xs:documentation xml:lang="en">Fixed step size of Fixed Step Master algorithm</xs:documentation></xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="VariableStepMaster" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en">
+                        This element provides useful default settings for a variable-step co-simulation master algorithm.
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:attribute name="description" type="xs:string" use="optional">
+                        <xs:annotation><xs:documentation xml:lang="en">Human-readable description of the co-simulation master algorithm.</xs:documentation></xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="minimumStepSize" type="xs:double" use="optional">
+                        <xs:annotation><xs:documentation xml:lang="en">Minimum step size of Variable Step Master algorithm</xs:documentation></xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="maximumStepSize" type="xs:double" use="optional">
+                        <xs:annotation><xs:documentation xml:lang="en">Maximum step size of Variable Step Master algorithm</xs:documentation></xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="initialStepSize" type="xs:double" use="optional">
+                        <xs:annotation><xs:documentation xml:lang="en">Initial step size of Variable Step Master algorithm</xs:documentation></xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Annotations" minOccurs="0" type="ssc:TAnnotations"/>
+        </xs:sequence>
+    </xs:complexType>
 </xs:schema>

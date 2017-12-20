@@ -15,7 +15,7 @@
                  schemas in the SSP group.
             -->
                                     
-            Version: 20170606
+            Version: 20171219
             
         </xs:documentation>
     </xs:annotation>
@@ -321,6 +321,159 @@
                             </xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:choice>
+    </xs:group>
+    
+    <xs:group name="GTransformationChoice">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                This element specifies the transformation to be applied to a value prior to its
+                use in a connection or parameter mapping.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:choice>
+            <xs:element name="LinearTransformation">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en">
+                        This element provides for a linear transformation to be performed on the
+                        parameter values and is valid for parameters of a continuous type.
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:attribute name="factor" type="xs:double" use="optional" default="1.0">
+                        <xs:annotation>
+                            <xs:documentation xml:lang="en">
+                                This attribute specifies an optional factor value to use in a linear
+                                transformation of the source parameter value to the target parameter
+                                value, i.e. in the calculation target = factor * source + offset.
+                                
+                                Note that conversions based on different units are performed, unless
+                                prevented by suppressUnitConversion, prior to the application of the
+                                linear transformation, i.e. the value of source is already converted
+                                to the target unit in the formula above.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="offset" type="xs:double" use="optional" default="0.0">
+                        <xs:annotation>
+                            <xs:documentation xml:lang="en">
+                                This attribute specifies an optional offset value to use in a linear
+                                transformation of the source parameter value to the target parameter
+                                value, i.e. in the calculation target = factor * source + offset.
+                                
+                                Note that conversions based on different units are performed, unless
+                                prevented by suppressUnitConversion, prior to the application of the
+                                linear transformation, i.e. the value of source is already converted
+                                to the target unit in the formula above.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="BooleanMappingTransformation">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en">
+                        This element provides for a transformation of boolean parameter values
+                        based on a mapping table and is valid for parameters of boolean type.
+                        Each mapping table entry is provided by a MapEntry element.
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="MapEntry" minOccurs="1" maxOccurs="unbounded">
+                            <xs:complexType>
+                                <xs:attribute name="source" type="xs:boolean" use="required">
+                                    <xs:annotation>
+                                        <xs:documentation xml:lang="en">
+                                            This attribute gives the value of the parameter in the
+                                            parameter source that this entry applies to.
+                                        </xs:documentation>
+                                    </xs:annotation>
+                                </xs:attribute>
+                                <xs:attribute name="target" type="xs:boolean" use="required">
+                                    <xs:annotation>
+                                        <xs:documentation xml:lang="en">
+                                            This attribute gives the value of the parameter to use
+                                            when applying it to the system or component that is to be
+                                            parametrized.
+                                        </xs:documentation>
+                                    </xs:annotation>
+                                </xs:attribute>
+                            </xs:complexType>
+                        </xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="IntegerMappingTransformation">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en">
+                        This element provides for a transformation of integer parameter values
+                        based on a mapping table and is valid for parameters of integer and 
+                        enumeration type.  Each mapping table entry is provided by a MapEntry
+                        element.
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="MapEntry" minOccurs="1" maxOccurs="unbounded">
+                            <xs:complexType>
+                                <xs:attribute name="source" type="xs:int" use="required">
+                                    <xs:annotation>
+                                        <xs:documentation xml:lang="en">
+                                            This attribute gives the value of the parameter in the
+                                            parameter source that this entry applies to.
+                                        </xs:documentation>
+                                    </xs:annotation>
+                                </xs:attribute>
+                                <xs:attribute name="target" type="xs:int" use="required">
+                                    <xs:annotation>
+                                        <xs:documentation xml:lang="en">
+                                            This attribute gives the value of the parameter to use
+                                            when applying it to the system or component that is to be
+                                            parametrized.
+                                        </xs:documentation>
+                                    </xs:annotation>
+                                </xs:attribute>
+                            </xs:complexType>
+                        </xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerationMappingTransformation">
+                <xs:annotation>
+                    <xs:documentation xml:lang="en">
+                        This element provides for a transformation of enumeration parameter values
+                        based on a mapping table of their enumeration item names and is valid for
+                        parameters of enumeration type.  Each mapping table entry is provided by a
+                        MapEntry element.
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="MapEntry" minOccurs="1" maxOccurs="unbounded">
+                            <xs:complexType>
+                                <xs:attribute name="source" type="xs:string" use="required">
+                                    <xs:annotation>
+                                        <xs:documentation xml:lang="en">
+                                            This attribute gives the value of the parameter in the
+                                            parameter source that this entry applies to.
+                                        </xs:documentation>
+                                    </xs:annotation>
+                                </xs:attribute>
+                                <xs:attribute name="target" type="xs:string" use="required">
+                                    <xs:annotation>
+                                        <xs:documentation xml:lang="en">
+                                            This attribute gives the value of the parameter to use
+                                            when applying it to the system or component that is to be
+                                            parametrized.
+                                        </xs:documentation>
+                                    </xs:annotation>
+                                </xs:attribute>
+                            </xs:complexType>
+                        </xs:element>
+                    </xs:sequence>
                 </xs:complexType>
             </xs:element>
         </xs:choice>

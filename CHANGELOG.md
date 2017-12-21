@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.2] - 2017-12-21
+
+### Changed
+- 'fmpy' command is now directly accessible from the command line
+- SSP schema updated to Draft20171219
+
 ## [0.1.1] - 2017-12-11
 
 ### Added

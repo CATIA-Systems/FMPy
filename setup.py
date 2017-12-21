@@ -1,19 +1,22 @@
 from setuptools import setup
 
 
-def readme():
-    """ Get the content of README.rst without the CI badges """
-    with open('README.rst') as f:
-        lines = f.readlines()
-        while not lines[0].startswith('FMPy'):
-            lines = lines[1:]
-        return ''.join(lines)
-
-
-setup(name="FMPy",
-      version="0.1.1",
+setup(name='FMPy',
+      version='0.1.2',
       description="Simulate Functional Mock-up Units (FMUs) in Python",
-      long_description=readme(),
+      long_description="""
+FMPy
+====
+
+FMPy is a free Python library to simulate `Functional Mock-up Units (FMUs) <http://fmi-standard.org/>`_ that...
+
+- supports FMI 1.0 and 2.0
+- supports Co-Simulation and Model Exchange
+- runs on Windows, Linux and macOS
+- can validate FMUs
+- provides fixed and variable-step solvers
+- is pure Python (with ctypes)
+""",
       author="Torsten Sommer",
       author_email="torsten.sommer@3ds.com",
       url="https://github.com/CATIA-Systems/FMPy",
@@ -37,4 +40,5 @@ setup(name="FMPy",
                         'numpy',
                         'pathlib',
                         'requests',
-                        'pypiwin32;platform_system=="Windows"'])
+                        'pypiwin32;platform_system=="Windows"'],
+      entry_points={'console_scripts': ['fmpy=fmpy.command_line:main']})

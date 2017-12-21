@@ -26,7 +26,7 @@
             A parameter set can be provided as a stand-alone XML file (conventionally with a .ssv file type)
             which can be referenced from SSD files.
                         
-            Version: 20170606
+            Version: 20171219
             
         </xs:documentation>
     </xs:annotation>
@@ -37,10 +37,11 @@
         <xs:complexType>
             <xs:sequence>
                 <xs:element name="Parameters" type="ssv:TParameters"/>
+                <xs:element name="Enumerations" minOccurs="0" type="ssc:TEnumerations"/>
                 <xs:element name="Units" minOccurs="0" type="ssc:TUnits"/>
                 <xs:element name="Annotations" minOccurs="0" type="ssc:TAnnotations"/>
             </xs:sequence>
-            <xs:attribute name="version" type="xs:normalizedString" use="required" fixed="Draft20170606">
+            <xs:attribute name="version" type="xs:normalizedString" use="required" fixed="Draft20171219">
                 <xs:annotation>
                     <xs:documentation xml:lang="en">
                         Version of SSV format, fixed at 1.0 for the actual release.
@@ -131,6 +132,26 @@
                                     value of this at run time will depend on the item
                                     mapping of the enumeration type of the variables
                                     being parameterized.
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:attribute>
+                        <xs:attribute name="name" type="xs:string" use="optional">
+                            <xs:annotation>
+                                <xs:documentation xml:lang="en">
+                                    This attribute specifies the name of the enumeration
+                                    which references into the set of defined enumerations
+                                    of the system structure description, as contained in
+                                    the Enumerations element of the root element.
+                                    
+                                    This attribute is optional; if it is not specified, then
+                                    the list of valid enumeration items with their names and
+                                    values is not specified, and the interpretation of the
+                                    enumeration value is left solely to the variables that
+                                    are being parameterized.
+                                    
+                                    If the attribute is specified, implementations can use
+                                    that information for user interface purposes, and/or
+                                    for additional consistency checking. 
                                 </xs:documentation>
                             </xs:annotation>
                         </xs:attribute>

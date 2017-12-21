@@ -454,10 +454,10 @@ def fmu_info(filename, causalities=['input', 'output']):
 
         description = v.description if v.description else ''
 
-        l.append(v.name + ' ' * (20 - len(v.name)) + \
-              v.causality + ' ' * (10 - len(v.causality)) + \
-              ' ' * (20 - len(start)) + start + \
-              '  ' + unit + ' ' * (8 - len(unit)) + \
-              ' ' + description)
+        l.append(v.name + ' ' * (20 - len(v.name)) +
+                 v.causality + ' ' * (10 - len(v.causality)) +
+                 ' ' * (20 - len(start)) + start +
+                 '  ' + unit + ' ' * (8 - len(unit)) +
+                 ' ' + description)
 
     return '\n'.join(l)

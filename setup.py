@@ -1,8 +1,8 @@
 from setuptools import setup
 
 
-setup(name="FMPy",
-      version="0.1.1",
+setup(name='FMPy',
+      version='0.1.2',
       description="Simulate Functional Mock-up Units (FMUs) in Python",
       long_description="""
 FMPy

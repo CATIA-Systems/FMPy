@@ -7,11 +7,15 @@ def main():
     import textwrap
 
     description = """\
-    Simulate an FMU
+    Validate and simulate Functional Mock-up Units (FMUs)
 
-    Example: 
-        > python -m fmpy.simulate Rectifier.fmu
-
+    Get information about an FMU:
+       
+        fmpy info Rectifier.fmu
+     
+    Simulate an FMU:
+     
+        fmpy simulate Rectifier.fmu --show-plot
     """
 
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,

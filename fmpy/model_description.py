@@ -72,11 +72,23 @@ class ScalarVariable(object):
         self.name = name
         self.valueReference = valueReference
         self.description = None
+
         self.type = None
+        "One of 'Real', 'Integer', 'Enumeration', 'Boolean', 'String'"
+
         self.unit = None
+
         self.start = None
+
         self.causality = None
+        "One of 'parameter', 'calculatedParameter', 'input', 'output', 'local', 'independent'"
+
         self.variability = None
+        "One of 'constant', 'fixed', 'tunable', 'discrete' or 'continuous'"
+
+        self.initial = None
+        "One of 'exact', 'approx', 'calculated' or None"
+
         self.declaredType = None
 
     def __repr__(self):
@@ -327,6 +339,15 @@ def read_model_description(filename, validate=True):
         modelDescription.typeDefinitions.append(simpleType)
         typeDefinitions[simpleType.name] = simpleType
 
+    # default values for 'initial' derived from variability and causality
+    initial_defaults = {
+        'constant':   {'output': 'exact', 'local': 'exact'},
+        'fixed':      {'parameter': 'exact', 'calculatedParameter': 'calculated', 'local': 'calculated'},
+        'tunable':    {'parameter': 'exact', 'calculatedParameter': 'calculated', 'local': 'calculated'},
+        'discrete':   {'input': None, 'output': 'calculated', 'local': 'calculated'},
+        'continuous': {'input': None, 'output': 'calculated', 'local': 'calculated', 'independent': None},
+    }
+
     # model variables
     for variable in root.find('ModelVariables'):
 
@@ -336,27 +357,36 @@ def read_model_description(filename, validate=True):
         sv = ScalarVariable(name=variable.get('name'), valueReference=int(variable.get('valueReference')))
         sv.description = variable.get('description')
         sv.start = variable.get('start')
-        sv.causality = variable.get('causality')
+        sv.causality = variable.get('causality', default='local')
+        sv.variability = variable.get('variability')
+        sv.initial = variable.get('initial')
 
         value = next(variable.iterchildren())
         sv.type = value.tag
-        start = value.get('start')
-
-        if start is not None:
-            if sv.type == 'Real':
-                sv.start = float(start)
-            elif sv.type == 'Integer':
-                sv.start = int(start)
-            elif sv.type == 'Boolean':
-                sv.start = start == 'true'
-            else:
-                sv.start = start
+        sv.start = value.get('start')
 
         if sv.type == 'Real':
             sv.unit = value.get('unit')
 
         # resolve the declared type
         sv.declaredType = typeDefinitions[value.get('declaredType')]
+
+        if fmiVersion == '1.0':
+            if sv.causality == 'internal':
+                sv.causality = 'local'
+
+            if sv.variability == 'parameter':
+                sv.causality = 'parameter'
+                sv.variability = None
+        else:
+            if sv.variability is None:
+                if sv.type == 'Real':
+                    sv.variability = 'continuous'
+                else:
+                    sv.variability = 'discrete'
+
+            if sv.initial is None:
+                sv.initial = initial_defaults[sv.variability][sv.causality]
 
         modelDescription.modelVariables.append(sv)
 

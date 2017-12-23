@@ -3,7 +3,7 @@
 import pathlib
 from ctypes import *
 from . import free, calloc
-from .fmi1 import _FMU
+from .fmi1 import _FMU, printLogMessage
 
 
 fmi2Component            = c_void_p
@@ -45,15 +45,6 @@ fmi2LastSuccessfulTime = 2
 fmi2Terminated         = 3
 
 
-def logger(componentEnvironment, instanceName, status, category, message):
-    if status == fmi2Warning:
-        print('[WARNING]', message)
-    elif status > fmi2Warning:
-        print('[ERROR]', message)
-    else:
-        print('[INFO]', message)
-
-
 def allocateMemory(nobj, size):
     return calloc(nobj, size)
 
@@ -73,13 +64,6 @@ class fmi2CallbackFunctions(Structure):
                 ('freeMemory',           fmi2CallbackFreeMemoryTYPE),
                 ('stepFinished',         fmi2StepFinishedTYPE),
                 ('componentEnvironment', fmi2ComponentEnvironment)]
-
-callbacks = fmi2CallbackFunctions()
-callbacks.logger               = fmi2CallbackLoggerTYPE(logger)
-callbacks.allocateMemory       = fmi2CallbackAllocateMemoryTYPE(allocateMemory)
-#callbacks.stepFinished         = fmi2StepFinishedTYPE(stepFinished)
-callbacks.freeMemory           = fmi2CallbackFreeMemoryTYPE(freeMemory)
-#callbacks.componentEnvironment = None
 
 
 class fmi2EventInfo(Structure):
@@ -207,18 +191,27 @@ class _FMU2(_FMU):
 
         setattr(self, fname, w)
 
-    def instantiate(self, visible=False, loggingOn=False):
+    def instantiate(self, visible=False, callbacks=None, loggingOn=False):
 
         kind = fmi2ModelExchange if isinstance(self, FMU2Model) else fmi2CoSimulation
         resourceLocation = pathlib.Path(self.unzipDirectory, 'resources').as_uri()
         visible = fmi2True if visible else fmi2False
+
+        if callbacks is None:
+            callbacks = fmi2CallbackFunctions()
+            callbacks.logger = fmi2CallbackLoggerTYPE(printLogMessage)
+            callbacks.allocateMemory = fmi2CallbackAllocateMemoryTYPE(allocateMemory)
+            callbacks.freeMemory = fmi2CallbackFreeMemoryTYPE(freeMemory)
+
+        self.callbacks = callbacks
+
         loggingOn = fmi2True if loggingOn else fmi2False
 
         self.component = self.fmi2Instantiate(self.instanceName.encode('utf-8'),
                                               kind,
                                               self.guid.encode('utf-8'),
                                               resourceLocation.encode('utf-8'),
-                                              byref(callbacks),
+                                              byref(self.callbacks),
                                               visible,
                                               loggingOn)
 

@@ -1,7 +1,7 @@
 FMPy
 ====
 
-Copyright (c) 2017 Dassault Systemes. All rights reserved.
+Copyright (c) 2017-2018 Dassault Systemes. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,6 +30,14 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
+The icons and materials included in the project are released under the Creative
+Commons Attribution 4.0 International Public License (CC BY 4.0) available on
+https://creativecommons.org/licenses/by/4.0/.
+
+Some icons are based on the free GLYPHICONS (https://glyphicons.com/) by  Jan
+Kovarik released under the Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+license available on https://creativecommons.org/licenses/by/3.0/.
 
 
 SUNDIALS

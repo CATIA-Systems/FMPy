@@ -1,0 +1,34 @@
+<RCC>
+  <qresource prefix="icons">
+    <file>log.png</file>
+    <file>stop.png</file>
+    <file>info-16x16.png</file>
+    <file>warning-16x16.png</file>
+    <file>debug-16x16.png</file>
+    <file>error-16x16.png</file>
+    <file>list-16x16.png</file>
+    <file>filter.png</file>
+    <file>start-background.png</file>
+    <file>folder_open.png</file>
+    <file>app_icon.ico</file>
+    <file>settings.png</file>
+    <file>stats.png</file>
+    <file>play.png</file>
+    <file>boolean.png</file>
+    <file>boolean_input.png</file>
+    <file>boolean_output.png</file>
+    <file>enumeration.png</file>
+    <file>enumeration_input.png</file>
+    <file>enumeration_output.png</file>
+    <file>integer.png</file>
+    <file>integer_input.png</file>
+    <file>integer_output.png</file>
+    <file>real_input.png</file>
+    <file>real_output.png</file>
+    <file>string.png</file>
+    <file>string_input.png</file>
+    <file>string_output.png</file>
+    <file>subsystem.png</file>
+    <file>real.png</file>
+  </qresource>
+</RCC>

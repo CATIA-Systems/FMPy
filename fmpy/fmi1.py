@@ -76,11 +76,11 @@ class fmi1EventInfo(Structure):
                                       self.nextEventTime)
 
 
-def logger(component, instanceName, status, category, message):
-    if status == fmi1Warning:
-        print('[WARNING]', message)
-    elif status > fmi1Warning:
-        print('[ERROR]', message)
+def printLogMessage(component, instanceName, status, category, message):
+    """ Print the FMU's log messages to the command line (works for both FMI 1.0 and 2.0) """
+
+    label = ['OK', 'WARNING', 'DISCARD', 'ERROR', 'FATAL', 'PENDING'][status]
+    print("[%s] %s" % (label, message))
 
 
 def allocateMemory(nobj, size):
@@ -93,14 +93,6 @@ def freeMemory(obj):
 
 def stepFinished(componentEnvironment, status):
     pass
-
-
-callbacks = fmi1CallbackFunctions()
-callbacks.logger               = fmi1CallbackLoggerTYPE(logger)
-callbacks.allocateMemory       = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
-callbacks.freeMemory           = fmi1CallbackFreeMemoryTYPE(freeMemory)
-#callbacks.stepFinished         = fmi1StepFinishedTYPE(stepFinished)
-callbacks.stepFinished = None
 
 
 class _FMU(object):
@@ -130,6 +122,9 @@ class _FMU(object):
         os.chdir(work_dir)
 
         self.component = None
+
+        self.callbacks = None
+        " Reference to the callbacks struct (to save it from GC)"
 
     def freeLibrary(self):
         # unload the shared library
@@ -348,9 +343,18 @@ class FMU1Slave(_FMU1):
         self._fmi1Function('FreeSlaveInstance', ['component'], [fmi1Component], None)
 
     def instantiate(self, mimeType='application/x-fmu-sharedlibrary', timeout=0, visible=fmi1False,
-                    interactive=fmi1False, functions=callbacks, loggingOn=fmi1False):
+                    interactive=fmi1False, functions=None, loggingOn=fmi1False):
 
         fmuLocation = pathlib.Path(self.unzipDirectory).as_uri()
+
+        if functions is None:
+            functions = fmi1CallbackFunctions()
+            functions.logger = fmi1CallbackLoggerTYPE(printLogMessage)
+            functions.allocateMemory = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
+            functions.freeMemory = fmi1CallbackFreeMemoryTYPE(freeMemory)
+            functions.stepFinished = None
+
+        self.callbacks = functions
 
         self.component = self.fmi1InstantiateSlave(self.instanceName.encode('UTF-8'),
                                                    self.guid.encode('UTF-8'),
@@ -444,10 +448,20 @@ class FMU1Model(_FMU1):
                            [fmi1Component],
                            None)
 
-    def instantiate(self, functions=callbacks, loggingOn=fmi1False):
+    def instantiate(self, functions=None, loggingOn=fmi1False):
+
+        if functions is None:
+            functions = fmi1CallbackFunctions()
+            functions.logger = fmi1CallbackLoggerTYPE(logger)
+            functions.allocateMemory = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
+            functions.freeMemory = fmi1CallbackFreeMemoryTYPE(freeMemory)
+            functions.stepFinished = None
+
+        self.callbacks = functions
+
         self.component = self.fmi1InstantiateModel(self.instanceName.encode('UTF-8'),
                                                    self.guid.encode('UTF-8'),
-                                                   functions,
+                                                   self.callbacks,
                                                    loggingOn)
 
     def setTime(self, time):

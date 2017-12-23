@@ -438,7 +438,7 @@ def fmu_info(filename, causalities=['input', 'output']):
     l.append("")
     l.append("Variables (%s)" % ', '.join(causalities))
     l.append("")
-    l.append('Name                Causality          Start Value  Unit     Description')
+    l.append('Name                Causality              Start Value  Unit     Description')
     for v in md.modelVariables:
         if v.causality not in causalities:
             continue
@@ -456,7 +456,7 @@ def fmu_info(filename, causalities=['input', 'output']):
 
         l.append(v.name + ' ' * (20 - len(v.name)) +
                  v.causality + ' ' * (10 - len(v.causality)) +
-                 ' ' * (20 - len(start)) + start +
+                 ' ' * (24 - len(start)) + start +
                  '  ' + unit + ' ' * (8 - len(unit)) +
                  ' ' + description)
 

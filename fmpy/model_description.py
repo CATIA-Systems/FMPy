@@ -22,6 +22,9 @@ class ModelDescription(object):
         self.unitDefinitions = []
         self.typeDefinitions = []
         self.modelVariables = []
+
+        self.outputs = []
+        self.derivatives = []
         self.initialUnknowns = []
 
 
@@ -358,22 +361,26 @@ def read_model_description(filename, validate=True):
         modelDescription.modelVariables.append(sv)
 
     # model structure
-    for u in root.findall('ModelStructure/InitialUnknowns/Unknown'):
-        unknown = Unknown()
+    for attr, element in [(modelDescription.outputs, 'Outputs'),
+                          (modelDescription.derivatives, 'Derivatives'),
+                          (modelDescription.initialUnknowns, 'InitialUnknowns')]:
 
-        unknown.variable = modelDescription.modelVariables[int(u.get('index')) - 1]
+        for u in root.findall('ModelStructure/' + element + '/Unknown'):
+            unknown = Unknown()
 
-        dependencies = u.get('dependencies')
+            unknown.variable = modelDescription.modelVariables[int(u.get('index')) - 1]
 
-        if dependencies:
-            for i in dependencies.split(' '):
-                unknown.dependencies.append(modelDescription.modelVariables[int(i) - 1])
+            dependencies = u.get('dependencies')
 
-        dependenciesKind = u.get('dependenciesKind')
+            if dependencies:
+                for i in dependencies.split(' '):
+                    unknown.dependencies.append(modelDescription.modelVariables[int(i) - 1])
 
-        if dependenciesKind:
-            unknown.dependenciesKind = u.get('dependenciesKind').split(' ')
+            dependenciesKind = u.get('dependenciesKind')
 
-        modelDescription.initialUnknowns.append(unknown)
+            if dependenciesKind:
+                unknown.dependenciesKind = u.get('dependenciesKind').split(' ')
+
+            attr.append(unknown)
 
     return modelDescription

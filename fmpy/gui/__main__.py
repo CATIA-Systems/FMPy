@@ -469,14 +469,18 @@ class MainWindow(QMainWindow):
 
         self.simulationThread = None
 
+        self.updatePlotData()
+
     def updatePlotData(self):
 
         import numpy as np
 
-        if self.simulationThread is None or len(self.simulationThread.rows) < 2:
-            return
+        if self.simulationThread is not None and len(self.simulationThread.rows) > 1:
+            # get results from current simulation
+            self.result = np.array(self.simulationThread.rows, dtype=np.dtype(self.simulationThread.cols))
 
-        self.result = np.array(self.simulationThread.rows, dtype=np.dtype(self.simulationThread.cols))
+        if self.result is None:
+            return  # no results available yet
 
         time = self.result['time']
 
@@ -500,6 +504,8 @@ class MainWindow(QMainWindow):
 
         if self.simulationThread is not None:
             stop_time = self.simulationThread.stopTime
+        elif self.result is not None:
+            stop_time = self.result['time'][-1]
         else:
             stop_time = 1.0
 

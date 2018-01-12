@@ -13,7 +13,14 @@ from time import time as current_time
 class Recorder(object):
     """ Helper class to record the variables during the simulation """
 
-    def __init__(self, fmu, modelDescription, variableNames=None, interval=None, initialValues=None):
+    def __init__(self, fmu, modelDescription, variableNames=None, interval=None):
+        """
+        Parameters:
+            fmu               the FMU instance
+            modelDescription  the model description instance
+            variableNames     list of variable names to record
+            interval          minimum distance to the previous sample
+        """
 
         self.fmu = fmu
         self.interval = interval
@@ -51,20 +58,6 @@ class Recorder(object):
                 else:
                     pass  # skip String variables
 
-            # record the initial values of all variables
-            if initialValues is not None:
-
-                if sv.type == 'Real':
-                    value = self.fmu.getReal([sv.valueReference])
-                elif sv.type in ['Integer', 'Enumeration']:
-                    value = self.fmu.getInteger([sv.valueReference])
-                elif sv.type == 'Boolean':
-                    value = self.fmu.getBoolean([sv.valueReference])
-                elif sv.type == 'String':
-                    value = self.fmu.getString([sv.valueReference])
-
-                initialValues[sv.name] = value[0]
-
         self.cols += zip(real_names, [np.float64] * len(real_names))
         self.cols += zip(integer_names, [np.int32] * len(integer_names))
         self.cols += zip(boolean_names, [np.bool_] * len(boolean_names))
@@ -94,8 +87,15 @@ class Recorder(object):
 
 
 class Input(object):
+    """ Helper class that sets the input to the FMU """
 
     def __init__(self, fmu, modelDescription, signals):
+        """
+        Parameters:
+            fmu               the FMU instance
+            modelDescription  the model description instance
+            signals           a structured numpy array that contains the input
+        """
 
         self.fmu = fmu
         self.signals = signals
@@ -228,6 +228,13 @@ class Input(object):
 
 
 def apply_start_values(fmu, modelDescription, start_values):
+    """ Set start values to an FMU instance
+
+    Parameters:
+        fmu               the FMU instance
+        modelDescription  the ModelDescription instance
+        start_values      dictionary of variable_name -> value pairs
+    """
 
     variables = {}
 
@@ -315,7 +322,6 @@ def simulate_fmu(filename,
                  output=None,
                  timeout=None,
                  fmi_logging=False,
-                 initial_values=None,
                  logger=None,
                  step_finished=None):
     """ Simulate an FMU
@@ -331,11 +337,10 @@ def simulate_fmu(filename,
         output_interval     interval for sampling the output
         fmi_type            FMI type for the simulation (None: determine from FMU)
         start_values        dictionary of variable name -> value pairs
-        input               filename of the input file
-        output              filename of the output file
+        input               a structured numpy array that contains the input
+        output              list of variables to record (None: record outputs)
         timeout             timeout for the simulation
         fmi_logging         whether to log FMI calls
-        initial_values      (experimental)
         logger              callback function passed to the FMU (experimental)
         step_finished       callback to interact with the simulation (experimental)
 
@@ -405,10 +410,10 @@ def simulate_fmu(filename,
     # simulate_fmu the FMU
     if fmi_type == 'ModelExchange':
         fmu_args['modelIdentifier'] = modelDescription.modelExchange.modelIdentifier
-        result = simulateME(modelDescription, fmu_args, start_time, stop_time, solver, step_size, relative_tolerance, start_values, input, output, output_interval, timeout, initial_values, callbacks, step_finished)
+        result = simulateME(modelDescription, fmu_args, start_time, stop_time, solver, step_size, relative_tolerance, start_values, input, output, output_interval, timeout, callbacks, step_finished)
     elif fmi_type == 'CoSimulation':
         fmu_args['modelIdentifier'] = modelDescription.coSimulation.modelIdentifier
-        result = simulateCS(modelDescription, fmu_args, start_time, stop_time, start_values, input, output, output_interval, timeout, initial_values, callbacks, step_finished)
+        result = simulateCS(modelDescription, fmu_args, start_time, stop_time, start_values, input, output, output_interval, timeout, callbacks, step_finished)
 
     # clean up
     shutil.rmtree(unzipdir)
@@ -416,7 +421,7 @@ def simulate_fmu(filename,
     return result
 
 
-def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name, step_size, relative_tolerance, start_values, input_signals, output, output_interval, timeout, initial_values, callbacks, step_finished):
+def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name, step_size, relative_tolerance, start_values, input_signals, output, output_interval, timeout, callbacks, step_finished):
 
     sim_start = current_time()
 
@@ -487,8 +492,7 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
     recorder = Recorder(fmu=fmu,
                         modelDescription=modelDescription,
                         variableNames=output,
-                        interval=output_interval,
-                        initialValues=initial_values)
+                        interval=output_interval)
 
     # simulation loop
     while time < stop_time:
@@ -564,7 +568,7 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
     return recorder.result()
 
 
-def simulateCS(modelDescription, fmu_kwargs, start_time, stop_time, start_values, input_signals, output, output_interval, timeout, initial_values, callbacks, step_finished):
+def simulateCS(modelDescription, fmu_kwargs, start_time, stop_time, start_values, input_signals, output, output_interval, timeout, callbacks, step_finished):
 
     sim_start = current_time()
 
@@ -582,11 +586,11 @@ def simulateCS(modelDescription, fmu_kwargs, start_time, stop_time, start_values
         fmu.exitInitializationMode()
 
     input = Input(fmu=fmu, modelDescription=modelDescription, signals=input_signals)
+
     recorder = Recorder(fmu=fmu,
                         modelDescription=modelDescription,
                         variableNames=output,
-                        interval=output_interval,
-                        initialValues=initial_values)
+                        interval=output_interval)
 
     time = start_time
 

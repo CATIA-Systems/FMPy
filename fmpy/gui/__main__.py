@@ -415,10 +415,8 @@ class MainWindow(QMainWindow):
             solver = 'CVode'
 
         output = []
-
         for variable in self.modelDescription.modelVariables:
-            if variable.variability in ['tunable', 'discrete', 'continuous']:
-                output.append(variable.name)
+            output.append(variable.name)
 
         self.simulationThread = SimulationThread(filename=self.filename,
                                                  stopTime=stop_time,

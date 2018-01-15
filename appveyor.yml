@@ -1,3 +1,5 @@
+image: Visual Studio 2015
+
 build: false
 
 environment:
@@ -16,7 +18,7 @@ environment:
       MINICONDA: C:\Miniconda35-x64
 
 init:
-  - echo %PYTHON_VERSION% %MINICONDA%
+  - echo echo %VS140COMNTOOLS% %PYTHON_VERSION% %MINICONDA%
 
 install:
   - git submodule update --init --recursive

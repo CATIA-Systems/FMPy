@@ -51,6 +51,7 @@ class CoSimulation(object):
         self.canGetAndSetFMUstate = False
         self.canSerializeFMUstate = False
         self.providesDirectionalDerivative = False
+        self.sourceFiles = []
 
 
 class ModelExchange(object):
@@ -64,6 +65,7 @@ class ModelExchange(object):
         self.canGetAndSetFMUstate = False
         self.canSerializeFMUstate = False
         self.providesDirectionalDerivative = False
+        self.sourceFiles = []
 
 
 class ScalarVariable(object):
@@ -277,6 +279,8 @@ def read_model_description(filename, validate=True):
                               'canGetAndSetFMUstate',
                               'canSerializeFMUstate',
                               'providesDirectionalDerivative'])
+            for file in me.findall('SourceFiles/File'):
+                modelDescription.modelExchange.sourceFiles.append(file.get('name'))
 
         for cs in root.findall('CoSimulation'):
             modelDescription.coSimulation = CoSimulation()
@@ -292,6 +296,8 @@ def read_model_description(filename, validate=True):
                               'canGetAndSetFMUstate',
                               'canSerializeFMUstate',
                               'providesDirectionalDerivative'])
+            for file in cs.findall('SourceFiles/File'):
+                modelDescription.coSimulation.sourceFiles.append(file.get('name'))
 
     # unit definitions
     if fmiVersion == "1.0":

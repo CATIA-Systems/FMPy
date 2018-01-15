@@ -25,7 +25,9 @@ packages = ['fmpy', 'fmpy.cross_check', 'fmpy.examples', 'fmpy.gui', 'fmpy.gui.g
             'fmpy.ssp.examples', 'fmpy.sundials']
 
 package_data = {
-    'fmpy': ['schema/fmi1/*.xsd',
+    'fmpy': ['c-code/fmi2/*.h',
+             'c-code/fmi2/*.c',
+             'schema/fmi1/*.xsd',
              'schema/fmi2/*.xsd',
              'sundials/darwin64/*.dylib',
              'sundials/linux64/*.so',

@@ -461,3 +461,107 @@ def fmu_info(filename, causalities=['input', 'output']):
                  ' ' + description)
 
     return '\n'.join(l)
+
+
+def visual_c_versions():
+    """ Detect installed Visual C compilers
+
+    Returns: a sorted list of detected Visual C versions e.g. [90, 120, 140]
+    """
+
+    versions = []
+
+    for key in os.environ.keys():
+        if key.upper().startswith('VS') and key.upper().endswith('COMNTOOLS'):
+            versions.append(int(key[len('VS'):-len('COMNTOOLS')]))
+
+    return sorted(versions)
+
+
+def compile_dll(model_description, sources_dir, compiler=None):
+    """ Compile the DLL """
+
+    from . import platform, sharedLibraryExtension
+
+    if model_description.fmiVersion == '1.0':
+        raise Exception("FMI 1.0 source FMUs are currently not supported")
+
+    if compiler is None:
+        if platform.startswith('win'):
+            compiler = 'vc'
+        else:
+            compiler = 'gcc'
+
+    include_dir = os.path.join(os.path.dirname(__file__), 'c-code')
+    preprocessor_definitions = []
+    source_files = [os.path.join(include_dir, 'fmi2', 'fmi2_wrapper.c')]
+
+    if model_description.coSimulation is not None:
+        model_identifier = model_description.coSimulation.modelIdentifier
+        source_files += model_description.coSimulation.sourceFiles
+        preprocessor_definitions.append('CO_SIMULATION')
+
+    if model_description.modelExchange is not None:
+        model_identifier = model_description.coSimulation.modelIdentifier
+        for source_file in model_description.modelExchange.sourceFiles:
+            if source_file not in source_files:
+                source_files += source_file
+        preprocessor_definitions.append('MODEL_EXCHANGE')
+
+    preprocessor_definitions.append('FMI2_FUNCTION_PREFIX=' + model_identifier + '_')
+
+    fmi_include_dir = os.path.join(include_dir, 'fmi1' if model_description.fmiVersion == '1.0' else 'fmi2')
+
+    target = model_identifier + sharedLibraryExtension
+
+    print('Compiling %s...' % target)
+
+    if compiler == 'vc':
+
+        vc_versions = visual_c_versions()
+
+        if len(vc_versions) == 0:
+            raise Exception("No VisualStudio found")
+
+        command = r'call "%%VS%dCOMNTOOLS%%\..\..\VC\vcvarsall.bat"' % vc_versions[-1]
+        if platform == 'win64':
+            command += ' x86_amd64'
+        command += ' && cl /LD /I. /I"%s"' % fmi_include_dir
+        for definition in preprocessor_definitions:
+            command += ' /D' + definition
+        command += ' /Fe' + model_identifier + ' shlwapi.lib ' + ' '.join(source_files)
+
+    elif compiler == 'gcc':
+
+        command = ''
+        if platform.startswith('win'):
+            command += r'set PATH=C:\MinGW\bin;%%PATH%% && '
+        command += 'gcc -c -I. -I%s' % fmi_include_dir
+        if platform in ['linux32', 'linux64']:
+            command += ' -fPIC'
+        for definition in preprocessor_definitions:
+            command += ' -D' + definition
+        command += ' ' + ' '.join(source_files)
+        command += ' && gcc'
+        if platform != 'darwin64':
+            command += ' -static-libgcc'
+        command += ' -shared -o%s *.o' % target
+
+    else:
+        raise Exception("Unsupported compiler: '%s'" % compiler)
+
+    cur_dir = os.getcwd()
+    os.chdir(sources_dir)
+    status = os.system(command)
+    os.chdir(cur_dir)
+
+    print(sources_dir)
+    print(command)
+
+    dll_path = os.path.join(sources_dir, target)
+
+    if status != 0 or not os.path.isfile(dll_path):
+        raise Exception('Failed to compile shared library')
+
+
+    return str(dll_path)

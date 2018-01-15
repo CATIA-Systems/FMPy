@@ -98,7 +98,16 @@ def stepFinished(componentEnvironment, status):
 class _FMU(object):
     """ Base class for all FMUs """
 
-    def __init__(self, guid, modelIdentifier, unzipDirectory, instanceName, logFMICalls=False):
+    def __init__(self, guid, modelIdentifier, unzipDirectory, instanceName, libraryPath=None, logFMICalls=False):
+        """
+        Parameters:
+            guid             the GUI from the modelDescription.xml
+            modelIdentifier  the model identifier from the modelDescription.xml
+            unzipDirectory   folder where the FMU has been extracted
+            instanceName     the name of the FMU instance
+            libraryPath      path to the shared library
+            logFMICalls      whether FMI calls should be logged
+        """
 
         self.guid = guid
         self.modelIdentifier = modelIdentifier
@@ -109,14 +118,17 @@ class _FMU(object):
         # remember the current working directory
         work_dir = os.getcwd()
 
-        library_dir = os.path.join(unzipDirectory, 'binaries', platform)
+        if libraryPath is None:
+            library_dir = os.path.join(unzipDirectory, 'binaries', platform)
+            libraryPath = str(os.path.join(library_dir, self.modelIdentifier + sharedLibraryExtension))
+        else:
+            library_dir = os.path.dirname(libraryPath)
 
         # change to the library directory as some DLLs expect this to resolve dependencies
         os.chdir(library_dir)
 
         # load the shared library
-        library_path = str(os.path.join(library_dir, self.modelIdentifier + sharedLibraryExtension))
-        self.dll = cdll.LoadLibrary(library_path)
+        self.dll = cdll.LoadLibrary(libraryPath)
 
         # change back to the working directory
         os.chdir(work_dir)

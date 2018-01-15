@@ -317,6 +317,7 @@ def simulate_fmu(filename,
                  relative_tolerance=None,
                  output_interval=None,
                  fmi_type=None,
+                 use_source_code=False,
                  start_values={},
                  input=None,
                  output=None,
@@ -336,6 +337,7 @@ def simulate_fmu(filename,
         relative_tolerance  relative tolerance for the 'CVode' solver
         output_interval     interval for sampling the output
         fmi_type            FMI type for the simulation (None: determine from FMU)
+        use_source_code     compile the shared library (requires C sources)
         start_values        dictionary of variable name -> value pairs
         input               a structured numpy array that contains the input
         output              list of variables to record (None: record outputs)
@@ -366,10 +368,10 @@ def simulate_fmu(filename,
             start_time = 0.0
 
     if stop_time is None:
-        if defaultExperiment is not None:
+        if defaultExperiment is not None and defaultExperiment.stopTime is not None:
             stop_time = defaultExperiment.stopTime
         else:
-            stop_time = 1.0
+            stop_time = start_time + 1.0
 
     if relative_tolerance is None:
         if defaultExperiment is not None and defaultExperiment.tolerance is not None:
@@ -381,16 +383,25 @@ def simulate_fmu(filename,
         total_time = stop_time - start_time
         step_size = 10 ** (np.round(np.log10(total_time)) - 3)
 
+    # extract the FMU
     unzipdir = extract(filename)
-
-    if output_interval is None:
-        output_interval = (stop_time - start_time) / 500
 
     # common FMU constructor arguments
     fmu_args = {'guid': modelDescription.guid,
                 'unzipDirectory': unzipdir,
                 'instanceName': None,
                 'logFMICalls': fmi_logging}
+
+    if use_source_code:
+
+        from .util import compile_dll
+
+        # compile the shared library from the C sources
+        fmu_args['libraryPath'] = compile_dll(model_description=modelDescription,
+                                              sources_dir=os.path.join(unzipdir, 'sources'))
+
+    if output_interval is None:
+        output_interval = (stop_time - start_time) / 500
 
     if logger is None:
         logger = printLogMessage

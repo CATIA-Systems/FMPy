@@ -16,6 +16,9 @@ library_dir = os.path.join(library_dir, platform)
 sundials_nvecserial = cdll.LoadLibrary(os.path.join(library_dir, 'sundials_nvecserial' + sharedLibraryExtension))
 sundials_cvode = cdll.LoadLibrary(os.path.join(library_dir, 'sundials_cvode' + sharedLibraryExtension))
 
+# Return flags
+CV_SUCCESS = 0
+
 
 # struct _N_VectorContent_Serial {
 #   long int length;
@@ -55,11 +58,19 @@ CVodeCreate = getattr(sundials_cvode, 'CVodeCreate')
 CVodeCreate.argtypes = [c_int, c_int]
 CVodeCreate.restype = c_void_p
 
+# typedef void (*CVErrHandlerFn)(int error_code, const char *module, const char *function, char *msg, void *user_data);
+CVErrHandlerFn = CFUNCTYPE(None, c_int, c_char_p, c_char_p, c_char_p, c_void_p)
+
 # typedef int (*CVRhsFn)(realtype t, N_Vector y, N_Vector ydot, void *user_data);
 CVRhsFn = CFUNCTYPE(c_int, realtype, N_Vector, N_Vector, c_void_p)
 
 # typedef int (*CVRootFn)(realtype t, N_Vector y, realtype *gout, void *user_data);
 CVRootFn = CFUNCTYPE(c_int, realtype, N_Vector, POINTER(realtype), c_void_p)
+
+# int CVodeSetErrHandlerFn(void *cvode_mem, CVErrHandlerFn ehfun, void *eh_data);
+CVodeSetErrHandlerFn = getattr(sundials_cvode, 'CVodeSetErrHandlerFn')
+CVodeSetErrHandlerFn.argtypes = [c_void_p, CVErrHandlerFn, c_void_p]
+CVodeSetErrHandlerFn.restype = c_int
 
 # int CVodeInit(void *cvode_mem, CVRhsFn f, realtype t0, N_Vector y0)
 CVodeInit = getattr(sundials_cvode, 'CVodeInit')
@@ -70,6 +81,11 @@ CVodeInit.restype = c_int
 CVodeSetMaxStep = getattr(sundials_cvode, 'CVodeSetMaxStep')
 CVodeSetMaxStep.argtypes = [c_void_p, realtype]
 CVodeSetMaxStep.restype = c_int
+
+# int CVodeSetMaxNumSteps(void *cvode_mem, long int mxsteps);
+CVodeSetMaxNumSteps = getattr(sundials_cvode, 'CVodeSetMaxNumSteps')
+CVodeSetMaxNumSteps.argtypes = [c_void_p, c_long]
+CVodeSetMaxNumSteps.restype = c_int
 
 # void CVodeFree(void **cvode_mem)
 CVodeFree = getattr(sundials_cvode, 'CVodeFree')
@@ -120,13 +136,28 @@ def NV_DATA_S(v):
 
 
 class CVodeSolver(object):
+    """ Interface to the CVode solver """
 
     def __init__(self,
                  nx, nz, get_x, set_x, get_dx, get_z, set_time,
                  startTime,
-                 stopTime,
-                 maxStep=None,
-                 relativeTolerance=1e-5):
+                 maxStep=float('inf'),
+                 relativeTolerance=1e-5,
+                 maxNumSteps=500):
+        """
+        Parameters:
+            nx                  number of continuous states
+            nz                  number of event indicators
+            get_x               callback function to get the continuous states
+            set_x               callback function to set the continuous states
+            get_dx              callback function to get the derivatives
+            get_z               callback function to get the event indicators
+            set_time            callback function to set the time
+            startTime           start time for the integration
+            maxStep             maximum absolute value of step size allowed
+            relativeTolerance   relative tolerance
+            maxNumSteps         maximum number of internal steps to be taken by the solver in its attempt to reach tout
+        """
 
         self.get_x = get_x
         self.set_x = set_x
@@ -143,10 +174,6 @@ class CVodeSolver(object):
             self.nx = nx
 
         self.nz = nz
-
-        if maxStep is None:
-            # perform at least 50 steps
-            maxStep = (stopTime - startTime) / 50.
 
         self.x      = N_VNew_Serial(self.nx)
         self.abstol = N_VNew_Serial(self.nx)
@@ -170,15 +197,21 @@ class CVodeSolver(object):
         self.f_ = CVRhsFn(self.f)
         self.g_ = CVRootFn(self.g)
 
-        flag = CVodeInit(self.cvode_mem, self.f_, startTime, self.x)
+        assert CVodeInit(self.cvode_mem, self.f_, startTime, self.x) == CV_SUCCESS
 
-        flag = CVodeRootInit(self.cvode_mem, self.nz, self.g_)
+        assert CVodeRootInit(self.cvode_mem, self.nz, self.g_) == CV_SUCCESS
 
-        flag = CVodeSVtolerances(self.cvode_mem, relativeTolerance, self.abstol)
+        assert CVodeSVtolerances(self.cvode_mem, relativeTolerance, self.abstol) == CV_SUCCESS
 
-        flag = CVDense(self.cvode_mem, self.nx)
+        assert CVDense(self.cvode_mem, self.nx) == CV_SUCCESS
 
-        flag = CVodeSetMaxStep(self.cvode_mem, maxStep)
+        assert CVodeSetMaxStep(self.cvode_mem, maxStep) == CV_SUCCESS
+
+        assert CVodeSetMaxNumSteps(self.cvode_mem, maxNumSteps) == CV_SUCCESS
+
+    def ehfun(self, error_code, module, function, msg,  user_data):
+        """ Error handler function """
+        print("[%s] %s" % (module.decode("utf-8"), msg.decode("utf-8")))
 
     def f(self, t, y, ydot, user_data):
         """ Right-hand-side function """

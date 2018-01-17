@@ -460,31 +460,26 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
 
         fmu.enterContinuousTimeMode()
 
-    # solver callbacks
-    def get_x(x, size):
-        fmu.getContinuousStates(x, size)
-
-    def set_x(x, size):
-        fmu.setContinuousStates(x, size)
-
-    def get_dx(dx, size):
-        fmu.getDerivatives(dx, size)
-
-    def get_z(z, size):
-        fmu.getEventIndicators(z, size)
-
-    def set_time(t):
-        fmu.setTime(t)
-
-    nx = modelDescription.numberOfContinuousStates
-    nz = modelDescription.numberOfEventIndicators
+    # common solver constructor arguments
+    solver_args = {
+        'nx': modelDescription.numberOfContinuousStates,
+        'nz': modelDescription.numberOfEventIndicators,
+        'get_x': fmu.getContinuousStates,
+        'set_x': fmu.setContinuousStates,
+        'get_dx': fmu.getDerivatives,
+        'get_z': fmu.getEventIndicators
+    }
 
     # select the solver
     if solver_name == 'Euler':
-        solver = ForwardEuler(nx, nz, get_x, set_x, get_dx, get_z)
+        solver = ForwardEuler(**solver_args)
     elif solver_name is None or solver_name == 'CVode':
         from .sundials import CVodeSolver
-        solver = CVodeSolver(nx, nz, get_x, set_x, get_dx, get_z, set_time, start_time, stop_time, relative_tolerance)
+        solver = CVodeSolver(set_time=fmu.setTime,
+                             startTime=start_time,
+                             maxStep=(stop_time - start_time) / 50.,
+                             relativeTolerance=relative_tolerance,
+                             **solver_args)
         step_size = output_interval
     else:
         raise Exception("Unknown solver: %s. Must be one of 'Euler' or 'CVode'." % solver_name)

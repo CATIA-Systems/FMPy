@@ -108,6 +108,8 @@ class MainWindow(QMainWindow):
         self.ui.actionShowLog.setEnabled(False)
         self.ui.actionShowResults.setEnabled(False)
         self.ui.actionSimulate.setEnabled(False)
+        self.ui.actionSaveResult.setEnabled(False)
+        self.ui.actionSavePlottedResult.setEnabled(False)
         self.stopTimeLineEdit.setEnabled(False)
         self.fmiTypeComboBox.setEnabled(False)
 
@@ -221,6 +223,8 @@ class MainWindow(QMainWindow):
         self.ui.actionNewWindow.triggered.connect(self.newWindow)
         self.ui.openButton.clicked.connect(self.open)
         self.ui.actionOpen.triggered.connect(self.open)
+        self.ui.actionSaveResult.triggered.connect(self.saveResult)
+        self.ui.actionSavePlottedResult.triggered.connect(lambda: self.saveResult(plotted=True))
         self.ui.actionSimulate.triggered.connect(self.startSimulation)
         self.ui.actionSettings.triggered.connect(self.showSettingsPage)
         self.ui.actionShowLog.triggered.connect(self.showLogPage)
@@ -556,6 +560,9 @@ class MainWindow(QMainWindow):
 
         if self.result is None:
             self.showLogPage()
+        else:
+            self.ui.actionSaveResult.setEnabled(True)
+            self.ui.actionSavePlottedResult.setEnabled(True)
 
         self.result = self.simulationThread.result
 
@@ -659,6 +666,28 @@ class MainWindow(QMainWindow):
                 window = MainWindow()
                 
             window.load(url.toLocalFile())
+
+    def saveResult(self, plotted=False):
+
+        filename, _ = os.path.splitext(self.filename)
+
+        filename, _ = QFileDialog.getSaveFileName(parent=self,
+                                                  caption="Save Result",
+                                                  directory=filename + '_out.csv',
+                                                  filter="Comma Separated Values (*.csv);;All Files (*.*)")
+
+        if filename:
+            from ..util import write_csv
+
+            if plotted:
+                columns = [variable.name for variable in self.selectedVariables]
+            else:
+                columns = None
+
+            try:
+                write_csv(filename=filename, result=self.result, columns=columns)
+            except Exception as e:
+                QMessageBox.critical(self, "Failed to write result", '"Failed to write "%s". %s' % (filename, e))
 
 
 if __name__ == '__main__':

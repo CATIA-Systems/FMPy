@@ -74,7 +74,7 @@ def main():
                               fmi_logging=args.fmi_logging)
 
         if args.output_file:
-            write_csv(args.output_file, result)
+            write_csv(filename=args.output_file, result=result)
 
         if args.show_plot:
             plot_result(result=result, window_title=args.fmu_filename)

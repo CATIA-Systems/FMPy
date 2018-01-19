@@ -1174,6 +1174,9 @@
     <addaction name="actionOpen"/>
     <addaction name="actionNewWindow"/>
     <addaction name="separator"/>
+    <addaction name="actionSaveResult"/>
+    <addaction name="actionSavePlottedResult"/>
+    <addaction name="separator"/>
     <addaction name="actionClose"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
@@ -1589,6 +1592,22 @@ QStatusBar::item {
    </property>
    <property name="toolTip">
     <string>Test FMUs on fmi-standard.org</string>
+   </property>
+  </action>
+  <action name="actionSaveResult">
+   <property name="text">
+    <string>&amp;Save Result...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionSavePlottedResult">
+   <property name="text">
+    <string>Save &amp;Plotted Result...</string>
+   </property>
+   <property name="toolTip">
+    <string>Save plotted result</string>
    </property>
   </action>
  </widget>

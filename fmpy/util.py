@@ -42,13 +42,18 @@ def read_csv(filename, variable_names=[], validate=True):
     return traj
 
 
-def write_csv(filename, result):
-    """ Save simulation results as a CSV
+def write_csv(filename, result, columns=None):
+    """ Save a simulation result as a CSV file
 
     Parameters:
-        filename  name of the CSV file to write
-        result    structured NumPy array that holds the results
+        filename   name of the CSV file to write
+        result     structured NumPy array that holds the result
+        columns    list of column names to save (None: save all)
     """
+
+    if columns is not None:
+        result = result[['time'] + columns]
+
     header = ','.join(map(lambda s: '"' + s + '"', result.dtype.names))
     np.savetxt(filename, result, delimiter=',', header=header, comments='', fmt='%g')
 

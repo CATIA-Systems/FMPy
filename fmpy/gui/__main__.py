@@ -155,6 +155,14 @@ class MainWindow(QMainWindow):
         self.ui.recentFilesGroupBox.setLayout(vbox)
         self.ui.recentFilesGroupBox.setVisible(len(recent_files) > 0)
 
+        # settings page
+        self.inputFileMenu = QMenu()
+        self.inputFileMenu.addAction("New input file...", self.createInputFile)
+        self.inputFileMenu.addSeparator()
+        self.inputFileMenu.addAction("Show in Explorer", self.showInputFileInExplorer)
+        self.inputFileMenu.addAction("Open in default application", self.openInputFile)
+        self.ui.selectInputButton.setMenu(self.inputFileMenu)
+
         # log page
         self.log = Log(self)
         self.ui.logTreeView.setModel(self.log)
@@ -230,6 +238,7 @@ class MainWindow(QMainWindow):
         self.ui.filterToolButton.toggled.connect(self.treeFilterModel.setFilterByCausality)
         self.ui.filterToolButton.toggled.connect(self.tableFilterModel.setFilterByCausality)
         self.log.currentMessageChanged.connect(self.setStatusMessage)
+        self.ui.selectInputButton.clicked.connect(self.selectInputFile)
 
         self.ui.tableViewToolButton.toggled.connect(lambda show: self.ui.variablesStackedWidget.setCurrentWidget(self.ui.tablePage if show else self.ui.treePage))
 
@@ -377,6 +386,71 @@ class MainWindow(QMainWindow):
     def showResultPage(self):
         self.ui.stackedWidget.setCurrentWidget(self.ui.resultPage)
 
+    def selectInputFile(self):
+        start_dir = os.path.dirname(self.filename)
+        filename, _ = QFileDialog.getOpenFileName(parent=self,
+                                                  caption="Select Input File",
+                                                  directory=start_dir,
+                                                  filter="FMUs (*.csv);;All Files (*.*)")
+        if filename:
+            self.ui.inputFilenameLineEdit.setText(filename)
+
+    def createInputFile(self):
+        """ Create an input file based on the input variables in the model description """
+
+        input_variables = []
+
+        for variable in self.modelDescription.modelVariables:
+            if variable.causality == 'input':
+                input_variables.append(variable)
+
+        if len(input_variables) == 0:
+            QMessageBox.warning(self,
+                                "Cannot create input file",
+                                "The input file cannot be created because the model has no input variables")
+            return
+
+        filename, _ = os.path.splitext(self.filename)
+
+        filename, _ = QFileDialog.getSaveFileName(parent=self,
+                                                  caption="Save Input File",
+                                                  directory=filename + '_in.csv',
+                                                  filter="Comma Separated Values (*.csv);;All Files (*.*)")
+
+        if not filename:
+            return
+
+        with open(filename, 'w') as f:
+
+            # column names
+            f.write('"time"')
+            for variable in input_variables:
+                f.write(',"%s"' % variable.name)
+            f.write('\n')
+
+            # example data
+            f.write(','.join(['0'] * (len(input_variables) + 1)) + '\n')
+
+        self.ui.inputFilenameLineEdit.setText(filename)
+
+    def showInputFileInExplorer(self):
+        """ Reveal the input file in the file browser """
+
+        filename = self.ui.inputFilenameLineEdit.text()
+        if not os.path.isfile(filename):
+            QMessageBox.warning(self, "Cannot show input file", "The input file does not exist")
+            return
+        QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(filename)))
+
+    def openInputFile(self):
+        """ Open the input file in the default application """
+
+        filename = self.ui.inputFilenameLineEdit.text()
+        if not os.path.isfile(filename):
+            QMessageBox.warning(self, "Cannot open input file", "The input file does not exist")
+            return
+        QDesktopServices.openUrl(QUrl.fromLocalFile(filename))
+
     def updateSimulationSettings(self):
 
         if self.fmiTypeComboBox.currentText() == 'Co-Simulation':
@@ -414,6 +488,23 @@ class MainWindow(QMainWindow):
         else:
             solver = 'CVode'
 
+        if self.ui.inputCheckBox.isChecked():
+
+            input_variables = []
+            for variable in self.modelDescription.modelVariables:
+                if variable.causality == 'input':
+                    input_variables.append(variable.name)
+            try:
+                from fmpy.util import read_csv
+                filename = self.ui.inputFilenameLineEdit.text()
+                input = read_csv(filename, variable_names=input_variables)
+            except Exception as e:
+                self.log.log('error', "Failed to load input from '%s'. %s" % (filename, e))
+                return
+        else:
+            input = None
+
+
         output = []
         for variable in self.modelDescription.modelVariables:
             output.append(variable.name)
@@ -425,6 +516,7 @@ class MainWindow(QMainWindow):
                                                  relativeTolerance=relative_tolerance,
                                                  outputInterval=output_interval,
                                                  startValues=self.startValues,
+                                                 input=input,
                                                  output=output)
 
         self.ui.actionSimulate.setIcon(QIcon(':/icons/stop.png'))

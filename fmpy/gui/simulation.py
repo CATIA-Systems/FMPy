@@ -8,7 +8,7 @@ class SimulationThread(QThread):
     progressChanged = pyqtSignal(int)
     messageChanged = pyqtSignal(str, str)
 
-    def __init__(self, filename, stopTime, solver, stepSize, relativeTolerance, outputInterval, startValues, output, parent=None):
+    def __init__(self, filename, stopTime, solver, stepSize, relativeTolerance, outputInterval, startValues, input, output, parent=None):
 
         super(SimulationThread, self).__init__(parent)
 
@@ -19,6 +19,7 @@ class SimulationThread(QThread):
         self.relativeTolerance = relativeTolerance
         self.outputInterval = outputInterval
         self.startValues = startValues
+        self.input = input
         self.output = output
         self.progress = 0
         self.stopped = False
@@ -69,6 +70,7 @@ class SimulationThread(QThread):
                                        relative_tolerance=self.relativeTolerance,
                                        output_interval=self.outputInterval,
                                        start_values=self.startValues,
+                                       input=self.input,
                                        output=self.output,
                                        logger=self.logFMUMessage,
                                        step_finished=self.stepFinished)

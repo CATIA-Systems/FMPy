@@ -593,7 +593,7 @@ class MainWindow(QMainWindow):
             if variable.type == 'Real':
                 curve.setData(x=time, y=y)
             else:
-                curve.setData(x=time, y=y[:-1], stepMode=True)
+                curve.setData(x=np.repeat(time, 2)[1:], y=np.repeat(y, 2)[:-1])
 
     def updatePlotLayout(self):
 
@@ -608,21 +608,22 @@ class MainWindow(QMainWindow):
         else:
             stop_time = 1.0
 
+        pen = (0, 0, 255)
+
         for variable in self.selectedVariables:
 
             self.ui.plotWidget.nextRow()
             plot = self.ui.plotWidget.addPlot()
 
             if variable.type == 'Real':
-                curve = plot.plot(pen=(0, 0, 255))
+                curve = plot.plot(pen=pen)
             else:
                 if variable.type == 'Boolean':
-                    brush = (0, 0, 255, 50)
                     plot.setYRange(0, 1, padding=0.2)
                     plot.getAxis('left').setTicks([[(0, 'false'), (1, 'true')], []])
+                    curve = plot.plot(pen=pen, fillLevel=0, fillBrush=(0, 0, 255, 50), antialias=False)
                 else:
-                    brush = None
-                curve = plot.plot(pen=(0, 0, 255), fillLevel=0, fillBrush=brush, antialias=False)
+                    curve = plot.plot(pen=pen, antialias=False)
 
             plot.setXRange(0, stop_time, padding=0.05)
 

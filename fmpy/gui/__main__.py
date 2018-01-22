@@ -8,8 +8,8 @@ except Exception as e:
 
 import os
 
-from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QDateTime
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, QMenu, QMessageBox, QProgressDialog, QProgressBar
+from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, QMenu, QMessageBox, QProgressBar
 from PyQt5.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator
 
 from fmpy.gui.generated.MainWindow import Ui_MainWindow
@@ -357,7 +357,7 @@ class MainWindow(QMainWindow):
         # save the 10 most recent files
         settings.setValue('recentFiles', recent_files[:10])
 
-        self.setWindowTitle("%s - FMPy" % os.path.basename(filename))
+        self.setWindowTitle("%s - FMPy" % os.path.normpath(filename))
 
     def open(self):
 

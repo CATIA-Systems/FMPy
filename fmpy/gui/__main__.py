@@ -141,13 +141,12 @@ class MainWindow(QMainWindow):
         # populate the recent files list
         settings = QSettings()
         recent_files = settings.value("recentFiles", defaultValue=[])
+        recent_files = self.removeDuplicates(recent_files)
         vbox = QVBoxLayout()
 
         if recent_files:
             added = set()
             for file in recent_files[:5]:
-                if file in added:
-                    continue  # skip duplicates
                 link = QLabel('<a href="%s" style="text-decoration: none">%s</a>' % (file, os.path.basename(file)))
                 link.setToolTip(file)
                 link.linkActivated.connect(self.load)
@@ -354,9 +353,10 @@ class MainWindow(QMainWindow):
 
         settings = QSettings()
         recent_files = settings.value("recentFiles", defaultValue=[])
+        recent_files = self.removeDuplicates([filename] + recent_files)
 
         # save the 10 most recent files
-        settings.setValue('recentFiles', [filename] + recent_files[:9])
+        settings.setValue('recentFiles', recent_files[:10])
 
         self.setWindowTitle("%s - FMPy" % os.path.basename(filename))
 
@@ -688,6 +688,13 @@ class MainWindow(QMainWindow):
                 write_csv(filename=filename, result=self.result, columns=columns)
             except Exception as e:
                 QMessageBox.critical(self, "Failed to write result", '"Failed to write "%s". %s' % (filename, e))
+
+    @staticmethod
+    def removeDuplicates(seq):
+        """ Remove duplicates from a sequence """
+        seen = set()
+        seen_add = seen.add
+        return [x for x in seq if not (x in seen or seen_add(x))]
 
 
 if __name__ == '__main__':

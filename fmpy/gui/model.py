@@ -194,6 +194,8 @@ class VariablesTreeModel(VariablesModel):
 
     def setModelDescription(self, md):
 
+        self.rootItem.children.clear()
+
         for variable in md.modelVariables:
 
             name = variable.name

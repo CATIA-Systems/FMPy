@@ -118,9 +118,9 @@ class MainWindow(QMainWindow):
 
         self.ui.tableView.setMinimumWidth(500)
 
-        self.model = VariablesTableModel(self.selectedVariables, self.startValues)
+        self.tableModel = VariablesTableModel(self.selectedVariables, self.startValues)
         self.tableFilterModel = VariablesFilterModel()
-        self.tableFilterModel.setSourceModel(self.model)
+        self.tableFilterModel.setSourceModel(self.tableModel)
         self.tableFilterModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
         self.ui.tableView.setModel(self.tableFilterModel)
 
@@ -232,8 +232,8 @@ class MainWindow(QMainWindow):
         self.ui.solverComboBox.currentTextChanged.connect(self.updateSimulationSettings)
         self.variableSelected.connect(self.updatePlotLayout)
         self.variableDeselected.connect(self.updatePlotLayout)
-        self.model.variableSelected.connect(self.selectVariable)
-        self.model.variableDeselected.connect(self.deselectVariable)
+        self.tableModel.variableSelected.connect(self.selectVariable)
+        self.tableModel.variableDeselected.connect(self.deselectVariable)
         self.treeModel.variableSelected.connect(self.selectVariable)
         self.treeModel.variableDeselected.connect(self.deselectVariable)
         self.ui.filterLineEdit.textChanged.connect(self.treeFilterModel.setFilterFixedString)
@@ -312,13 +312,12 @@ class MainWindow(QMainWindow):
                 self.stopTimeLineEdit.setText(str(md.defaultExperiment.stopTime))
 
         # variables view
-        self.model.modelDescription = md
-        self.model.setModelDescription(md)
         self.treeModel.setModelDescription(md)
+        self.tableModel.setModelDescription(md)
         self.treeFilterModel.invalidate()
         self.tableFilterModel.invalidate()
-        self.ui.tableView.reset()
         self.ui.treeView.reset()
+        self.ui.tableView.reset()
 
         # settings page
         self.ui.fmiVersionLabel.setText(md.fmiVersion)

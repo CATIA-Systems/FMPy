@@ -33,7 +33,8 @@ package_data = {
              'sundials/linux64/*.so',
              'sundials/win32/*.dll',
              'sundials/win64/*.dll'],
-     'fmpy.ssp': ['schema/*.xsd']
+    'fmpy.gui': ['icons/app_icon.ico'],
+    'fmpy.ssp': ['schema/*.xsd'],
 }
 
 install_requires = ['lxml', 'numpy', 'pathlib', 'pypiwin32;platform_system=="Windows"']

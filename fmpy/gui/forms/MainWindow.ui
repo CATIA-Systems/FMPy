@@ -1189,6 +1189,8 @@
     <addaction name="actionOpenFMI1SpecME"/>
     <addaction name="actionOpenFMI2Spec"/>
     <addaction name="actionOpenTestFMUs"/>
+    <addaction name="separator"/>
+    <addaction name="actionCreateDesktopShortcut"/>
    </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_Help"/>
@@ -1608,6 +1610,11 @@ QStatusBar::item {
    </property>
    <property name="toolTip">
     <string>Save plotted result</string>
+   </property>
+  </action>
+  <action name="actionCreateDesktopShortcut">
+   <property name="text">
+    <string>Create Desktop Shortcut</string>
    </property>
   </action>
  </widget>

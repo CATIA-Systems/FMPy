@@ -8,7 +8,7 @@ except Exception as e:
 
 import os
 
-from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer
+from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QStandardPaths
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, QMenu, QMessageBox, QProgressBar
 from PyQt5.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator
 
@@ -242,6 +242,11 @@ class MainWindow(QMainWindow):
         self.ui.filterToolButton.toggled.connect(self.tableFilterModel.setFilterByCausality)
         self.log.currentMessageChanged.connect(self.setStatusMessage)
         self.ui.selectInputButton.clicked.connect(self.selectInputFile)
+
+        if os.name == 'nt':
+            self.ui.actionCreateDesktopShortcut.triggered.connect(self.createDesktopShortcut)
+        else:
+            self.ui.actionCreateDesktopShortcut.setEnabled(False)
 
         self.ui.tableViewToolButton.toggled.connect(lambda show: self.ui.variablesStackedWidget.setCurrentWidget(self.ui.tablePage if show else self.ui.treePage))
 
@@ -688,6 +693,38 @@ class MainWindow(QMainWindow):
                 write_csv(filename=filename, result=self.result, columns=columns)
             except Exception as e:
                 QMessageBox.critical(self, "Failed to write result", '"Failed to write "%s". %s' % (filename, e))
+
+    def createDesktopShortcut(self):
+        """ Create a desktop shortcut to start the GUI """
+
+        import os
+        from win32com.client import Dispatch
+        import sys
+
+        desktop_locations = QStandardPaths.standardLocations(QStandardPaths.DesktopLocation)
+        path = os.path.join(desktop_locations[0], "FMPy GUI.lnk")
+
+        python = sys.executable
+
+        root, ext = os.path.splitext(python)
+
+        pythonw = root + 'w' + ext
+
+        if os.path.isfile(pythonw):
+            target = pythonw
+        else:
+            target = python
+
+        file_path = os.path.dirname(__file__)
+        icon = os.path.join(file_path, 'icons', 'app_icon.ico')
+
+        shell = Dispatch('WScript.Shell')
+        shortcut = shell.CreateShortCut(path)
+        shortcut.Targetpath = target
+        shortcut.Arguments = '-m fmpy.gui'
+        # shortcut.WorkingDirectory = ...
+        shortcut.IconLocation = icon
+        shortcut.save()
 
     @staticmethod
     def removeDuplicates(seq):

@@ -76,19 +76,8 @@ class fmi2EventInfo(Structure):
                 ('nextEventTime',                     fmi2Real)]
 
 
-class ScalarVariable(object):
-
-    def __init__(self, name, valueReference):
-        self.name = name
-        self.valueReference = valueReference
-        self.description = None
-        self.type = None
-        self.start = None
-        self.causality = None
-        self.variability = None
-
-
 class _FMU2(_FMU):
+    """ Base class for FMI 2.0 FMUs """
 
     def __init__(self, **kwargs):
 
@@ -303,6 +292,7 @@ class _FMU2(_FMU):
 
 
 class FMU2Model(_FMU2):
+    """ Base class for FMI 2.0 model exchange FMUs """
 
     def __init__(self, **kwargs):
 
@@ -387,12 +377,23 @@ class FMU2Model(_FMU2):
 
 
 class FMU2Slave(_FMU2):
+    """ Base class for FMI 2.0 co-simulation FMUs """
 
     def __init__(self, instanceName=None, **kwargs):
 
         kwargs['instanceName'] = instanceName
 
         super(FMU2Slave, self).__init__(**kwargs)
+
+        self._fmi2Function('fmi2SetRealInputDerivatives',
+                           ['c', 'vr', 'nvr', 'order', 'value'],
+                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer), POINTER(fmi2Real)],
+                           fmi2Status)
+
+        self._fmi2Function('fmi2GetRealOutputDerivatives',
+                           ['c', 'vr', 'nvr', 'order', 'value'],
+                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer), POINTER(fmi2Real)],
+                           fmi2Status)
 
         self._fmi2Function('fmi2DoStep',
                            ['component', 'currentCommunicationPoint', 'communicationStepSize',
@@ -404,6 +405,19 @@ class FMU2Slave(_FMU2):
                            ['component', 'kind', 'value'],
                            [fmi2Component, fmi2StatusKind, POINTER(fmi2Boolean)],
                            fmi2Status)
+
+    def setRealInputDerivatives(self, vr, order, value):
+        vr = (fmi2ValueReference * len(vr))(*vr)
+        order = (fmi2Integer * len(vr))(*order)
+        value = (fmi2Real * len(vr))(*value)
+        self.fmi2SetRealInputDerivatives(self.component, vr, len(vr), order, value)
+
+    def getRealOutputDerivatives(self, vr, order):
+        vr = (fmi2ValueReference * len(vr))(*vr)
+        order = (fmi2Integer * len(vr))(*order)
+        value = (fmi2Real * len(vr))()
+        self.fmi2GetRealOutputDerivatives(self.component, vr, len(vr), order, value)
+        return list(value)
 
     def doStep(self, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint=fmi2True):
         return self.fmi2DoStep(self.component, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint)

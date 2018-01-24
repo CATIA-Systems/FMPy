@@ -206,6 +206,7 @@ class _FMU(object):
 
 
 class _FMU1(_FMU):
+    """ Base class for FMI 1.0 FMUs """
 
     def __init__(self, **kwargs):
 
@@ -327,6 +328,7 @@ class _FMU1(_FMU):
 
 
 class FMU1Slave(_FMU1):
+    """ Base class for FMI 1.0 co-simulation FMUs """
 
     def __init__(self, **kwargs):
 
@@ -353,6 +355,16 @@ class FMU1Slave(_FMU1):
         self._fmi1Function('ResetSlave', ['component'], [fmi1Component], fmi1Status)
 
         self._fmi1Function('FreeSlaveInstance', ['component'], [fmi1Component], None)
+
+        self._fmi1Function('SetRealInputDerivatives',
+                           ['c', 'vr', 'nvr', 'order', 'value'],
+                           [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Integer), POINTER(fmi1Real)],
+                           fmi1Status)
+
+        self._fmi1Function('GetRealOutputDerivatives',
+                           ['c', 'vr', 'nvr', 'order', 'value'],
+                           [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Integer), POINTER(fmi1Real)],
+                           fmi1Status)
 
     def instantiate(self, mimeType='application/x-fmu-sharedlibrary', timeout=0, visible=fmi1False,
                     interactive=fmi1False, functions=None, loggingOn=fmi1False):
@@ -393,11 +405,25 @@ class FMU1Slave(_FMU1):
         self.fmi1FreeSlaveInstance(self.component)
         self.freeLibrary()
 
+    def setRealInputDerivatives(self, vr, order, value):
+        vr = (fmi1ValueReference * len(vr))(*vr)
+        order = (fmi1Integer * len(vr))(*order)
+        value = (fmi1Real * len(vr))(*value)
+        self.fmi1SetRealInputDerivatives(self.component, vr, len(vr), order, value)
+
+    def getRealOutputDerivatives(self, vr, order):
+        vr = (fmi1ValueReference * len(vr))(*vr)
+        order = (fmi1Integer * len(vr))(*order)
+        value = (fmi1Real * len(vr))()
+        self.fmi1GetRealOutputDerivatives(self.component, vr, len(vr), order, value)
+        return list(value)
+
     def doStep(self, currentCommunicationPoint, communicationStepSize, newStep=fmi1True):
         return self.fmi1DoStep(self.component, currentCommunicationPoint, communicationStepSize, newStep)
 
 
 class FMU1Model(_FMU1):
+    """ Base class for FMI 1.0 model exchange FMUs """
 
     def __init__(self, **kwargs):
 

@@ -16,12 +16,16 @@ def main():
     Simulate an FMU:
      
         fmpy simulate Rectifier.fmu --show-plot
+        
+    Compile a source code FMU:
+    
+        fmpy compile Rectifier.fmu
     """
 
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
                                      description=textwrap.dedent(description))
 
-    parser.add_argument('command', choices=['info', 'simulate'], help="Command to execute")
+    parser.add_argument('command', choices=['info', 'simulate', 'compile'], help="Command to execute")
     parser.add_argument('fmu_filename', help="filename of the FMU")
 
     parser.add_argument('--solver', choices=['Euler', 'CVode'], default='CVode',
@@ -44,6 +48,11 @@ def main():
 
         from fmpy import dump
         dump(args.fmu_filename)
+
+    elif args.command == 'compile':
+
+        from fmpy.util import compile_platform_binary
+        compile_platform_binary(args.fmu_filename)
 
     elif args.command == 'simulate':
 

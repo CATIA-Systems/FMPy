@@ -3,6 +3,7 @@ from fmpy import simulate_fmu
 import unittest
 from fmpy.util import download_file
 import os
+from fmpy.util import compile_platform_binary
 
 
 class CCodeTest(unittest.TestCase):
@@ -12,14 +13,25 @@ class CCodeTest(unittest.TestCase):
 
     def test_compile(self):
 
-        fmus = ['c-code/dSPACE_TargetLink/Release_2016-B/poscontrol/FmuController.fmu',
-                'c-code/MapleSim/2016.2/Rectifier/Rectifier.fmu',
-                'c-code/Dymola/2017/IntegerNetwork1/IntegerNetwork1.fmu']
+        fmus = [
+            'c-code/dSPACE_TargetLink/Release_2016-B/poscontrol/FmuController.fmu',
+            'c-code/MapleSim/2016.2/Rectifier/Rectifier.fmu',
+            'c-code/Dymola/2017/IntegerNetwork1/IntegerNetwork1.fmu',
+         ]
 
         for fmu in fmus:
             download_file(self.url + fmu)
+
             filename = os.path.basename(fmu)
+
+            # compile in-place
             result = simulate_fmu(filename=filename, use_source_code=True)
+            self.assertIsNotNone(result)
+
+            # add binary to FMU
+            compile_platform_binary(filename)
+
+            result = simulate_fmu(filename=filename)
             self.assertIsNotNone(result)
 
 

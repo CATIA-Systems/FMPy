@@ -1,3 +1,5 @@
+image: Visual Studio 2015
+
 build: false
 
 environment:
@@ -16,7 +18,7 @@ environment:
       MINICONDA: C:\Miniconda35-x64
 
 init:
-  - echo %PYTHON_VERSION% %MINICONDA%
+  - echo echo %VS140COMNTOOLS% %PYTHON_VERSION% %MINICONDA%
 
 install:
   - git submodule update --init --recursive
@@ -24,14 +26,14 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - conda create -q -n test-env python=%PYTHON_VERSION%
+  - conda create -q -n test-env -c anaconda python=%PYTHON_VERSION% dask lxml matplotlib numpy pathlib pyqt pyqtgraph pywin32 requests
   - activate test-env
 
   # build the wheel
   - python setup.py bdist_wheel --universal
 
-  # install the wheel and its dependencies
-  - for %%f in (dist\FMPy-*.whl) do pip install %%f
+  # install the wheel
+  - for %%f in (dist\FMPy-*.whl) do pip install %%f --no-deps
 
 test_script:
   - cd tests

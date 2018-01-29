@@ -11,8 +11,16 @@ from time import time as current_time
 
 
 class Recorder(object):
+    """ Helper class to record the variables during the simulation """
 
     def __init__(self, fmu, modelDescription, variableNames=None, interval=None):
+        """
+        Parameters:
+            fmu               the FMU instance
+            modelDescription  the model description instance
+            variableNames     list of variable names to record
+            interval          minimum distance to the previous sample
+        """
 
         self.fmu = fmu
         self.interval = interval
@@ -29,9 +37,14 @@ class Recorder(object):
         boolean_names = []
         self.boolean_vrs = []
 
+        self.constants = {}
+        self.modelDescription = modelDescription
+
+        # collect the variables to record
         for sv in modelDescription.modelVariables:
 
-            if (variableNames is None and sv.causality == 'output') or (variableNames is not None and sv.name in variableNames):
+            # collect the variables to record
+            if (variableNames is not None and sv.name in variableNames) or (variableNames is None and sv.causality == 'output'):
 
                 if sv.type == 'Real':
                     real_names.append(sv.name)
@@ -42,12 +55,14 @@ class Recorder(object):
                 elif sv.type == 'Boolean':
                     boolean_names.append(sv.name)
                     self.boolean_vrs.append(sv.valueReference)
+                else:
+                    pass  # skip String variables
 
         self.cols += zip(real_names, [np.float64] * len(real_names))
         self.cols += zip(integer_names, [np.int32] * len(integer_names))
         self.cols += zip(boolean_names, [np.bool_] * len(boolean_names))
 
-    def sample(self, time, force = False):
+    def sample(self, time, force=False):
 
         if not force and self.interval is not None and len(self.rows) > 0:
             last = self.rows[-1][0]
@@ -72,8 +87,15 @@ class Recorder(object):
 
 
 class Input(object):
+    """ Helper class that sets the input to the FMU """
 
     def __init__(self, fmu, modelDescription, signals):
+        """
+        Parameters:
+            fmu               the FMU instance
+            modelDescription  the model description instance
+            signals           a structured numpy array that contains the input
+        """
 
         self.fmu = fmu
         self.signals = signals
@@ -206,6 +228,13 @@ class Input(object):
 
 
 def apply_start_values(fmu, modelDescription, start_values):
+    """ Set start values to an FMU instance
+
+    Parameters:
+        fmu               the FMU instance
+        modelDescription  the ModelDescription instance
+        start_values      dictionary of variable_name -> value pairs
+    """
 
     variables = {}
 
@@ -285,13 +314,41 @@ def simulate_fmu(filename,
                  stop_time=None,
                  solver='CVode',
                  step_size=None,
+                 relative_tolerance=None,
                  output_interval=None,
                  fmi_type=None,
+                 use_source_code=False,
                  start_values={},
                  input=None,
                  output=None,
                  timeout=None,
-                 fmi_logging=False):
+                 fmi_logging=False,
+                 logger=None,
+                 step_finished=None):
+    """ Simulate an FMU
+
+    Parameters:
+        filename            filename of the FMU
+        validate            validate the FMU
+        start_time          simulation start time (None: use default experiment or 0 if not defined)
+        stop_time           simulation stop time (None: use default experiment or start_time + 1 if not defined)
+        solver              solver to use for model exchange ('Euler' or 'CVode')
+        step_size           step size for the 'Euler' solver
+        relative_tolerance  relative tolerance for the 'CVode' solver
+        output_interval     interval for sampling the output
+        fmi_type            FMI type for the simulation (None: determine from FMU)
+        use_source_code     compile the shared library (requires C sources)
+        start_values        dictionary of variable name -> value pairs
+        input               a structured numpy array that contains the input
+        output              list of variables to record (None: record outputs)
+        timeout             timeout for the simulation
+        fmi_logging         whether to log FMI calls
+        logger              callback function passed to the FMU (experimental)
+        step_finished       callback to interact with the simulation (experimental)
+
+    Returns:
+        result              a structured numpy array that contains the result
+    """
 
     modelDescription = read_model_description(filename, validate=validate)
 
@@ -311,19 +368,23 @@ def simulate_fmu(filename,
             start_time = 0.0
 
     if stop_time is None:
-        if defaultExperiment is not None:
+        if defaultExperiment is not None and defaultExperiment.stopTime is not None:
             stop_time = defaultExperiment.stopTime
         else:
-            stop_time = 1.0
+            stop_time = start_time + 1.0
+
+    if relative_tolerance is None:
+        if defaultExperiment is not None and defaultExperiment.tolerance is not None:
+            relative_tolerance = defaultExperiment.tolerance
+        else:
+            relative_tolerance = 1e-5
 
     if step_size is None:
         total_time = stop_time - start_time
         step_size = 10 ** (np.round(np.log10(total_time)) - 3)
 
+    # extract the FMU
     unzipdir = extract(filename)
-
-    if output_interval is None:
-        output_interval = (stop_time - start_time) / 500
 
     # common FMU constructor arguments
     fmu_args = {'guid': modelDescription.guid,
@@ -331,13 +392,39 @@ def simulate_fmu(filename,
                 'instanceName': None,
                 'logFMICalls': fmi_logging}
 
+    if use_source_code:
+
+        from .util import compile_dll
+
+        # compile the shared library from the C sources
+        fmu_args['libraryPath'] = compile_dll(model_description=modelDescription,
+                                              sources_dir=os.path.join(unzipdir, 'sources'))
+
+    if output_interval is None:
+        output_interval = (stop_time - start_time) / 500
+
+    if logger is None:
+        logger = printLogMessage
+
+    if modelDescription.fmiVersion == '1.0':
+        callbacks = fmi1CallbackFunctions()
+        callbacks.logger = fmi1CallbackLoggerTYPE(logger)
+        callbacks.allocateMemory = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
+        callbacks.freeMemory = fmi1CallbackFreeMemoryTYPE(freeMemory)
+        callbacks.stepFinished = None
+    else:
+        callbacks = fmi2CallbackFunctions()
+        callbacks.logger = fmi2CallbackLoggerTYPE(logger)
+        callbacks.allocateMemory = fmi2CallbackAllocateMemoryTYPE(allocateMemory)
+        callbacks.freeMemory = fmi2CallbackFreeMemoryTYPE(freeMemory)
+
     # simulate_fmu the FMU
     if fmi_type == 'ModelExchange':
         fmu_args['modelIdentifier'] = modelDescription.modelExchange.modelIdentifier
-        result = simulateME(modelDescription, fmu_args, start_time, stop_time, solver, step_size, start_values, input, output, output_interval, timeout)
+        result = simulateME(modelDescription, fmu_args, start_time, stop_time, solver, step_size, relative_tolerance, start_values, input, output, output_interval, timeout, callbacks, step_finished)
     elif fmi_type == 'CoSimulation':
         fmu_args['modelIdentifier'] = modelDescription.coSimulation.modelIdentifier
-        result = simulateCS(modelDescription, fmu_args, start_time, stop_time, start_values, input, output, output_interval, timeout)
+        result = simulateCS(modelDescription, fmu_args, start_time, stop_time, start_values, input, output, output_interval, timeout, callbacks, step_finished)
 
     # clean up
     shutil.rmtree(unzipdir)
@@ -345,7 +432,7 @@ def simulate_fmu(filename,
     return result
 
 
-def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name, step_size, start_values, input_signals, output, output_interval, timeout):
+def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name, step_size, relative_tolerance, start_values, input_signals, output, output_interval, timeout, callbacks, step_finished):
 
     sim_start = current_time()
 
@@ -355,11 +442,11 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
 
     if is_fmi1:
         fmu = FMU1Model(**fmu_kwargs)
-        fmu.instantiate()
+        fmu.instantiate(functions=callbacks)
         fmu.setTime(time)
     else:
         fmu = FMU2Model(**fmu_kwargs)
-        fmu.instantiate()
+        fmu.instantiate(callbacks=callbacks)
         fmu.setupExperiment(startTime=start_time)
 
     # set the start values
@@ -384,36 +471,34 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
 
         fmu.enterContinuousTimeMode()
 
-    # solver callbacks
-    def get_x(x, size):
-        fmu.getContinuousStates(x, size)
-
-    def set_x(x, size):
-        fmu.setContinuousStates(x, size)
-
-    def get_dx(dx, size):
-        fmu.getDerivatives(dx, size)
-
-    def get_z(z, size):
-        fmu.getEventIndicators(z, size)
-
-    def set_time(t):
-        fmu.setTime(t)
-
-    nx = modelDescription.numberOfContinuousStates
-    nz = modelDescription.numberOfEventIndicators
+    # common solver constructor arguments
+    solver_args = {
+        'nx': modelDescription.numberOfContinuousStates,
+        'nz': modelDescription.numberOfEventIndicators,
+        'get_x': fmu.getContinuousStates,
+        'set_x': fmu.setContinuousStates,
+        'get_dx': fmu.getDerivatives,
+        'get_z': fmu.getEventIndicators
+    }
 
     # select the solver
     if solver_name == 'Euler':
-        solver = ForwardEuler(nx, nz, get_x, set_x, get_dx, get_z)
+        solver = ForwardEuler(**solver_args)
     elif solver_name is None or solver_name == 'CVode':
         from .sundials import CVodeSolver
-        solver = CVodeSolver(nx, nz, get_x, set_x, get_dx, get_z, set_time, start_time, stop_time)
+        solver = CVodeSolver(set_time=fmu.setTime,
+                             startTime=start_time,
+                             maxStep=(stop_time - start_time) / 50.,
+                             relativeTolerance=relative_tolerance,
+                             **solver_args)
         step_size = output_interval
     else:
-        raise Exception('Unknown solver: %s. Must be one of "Euler" or "CVode".' % solver_name)
+        raise Exception("Unknown solver: %s. Must be one of 'Euler' or 'CVode'." % solver_name)
 
-    recorder = Recorder(fmu=fmu, modelDescription=modelDescription, variableNames=output, interval=output_interval)
+    recorder = Recorder(fmu=fmu,
+                        modelDescription=modelDescription,
+                        variableNames=output,
+                        interval=output_interval)
 
     # simulation loop
     while time < stop_time:
@@ -475,6 +560,9 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
             # record values after the event
             recorder.sample(time)
 
+        if step_finished is not None and not step_finished(time, recorder):
+            break
+
     recorder.sample(time, force=True)
 
     fmu.terminate()
@@ -486,25 +574,29 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
     return recorder.result()
 
 
-def simulateCS(modelDescription, fmu_kwargs, start_time, stop_time, start_values, input_signals, output, output_interval, timeout):
+def simulateCS(modelDescription, fmu_kwargs, start_time, stop_time, start_values, input_signals, output, output_interval, timeout, callbacks, step_finished):
 
     sim_start = current_time()
 
     if modelDescription.fmiVersion == '1.0':
         fmu = FMU1Slave(**fmu_kwargs)
-        fmu.instantiate("instance1")
+        fmu.instantiate("instance1", functions=callbacks)
         apply_start_values(fmu, modelDescription, start_values)
         fmu.initialize()
     else:
         fmu = FMU2Slave(**fmu_kwargs)
-        fmu.instantiate(loggingOn=False)
+        fmu.instantiate(callbacks=callbacks)
         fmu.setupExperiment(tolerance=None, startTime=start_time)
         apply_start_values(fmu, modelDescription, start_values)
         fmu.enterInitializationMode()
         fmu.exitInitializationMode()
 
     input = Input(fmu=fmu, modelDescription=modelDescription, signals=input_signals)
-    recorder = Recorder(fmu=fmu, modelDescription=modelDescription, variableNames=output, interval=output_interval)
+
+    recorder = Recorder(fmu=fmu,
+                        modelDescription=modelDescription,
+                        variableNames=output,
+                        interval=output_interval)
 
     time = start_time
 
@@ -519,6 +611,9 @@ def simulateCS(modelDescription, fmu_kwargs, start_time, stop_time, start_values
         input.apply(time)
 
         fmu.doStep(currentCommunicationPoint=time, communicationStepSize=output_interval)
+
+        if step_finished is not None and not step_finished(time, recorder):
+            break
 
         time += output_interval
 

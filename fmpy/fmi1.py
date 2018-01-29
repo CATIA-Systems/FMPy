@@ -76,11 +76,11 @@ class fmi1EventInfo(Structure):
                                       self.nextEventTime)
 
 
-def logger(component, instanceName, status, category, message):
-    if status == fmi1Warning:
-        print('[WARNING]', message)
-    elif status > fmi1Warning:
-        print('[ERROR]', message)
+def printLogMessage(component, instanceName, status, category, message):
+    """ Print the FMU's log messages to the command line (works for both FMI 1.0 and 2.0) """
+
+    label = ['OK', 'WARNING', 'DISCARD', 'ERROR', 'FATAL', 'PENDING'][status]
+    print("[%s] %s" % (label, message))
 
 
 def allocateMemory(nobj, size):
@@ -95,18 +95,19 @@ def stepFinished(componentEnvironment, status):
     pass
 
 
-callbacks = fmi1CallbackFunctions()
-callbacks.logger               = fmi1CallbackLoggerTYPE(logger)
-callbacks.allocateMemory       = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
-callbacks.freeMemory           = fmi1CallbackFreeMemoryTYPE(freeMemory)
-#callbacks.stepFinished         = fmi1StepFinishedTYPE(stepFinished)
-callbacks.stepFinished = None
-
-
 class _FMU(object):
     """ Base class for all FMUs """
 
-    def __init__(self, guid, modelIdentifier, unzipDirectory, instanceName, logFMICalls=False):
+    def __init__(self, guid, modelIdentifier, unzipDirectory, instanceName, libraryPath=None, logFMICalls=False):
+        """
+        Parameters:
+            guid             the GUI from the modelDescription.xml
+            modelIdentifier  the model identifier from the modelDescription.xml
+            unzipDirectory   folder where the FMU has been extracted
+            instanceName     the name of the FMU instance
+            libraryPath      path to the shared library
+            logFMICalls      whether FMI calls should be logged
+        """
 
         self.guid = guid
         self.modelIdentifier = modelIdentifier
@@ -117,19 +118,25 @@ class _FMU(object):
         # remember the current working directory
         work_dir = os.getcwd()
 
-        library_dir = os.path.join(unzipDirectory, 'binaries', platform)
+        if libraryPath is None:
+            library_dir = os.path.join(unzipDirectory, 'binaries', platform)
+            libraryPath = str(os.path.join(library_dir, self.modelIdentifier + sharedLibraryExtension))
+        else:
+            library_dir = os.path.dirname(libraryPath)
 
         # change to the library directory as some DLLs expect this to resolve dependencies
         os.chdir(library_dir)
 
         # load the shared library
-        library_path = str(os.path.join(library_dir, self.modelIdentifier + sharedLibraryExtension))
-        self.dll = cdll.LoadLibrary(library_path)
+        self.dll = cdll.LoadLibrary(libraryPath)
 
         # change back to the working directory
         os.chdir(work_dir)
 
         self.component = None
+
+        self.callbacks = None
+        " Reference to the callbacks struct (to save it from GC)"
 
     def freeLibrary(self):
         # unload the shared library
@@ -199,6 +206,7 @@ class _FMU(object):
 
 
 class _FMU1(_FMU):
+    """ Base class for FMI 1.0 FMUs """
 
     def __init__(self, **kwargs):
 
@@ -320,6 +328,7 @@ class _FMU1(_FMU):
 
 
 class FMU1Slave(_FMU1):
+    """ Base class for FMI 1.0 co-simulation FMUs """
 
     def __init__(self, **kwargs):
 
@@ -347,10 +356,29 @@ class FMU1Slave(_FMU1):
 
         self._fmi1Function('FreeSlaveInstance', ['component'], [fmi1Component], None)
 
+        self._fmi1Function('SetRealInputDerivatives',
+                           ['c', 'vr', 'nvr', 'order', 'value'],
+                           [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Integer), POINTER(fmi1Real)],
+                           fmi1Status)
+
+        self._fmi1Function('GetRealOutputDerivatives',
+                           ['c', 'vr', 'nvr', 'order', 'value'],
+                           [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1Integer), POINTER(fmi1Real)],
+                           fmi1Status)
+
     def instantiate(self, mimeType='application/x-fmu-sharedlibrary', timeout=0, visible=fmi1False,
-                    interactive=fmi1False, functions=callbacks, loggingOn=fmi1False):
+                    interactive=fmi1False, functions=None, loggingOn=fmi1False):
 
         fmuLocation = pathlib.Path(self.unzipDirectory).as_uri()
+
+        if functions is None:
+            functions = fmi1CallbackFunctions()
+            functions.logger = fmi1CallbackLoggerTYPE(printLogMessage)
+            functions.allocateMemory = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
+            functions.freeMemory = fmi1CallbackFreeMemoryTYPE(freeMemory)
+            functions.stepFinished = None
+
+        self.callbacks = functions
 
         self.component = self.fmi1InstantiateSlave(self.instanceName.encode('UTF-8'),
                                                    self.guid.encode('UTF-8'),
@@ -377,11 +405,25 @@ class FMU1Slave(_FMU1):
         self.fmi1FreeSlaveInstance(self.component)
         self.freeLibrary()
 
+    def setRealInputDerivatives(self, vr, order, value):
+        vr = (fmi1ValueReference * len(vr))(*vr)
+        order = (fmi1Integer * len(vr))(*order)
+        value = (fmi1Real * len(vr))(*value)
+        self.fmi1SetRealInputDerivatives(self.component, vr, len(vr), order, value)
+
+    def getRealOutputDerivatives(self, vr, order):
+        vr = (fmi1ValueReference * len(vr))(*vr)
+        order = (fmi1Integer * len(vr))(*order)
+        value = (fmi1Real * len(vr))()
+        self.fmi1GetRealOutputDerivatives(self.component, vr, len(vr), order, value)
+        return list(value)
+
     def doStep(self, currentCommunicationPoint, communicationStepSize, newStep=fmi1True):
         return self.fmi1DoStep(self.component, currentCommunicationPoint, communicationStepSize, newStep)
 
 
 class FMU1Model(_FMU1):
+    """ Base class for FMI 1.0 model exchange FMUs """
 
     def __init__(self, **kwargs):
 
@@ -444,10 +486,20 @@ class FMU1Model(_FMU1):
                            [fmi1Component],
                            None)
 
-    def instantiate(self, functions=callbacks, loggingOn=fmi1False):
+    def instantiate(self, functions=None, loggingOn=fmi1False):
+
+        if functions is None:
+            functions = fmi1CallbackFunctions()
+            functions.logger = fmi1CallbackLoggerTYPE(logger)
+            functions.allocateMemory = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
+            functions.freeMemory = fmi1CallbackFreeMemoryTYPE(freeMemory)
+            functions.stepFinished = None
+
+        self.callbacks = functions
+
         self.component = self.fmi1InstantiateModel(self.instanceName.encode('UTF-8'),
                                                    self.guid.encode('UTF-8'),
-                                                   functions,
+                                                   self.callbacks,
                                                    loggingOn)
 
     def setTime(self, time):

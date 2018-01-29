@@ -37,16 +37,16 @@ install:
   - conda info -a
 
   # create the conda environment
-  - conda create -q -n test-env python=$PYTHON_VERSION
+  - conda create -q -n test-env -c anaconda python=$PYTHON_VERSION dask lxml matplotlib numpy pathlib pyqt pyqtgraph requests
   - source activate test-env
 
   # build the wheel
   - python setup.py bdist_wheel --universal
 
-  # install the wheel and its dependencies
+  # install the wheel
   - |
     for f in dist/FMPy-*.whl; do
-      pip install $f
+      pip install $f --no-deps
     done
 
 script:

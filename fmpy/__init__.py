@@ -1,11 +1,11 @@
-""" Simulate Functional Mockup Units (FMUs) in Python """
+""" Simulate Functional Mock-up Units (FMUs) in Python """
 
 import sys
 import os
 from ctypes import *
 import _ctypes
 
-__version__ = '0.1.2'
+__version__ = '0.2.0'
 
 
 # determine the platform

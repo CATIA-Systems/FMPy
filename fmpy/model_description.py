@@ -22,6 +22,9 @@ class ModelDescription(object):
         self.unitDefinitions = []
         self.typeDefinitions = []
         self.modelVariables = []
+
+        self.outputs = []
+        self.derivatives = []
         self.initialUnknowns = []
 
 
@@ -48,6 +51,7 @@ class CoSimulation(object):
         self.canGetAndSetFMUstate = False
         self.canSerializeFMUstate = False
         self.providesDirectionalDerivative = False
+        self.sourceFiles = []
 
 
 class ModelExchange(object):
@@ -61,6 +65,7 @@ class ModelExchange(object):
         self.canGetAndSetFMUstate = False
         self.canSerializeFMUstate = False
         self.providesDirectionalDerivative = False
+        self.sourceFiles = []
 
 
 class ScalarVariable(object):
@@ -69,11 +74,23 @@ class ScalarVariable(object):
         self.name = name
         self.valueReference = valueReference
         self.description = None
+
         self.type = None
+        "One of 'Real', 'Integer', 'Enumeration', 'Boolean', 'String'"
+
         self.unit = None
+
         self.start = None
+
         self.causality = None
+        "One of 'parameter', 'calculatedParameter', 'input', 'output', 'local', 'independent'"
+
         self.variability = None
+        "One of 'constant', 'fixed', 'tunable', 'discrete' or 'continuous'"
+
+        self.initial = None
+        "One of 'exact', 'approx', 'calculated' or None"
+
         self.declaredType = None
 
     def __repr__(self):
@@ -262,6 +279,8 @@ def read_model_description(filename, validate=True):
                               'canGetAndSetFMUstate',
                               'canSerializeFMUstate',
                               'providesDirectionalDerivative'])
+            for file in me.findall('SourceFiles/File'):
+                modelDescription.modelExchange.sourceFiles.append(file.get('name'))
 
         for cs in root.findall('CoSimulation'):
             modelDescription.coSimulation = CoSimulation()
@@ -277,6 +296,8 @@ def read_model_description(filename, validate=True):
                               'canGetAndSetFMUstate',
                               'canSerializeFMUstate',
                               'providesDirectionalDerivative'])
+            for file in cs.findall('SourceFiles/File'):
+                modelDescription.coSimulation.sourceFiles.append(file.get('name'))
 
     # unit definitions
     if fmiVersion == "1.0":
@@ -324,6 +345,15 @@ def read_model_description(filename, validate=True):
         modelDescription.typeDefinitions.append(simpleType)
         typeDefinitions[simpleType.name] = simpleType
 
+    # default values for 'initial' derived from variability and causality
+    initial_defaults = {
+        'constant':   {'output': 'exact', 'local': 'exact'},
+        'fixed':      {'parameter': 'exact', 'calculatedParameter': 'calculated', 'local': 'calculated'},
+        'tunable':    {'parameter': 'exact', 'calculatedParameter': 'calculated', 'local': 'calculated'},
+        'discrete':   {'input': None, 'output': 'calculated', 'local': 'calculated'},
+        'continuous': {'input': None, 'output': 'calculated', 'local': 'calculated', 'independent': None},
+    }
+
     # model variables
     for variable in root.find('ModelVariables'):
 
@@ -333,21 +363,13 @@ def read_model_description(filename, validate=True):
         sv = ScalarVariable(name=variable.get('name'), valueReference=int(variable.get('valueReference')))
         sv.description = variable.get('description')
         sv.start = variable.get('start')
-        sv.causality = variable.get('causality')
+        sv.causality = variable.get('causality', default='local')
+        sv.variability = variable.get('variability')
+        sv.initial = variable.get('initial')
 
         value = next(variable.iterchildren())
         sv.type = value.tag
-        start = value.get('start')
-
-        if start is not None:
-            if sv.type == 'Real':
-                sv.start = float(start)
-            elif sv.type == 'Integer':
-                sv.start = int(start)
-            elif sv.type == 'Boolean':
-                sv.start = start == 'true'
-            else:
-                sv.start = start
+        sv.start = value.get('start')
 
         if sv.type == 'Real':
             sv.unit = value.get('unit')
@@ -355,25 +377,46 @@ def read_model_description(filename, validate=True):
         # resolve the declared type
         sv.declaredType = typeDefinitions[value.get('declaredType')]
 
+        if fmiVersion == '1.0':
+            if sv.causality == 'internal':
+                sv.causality = 'local'
+
+            if sv.variability == 'parameter':
+                sv.causality = 'parameter'
+                sv.variability = None
+        else:
+            if sv.variability is None:
+                if sv.type == 'Real':
+                    sv.variability = 'continuous'
+                else:
+                    sv.variability = 'discrete'
+
+            if sv.initial is None:
+                sv.initial = initial_defaults[sv.variability][sv.causality]
+
         modelDescription.modelVariables.append(sv)
 
     # model structure
-    for u in root.findall('ModelStructure/InitialUnknowns/Unknown'):
-        unknown = Unknown()
+    for attr, element in [(modelDescription.outputs, 'Outputs'),
+                          (modelDescription.derivatives, 'Derivatives'),
+                          (modelDescription.initialUnknowns, 'InitialUnknowns')]:
 
-        unknown.variable = modelDescription.modelVariables[int(u.get('index')) - 1]
+        for u in root.findall('ModelStructure/' + element + '/Unknown'):
+            unknown = Unknown()
 
-        dependencies = u.get('dependencies')
+            unknown.variable = modelDescription.modelVariables[int(u.get('index')) - 1]
 
-        if dependencies:
-            for i in dependencies.split(' '):
-                unknown.dependencies.append(modelDescription.modelVariables[int(i) - 1])
+            dependencies = u.get('dependencies')
 
-        dependenciesKind = u.get('dependenciesKind')
+            if dependencies:
+                for i in dependencies.split(' '):
+                    unknown.dependencies.append(modelDescription.modelVariables[int(i) - 1])
 
-        if dependenciesKind:
-            unknown.dependenciesKind = u.get('dependenciesKind').split(' ')
+            dependenciesKind = u.get('dependenciesKind')
 
-        modelDescription.initialUnknowns.append(unknown)
+            if dependenciesKind:
+                unknown.dependenciesKind = u.get('dependenciesKind').split(' ')
+
+            attr.append(unknown)
 
     return modelDescription

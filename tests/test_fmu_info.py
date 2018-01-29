@@ -41,12 +41,12 @@ Default Experiment
 
 Variables (input, output)
 
-Name                Causality          Start Value  Unit     Description
-inputs              input                      0.0           RI1
-outputs[1]          output                    10.0  rad/s    J1.w
-outputs[2]          output                     0.0  rad/s    J2.w
-outputs[3]          output                     0.0  rad/s    J3.w
-outputs[4]          output                     0.0  rad/s    J4.w""" % (platform, generation_dates[platform])
+Name                Causality              Start Value  Unit     Description
+inputs              input      0.00000000000000000e+00           RI1
+outputs[1]          output     1.00000000000000000e+01  rad/s    J1.w
+outputs[2]          output     0.00000000000000000e+00  rad/s    J2.w
+outputs[3]          output     0.00000000000000000e+00  rad/s    J3.w
+outputs[4]          output     0.00000000000000000e+00  rad/s    J4.w""" % (platform, generation_dates[platform])
 
         self.assertEqual(expected, info)
 

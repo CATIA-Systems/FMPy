@@ -7,17 +7,25 @@ def main():
     import textwrap
 
     description = """\
-    Simulate an FMU
+    Validate and simulate Functional Mock-up Units (FMUs)
 
-    Example: 
-        > python -m fmpy.simulate Rectifier.fmu
-
+    Get information about an FMU:
+       
+        fmpy info Rectifier.fmu
+     
+    Simulate an FMU:
+     
+        fmpy simulate Rectifier.fmu --show-plot
+        
+    Compile a source code FMU:
+    
+        fmpy compile Rectifier.fmu
     """
 
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
                                      description=textwrap.dedent(description))
 
-    parser.add_argument('command', choices=['info', 'simulate'], help="Command to execute")
+    parser.add_argument('command', choices=['info', 'simulate', 'compile'], help="Command to execute")
     parser.add_argument('fmu_filename', help="filename of the FMU")
 
     parser.add_argument('--solver', choices=['Euler', 'CVode'], default='CVode',
@@ -40,6 +48,11 @@ def main():
 
         from fmpy import dump
         dump(args.fmu_filename)
+
+    elif args.command == 'compile':
+
+        from fmpy.util import compile_platform_binary
+        compile_platform_binary(args.fmu_filename)
 
     elif args.command == 'simulate':
 
@@ -70,7 +83,7 @@ def main():
                               fmi_logging=args.fmi_logging)
 
         if args.output_file:
-            write_csv(args.output_file, result)
+            write_csv(filename=args.output_file, result=result)
 
         if args.show_plot:
             plot_result(result=result, window_title=args.fmu_filename)

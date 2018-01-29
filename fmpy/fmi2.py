@@ -3,7 +3,7 @@
 import pathlib
 from ctypes import *
 from . import free, calloc
-from .fmi1 import _FMU
+from .fmi1 import _FMU, printLogMessage
 
 
 fmi2Component            = c_void_p
@@ -45,15 +45,6 @@ fmi2LastSuccessfulTime = 2
 fmi2Terminated         = 3
 
 
-def logger(componentEnvironment, instanceName, status, category, message):
-    if status == fmi2Warning:
-        print('[WARNING]', message)
-    elif status > fmi2Warning:
-        print('[ERROR]', message)
-    else:
-        print('[INFO]', message)
-
-
 def allocateMemory(nobj, size):
     return calloc(nobj, size)
 
@@ -74,13 +65,6 @@ class fmi2CallbackFunctions(Structure):
                 ('stepFinished',         fmi2StepFinishedTYPE),
                 ('componentEnvironment', fmi2ComponentEnvironment)]
 
-callbacks = fmi2CallbackFunctions()
-callbacks.logger               = fmi2CallbackLoggerTYPE(logger)
-callbacks.allocateMemory       = fmi2CallbackAllocateMemoryTYPE(allocateMemory)
-#callbacks.stepFinished         = fmi2StepFinishedTYPE(stepFinished)
-callbacks.freeMemory           = fmi2CallbackFreeMemoryTYPE(freeMemory)
-#callbacks.componentEnvironment = None
-
 
 class fmi2EventInfo(Structure):
 
@@ -92,19 +76,8 @@ class fmi2EventInfo(Structure):
                 ('nextEventTime',                     fmi2Real)]
 
 
-class ScalarVariable(object):
-
-    def __init__(self, name, valueReference):
-        self.name = name
-        self.valueReference = valueReference
-        self.description = None
-        self.type = None
-        self.start = None
-        self.causality = None
-        self.variability = None
-
-
 class _FMU2(_FMU):
+    """ Base class for FMI 2.0 FMUs """
 
     def __init__(self, **kwargs):
 
@@ -207,18 +180,27 @@ class _FMU2(_FMU):
 
         setattr(self, fname, w)
 
-    def instantiate(self, visible=False, loggingOn=False):
+    def instantiate(self, visible=False, callbacks=None, loggingOn=False):
 
         kind = fmi2ModelExchange if isinstance(self, FMU2Model) else fmi2CoSimulation
         resourceLocation = pathlib.Path(self.unzipDirectory, 'resources').as_uri()
         visible = fmi2True if visible else fmi2False
+
+        if callbacks is None:
+            callbacks = fmi2CallbackFunctions()
+            callbacks.logger = fmi2CallbackLoggerTYPE(printLogMessage)
+            callbacks.allocateMemory = fmi2CallbackAllocateMemoryTYPE(allocateMemory)
+            callbacks.freeMemory = fmi2CallbackFreeMemoryTYPE(freeMemory)
+
+        self.callbacks = callbacks
+
         loggingOn = fmi2True if loggingOn else fmi2False
 
         self.component = self.fmi2Instantiate(self.instanceName.encode('utf-8'),
                                               kind,
                                               self.guid.encode('utf-8'),
                                               resourceLocation.encode('utf-8'),
-                                              byref(callbacks),
+                                              byref(self.callbacks),
                                               visible,
                                               loggingOn)
 
@@ -310,6 +292,7 @@ class _FMU2(_FMU):
 
 
 class FMU2Model(_FMU2):
+    """ Base class for FMI 2.0 model exchange FMUs """
 
     def __init__(self, **kwargs):
 
@@ -394,12 +377,23 @@ class FMU2Model(_FMU2):
 
 
 class FMU2Slave(_FMU2):
+    """ Base class for FMI 2.0 co-simulation FMUs """
 
     def __init__(self, instanceName=None, **kwargs):
 
         kwargs['instanceName'] = instanceName
 
         super(FMU2Slave, self).__init__(**kwargs)
+
+        self._fmi2Function('fmi2SetRealInputDerivatives',
+                           ['c', 'vr', 'nvr', 'order', 'value'],
+                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer), POINTER(fmi2Real)],
+                           fmi2Status)
+
+        self._fmi2Function('fmi2GetRealOutputDerivatives',
+                           ['c', 'vr', 'nvr', 'order', 'value'],
+                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer), POINTER(fmi2Real)],
+                           fmi2Status)
 
         self._fmi2Function('fmi2DoStep',
                            ['component', 'currentCommunicationPoint', 'communicationStepSize',
@@ -411,6 +405,19 @@ class FMU2Slave(_FMU2):
                            ['component', 'kind', 'value'],
                            [fmi2Component, fmi2StatusKind, POINTER(fmi2Boolean)],
                            fmi2Status)
+
+    def setRealInputDerivatives(self, vr, order, value):
+        vr = (fmi2ValueReference * len(vr))(*vr)
+        order = (fmi2Integer * len(vr))(*order)
+        value = (fmi2Real * len(vr))(*value)
+        self.fmi2SetRealInputDerivatives(self.component, vr, len(vr), order, value)
+
+    def getRealOutputDerivatives(self, vr, order):
+        vr = (fmi2ValueReference * len(vr))(*vr)
+        order = (fmi2Integer * len(vr))(*order)
+        value = (fmi2Real * len(vr))()
+        self.fmi2GetRealOutputDerivatives(self.component, vr, len(vr), order, value)
+        return list(value)
 
     def doStep(self, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint=fmi2True):
         return self.fmi2DoStep(self.component, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint)

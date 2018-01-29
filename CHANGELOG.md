@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.0] - 2018-01-29
+
+### Added
+- graphical user interface
+- compilation of source code FMUs
+- model structure elements: ModelDescription.outputs and ModelDescription.derivatives
+- FMI functions: setRealInputDerivatives() and getRealOutputDerivatives()
+
+### Fixed
+- constructor arguments for solver classes
+
 ## [0.1.2] - 2017-12-21
 
 ### Changed

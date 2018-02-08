@@ -9,7 +9,7 @@ except Exception as e:
 import os
 
 from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QStandardPaths
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, QMenu, QMessageBox, QProgressBar
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, QMenu, QMessageBox, QProgressBar, QDialog
 from PyQt5.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator
 
 from fmpy.gui.generated.MainWindow import Ui_MainWindow
@@ -42,6 +42,32 @@ class ClickableLabel(QLabel):
     def mousePressEvent(self, ev):
         self.clicked.emit()
         super(ClickableLabel, self).mousePressEvent(ev)
+
+
+class AboutDialog(QDialog):
+
+    def __init__(self, parent=None):
+        super(AboutDialog, self).__init__(parent)
+
+        from .generated.AboutDialog import Ui_Dialog
+        from .. import __version__, platform, __file__
+        import sys
+        import os
+
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+
+        # hide the question mark button
+        flags = self.windowFlags()
+        flags &= ~Qt.WindowContextHelpButtonHint
+        flags |= Qt.MSWindowsFixedSizeDialogHint
+        self.setWindowFlags(flags)
+
+        self.ui.fmpyVersionLabel.setText(__version__)
+        self.ui.fmiPlatformLabel.setText(platform)
+        self.ui.installationPathLabel.setText(os.path.dirname(__file__))
+        self.ui.pythonInterpreterLabel.setText(sys.executable)
+        self.ui.pythonVersionLabel.setText(sys.version)
 
 
 class MainWindow(QMainWindow):
@@ -242,6 +268,7 @@ class MainWindow(QMainWindow):
         self.ui.filterToolButton.toggled.connect(self.tableFilterModel.setFilterByCausality)
         self.log.currentMessageChanged.connect(self.setStatusMessage)
         self.ui.selectInputButton.clicked.connect(self.selectInputFile)
+        self.ui.actionShowAboutDialog.triggered.connect(self.showAboutDialog)
 
         if os.name == 'nt':
             self.ui.actionCreateDesktopShortcut.triggered.connect(self.createDesktopShortcut)
@@ -725,6 +752,10 @@ class MainWindow(QMainWindow):
         # shortcut.WorkingDirectory = ...
         shortcut.IconLocation = icon
         shortcut.save()
+
+    def showAboutDialog(self):
+        dialog = AboutDialog(self)
+        dialog.show()
 
     @staticmethod
     def removeDuplicates(seq):

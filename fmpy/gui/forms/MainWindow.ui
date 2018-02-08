@@ -1191,6 +1191,8 @@
     <addaction name="actionOpenTestFMUs"/>
     <addaction name="separator"/>
     <addaction name="actionCreateDesktopShortcut"/>
+    <addaction name="separator"/>
+    <addaction name="actionShowAboutDialog"/>
    </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_Help"/>
@@ -1615,6 +1617,11 @@ QStatusBar::item {
   <action name="actionCreateDesktopShortcut">
    <property name="text">
     <string>Create Desktop Shortcut</string>
+   </property>
+  </action>
+  <action name="actionShowAboutDialog">
+   <property name="text">
+    <string>&amp;About</string>
    </property>
   </action>
  </widget>

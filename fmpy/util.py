@@ -400,12 +400,19 @@ def fmu_info(filename, causalities=['input', 'output']):
     md = read_model_description(filename, validate=False)
     platforms = supported_platforms(filename)
 
+    fmi_types = []
+    if md.modelExchange is not None:
+        fmi_types.append('Model Exchange')
+    if md.coSimulation is not None:
+        fmi_types.append('Co-Simulation')
+
     l = []
 
     l.append("")
     l.append("Model Info")
     l.append("")
     l.append("  FMI Version       %s" % md.fmiVersion)
+    l.append("  FMI Type          %s" % ', '.join(fmi_types))
     l.append("  Model Name        %s" % md.modelName)
     l.append("  Description       %s" % md.description)
     l.append("  Platforms         %s" % ', '.join(platforms))

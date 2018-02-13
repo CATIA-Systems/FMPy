@@ -35,6 +35,7 @@ class FMUInfoTest(unittest.TestCase):
 Model Info
 
   FMI Version       2.0
+  FMI Type          Model Exchange
   Model Name        CoupledClutches
   Description       Model CoupledClutches
   Platforms         %s

@@ -202,8 +202,12 @@ class MainWindow(QMainWindow):
         self.actionCollapseAll = self.contextMenu.addAction("Collapse all")
         self.actionCollapseAll.triggered.connect(self.ui.treeView.collapseAll)
         self.contextMenu.addSeparator()
+        self.actionCopyVariableName = self.contextMenu.addAction("Copy Variable Name", self.copyVariableName)
+        self.actionCopyValueReference = self.contextMenu.addAction("Copy Value Reference", self.copyValueReference)
+        self.contextMenu.addSeparator()
+        self.columnsMenu = self.contextMenu.addMenu('Columns')
         for column in ['Value Reference', 'Initial', 'Causality', 'Variability']:
-            action = self.contextMenu.addAction(column)
+            action = self.columnsMenu.addAction(column)
             action.setCheckable(True)
             action.toggled.connect(lambda show, col=column: self.showColumn(col, show))
 
@@ -310,6 +314,11 @@ class MainWindow(QMainWindow):
 
         self.actionExpandAll.setEnabled(currentView == self.ui.treeView)
         self.actionCollapseAll.setEnabled(currentView == self.ui.treeView)
+
+        can_copy = len(self.getSelectedVariables()) > 0
+
+        self.actionCopyVariableName.setEnabled(can_copy)
+        self.actionCopyValueReference.setEnabled(can_copy)
 
         self.contextMenu.exec_(currentView.mapToGlobal(point))
 
@@ -801,6 +810,37 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "File association added", "The file association for *.fmu has been added")
         except Exception as e:
             QMessageBox.critical(self, "File association failed", "The file association for *.fmu could not be added. %s" % e)
+
+    def copyValueReference(self):
+        """ Copy the value references of the selected variables to the clipboard """
+
+        text = '\n'.join([str(v.valueReference) for v in self.getSelectedVariables()])
+        QApplication.clipboard().setText(text)
+
+    def copyVariableName(self):
+        """ Copy the names of the selected variables to the clipboard """
+
+        text = '\n'.join([str(v.name) for v in self.getSelectedVariables()])
+        QApplication.clipboard().setText(text)
+
+    def getSelectedVariables(self):
+        """ Returns a list of selected variables in the current view """
+
+        variables = []
+
+        if self.ui.variablesStackedWidget.currentWidget() == self.ui.treePage:
+            for index in self.ui.treeView.selectionModel().selectedRows():
+                sourceIndex = self.treeFilterModel.mapToSource(index)
+                treeItem = sourceIndex.internalPointer()
+                if treeItem.variable is not None:
+                    variables.append(treeItem.variable)
+        else:
+            for index in self.ui.tableView.selectionModel().selectedRows():
+                sourceIndex = self.tableFilterModel.mapToSource(index)
+                variable = sourceIndex.internalPointer()
+                variables.append(variable)
+
+        return variables
 
 
 if __name__ == '__main__':

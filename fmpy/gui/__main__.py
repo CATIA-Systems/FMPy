@@ -215,6 +215,7 @@ class MainWindow(QMainWindow):
         self.ui.actionOpenFMI1SpecME.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://svn.modelica.org/fmi/branches/public/specifications/v1.0/FMI_for_ModelExchange_v1.0.1.pdf')))
         self.ui.actionOpenFMI2Spec.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://svn.modelica.org/fmi/branches/public/specifications/v2.0/FMI_for_ModelExchange_and_CoSimulation_v2.0.pdf')))
         self.ui.actionOpenTestFMUs.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://trac.fmi-standard.org/browser/branches/public/Test_FMUs')))
+        self.ui.actionCheckForUpdates.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/CATIA-Systems/FMPy')))
 
         # filter menu
         self.filterMenu = QMenu()
@@ -272,8 +273,10 @@ class MainWindow(QMainWindow):
 
         if os.name == 'nt':
             self.ui.actionCreateDesktopShortcut.triggered.connect(self.createDesktopShortcut)
+            self.ui.actionAddFileAssociation.triggered.connect(self.addFileAssociation)
         else:
             self.ui.actionCreateDesktopShortcut.setEnabled(False)
+            self.ui.actionAddFileAssociation.setEnabled(False)
 
         self.ui.tableViewToolButton.toggled.connect(lambda show: self.ui.variablesStackedWidget.setCurrentWidget(self.ui.tablePage if show else self.ui.treePage))
 
@@ -763,6 +766,41 @@ class MainWindow(QMainWindow):
         seen = set()
         seen_add = seen.add
         return [x for x in seq if not (x in seen or seen_add(x))]
+
+    def addFileAssociation(self):
+        """ Associate *.fmu with the FMPy GUI """
+
+        try:
+            from winreg import HKEY_CURRENT_USER, KEY_WRITE, REG_SZ, OpenKey, CreateKey, SetValueEx, CloseKey
+
+            python = sys.executable
+
+            root, ext = os.path.splitext(python)
+
+            pythonw = root + 'w' + ext
+
+            if os.path.isfile(pythonw):
+                target = pythonw
+            else:
+                target = python
+
+            key_path = r'Software\Classes\fmpy.gui\shell\open\command'
+
+            CreateKey(HKEY_CURRENT_USER, key_path)
+            key = OpenKey(HKEY_CURRENT_USER, key_path, 0, KEY_WRITE)
+            SetValueEx(key, '', 0, REG_SZ, '"%s" -m fmpy.gui "%%1"' % target)
+            CloseKey(key)
+
+            key_path = r'SOFTWARE\Classes\.fmu'
+
+            CreateKey(HKEY_CURRENT_USER, key_path)
+            key = OpenKey(HKEY_CURRENT_USER, key_path, 0, KEY_WRITE)
+            SetValueEx(key, '', 0, REG_SZ, 'fmpy.gui')
+            CloseKey(key)
+
+            QMessageBox.information(self, "File association added", "The file association for *.fmu has been added")
+        except Exception as e:
+            QMessageBox.critical(self, "File association failed", "The file association for *.fmu could not be added. %s" % e)
 
 
 if __name__ == '__main__':

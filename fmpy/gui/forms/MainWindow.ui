@@ -1185,12 +1185,22 @@
     <property name="title">
      <string>&amp;Help</string>
     </property>
-    <addaction name="actionOpenFMI1SpecCS"/>
-    <addaction name="actionOpenFMI1SpecME"/>
-    <addaction name="actionOpenFMI2Spec"/>
+    <widget class="QMenu" name="menuFMI_Specifications">
+     <property name="title">
+      <string>FMI Specifications</string>
+     </property>
+     <addaction name="actionOpenFMI2Spec"/>
+     <addaction name="separator"/>
+     <addaction name="actionOpenFMI1SpecCS"/>
+     <addaction name="actionOpenFMI1SpecME"/>
+    </widget>
+    <addaction name="menuFMI_Specifications"/>
     <addaction name="actionOpenTestFMUs"/>
     <addaction name="separator"/>
     <addaction name="actionCreateDesktopShortcut"/>
+    <addaction name="actionAddFileAssociation"/>
+    <addaction name="separator"/>
+    <addaction name="actionCheckForUpdates"/>
     <addaction name="separator"/>
     <addaction name="actionShowAboutDialog"/>
    </widget>
@@ -1546,17 +1556,17 @@ QStatusBar::item {
   </action>
   <action name="actionOpenFMI2Spec">
    <property name="text">
-    <string>FMI 2.0 Specification</string>
+    <string>FMI 2.0</string>
    </property>
   </action>
   <action name="actionOpenFMI1SpecCS">
    <property name="text">
-    <string>FMI 1.0.1 Specification (Co-Simulation)</string>
+    <string>FMI 1.0.1 Co-Simulation</string>
    </property>
   </action>
   <action name="actionOpenFMI1SpecME">
    <property name="text">
-    <string>FMI 1.0.1 Specifcation (Model Exchange)</string>
+    <string>FMI 1.0.1 for Model Exchange</string>
    </property>
   </action>
   <action name="actionClose">
@@ -1616,12 +1626,25 @@ QStatusBar::item {
   </action>
   <action name="actionCreateDesktopShortcut">
    <property name="text">
-    <string>Create Desktop Shortcut</string>
+    <string>Create Desktop &amp;Shortcut</string>
    </property>
   </action>
   <action name="actionShowAboutDialog">
    <property name="text">
-    <string>&amp;About</string>
+    <string>&amp;About FMPy</string>
+   </property>
+  </action>
+  <action name="actionCheckForUpdates">
+   <property name="text">
+    <string>Check for &amp;Updates</string>
+   </property>
+  </action>
+  <action name="actionAddFileAssociation">
+   <property name="text">
+    <string>Associate with *.fmu Files</string>
+   </property>
+   <property name="toolTip">
+    <string>Add file association for *.fmu</string>
    </property>
   </action>
  </widget>

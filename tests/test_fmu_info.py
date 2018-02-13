@@ -1,5 +1,5 @@
 import unittest
-from fmpy import platform, dump
+from fmpy import platform, dump, simulate_fmu
 from fmpy.util import download_test_file, fmu_info
 
 
@@ -9,6 +9,16 @@ class FMUInfoTest(unittest.TestCase):
     def setUpClass(cls):
         # download the FMU
         download_test_file('2.0', 'ModelExchange', 'MapleSim', '2017', 'CoupledClutches', 'CoupledClutches.fmu')
+
+    def test_illegal_fmi_type(self):
+        with self.assertRaises(Exception) as context:
+            simulate_fmu('CoupledClutches.fmu', fmi_type='Hybrid')
+        self.assertEqual('fmi_type must be one of "ModelExchange" or "CoSimulation"', str(context.exception))
+
+    def test_unsupported_fmi_type(self):
+        with self.assertRaises(Exception) as context:
+            simulate_fmu('CoupledClutches.fmu', fmi_type='CoSimulation')
+        self.assertEqual('FMI type "CoSimulation" is not supported by the FMU', str(context.exception))
 
     def test_fmu_info(self):
 

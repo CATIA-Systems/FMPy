@@ -419,12 +419,14 @@ def simulate_fmu(filename,
         callbacks.freeMemory = fmi2CallbackFreeMemoryTYPE(freeMemory)
 
     # simulate_fmu the FMU
-    if fmi_type == 'ModelExchange':
+    if fmi_type == 'ModelExchange' and modelDescription.modelExchange is not None:
         fmu_args['modelIdentifier'] = modelDescription.modelExchange.modelIdentifier
         result = simulateME(modelDescription, fmu_args, start_time, stop_time, solver, step_size, relative_tolerance, start_values, input, output, output_interval, timeout, callbacks, step_finished)
-    elif fmi_type == 'CoSimulation':
+    elif fmi_type == 'CoSimulation' and modelDescription.coSimulation is not None:
         fmu_args['modelIdentifier'] = modelDescription.coSimulation.modelIdentifier
         result = simulateCS(modelDescription, fmu_args, start_time, stop_time, start_values, input, output, output_interval, timeout, callbacks, step_finished)
+    else:
+        raise Exception('FMI type "%s" is not supported by the FMU' % fmi_type)
 
     # clean up
     shutil.rmtree(unzipdir)

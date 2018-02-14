@@ -234,12 +234,12 @@ class MainWindow(QMainWindow):
         # status bar
         self.statusIconLabel = ClickableLabel(self)
         self.statusIconLabel.setStyleSheet("QLabel { margin-left: 5px; }")
-        self.statusIconLabel.clicked.connect(self.showLogPage)
+        self.statusIconLabel.clicked.connect(lambda: self.setCurrentPage(self.ui.logPage))
         self.ui.statusBar.addPermanentWidget(self.statusIconLabel)
 
         self.statusTextLabel = ClickableLabel(self)
         self.statusTextLabel.setMinimumWidth(10)
-        self.statusTextLabel.clicked.connect(self.showLogPage)
+        self.statusTextLabel.clicked.connect(lambda: self.setCurrentPage(self.ui.logPage))
         self.ui.statusBar.addPermanentWidget(self.statusTextLabel)
 
         self.ui.statusBar.addPermanentWidget(QWidget(self), 1)  # spacer
@@ -256,9 +256,9 @@ class MainWindow(QMainWindow):
         self.ui.actionSaveResult.triggered.connect(self.saveResult)
         self.ui.actionSavePlottedResult.triggered.connect(lambda: self.saveResult(plotted=True))
         self.ui.actionSimulate.triggered.connect(self.startSimulation)
-        self.ui.actionSettings.triggered.connect(self.showSettingsPage)
-        self.ui.actionShowLog.triggered.connect(self.showLogPage)
-        self.ui.actionShowResults.triggered.connect(self.showResultPage)
+        self.ui.actionSettings.triggered.connect(lambda: self.setCurrentPage(self.ui.settingsPage))
+        self.ui.actionShowLog.triggered.connect(lambda: self.setCurrentPage(self.ui.logPage))
+        self.ui.actionShowResults.triggered.connect(lambda: self.setCurrentPage(self.ui.resultPage))
         self.fmiTypeComboBox.currentTextChanged.connect(self.updateSimulationSettings)
         self.ui.solverComboBox.currentTextChanged.connect(self.updateSimulationSettings)
         self.variableSelected.connect(self.updatePlotLayout)
@@ -380,12 +380,13 @@ class MainWindow(QMainWindow):
 
         self.updateSimulationSettings()
 
-        self.ui.stackedWidget.setCurrentWidget(self.ui.settingsPage)
+        self.setCurrentPage(self.ui.settingsPage)
 
         self.ui.dockWidget.show()
 
         self.ui.actionSettings.setEnabled(True)
         self.ui.actionShowLog.setEnabled(True)
+        self.ui.actionShowResults.setEnabled(False)
 
         can_simulate = platform in platforms
 
@@ -424,14 +425,25 @@ class MainWindow(QMainWindow):
         if filename:
             self.load(filename)
 
-    def showSettingsPage(self):
-        self.ui.stackedWidget.setCurrentWidget(self.ui.settingsPage)
+    def setCurrentPage(self, widget):
+        """ Set the current page and the actions """
 
-    def showLogPage(self):
-        self.ui.stackedWidget.setCurrentWidget(self.ui.logPage)
+        # block the signals during the update
+        self.ui.actionSettings.blockSignals(True)
+        self.ui.actionShowLog.blockSignals(True)
+        self.ui.actionShowResults.blockSignals(True)
 
-    def showResultPage(self):
-        self.ui.stackedWidget.setCurrentWidget(self.ui.resultPage)
+        self.ui.stackedWidget.setCurrentWidget(widget)
+
+        # toggle the actions
+        self.ui.actionSettings.setChecked(widget == self.ui.settingsPage)
+        self.ui.actionShowLog.setChecked(widget == self.ui.logPage)
+        self.ui.actionShowResults.setChecked(widget == self.ui.resultPage)
+
+        # un-block the signals during the update
+        self.ui.actionSettings.blockSignals(False)
+        self.ui.actionShowLog.blockSignals(False)
+        self.ui.actionShowResults.blockSignals(False)
 
     def selectInputFile(self):
         start_dir = os.path.dirname(self.filename)
@@ -580,7 +592,7 @@ class MainWindow(QMainWindow):
         if self.ui.clearLogOnStartButton.isChecked():
             self.log.clear()
 
-        self.showResultPage()
+        self.setCurrentPage(self.ui.resultPage)
 
         self.simulationThread.start()
         self.plotUpdateTimer.start(100)
@@ -598,11 +610,11 @@ class MainWindow(QMainWindow):
         self.simulationProgressBar.setVisible(False)
         self.ui.actionShowResults.setEnabled(True)
         self.ui.actionSettings.setEnabled(True)
-        self.ui.stackedWidget.setCurrentWidget(self.ui.resultPage)
+        self.setCurrentPage(self.ui.resultPage)
         self.updatePlotLayout()
 
         if self.result is None:
-            self.showLogPage()
+            self.setCurrentPage(self.ui.logPage)
         else:
             self.ui.actionSaveResult.setEnabled(True)
             self.ui.actionSavePlottedResult.setEnabled(True)

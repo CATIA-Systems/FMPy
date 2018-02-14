@@ -1433,6 +1433,9 @@ QStatusBar::item {
    </property>
   </action>
   <action name="actionSettings">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../icons/icons.qrc">
      <normaloff>:/icons/settings.png</normaloff>:/icons/settings.png</iconset>
@@ -1460,6 +1463,9 @@ QStatusBar::item {
    </property>
   </action>
   <action name="actionShowResults">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../icons/icons.qrc">
      <normaloff>:/icons/stats.png</normaloff>:/icons/stats.png</iconset>
@@ -1589,6 +1595,9 @@ QStatusBar::item {
    </property>
   </action>
   <action name="actionShowLog">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../icons/icons.qrc">
      <normaloff>:/icons/log.png</normaloff>:/icons/log.png</iconset>

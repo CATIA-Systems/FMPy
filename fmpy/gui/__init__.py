@@ -8,13 +8,15 @@ def compile_resources():
 
     p = os.path.dirname(__file__)
 
-    mw_ui = os.path.join(p, 'forms', 'MainWindow.ui')
-    mw_py = os.path.join(p, 'generated', 'MainWindow.py')
+    for form in ['MainWindow', 'AboutDialog']:
 
-    if os.path.isfile(mw_ui):
-        if not os.path.isfile(mw_py) or os.path.getmtime(mw_ui) > os.path.getmtime(mw_py):
-            print("UIC'ing %s" % mw_ui)
-            os.system('pyuic5 %s -o %s --import-from .' % (mw_ui, mw_py))
+        ui_file = os.path.join(p, 'forms', form + '.ui')
+        py_file = os.path.join(p, 'generated', form + '.py')
+
+        if os.path.isfile(ui_file):
+            if not os.path.isfile(py_file) or os.path.getmtime(ui_file) > os.path.getmtime(py_file):
+                print("UIC'ing %s" % ui_file)
+                os.system('pyuic5 %s -o %s --import-from .' % (ui_file, py_file))
 
     icons_qrc = os.path.join(p, 'icons', 'icons.qrc')
     icons_rc_py = os.path.join(p, 'generated', 'icons_rc.py')

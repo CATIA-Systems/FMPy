@@ -9,7 +9,7 @@ except Exception as e:
 import os
 
 from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QStandardPaths
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, QMenu, QMessageBox, QProgressBar
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, QMenu, QMessageBox, QProgressBar, QDialog
 from PyQt5.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator
 
 from fmpy.gui.generated.MainWindow import Ui_MainWindow
@@ -42,6 +42,32 @@ class ClickableLabel(QLabel):
     def mousePressEvent(self, ev):
         self.clicked.emit()
         super(ClickableLabel, self).mousePressEvent(ev)
+
+
+class AboutDialog(QDialog):
+
+    def __init__(self, parent=None):
+        super(AboutDialog, self).__init__(parent)
+
+        from .generated.AboutDialog import Ui_Dialog
+        from .. import __version__, platform, __file__
+        import sys
+        import os
+
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+
+        # hide the question mark button
+        flags = self.windowFlags()
+        flags &= ~Qt.WindowContextHelpButtonHint
+        flags |= Qt.MSWindowsFixedSizeDialogHint
+        self.setWindowFlags(flags)
+
+        self.ui.fmpyVersionLabel.setText(__version__)
+        self.ui.fmiPlatformLabel.setText(platform)
+        self.ui.installationPathLabel.setText(os.path.dirname(__file__))
+        self.ui.pythonInterpreterLabel.setText(sys.executable)
+        self.ui.pythonVersionLabel.setText(sys.version)
 
 
 class MainWindow(QMainWindow):
@@ -176,8 +202,12 @@ class MainWindow(QMainWindow):
         self.actionCollapseAll = self.contextMenu.addAction("Collapse all")
         self.actionCollapseAll.triggered.connect(self.ui.treeView.collapseAll)
         self.contextMenu.addSeparator()
+        self.actionCopyVariableName = self.contextMenu.addAction("Copy Variable Name", self.copyVariableName)
+        self.actionCopyValueReference = self.contextMenu.addAction("Copy Value Reference", self.copyValueReference)
+        self.contextMenu.addSeparator()
+        self.columnsMenu = self.contextMenu.addMenu('Columns')
         for column in ['Value Reference', 'Initial', 'Causality', 'Variability']:
-            action = self.contextMenu.addAction(column)
+            action = self.columnsMenu.addAction(column)
             action.setCheckable(True)
             action.toggled.connect(lambda show, col=column: self.showColumn(col, show))
 
@@ -189,6 +219,8 @@ class MainWindow(QMainWindow):
         self.ui.actionOpenFMI1SpecME.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://svn.modelica.org/fmi/branches/public/specifications/v1.0/FMI_for_ModelExchange_v1.0.1.pdf')))
         self.ui.actionOpenFMI2Spec.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://svn.modelica.org/fmi/branches/public/specifications/v2.0/FMI_for_ModelExchange_and_CoSimulation_v2.0.pdf')))
         self.ui.actionOpenTestFMUs.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://trac.fmi-standard.org/browser/branches/public/Test_FMUs')))
+        self.ui.actionOpenWebsite.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/CATIA-Systems/FMPy')))
+        self.ui.actionShowReleaseNotes.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/CATIA-Systems/FMPy/blob/master/CHANGELOG.md')))
 
         # filter menu
         self.filterMenu = QMenu()
@@ -203,12 +235,12 @@ class MainWindow(QMainWindow):
         # status bar
         self.statusIconLabel = ClickableLabel(self)
         self.statusIconLabel.setStyleSheet("QLabel { margin-left: 5px; }")
-        self.statusIconLabel.clicked.connect(self.showLogPage)
+        self.statusIconLabel.clicked.connect(lambda: self.setCurrentPage(self.ui.logPage))
         self.ui.statusBar.addPermanentWidget(self.statusIconLabel)
 
         self.statusTextLabel = ClickableLabel(self)
         self.statusTextLabel.setMinimumWidth(10)
-        self.statusTextLabel.clicked.connect(self.showLogPage)
+        self.statusTextLabel.clicked.connect(lambda: self.setCurrentPage(self.ui.logPage))
         self.ui.statusBar.addPermanentWidget(self.statusTextLabel)
 
         self.ui.statusBar.addPermanentWidget(QWidget(self), 1)  # spacer
@@ -225,9 +257,9 @@ class MainWindow(QMainWindow):
         self.ui.actionSaveResult.triggered.connect(self.saveResult)
         self.ui.actionSavePlottedResult.triggered.connect(lambda: self.saveResult(plotted=True))
         self.ui.actionSimulate.triggered.connect(self.startSimulation)
-        self.ui.actionSettings.triggered.connect(self.showSettingsPage)
-        self.ui.actionShowLog.triggered.connect(self.showLogPage)
-        self.ui.actionShowResults.triggered.connect(self.showResultPage)
+        self.ui.actionSettings.triggered.connect(lambda: self.setCurrentPage(self.ui.settingsPage))
+        self.ui.actionShowLog.triggered.connect(lambda: self.setCurrentPage(self.ui.logPage))
+        self.ui.actionShowResults.triggered.connect(lambda: self.setCurrentPage(self.ui.resultPage))
         self.fmiTypeComboBox.currentTextChanged.connect(self.updateSimulationSettings)
         self.ui.solverComboBox.currentTextChanged.connect(self.updateSimulationSettings)
         self.variableSelected.connect(self.updatePlotLayout)
@@ -242,11 +274,14 @@ class MainWindow(QMainWindow):
         self.ui.filterToolButton.toggled.connect(self.tableFilterModel.setFilterByCausality)
         self.log.currentMessageChanged.connect(self.setStatusMessage)
         self.ui.selectInputButton.clicked.connect(self.selectInputFile)
+        self.ui.actionShowAboutDialog.triggered.connect(self.showAboutDialog)
 
         if os.name == 'nt':
             self.ui.actionCreateDesktopShortcut.triggered.connect(self.createDesktopShortcut)
+            self.ui.actionAddFileAssociation.triggered.connect(self.addFileAssociation)
         else:
             self.ui.actionCreateDesktopShortcut.setEnabled(False)
+            self.ui.actionAddFileAssociation.setEnabled(False)
 
         self.ui.tableViewToolButton.toggled.connect(lambda show: self.ui.variablesStackedWidget.setCurrentWidget(self.ui.tablePage if show else self.ui.treePage))
 
@@ -280,6 +315,11 @@ class MainWindow(QMainWindow):
 
         self.actionExpandAll.setEnabled(currentView == self.ui.treeView)
         self.actionCollapseAll.setEnabled(currentView == self.ui.treeView)
+
+        can_copy = len(self.getSelectedVariables()) > 0
+
+        self.actionCopyVariableName.setEnabled(can_copy)
+        self.actionCopyValueReference.setEnabled(can_copy)
 
         self.contextMenu.exec_(currentView.mapToGlobal(point))
 
@@ -341,12 +381,13 @@ class MainWindow(QMainWindow):
 
         self.updateSimulationSettings()
 
-        self.ui.stackedWidget.setCurrentWidget(self.ui.settingsPage)
+        self.setCurrentPage(self.ui.settingsPage)
 
         self.ui.dockWidget.show()
 
         self.ui.actionSettings.setEnabled(True)
         self.ui.actionShowLog.setEnabled(True)
+        self.ui.actionShowResults.setEnabled(False)
 
         can_simulate = platform in platforms
 
@@ -385,14 +426,25 @@ class MainWindow(QMainWindow):
         if filename:
             self.load(filename)
 
-    def showSettingsPage(self):
-        self.ui.stackedWidget.setCurrentWidget(self.ui.settingsPage)
+    def setCurrentPage(self, widget):
+        """ Set the current page and the actions """
 
-    def showLogPage(self):
-        self.ui.stackedWidget.setCurrentWidget(self.ui.logPage)
+        # block the signals during the update
+        self.ui.actionSettings.blockSignals(True)
+        self.ui.actionShowLog.blockSignals(True)
+        self.ui.actionShowResults.blockSignals(True)
 
-    def showResultPage(self):
-        self.ui.stackedWidget.setCurrentWidget(self.ui.resultPage)
+        self.ui.stackedWidget.setCurrentWidget(widget)
+
+        # toggle the actions
+        self.ui.actionSettings.setChecked(widget == self.ui.settingsPage)
+        self.ui.actionShowLog.setChecked(widget == self.ui.logPage)
+        self.ui.actionShowResults.setChecked(widget == self.ui.resultPage)
+
+        # un-block the signals during the update
+        self.ui.actionSettings.blockSignals(False)
+        self.ui.actionShowLog.blockSignals(False)
+        self.ui.actionShowResults.blockSignals(False)
 
     def selectInputFile(self):
         start_dir = os.path.dirname(self.filename)
@@ -541,7 +593,7 @@ class MainWindow(QMainWindow):
         if self.ui.clearLogOnStartButton.isChecked():
             self.log.clear()
 
-        self.showResultPage()
+        self.setCurrentPage(self.ui.resultPage)
 
         self.simulationThread.start()
         self.plotUpdateTimer.start(100)
@@ -559,11 +611,11 @@ class MainWindow(QMainWindow):
         self.simulationProgressBar.setVisible(False)
         self.ui.actionShowResults.setEnabled(True)
         self.ui.actionSettings.setEnabled(True)
-        self.ui.stackedWidget.setCurrentWidget(self.ui.resultPage)
+        self.setCurrentPage(self.ui.resultPage)
         self.updatePlotLayout()
 
         if self.result is None:
-            self.showLogPage()
+            self.setCurrentPage(self.ui.logPage)
         else:
             self.ui.actionSaveResult.setEnabled(True)
             self.ui.actionSavePlottedResult.setEnabled(True)
@@ -726,12 +778,82 @@ class MainWindow(QMainWindow):
         shortcut.IconLocation = icon
         shortcut.save()
 
+    def showAboutDialog(self):
+        dialog = AboutDialog(self)
+        dialog.show()
+
     @staticmethod
     def removeDuplicates(seq):
         """ Remove duplicates from a sequence """
         seen = set()
         seen_add = seen.add
         return [x for x in seq if not (x in seen or seen_add(x))]
+
+    def addFileAssociation(self):
+        """ Associate *.fmu with the FMPy GUI """
+
+        try:
+            from winreg import HKEY_CURRENT_USER, KEY_WRITE, REG_SZ, OpenKey, CreateKey, SetValueEx, CloseKey
+
+            python = sys.executable
+
+            root, ext = os.path.splitext(python)
+
+            pythonw = root + 'w' + ext
+
+            if os.path.isfile(pythonw):
+                target = pythonw
+            else:
+                target = python
+
+            key_path = r'Software\Classes\fmpy.gui\shell\open\command'
+
+            CreateKey(HKEY_CURRENT_USER, key_path)
+            key = OpenKey(HKEY_CURRENT_USER, key_path, 0, KEY_WRITE)
+            SetValueEx(key, '', 0, REG_SZ, '"%s" -m fmpy.gui "%%1"' % target)
+            CloseKey(key)
+
+            key_path = r'SOFTWARE\Classes\.fmu'
+
+            CreateKey(HKEY_CURRENT_USER, key_path)
+            key = OpenKey(HKEY_CURRENT_USER, key_path, 0, KEY_WRITE)
+            SetValueEx(key, '', 0, REG_SZ, 'fmpy.gui')
+            CloseKey(key)
+
+            QMessageBox.information(self, "File association added", "The file association for *.fmu has been added")
+        except Exception as e:
+            QMessageBox.critical(self, "File association failed", "The file association for *.fmu could not be added. %s" % e)
+
+    def copyValueReference(self):
+        """ Copy the value references of the selected variables to the clipboard """
+
+        text = '\n'.join([str(v.valueReference) for v in self.getSelectedVariables()])
+        QApplication.clipboard().setText(text)
+
+    def copyVariableName(self):
+        """ Copy the names of the selected variables to the clipboard """
+
+        text = '\n'.join([str(v.name) for v in self.getSelectedVariables()])
+        QApplication.clipboard().setText(text)
+
+    def getSelectedVariables(self):
+        """ Returns a list of selected variables in the current view """
+
+        variables = []
+
+        if self.ui.variablesStackedWidget.currentWidget() == self.ui.treePage:
+            for index in self.ui.treeView.selectionModel().selectedRows():
+                sourceIndex = self.treeFilterModel.mapToSource(index)
+                treeItem = sourceIndex.internalPointer()
+                if treeItem.variable is not None:
+                    variables.append(treeItem.variable)
+        else:
+            for index in self.ui.tableView.selectionModel().selectedRows():
+                sourceIndex = self.tableFilterModel.mapToSource(index)
+                variable = sourceIndex.internalPointer()
+                variables.append(variable)
+
+        return variables
 
 
 if __name__ == '__main__':

@@ -1,5 +1,7 @@
 [![Travis CI](https://travis-ci.org/CATIA-Systems/FMPy.svg?branch=master)](https://travis-ci.org/CATIA-Systems/FMPy)
 [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/CATIA-Systems/FMPy?branch=master&svg=true)](https://ci.appveyor.com/project/TorstenSommer/fmpy)
+[![PyPI version](https://badge.fury.io/py/fmpy.svg)](https://badge.fury.io/py/fmpy)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/fmpy/badges/version.svg)](https://anaconda.org/conda-forge/fmpy)
 
 # FMPy
 
@@ -15,9 +17,9 @@ FMPy is a free Python library to simulate [Functional Mock-up Units (FMUs)](http
 
 Several options are available:
 
-- Install with conda: `conda -c conda-forge fmpy`
-- Install with from PyPI: `python -m pip install --upgrade fmpy[complete]`
-- Install the latest development version directly from GitHub: `python -m pip install --upgrade https://github.com/CATIA-Systems/FMPy/archive/develop.zip`
+- Install with conda: `conda install -c conda-forge fmpy`
+- Install with from PyPI: `python -m pip install fmpy[complete]`
+- Install the latest development version directly from GitHub: `python -m pip install https://github.com/CATIA-Systems/FMPy/archive/develop.zip`
 
 If you don't have Python on your machine you can install [Anaconda Python 3.6](https://www.anaconda.com/download/).
 

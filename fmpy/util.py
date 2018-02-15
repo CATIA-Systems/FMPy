@@ -400,12 +400,19 @@ def fmu_info(filename, causalities=['input', 'output']):
     md = read_model_description(filename, validate=False)
     platforms = supported_platforms(filename)
 
+    fmi_types = []
+    if md.modelExchange is not None:
+        fmi_types.append('Model Exchange')
+    if md.coSimulation is not None:
+        fmi_types.append('Co-Simulation')
+
     l = []
 
     l.append("")
     l.append("Model Info")
     l.append("")
     l.append("  FMI Version       %s" % md.fmiVersion)
+    l.append("  FMI Type          %s" % ', '.join(fmi_types))
     l.append("  Model Name        %s" % md.modelName)
     l.append("  Description       %s" % md.description)
     l.append("  Platforms         %s" % ', '.join(platforms))
@@ -450,20 +457,11 @@ def fmu_info(filename, causalities=['input', 'output']):
 
         start = str(v.start) if v.start is not None else ''
 
-        if v.unit:
-            unit = v.unit
-        elif v.declaredType:
-            unit = v.declaredType.unit
-        else:
-            unit = ''
+        unit = v.declaredType.unit if v.declaredType else v.unit
 
-        description = v.description if v.description else ''
+        args = ['' if s is None else str(s) for s in [v.name, v.causality, start, unit, v.description]]
 
-        l.append(v.name + ' ' * (20 - len(v.name)) +
-                 v.causality + ' ' * (10 - len(v.causality)) +
-                 ' ' * (24 - len(start)) + start +
-                 '  ' + unit + ' ' * (8 - len(unit)) +
-                 ' ' + description)
+        l.append('{:19} {:10} {:>23}  {:8} {}'.format(*args))
 
     return '\n'.join(l)
 

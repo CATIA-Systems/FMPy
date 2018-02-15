@@ -1200,7 +1200,8 @@
     <addaction name="actionCreateDesktopShortcut"/>
     <addaction name="actionAddFileAssociation"/>
     <addaction name="separator"/>
-    <addaction name="actionCheckForUpdates"/>
+    <addaction name="actionOpenWebsite"/>
+    <addaction name="actionShowReleaseNotes"/>
     <addaction name="separator"/>
     <addaction name="actionShowAboutDialog"/>
    </widget>
@@ -1643,9 +1644,9 @@ QStatusBar::item {
     <string>&amp;About FMPy</string>
    </property>
   </action>
-  <action name="actionCheckForUpdates">
+  <action name="actionOpenWebsite">
    <property name="text">
-    <string>Check for &amp;Updates</string>
+    <string>FMPy &amp;Website</string>
    </property>
   </action>
   <action name="actionAddFileAssociation">
@@ -1654,6 +1655,11 @@ QStatusBar::item {
    </property>
    <property name="toolTip">
     <string>Add file association for *.fmu</string>
+   </property>
+  </action>
+  <action name="actionShowReleaseNotes">
+   <property name="text">
+    <string>&amp;Release Notes</string>
    </property>
   </action>
  </widget>

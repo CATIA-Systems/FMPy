@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.1] (2018-02-15)
+
+## Added
+
+- About dialog in the GUI that shows version and environment info
+- Copy variable names and value references to the clipboard from the context menu
+- Navigation buttons are new toggled to indicated selected page
+
+## Fixed
+- fmu_info() now works with FMUs where not all attributes are set in the modelDescription.xml
+- Improved error message when the FMU does not support the selected FMI type
+
+
 ## [0.2.0] - 2018-01-29
 
 ### Added

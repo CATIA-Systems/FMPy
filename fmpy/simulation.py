@@ -1,7 +1,6 @@
 # noinspection PyPep8
 
 import shutil
-from fmpy.model_description import read_model_description
 from .fmi1 import *
 from .fmi1 import _FMU1
 from .fmi2 import *
@@ -349,6 +348,12 @@ def simulate_fmu(filename,
     Returns:
         result              a structured numpy array that contains the result
     """
+
+    from fmpy import supported_platforms
+    from fmpy.model_description import read_model_description
+
+    if platform not in supported_platforms(filename):
+        raise Exception("The current platform (%s) is not supported by the FMU." % platform)
 
     modelDescription = read_model_description(filename, validate=validate)
 

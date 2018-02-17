@@ -35,7 +35,7 @@ package_data = {
     'fmpy.ssp': ['schema/*.xsd'],
 }
 
-install_requires = ['lxml', 'numpy', 'pathlib', 'pypiwin32;platform_system=="Windows"']
+install_requires = ['lxml', 'numpy', 'pathlib', 'pywin32;platform_system=="Windows"']
 
 extras_require = {
     'examples': ['dask[bag]', 'requests'],

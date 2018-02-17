@@ -352,7 +352,7 @@ def simulate_fmu(filename,
     from fmpy import supported_platforms
     from fmpy.model_description import read_model_description
 
-    if platform not in supported_platforms(filename):
+    if not use_source_code and platform not in supported_platforms(filename):
         raise Exception("The current platform (%s) is not supported by the FMU." % platform)
 
     modelDescription = read_model_description(filename, validate=validate)

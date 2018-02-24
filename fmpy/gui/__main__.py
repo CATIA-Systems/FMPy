@@ -8,9 +8,9 @@ except Exception as e:
 
 import os
 
-from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QStandardPaths
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, QMenu, QMessageBox, QProgressBar, QDialog
-from PyQt5.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator
+from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QStandardPaths, QPointF
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, QMenu, QMessageBox, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, QGraphicsTextItem, QGraphicsPathItem
+from PyQt5.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QBrush, QFontMetricsF, QPolygonF, QPainterPath
 
 from fmpy.gui.generated.MainWindow import Ui_MainWindow
 import fmpy
@@ -404,6 +404,8 @@ class MainWindow(QMainWindow):
         settings.setValue('recentFiles', recent_files[:10])
 
         self.setWindowTitle("%s - FMPy" % os.path.normpath(filename))
+
+        self.createGraphics()
 
     def open(self):
 
@@ -854,6 +856,104 @@ class MainWindow(QMainWindow):
                 variables.append(variable)
 
         return variables
+
+    def createGraphics(self):
+        """ Create the graphical representation of the FMU's inputs and outputs """
+
+        def variableColor(variable):
+            if variable.type == 'Real':
+                return QColor.fromRgb(0, 0, 127)
+            elif variable.type in ['Integer', 'Enumeration']:
+                return QColor.fromRgb(255, 127, 0)
+            elif variable.type == 'Boolean':
+                return QColor.fromRgb(255, 0, 255)
+            elif variable.type == 'String':
+                return QColor.fromRgb(0, 128, 0)
+            else:
+                return QColor.fromRgb(0, 0, 0)
+
+        inputVariables = []
+        outputVariables = []
+        maxInputLabelWidth = 0
+        maxOutputLabelWidth = 0
+
+        textItem = QGraphicsTextItem()
+        fontMetrics = QFontMetricsF(textItem.font())
+
+        for variable in self.modelDescription.modelVariables:
+            if variable.causality == 'input':
+                inputVariables.append(variable)
+            elif variable.causality == 'output':
+                outputVariables.append(variable)
+
+        for variable in inputVariables:
+            maxInputLabelWidth = max(maxInputLabelWidth, fontMetrics.width(variable.name))
+
+        for variable in outputVariables:
+            maxOutputLabelWidth = max(maxOutputLabelWidth, fontMetrics.width(variable.name))
+
+        from math import floor
+
+        scene = QGraphicsScene()
+        self.ui.graphicsView.setScene(scene)
+        group = QGraphicsItemGroup()
+        scene.addItem(group)
+        group.setPos(200.5, -50.5)
+        lh = 15  # line height
+
+        w = max(150., maxInputLabelWidth + maxOutputLabelWidth + 20)
+        h = max(50., 10 + lh * max(len(inputVariables), len(outputVariables)))
+
+        block = QGraphicsRectItem(0, 0, w, h, group)
+        block.setPen(QColor.fromRgb(0, 0, 255))
+
+        pen = QPen()
+        pen.setWidthF(1)
+
+        font = QFont()
+        font.setPixelSize(10)
+
+        # inputs
+        y = floor((h - len(inputVariables) * lh) / 2 - 2)
+        for variable in inputVariables:
+            text = QGraphicsTextItem(variable.name, group)
+            text.setDefaultTextColor(QColor.fromRgb(0, 0, 255))
+            text.setFont(font)
+            text.setX(3)
+            text.setY(y)
+
+            polygon = QPolygonF([QPointF(-13.5, y + 4), QPointF(1, y + 11), QPointF(-13.5, y + 18)])
+
+            path = QPainterPath()
+            path.addPolygon(polygon)
+            path.closeSubpath()
+            contour = QGraphicsPathItem(path, group)
+            contour.setPen(QPen(Qt.NoPen))
+            contour.setBrush(variableColor(variable))
+
+            y += lh
+
+        # outputs
+        y = floor((h - len(outputVariables) * lh) / 2 - 2)
+        for variable in outputVariables:
+            text = QGraphicsTextItem(variable.name, group)
+            text.setDefaultTextColor(QColor.fromRgb(0, 0, 255))
+            text.setFont(font)
+            text.setX(w - 3 - text.boundingRect().width())
+            text.setY(y)
+
+            polygon = QPolygonF([QPointF(w, y + 0 + 7.5), QPointF(w + 7, y + 3.5 + 7.5), QPointF(w, y + 7 + 7.5)])
+
+            path = QPainterPath()
+            path.addPolygon(polygon)
+            path.closeSubpath()
+            contour = QGraphicsPathItem(path, group)
+            pen = QPen()
+            pen.setColor(variableColor(variable))
+            pen.setJoinStyle(Qt.MiterJoin)
+            contour.setPen(pen)
+
+            y += lh
 
 
 if __name__ == '__main__':

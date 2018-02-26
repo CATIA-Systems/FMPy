@@ -511,7 +511,7 @@ def compile_dll(model_description, sources_dir, compiler=None):
         source_files += model_description.coSimulation.sourceFiles
 
     if model_description.modelExchange is not None:
-        model_identifier = model_description.coSimulation.modelIdentifier
+        model_identifier = model_description.modelExchange.modelIdentifier
 
         for source_file in model_description.modelExchange.sourceFiles:
             if source_file not in source_files:

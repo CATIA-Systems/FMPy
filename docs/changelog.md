@@ -1,3 +1,8 @@
+## v0.2.4 (unreleased)
+
+- `NEW` getDirectionalDerivative()
+
+
 ## v0.2.3 (2018-04-11)
 
 - `NEW` Allow simulation of extracted FMUs and pre-loaded model descriptions
@@ -15,6 +20,7 @@
 - `FIXED` Handling of `None` in setString()
 - `FIXED` Handling of time events
 - `FIXED` Conversion of Boolean start values
+
 
 ## v0.2.2 (2018-03-13)
 

@@ -83,12 +83,13 @@ class _FMU2(_FMU):
 
         super(_FMU2, self).__init__(**kwargs)
 
-        # common FMI 2.0 functions
+        # Inquire version numbers of header files and setting logging status
         self._fmi2Function('fmi2Instantiate',
                            ['instanceName', 'fmuType', 'guid', 'resourceLocation', 'callbacks', 'visible', 'loggingOn'],
-                           [fmi2String, fmi2Type, fmi2String, fmi2String, POINTER(fmi2CallbackFunctions), fmi2Boolean,
-                            fmi2Boolean],
+                           [fmi2String, fmi2Type, fmi2String, fmi2String, POINTER(fmi2CallbackFunctions), fmi2Boolean, fmi2Boolean],
                            fmi2Component)
+
+        self._fmi2Function('fmi2FreeInstance', ['component'], [fmi2Component], None)
 
         # Enter and exit initialization mode, terminate and reset
         self._fmi2Function('fmi2SetupExperiment',
@@ -146,13 +147,32 @@ class _FMU2(_FMU):
                            fmi2Status)
 
         # Getting and setting the internal FMU state
-        self._fmi2Function('fmi2GetFMUstate', ['component', 'state'], [fmi2Component, POINTER(fmi2FMUstate)], fmi2Status)
+        self._fmi2Function('fmi2GetFMUstate', ['component', 'FMUstate'],
+                           [fmi2Component, POINTER(fmi2FMUstate)],
+                           fmi2Status)
 
-        self._fmi2Function('fmi2SetFMUstate', ['component', 'state'], [fmi2Component, fmi2FMUstate], fmi2Status)
+        self._fmi2Function('fmi2SetFMUstate', ['component', 'FMUstate'],
+                           [fmi2Component, fmi2FMUstate],
+                           fmi2Status)
 
-        self._fmi2Function('fmi2FreeFMUstate', ['component', 'state'], [fmi2Component, POINTER(fmi2FMUstate)], fmi2Status)
+        self._fmi2Function('fmi2FreeFMUstate', ['component', 'FMUstate'],
+                           [fmi2Component, POINTER(fmi2FMUstate)],
+                           fmi2Status)
 
-        self._fmi2Function('fmi2FreeInstance', ['component'], [fmi2Component], None)
+        self._fmi2Function('fmi2SerializedFMUstateSize',
+                           ['component', 'FMUstate', 'size'],
+                           [fmi2Component, fmi2FMUstate, POINTER(c_size_t)],
+                           fmi2Status)
+
+        self._fmi2Function('fmi2SerializeFMUstate',
+                           ['component', 'FMUstate', 'serializedState', 'size'],
+                           [fmi2Component, fmi2FMUstate, POINTER(fmi2Byte), c_size_t],
+                           fmi2Status)
+
+        self._fmi2Function('fmi2DeSerializeFMUstate',
+                           ['component', 'FMUstate', 'serializedState', 'size'],
+                           [fmi2Component, POINTER(fmi2Byte), c_size_t, POINTER(fmi2FMUstate)],
+                           fmi2Status)
 
     def _fmi2Function(self, fname, argnames, argtypes, restype):
 
@@ -275,6 +295,7 @@ class _FMU2(_FMU):
         value = (fmi2String * len(vr))(*value)
         self.fmi2SetString(self.component, vr, len(vr), value)
 
+    # Getting and setting the internal FMU state
     def getFMUstate(self):
         state = fmi2FMUstate()
         self.fmi2GetFMUstate(self.component, byref(state))
@@ -289,6 +310,33 @@ class _FMU2(_FMU):
     def freeInstance(self):
         self.fmi2FreeInstance(self.component)
         self.freeLibrary()
+
+    def serializeFMUstate(self, state):
+        """ Serialize an FMU state
+
+        Parameters:
+            state   the FMU state
+
+        Returns:
+            the serialized state as a byte string
+        """
+
+        size = c_size_t()
+        self.fmi2SerializedFMUstateSize(self.component, state, byref(size))
+        serializedState = create_string_buffer(size.value)
+        self.fmi2SerializeFMUstate(self.component, state, serializedState, size)
+        return serializedState.raw
+
+    def deSerializeFMUstate(self, serializedState, state):
+        """ De-serialize an FMU state
+
+        Parameters:
+            serializedState   the serialized state as a byte string
+            state             the FMU state
+        """
+
+        buffer = create_string_buffer(serializedState)
+        self.fmi2DeSerializeFMUstate(self.component, buffer, len(buffer), byref(state))
 
 
 class FMU2Model(_FMU2):

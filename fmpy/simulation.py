@@ -507,6 +507,9 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
                         variableNames=output,
                         interval=output_interval)
 
+    # record the values for time == start_time
+    recorder.sample(time)
+
     # simulation loop
     while time < stop_time:
 

@@ -43,14 +43,14 @@ class ExamplesTest(unittest.TestCase):
 
                     if result is not None:  # sometimes the download fails...
 
-                        # check if the start value has been set
                         freqHz = result['CoupledClutches1_freqHz']
-                        self.assertTrue(np.all(freqHz == 0.4))
+                        self.assertTrue(np.all(freqHz == 0.4), "Start value has not been applied")
 
-                        # check if the input has been set
                         inputs = result['inputs']
-                        self.assertAlmostEqual(inputs[0], 0)
-                        self.assertAlmostEqual(inputs[-1], 1)
+                        self.assertAlmostEqual(inputs[0], 0, "Input has not been applied")
+                        self.assertAlmostEqual(inputs[-1], 1, "Input has not been applied")
+
+                        self.assertEqual(0.0, result['time'][0], msg="Result must start at start_time (= 0.0)")
 
     def test_custom_input_example(self):
         end_time = simulate_custom_input(show_plot=False)

@@ -62,6 +62,7 @@ class Recorder(object):
         self.cols += zip(boolean_names, [np.bool_] * len(boolean_names))
 
     def sample(self, time, force=False):
+        """ Record the variables """
 
         if not force and self.interval is not None and len(self.rows) > 0:
             last = self.rows[-1][0]
@@ -82,7 +83,17 @@ class Recorder(object):
         self.rows.append(tuple(row))
 
     def result(self):
+        """ Return a structured NumPy array with the recorded results """
+
         return np.array(self.rows, dtype=np.dtype(self.cols))
+
+    @property
+    def lastSampleTime(self):
+        """ Return the last sample time """
+
+        if len(self.rows) > 0:
+            return self.rows[-1][0]
+        raise Exception("No samples available")
 
 
 class Input(object):
@@ -315,6 +326,7 @@ def simulate_fmu(filename,
                  step_size=None,
                  relative_tolerance=None,
                  output_interval=None,
+                 record_events=True,
                  fmi_type=None,
                  use_source_code=False,
                  start_values={},
@@ -335,6 +347,7 @@ def simulate_fmu(filename,
         step_size           step size for the 'Euler' solver
         relative_tolerance  relative tolerance for the 'CVode' solver
         output_interval     interval for sampling the output
+        record_events       whether outputs should be sampled at events (model exchange only)
         fmi_type            FMI type for the simulation (None: determine from FMU)
         use_source_code     compile the shared library (requires C sources)
         start_values        dictionary of variable name -> value pairs
@@ -426,7 +439,7 @@ def simulate_fmu(filename,
     # simulate_fmu the FMU
     if fmi_type == 'ModelExchange' and modelDescription.modelExchange is not None:
         fmu_args['modelIdentifier'] = modelDescription.modelExchange.modelIdentifier
-        result = simulateME(modelDescription, fmu_args, start_time, stop_time, solver, step_size, relative_tolerance, start_values, input, output, output_interval, timeout, callbacks, step_finished)
+        result = simulateME(modelDescription, fmu_args, start_time, stop_time, solver, step_size, relative_tolerance, start_values, input, output, output_interval, record_events, timeout, callbacks, step_finished)
     elif fmi_type == 'CoSimulation' and modelDescription.coSimulation is not None:
         fmu_args['modelIdentifier'] = modelDescription.coSimulation.modelIdentifier
         result = simulateCS(modelDescription, fmu_args, start_time, stop_time, start_values, input, output, output_interval, timeout, callbacks, step_finished)
@@ -439,7 +452,7 @@ def simulate_fmu(filename,
     return result
 
 
-def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name, step_size, relative_tolerance, start_values, input_signals, output, output_interval, timeout, callbacks, step_finished):
+def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name, step_size, relative_tolerance, start_values, input_signals, output, output_interval, record_events, timeout, callbacks, step_finished):
 
     sim_start = current_time()
 
@@ -510,6 +523,9 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
     # record the values for time == start_time
     recorder.sample(time)
 
+    tNext = start_time
+    last_output = start_time
+
     # simulation loop
     while time < stop_time:
 
@@ -518,14 +534,15 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
 
         input.apply(time)
 
-        tNext = min(time + step_size, stop_time)
+        if time >= tNext:
+            tNext = min(time + step_size, stop_time)
 
         if is_fmi1:
             timeEvent = fmu.eventInfo.upcomingTimeEvent != fmi1False and fmu.eventInfo.nextEventTime <= time
         else:
             timeEvent = fmu.eventInfo.nextEventTimeDefined != fmi2False and fmu.eventInfo.nextEventTime <= time
 
-        if timeEvent:
+        if timeEvent and not isinstance(solver, ForwardEuler):
             tNext = fmu.eventInfo.nextEventTime
 
         if tNext - time > 1e-13:
@@ -545,11 +562,12 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
             stepEvent, terminateSimulation = fmu.completedIntegratorStep()
             stepEvent = stepEvent != fmi2False
 
-        # record the values for this step
-        recorder.sample(time)
-
         # handle events
         if timeEvent or stateEvent or stepEvent:
+
+            if record_events:
+                # record the values before the event
+                recorder.sample(time, force=True)
 
             if is_fmi1:
                 fmu.eventUpdate()
@@ -567,8 +585,17 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
                 fmu.enterContinuousTimeMode()
 
             solver.reset(time)
-            # record values after the event
-            recorder.sample(time)
+
+            if record_events:
+                # record values after the event
+                recorder.sample(time, force=True)
+
+        #if time == tNext and (recorder.lastSampleTime + output_interval) <= time != recorder.lastSampleTime:
+        if time >= last_output + output_interval:
+        #if time - (last_output + output_interval) > 1e-13:
+            # record values for this step
+            recorder.sample(time, force=True)
+            last_output += output_interval
 
         if step_finished is not None and not step_finished(time, recorder):
             break

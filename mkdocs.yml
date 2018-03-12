@@ -1,0 +1,9 @@
+site_name: FMPy
+pages:
+    - Home: index.md
+    - Installation: install.md
+    - Tutorial: tutorial.md
+    - Changelog: changelog.md
+    - Hacking: hacking.md
+    - Contributing: contributing.md
+theme: readthedocs

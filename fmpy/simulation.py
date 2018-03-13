@@ -1,7 +1,6 @@
 # noinspection PyPep8
 
 import shutil
-from fmpy.model_description import read_model_description
 from .fmi1 import *
 from .fmi1 import _FMU1
 from .fmi2 import *
@@ -350,6 +349,12 @@ def simulate_fmu(filename,
         result              a structured numpy array that contains the result
     """
 
+    from fmpy import supported_platforms
+    from fmpy.model_description import read_model_description
+
+    if not use_source_code and platform not in supported_platforms(filename):
+        raise Exception("The current platform (%s) is not supported by the FMU." % platform)
+
     modelDescription = read_model_description(filename, validate=validate)
 
     if fmi_type is None:
@@ -501,6 +506,9 @@ def simulateME(modelDescription, fmu_kwargs, start_time, stop_time, solver_name,
                         modelDescription=modelDescription,
                         variableNames=output,
                         interval=output_interval)
+
+    # record the values for time == start_time
+    recorder.sample(time)
 
     # simulation loop
     while time < stop_time:

@@ -1,3 +1,14 @@
+## v0.2.2 (2018-03-13)
+
+- `NEW` FMI 2.0 state serialization functions added
+- `NEW` Graphical representation of the FMU's inputs and outputs added to settings page
+- `NEW` Platform check when simulating FMUs
+- `NEW` MkDocs documentation added
+- `FIXED` Record values at time == start_time when simulating model exchange FMUs
+- `FIXED` Correct source files are now used when compiling model exchange FMUs
+- `CHANGED` Required dependency on pypiwin32 changed to pywin32
+
+
 ## v0.2.1 (2018-02-15)
 
 - `NEW` About dialog in the GUI that shows version and environment info

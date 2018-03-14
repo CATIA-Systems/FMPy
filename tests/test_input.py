@@ -1,5 +1,6 @@
 import unittest
 import numpy as np
+import sys
 
 from fmpy.simulation import Input
 
@@ -30,6 +31,21 @@ class InputTest(unittest.TestCase):
         v1, v2 = Input.interpolate(4, t, y)
         self.assertEqual(v1, 3)
         self.assertEqual(v2, 3)
+
+    def test_event_detection(self):
+
+        # time grid with events at 0.5 and 0.8
+        t = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 0.6, 0.7, 0.8, 0.8, 0.8, 0.9, 1.0])
+
+        fmx = sys.float_info.max
+
+        self.assertEqual(0.5, Input.nextEvent(0.0, t), "Expecting first event before first sample")
+        self.assertEqual(0.5, Input.nextEvent(0.2, t), "Expecting first event before first event")
+        self.assertEqual(0.8, Input.nextEvent(0.5, t), "Expecting second event at first event")
+        self.assertEqual(0.8, Input.nextEvent(0.6, t), "Expecting second event between first and second event")
+        self.assertEqual(fmx, Input.nextEvent(0.8, t), "Expecting no more events after second (multi) event")
+        self.assertEqual(fmx, Input.nextEvent(1.0, t), "Expecting no more events after last event")
+        self.assertEqual(fmx, Input.nextEvent(2.0, t), "Expecting no more events after last sample")
 
     def test_input_discrete(self):
 

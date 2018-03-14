@@ -181,7 +181,7 @@ def validate_result(result, reference, stop_time=None):
     return rel_out
 
 
-def plot_result(result, reference=None, names=None, filename=None, window_title=None):
+def plot_result(result, reference=None, names=None, filename=None, window_title=None, events=False):
     """ Plot a collection of time series.
 
     Parameters:
@@ -190,6 +190,7 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
         names:        variables to plot
         filename:     when provided the plot is saved as `filename` instead of showing the figure
         window_title: title for the figure window
+        events:       draw vertical lines at events
     """
 
     import matplotlib.pylab as pylab
@@ -225,6 +226,9 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
         if not isinstance(axes, Iterable):
             axes = [axes]
 
+        if events:
+            t_event = time[np.argwhere(np.diff(time) == 0)]
+
         for ax, name in zip(axes, names):
 
             y = result[name]
@@ -232,6 +236,10 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
             ax.grid(b=True, which='both', color='0.8', linestyle='-', zorder=0)
 
             ax.tick_params(direction='in')
+
+            if events:
+                for t in t_event:
+                    ax.axvline(x=t, color='y', linewidth=1)
 
             if reference is not None and name in reference.dtype.names:
                 t_ref = reference[reference.dtype.names[0]]
@@ -628,3 +636,26 @@ def compile_platform_binary(filename, output_filename=None):
     # clean up
     rmtree(unzipdir)
     rmtree(unzipdir2)
+
+
+def auto_interval(t):
+    """ Find a nice interval that divides t into 500 - 1000 steps """
+
+    h = 10 ** (np.round(np.log10(t)) - 3)
+
+    n_samples = t / h
+
+    if n_samples >= 2500:
+        h *= 5
+    elif n_samples >= 2000:
+        h *= 4
+    elif n_samples >= 1000:
+        h *= 2
+    elif n_samples <= 200:
+        h /= 5
+    elif n_samples <= 250:
+        h /= 4
+    elif n_samples <= 500:
+        h /= 2
+
+    return h

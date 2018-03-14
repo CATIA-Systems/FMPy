@@ -2,6 +2,7 @@
 [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/CATIA-Systems/FMPy?branch=master&svg=true)](https://ci.appveyor.com/project/TorstenSommer/fmpy)
 [![PyPI version](https://badge.fury.io/py/fmpy.svg)](https://badge.fury.io/py/fmpy)
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/fmpy/badges/version.svg)](https://anaconda.org/conda-forge/fmpy)
+[![Documentation Status](https://readthedocs.org/projects/fmpy/badge/?version=latest)](http://fmpy.readthedocs.io/en/latest/?badge=latest)
 
 # FMPy
 

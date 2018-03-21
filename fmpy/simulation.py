@@ -335,11 +335,12 @@ def simulate_fmu(filename,
                  timeout=None,
                  fmi_logging=False,
                  logger=None,
-                 step_finished=None):
+                 step_finished=None,
+                 model_description=None):
     """ Simulate an FMU
 
     Parameters:
-        filename            filename of the FMU
+        filename            filename of the FMU or directory with extracted FMU
         validate            validate the FMU
         start_time          simulation start time (None: use default experiment or 0 if not defined)
         stop_time           simulation stop time (None: use default experiment or start_time + 1 if not defined)
@@ -357,6 +358,7 @@ def simulate_fmu(filename,
         fmi_logging         whether to log FMI calls
         logger              callback function passed to the FMU (experimental)
         step_finished       callback to interact with the simulation (experimental)
+        model_description   the previously loaded model description (experimental)
 
     Returns:
         result              a structured numpy array that contains the result
@@ -368,7 +370,10 @@ def simulate_fmu(filename,
     if not use_source_code and platform not in supported_platforms(filename):
         raise Exception("The current platform (%s) is not supported by the FMU." % platform)
 
-    modelDescription = read_model_description(filename, validate=validate)
+    if model_description is None:
+        modelDescription = read_model_description(filename, validate=validate)
+    else:
+        modelDescription = model_description
 
     if fmi_type is None:
         # determine the FMI type automatically
@@ -401,8 +406,12 @@ def simulate_fmu(filename,
         total_time = stop_time - start_time
         step_size = 10 ** (np.round(np.log10(total_time)) - 3)
 
-    # extract the FMU
-    unzipdir = extract(filename)
+    if os.path.isfile(os.path.join(filename, 'modelDescription.xml')):
+        unzipdir = filename
+        tempdir = None
+    else:
+        tempdir = extract(filename)
+        unzipdir = tempdir
 
     # common FMU constructor arguments
     fmu_args = {'guid': modelDescription.guid,
@@ -447,7 +456,8 @@ def simulate_fmu(filename,
         raise Exception('FMI type "%s" is not supported by the FMU' % fmi_type)
 
     # clean up
-    shutil.rmtree(unzipdir)
+    if tempdir is not None:
+        shutil.rmtree(tempdir)
 
     return result
 

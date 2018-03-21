@@ -1,3 +1,7 @@
+## unreleased
+
+- `NEW` Allow simulation of extracted FMUs and pre-loaded model descriptions
+
 ## v0.2.2 (2018-03-13)
 
 - `NEW` FMI 2.0 state serialization functions added

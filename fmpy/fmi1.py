@@ -98,7 +98,7 @@ def stepFinished(componentEnvironment, status):
 class _FMU(object):
     """ Base class for all FMUs """
 
-    def __init__(self, guid, modelIdentifier, unzipDirectory, instanceName, libraryPath=None, logFMICalls=False):
+    def __init__(self, guid, modelIdentifier, unzipDirectory, instanceName=None, libraryPath=None, logFMICalls=False):
         """
         Parameters:
             guid             the GUI from the modelDescription.xml
@@ -490,7 +490,7 @@ class FMU1Model(_FMU1):
 
         if functions is None:
             functions = fmi1CallbackFunctions()
-            functions.logger = fmi1CallbackLoggerTYPE(logger)
+            functions.logger = fmi1CallbackLoggerTYPE(printLogMessage)
             functions.allocateMemory = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
             functions.freeMemory = fmi1CallbackFreeMemoryTYPE(freeMemory)
             functions.stepFinished = None

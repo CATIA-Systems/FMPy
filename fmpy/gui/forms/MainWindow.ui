@@ -1192,6 +1192,12 @@
     <addaction name="actionOpen"/>
     <addaction name="actionNewWindow"/>
     <addaction name="separator"/>
+    <addaction name="actionLoadStartValues"/>
+    <addaction name="separator"/>
+    <addaction name="actionReload"/>
+    <addaction name="separator"/>
+    <addaction name="actionSaveChanges"/>
+    <addaction name="separator"/>
     <addaction name="actionSaveResult"/>
     <addaction name="actionSavePlottedResult"/>
     <addaction name="separator"/>
@@ -1678,6 +1684,24 @@ QStatusBar::item {
   <action name="actionShowReleaseNotes">
    <property name="text">
     <string>&amp;Release Notes</string>
+   </property>
+  </action>
+  <action name="actionReload">
+   <property name="text">
+    <string>&amp;Reload</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
+  </action>
+  <action name="actionSaveChanges">
+   <property name="text">
+    <string>Save Changes</string>
+   </property>
+  </action>
+  <action name="actionLoadStartValues">
+   <property name="text">
+    <string>Load Start Values</string>
    </property>
   </action>
  </widget>

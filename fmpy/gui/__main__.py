@@ -205,6 +205,8 @@ class MainWindow(QMainWindow):
         self.actionCopyVariableName = self.contextMenu.addAction("Copy Variable Name", self.copyVariableName)
         self.actionCopyValueReference = self.contextMenu.addAction("Copy Value Reference", self.copyValueReference)
         self.contextMenu.addSeparator()
+        self.actionEditTable = self.contextMenu.addAction("Edit Table", self.editTable)
+        self.contextMenu.addSeparator()
         self.columnsMenu = self.contextMenu.addMenu('Columns')
         for column in ['Value Reference', 'Initial', 'Causality', 'Variability']:
             action = self.columnsMenu.addAction(column)
@@ -213,6 +215,9 @@ class MainWindow(QMainWindow):
 
         # file menu
         self.ui.actionExit.triggered.connect(QApplication.closeAllWindows)
+        self.ui.actionLoadStartValues.triggered.connect(self.loadStartValues)
+        self.ui.actionReload.triggered.connect(lambda: self.load(self.filename))
+        self.ui.actionSaveChanges.triggered.connect(self.saveChanges)
 
         # help menu
         self.ui.actionOpenFMI1SpecCS.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://svn.modelica.org/fmi/branches/public/specifications/v1.0/FMI_for_CoSimulation_v1.0.1.pdf')))
@@ -308,6 +313,8 @@ class MainWindow(QMainWindow):
     def showContextMenu(self, point):
         """ Update and show the variables context menu """
 
+        from .TableDialog import TableDialog
+
         if self.ui.variablesStackedWidget.currentWidget() == self.ui.treePage:
             currentView = self.ui.treeView
         else:
@@ -316,7 +323,11 @@ class MainWindow(QMainWindow):
         self.actionExpandAll.setEnabled(currentView == self.ui.treeView)
         self.actionCollapseAll.setEnabled(currentView == self.ui.treeView)
 
-        can_copy = len(self.getSelectedVariables()) > 0
+        selected = self.getSelectedVariables()
+
+        self.actionEditTable.setEnabled(len(selected) == 1 and TableDialog.canEdit(selected[0]))
+
+        can_copy = len(selected) > 0
 
         self.actionCopyVariableName.setEnabled(can_copy)
         self.actionCopyValueReference.setEnabled(can_copy)
@@ -330,8 +341,8 @@ class MainWindow(QMainWindow):
 
         try:
             self.modelDescription = md = read_model_description(filename)
-        except:
-            QMessageBox.warning(self, "Failed to load FMU", "Failed to load %s" % filename)
+        except Exception as e:
+            QMessageBox.warning(self, "Failed to load FMU", "Failed to load %s. %s" % (filename, e))
             return
 
         self.filename = filename
@@ -339,6 +350,7 @@ class MainWindow(QMainWindow):
 
         self.variables.clear()
         self.selectedVariables.clear()
+        self.startValues.clear()
 
         for v in md.modelVariables:
             self.variables[v.name] = v
@@ -954,6 +966,45 @@ class MainWindow(QMainWindow):
             contour.setPen(pen)
 
             y += lh
+
+    def saveChanges(self):
+
+        from ..util import change_fmu
+
+        output_file, _ = QFileDialog.getSaveFileName(parent=self,
+                                                     caption='Save Changed FMU',
+                                                     directory=self.filename,
+                                                     filter='FMUs (*.fmu)')
+
+        if output_file:
+            change_fmu(input_file=self.filename, output_file=output_file, start_values=self.startValues)
+
+    def loadStartValues(self):
+        from ..util import get_start_values
+
+        start_values = get_start_values(self.filename)
+
+        self.startValues.update(start_values)
+
+        self.ui.treeView.reset()
+        self.ui.tableView.reset()
+
+    def editTable(self):
+        """ Open the table dialog """
+
+        from .TableDialog import TableDialog
+
+        variables = self.getSelectedVariables()
+
+        if len(variables) == 1:
+            start_values = self.startValues.copy()
+            dialog = TableDialog(modelVariables=self.modelDescription.modelVariables,
+                                 variable=variables[0],
+                                 startValues=start_values)
+
+            if dialog.exec_() == QDialog.Accepted:
+                self.startValues.clear()
+                self.startValues.update(start_values)
 
 
 if __name__ == '__main__':

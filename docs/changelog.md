@@ -7,6 +7,10 @@
 - `NEW` Table editor for 1-d and 2-d array variables
 - 'FIXED' Logger callback for FMI 1.0
 - `FIXED` Handling of `None` in setString()
+- `NEW` Handle events in input signals
+- `FIXED` Handling of time events
+- `NEW` Plot events
+- `NEW` Regular time grid for model-exchange results
 
 ## v0.2.2 (2018-03-13)
 

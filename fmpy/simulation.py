@@ -170,7 +170,7 @@ class Input(object):
     def apply(self, time, continuous=True, discrete=True, after_event=False):
 
         if self.signals is None:
-            return
+            return sys.float_info.max
 
         t = self.signals['time']
 

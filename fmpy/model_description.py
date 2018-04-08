@@ -196,7 +196,7 @@ def read_model_description(filename, validate=True):
     """ Read the model description from an FMU without extracting it
 
     Parameters:
-        filename   filename of the FMU
+        filename   filename of the FMU or directory with extracted FMU
         validate   whether the model description should be validated
 
     returns:
@@ -207,9 +207,14 @@ def read_model_description(filename, validate=True):
     from lxml import etree
     import os
 
-    with zipfile.ZipFile(filename, 'r') as zf:
-        xml = zf.open('modelDescription.xml')
-        tree = etree.parse(xml)
+    xml_file = os.path.join(filename, 'modelDescription.xml')
+
+    if os.path.isfile(xml_file):
+        tree = etree.parse(xml_file)
+    else:
+        with zipfile.ZipFile(filename, 'r') as zf:
+            xml = zf.open('modelDescription.xml')
+            tree = etree.parse(xml)
 
     root = tree.getroot()
 

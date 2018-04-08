@@ -291,7 +291,7 @@ class _FMU2(_FMU):
 
     def setString(self, vr, value):
         vr = (fmi2ValueReference * len(vr))(*vr)
-        value = map(lambda s: s.encode('utf-8'), value)
+        value = map(lambda s: s.encode('utf-8') if s is not None else s, value)
         value = (fmi2String * len(vr))(*value)
         self.fmi2SetString(self.component, vr, len(vr), value)
 

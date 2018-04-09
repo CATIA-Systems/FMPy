@@ -252,39 +252,47 @@ class Input(object):
         return v
 
 
-def apply_start_values(fmu, modelDescription, start_values):
+def apply_start_values(fmu, model_description, start_values, apply_default_start_values=False):
     """ Set start values to an FMU instance
 
     Parameters:
-        fmu               the FMU instance
-        modelDescription  the ModelDescription instance
-        start_values      dictionary of variable_name -> value pairs
+        fmu                     the FMU instance
+        model_description       the ModelDescription instance
+        start_values            dictionary of variable_name -> start_value pairs
+        apply_default_values    apply the start values from the model description
     """
 
-    variables = {}
+    start_values = start_values.copy()
 
-    for v in modelDescription.modelVariables:
-        variables[v.name] = v
+    for variable in model_description.modelVariables:
 
-    for name, value in start_values.items():
+        if variable.name in start_values:
+            value = start_values.pop(variable.name)
+        elif apply_default_start_values and variable.start is not None:
+            value = variable.start
+        else:
+            continue
 
-        if name not in variables:
-            raise Exception("The variable '%s' could not be set because it does not exist in the FMU." % name)
+        vr = variable.valueReference
 
-        v = variables[name]
-        vr = v.valueReference
-
-        if v.type == 'Real':
-            value = float(value)
-            fmu.setReal([vr], [value])
-        elif v.type in ['Integer', 'Enumeration']:
-            value = int(value)
-            fmu.setInteger([vr], [value])
-        elif v.type == 'Boolean':
-            value = bool(value)
-            fmu.setBoolean([vr], [value])
-        elif v.type == 'String':
+        if variable.type == 'Real':
+            fmu.setReal([vr], [float(value)])
+        elif variable.type in ['Integer', 'Enumeration']:
+            fmu.setInteger([vr], [int(value)])
+        elif variable.type == 'Boolean':
+            if isinstance(value, str):
+                if value.lower() not in ['true', 'false']:
+                    raise Exception('The start value "%s" for variable "%s" could not be converted to Boolean' %
+                                    (value, variable.name))
+                else:
+                    value = value.lower() == 'true'
+            fmu.setBoolean([vr], [bool(value)])
+        elif variable.type == 'String':
             fmu.setString([vr], [value])
+
+    if len(start_values) > 0:
+        raise Exception("The start values for the following variables could not be set because they don't exist: " +
+                        ', '.join(start_values.keys()))
 
 
 class ForwardEuler(object):
@@ -345,6 +353,7 @@ def simulate_fmu(filename,
                  fmi_type=None,
                  use_source_code=False,
                  start_values={},
+                 apply_default_start_values=False,
                  input=None,
                  output=None,
                  timeout=None,
@@ -367,6 +376,7 @@ def simulate_fmu(filename,
         fmi_type            FMI type for the simulation (None: determine from FMU)
         use_source_code     compile the shared library (requires C sources)
         start_values        dictionary of variable name -> value pairs
+        apply_start_values  explicitly apply the start values from the model description
         input               a structured numpy array that contains the input
         output              list of variables to record (None: record outputs)
         timeout             timeout for the simulation
@@ -460,10 +470,10 @@ def simulate_fmu(filename,
     # simulate_fmu the FMU
     if fmi_type == 'ModelExchange' and model_description.modelExchange is not None:
         fmu_args['modelIdentifier'] = model_description.modelExchange.modelIdentifier
-        result = simulateME(model_description, fmu_args, start_time, stop_time, solver, step_size, relative_tolerance, start_values, input, output, output_interval, record_events, timeout, callbacks, step_finished)
+        result = simulateME(model_description, fmu_args, start_time, stop_time, solver, step_size, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, record_events, timeout, callbacks, step_finished)
     elif fmi_type == 'CoSimulation' and model_description.coSimulation is not None:
         fmu_args['modelIdentifier'] = model_description.coSimulation.modelIdentifier
-        result = simulateCS(model_description, fmu_args, start_time, stop_time, start_values, input, output, output_interval, timeout, callbacks, step_finished)
+        result = simulateCS(model_description, fmu_args, start_time, stop_time, start_values, apply_default_start_values, input, output, output_interval, timeout, callbacks, step_finished)
     else:
         raise Exception('FMI type "%s" is not supported by the FMU' % fmi_type)
 
@@ -474,7 +484,7 @@ def simulate_fmu(filename,
     return result
 
 
-def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name, step_size, relative_tolerance, start_values, input_signals, output, output_interval, record_events, timeout, callbacks, step_finished):
+def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name, step_size, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, record_events, timeout, callbacks, step_finished):
 
     if output_interval is None:
         if step_size is None:
@@ -512,7 +522,7 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
         fmu.setupExperiment(startTime=start_time)
 
     # set the start values
-    apply_start_values(fmu, model_description, start_values)
+    apply_start_values(fmu, model_description, start_values, apply_default_start_values)
 
     input = Input(fmu, model_description, input_signals)
     input.apply(time)
@@ -665,7 +675,7 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
     return recorder.result()
 
 
-def simulateCS(model_description, fmu_kwargs, start_time, stop_time, start_values, input_signals, output, output_interval, timeout, callbacks, step_finished):
+def simulateCS(model_description, fmu_kwargs, start_time, stop_time, start_values, apply_default_start_values, input_signals, output, output_interval, timeout, callbacks, step_finished):
 
     if output_interval is None:
         output_interval = auto_interval(stop_time - start_time)
@@ -675,13 +685,13 @@ def simulateCS(model_description, fmu_kwargs, start_time, stop_time, start_value
     if model_description.fmiVersion == '1.0':
         fmu = FMU1Slave(**fmu_kwargs)
         fmu.instantiate("instance1", functions=callbacks)
-        apply_start_values(fmu, model_description, start_values)
+        apply_start_values(fmu, model_description, start_values, apply_default_start_values)
         fmu.initialize()
     else:
         fmu = FMU2Slave(**fmu_kwargs)
         fmu.instantiate(callbacks=callbacks)
         fmu.setupExperiment(tolerance=None, startTime=start_time)
-        apply_start_values(fmu, model_description, start_values)
+        apply_start_values(fmu, model_description, start_values, apply_default_start_values)
         fmu.enterInitializationMode()
         fmu.exitInitializationMode()
 

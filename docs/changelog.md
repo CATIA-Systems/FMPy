@@ -11,6 +11,8 @@
 - `FIXED` Handling of time events
 - `NEW` Plot events
 - `NEW` Regular time grid for model-exchange results
+- `NEW` Optionally apply start values in the model description
+- `FIXED` Conversion of Boolean start values
 
 ## v0.2.2 (2018-03-13)
 

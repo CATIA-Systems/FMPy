@@ -41,6 +41,7 @@ def main():
     parser.add_argument('--timeout', type=float, help="max. time to wait for the simulation to finish")
     parser.add_argument('--fmi-logging', action='store_true', help="enable FMI logging")
     parser.add_argument('--start-values', nargs='+', help="name-value pairs of start values")
+    parser.add_argument('--apply-default-start-values', action='store_true', help="apply the default values from the model description")
 
     args = parser.parse_args()
 
@@ -77,6 +78,7 @@ def main():
                               output_interval=None,
                               fmi_type=None,
                               start_values=start_values,
+                              apply_default_start_values=args.apply_default_start_values,
                               input=input,
                               output=args.output_variables,
                               timeout=args.timeout,

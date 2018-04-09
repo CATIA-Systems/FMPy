@@ -578,7 +578,6 @@ class MainWindow(QMainWindow):
         else:
             input = None
 
-
         output = []
         for variable in self.modelDescription.modelVariables:
             output.append(variable.name)
@@ -590,6 +589,7 @@ class MainWindow(QMainWindow):
                                                  relativeTolerance=relative_tolerance,
                                                  outputInterval=output_interval,
                                                  startValues=self.startValues,
+                                                 applyDefaultStartValues=self.ui.applyDefaultStartValuesCheckBox.isChecked(),
                                                  input=input,
                                                  output=output)
 

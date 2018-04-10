@@ -1,3 +1,4 @@
+from __future__ import print_function
 from fmpy import simulate_fmu
 from fmpy.util import download_test_file
 import numpy as np
@@ -21,6 +22,7 @@ def simulate_coupled_clutches(fmi_version='2.0',
     print("Simulating CoupledClutches.fmu (FMI %s, %s, %s)..." % (fmi_version, fmi_type, solver))
     result = simulate_fmu(
         filename='CoupledClutches.fmu',
+        validate=False,
         start_time=0,
         stop_time=1.5,
         solver=solver,
@@ -30,8 +32,7 @@ def simulate_coupled_clutches(fmi_version='2.0',
         start_values={'CoupledClutches1_freqHz': 0.4},
         input=input,
         output=output,
-        validate=False,
-        fmi_logging=fmi_logging)
+        fmi_call_logger=lambda s: print('[FMI] ' + s) if fmi_logging else None)
 
     if show_plot:
         print("Plotting results...")

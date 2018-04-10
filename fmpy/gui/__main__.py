@@ -19,7 +19,7 @@ from fmpy.model_description import ScalarVariable
 
 
 from .model import VariablesTableModel, VariablesTreeModel, VariablesModel, VariablesFilterModel
-from .log import Log
+from .log import Log, LogMessagesFilterProxyModel
 
 QCoreApplication.setApplicationVersion(fmpy.__version__)
 QCoreApplication.setOrganizationName("CATIA-Systems")
@@ -192,8 +192,23 @@ class MainWindow(QMainWindow):
 
         # log page
         self.log = Log(self)
-        self.ui.logTreeView.setModel(self.log)
+        self.logFilterModel = LogMessagesFilterProxyModel(self)
+        self.logFilterModel.setSourceModel(self.log)
+        self.logFilterModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self.ui.logTreeView.setModel(self.logFilterModel)
         self.ui.clearLogButton.clicked.connect(self.log.clear)
+
+        self.log.numberOfDebugMessagesChanged.connect(lambda n: self.ui.showDebugMessagesButton.setText(str(n)))
+        self.log.numberOfInfoMessagesChanged.connect(lambda n: self.ui.showInfoMessagesButton.setText(str(n)))
+        self.log.numberOfWarningMessagesChanged.connect(lambda n: self.ui.showWarningMessagesButton.setText(str(n)))
+        self.log.numberOfErrorMessagesChanged.connect(lambda n: self.ui.showErrorMessagesButton.setText(str(n)))
+
+        self.ui.logFilterLineEdit.textChanged.connect(self.logFilterModel.setFilterFixedString)
+
+        self.ui.showDebugMessagesButton.toggled.connect(self.logFilterModel.setShowDebugMessages)
+        self.ui.showInfoMessagesButton.toggled.connect(self.logFilterModel.setShowInfoMessages)
+        self.ui.showWarningMessagesButton.toggled.connect(self.logFilterModel.setShowWarningMessages)
+        self.ui.showErrorMessagesButton.toggled.connect(self.logFilterModel.setShowErrorMessages)
 
         # context menu
         self.contextMenu = QMenu()
@@ -591,7 +606,9 @@ class MainWindow(QMainWindow):
                                                  startValues=self.startValues,
                                                  applyDefaultStartValues=self.ui.applyDefaultStartValuesCheckBox.isChecked(),
                                                  input=input,
-                                                 output=output)
+                                                 output=output,
+                                                 debugLogging=self.ui.debugLoggingCheckBox.isChecked(),
+                                                 fmiLogging=self.ui.logFMICallsCheckBox.isChecked())
 
         self.ui.actionSimulate.setIcon(QIcon(':/icons/stop.png'))
         self.ui.actionSimulate.setToolTip("Stop simulation")

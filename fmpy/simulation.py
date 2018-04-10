@@ -357,8 +357,9 @@ def simulate_fmu(filename,
                  input=None,
                  output=None,
                  timeout=None,
-                 fmi_logging=False,
+                 debug_logging=False,
                  logger=None,
+                 fmi_call_logger=None,
                  step_finished=None,
                  model_description=None):
     """ Simulate an FMU
@@ -376,11 +377,12 @@ def simulate_fmu(filename,
         fmi_type            FMI type for the simulation (None: determine from FMU)
         use_source_code     compile the shared library (requires C sources)
         start_values        dictionary of variable name -> value pairs
-        apply_start_values  explicitly apply the start values from the model description
+        apply_default_start_values  apply the start values from the model description
         input               a structured numpy array that contains the input
         output              list of variables to record (None: record outputs)
         timeout             timeout for the simulation
-        fmi_logging         whether to log FMI calls
+        debug_logging       enable the FMU's debug logging
+        fmi_call_logger     callback function to log FMI calls
         logger              callback function passed to the FMU (experimental)
         step_finished       callback to interact with the simulation (experimental)
         model_description   the previously loaded model description (experimental)
@@ -442,7 +444,7 @@ def simulate_fmu(filename,
     fmu_args = {'guid': model_description.guid,
                 'unzipDirectory': unzipdir,
                 'instanceName': None,
-                'logFMICalls': fmi_logging}
+                'fmiCallLogger': fmi_call_logger}
 
     if use_source_code:
 
@@ -470,10 +472,10 @@ def simulate_fmu(filename,
     # simulate_fmu the FMU
     if fmi_type == 'ModelExchange' and model_description.modelExchange is not None:
         fmu_args['modelIdentifier'] = model_description.modelExchange.modelIdentifier
-        result = simulateME(model_description, fmu_args, start_time, stop_time, solver, step_size, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, record_events, timeout, callbacks, step_finished)
+        result = simulateME(model_description, fmu_args, start_time, stop_time, solver, step_size, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, record_events, timeout, callbacks, debug_logging, step_finished)
     elif fmi_type == 'CoSimulation' and model_description.coSimulation is not None:
         fmu_args['modelIdentifier'] = model_description.coSimulation.modelIdentifier
-        result = simulateCS(model_description, fmu_args, start_time, stop_time, start_values, apply_default_start_values, input, output, output_interval, timeout, callbacks, step_finished)
+        result = simulateCS(model_description, fmu_args, start_time, stop_time, start_values, apply_default_start_values, input, output, output_interval, timeout, callbacks, debug_logging, step_finished)
     else:
         raise Exception('FMI type "%s" is not supported by the FMU' % fmi_type)
 
@@ -484,7 +486,7 @@ def simulate_fmu(filename,
     return result
 
 
-def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name, step_size, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, record_events, timeout, callbacks, step_finished):
+def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name, step_size, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, record_events, timeout, callbacks, debug_logging, step_finished):
 
     if output_interval is None:
         if step_size is None:
@@ -514,11 +516,11 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
 
     if is_fmi1:
         fmu = FMU1Model(**fmu_kwargs)
-        fmu.instantiate(functions=callbacks)
+        fmu.instantiate(functions=callbacks, loggingOn=debug_logging)
         fmu.setTime(time)
     else:
         fmu = FMU2Model(**fmu_kwargs)
-        fmu.instantiate(callbacks=callbacks)
+        fmu.instantiate(callbacks=callbacks, loggingOn=debug_logging)
         fmu.setupExperiment(startTime=start_time)
 
     # set the start values
@@ -675,7 +677,7 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
     return recorder.result()
 
 
-def simulateCS(model_description, fmu_kwargs, start_time, stop_time, start_values, apply_default_start_values, input_signals, output, output_interval, timeout, callbacks, step_finished):
+def simulateCS(model_description, fmu_kwargs, start_time, stop_time, start_values, apply_default_start_values, input_signals, output, output_interval, timeout, callbacks, debug_logging, step_finished):
 
     if output_interval is None:
         output_interval = auto_interval(stop_time - start_time)
@@ -684,12 +686,12 @@ def simulateCS(model_description, fmu_kwargs, start_time, stop_time, start_value
 
     if model_description.fmiVersion == '1.0':
         fmu = FMU1Slave(**fmu_kwargs)
-        fmu.instantiate("instance1", functions=callbacks)
+        fmu.instantiate(functions=callbacks, loggingOn=debug_logging)
         apply_start_values(fmu, model_description, start_values, apply_default_start_values)
         fmu.initialize()
     else:
         fmu = FMU2Slave(**fmu_kwargs)
-        fmu.instantiate(callbacks=callbacks)
+        fmu.instantiate(callbacks=callbacks, loggingOn=debug_logging)
         fmu.setupExperiment(tolerance=None, startTime=start_time)
         apply_start_values(fmu, model_description, start_values, apply_default_start_values)
         fmu.enterInitializationMode()

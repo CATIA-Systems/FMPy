@@ -188,7 +188,7 @@ class _FMU2(_FMU):
 
             res = f(*args, **kwargs)
 
-            if self.logFMICalls:
+            if self.fmiCallLogger is not None:
                 self._print_fmi_args(fname, argnames, argtypes, args, restype, res)
 
             if restype == fmi2Status:  # status code
@@ -204,7 +204,6 @@ class _FMU2(_FMU):
 
         kind = fmi2ModelExchange if isinstance(self, FMU2Model) else fmi2CoSimulation
         resourceLocation = pathlib.Path(self.unzipDirectory, 'resources').as_uri()
-        visible = fmi2True if visible else fmi2False
 
         if callbacks is None:
             callbacks = fmi2CallbackFunctions()
@@ -214,15 +213,13 @@ class _FMU2(_FMU):
 
         self.callbacks = callbacks
 
-        loggingOn = fmi2True if loggingOn else fmi2False
-
         self.component = self.fmi2Instantiate(self.instanceName.encode('utf-8'),
                                               kind,
                                               self.guid.encode('utf-8'),
                                               resourceLocation.encode('utf-8'),
                                               byref(self.callbacks),
-                                              visible,
-                                              loggingOn)
+                                              fmi2True if visible else fmi2False,
+                                              fmi2True if loggingOn else fmi2False)
 
     def setupExperiment(self, tolerance=None, startTime=0.0, stopTime=None):
 

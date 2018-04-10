@@ -98,7 +98,7 @@ def stepFinished(componentEnvironment, status):
 class _FMU(object):
     """ Base class for all FMUs """
 
-    def __init__(self, guid, modelIdentifier, unzipDirectory, instanceName=None, libraryPath=None, logFMICalls=False):
+    def __init__(self, guid, modelIdentifier, unzipDirectory, instanceName=None, libraryPath=None, fmiCallLogger=None):
         """
         Parameters:
             guid             the GUI from the modelDescription.xml
@@ -106,14 +106,14 @@ class _FMU(object):
             unzipDirectory   folder where the FMU has been extracted
             instanceName     the name of the FMU instance
             libraryPath      path to the shared library
-            logFMICalls      whether FMI calls should be logged
+            fmiCallLogger    logger callback that takes a message as input
         """
 
         self.guid = guid
         self.modelIdentifier = modelIdentifier
         self.unzipDirectory = unzipDirectory
         self.instanceName = instanceName if instanceName is not None else self.modelIdentifier
-        self.logFMICalls = logFMICalls
+        self.fmiCallLogger = fmiCallLogger
 
         # remember the current working directory
         work_dir = os.getcwd()
@@ -144,7 +144,7 @@ class _FMU(object):
 
     def _print_fmi_args(self, fname, argnames, argtypes, args, restype, res):
 
-        f = '[FMI] ' + fname + '('
+        f = fname + '('
 
         l = []
 
@@ -202,7 +202,7 @@ class _FMU(object):
         elif restype == c_void_p:
             f += ' -> ' + hex(res)
 
-        print(f)
+        self.fmiCallLogger(f)
 
 
 class _FMU1(_FMU):
@@ -264,7 +264,7 @@ class _FMU1(_FMU):
 
             res = f(*args, **kwargs)
 
-            if self.logFMICalls:
+            if self.fmiCallLogger is not None:
                 self._print_fmi_args('fmi' + name, argnames, argtypes, args, restype, res)
 
             if restype == fmi1Status:
@@ -367,7 +367,7 @@ class FMU1Slave(_FMU1):
                            fmi1Status)
 
     def instantiate(self, mimeType='application/x-fmu-sharedlibrary', timeout=0, visible=fmi1False,
-                    interactive=fmi1False, functions=None, loggingOn=fmi1False):
+                    interactive=fmi1False, functions=None, loggingOn=False):
 
         fmuLocation = pathlib.Path(self.unzipDirectory).as_uri()
 
@@ -388,7 +388,7 @@ class FMU1Slave(_FMU1):
                                                    visible,
                                                    interactive,
                                                    functions,
-                                                   loggingOn)
+                                                   fmi1True if loggingOn else fmi1False)
 
     def initialize(self, tStart=0.0, stopTime=None):
         stopTimeDefined = fmi1True if stopTime is not None else fmi1False
@@ -486,7 +486,7 @@ class FMU1Model(_FMU1):
                            [fmi1Component],
                            None)
 
-    def instantiate(self, functions=None, loggingOn=fmi1False):
+    def instantiate(self, functions=None, loggingOn=False):
 
         if functions is None:
             functions = fmi1CallbackFunctions()
@@ -500,7 +500,7 @@ class FMU1Model(_FMU1):
         self.component = self.fmi1InstantiateModel(self.instanceName.encode('UTF-8'),
                                                    self.guid.encode('UTF-8'),
                                                    self.callbacks,
-                                                   loggingOn)
+                                                   fmi1True if loggingOn else fmi1False)
 
     def setTime(self, time):
         return self.fmi1SetTime(self.component, time)

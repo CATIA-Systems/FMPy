@@ -5,14 +5,16 @@
 - `NEW` Load start values from an FMU
 - `NEW` Write changed start values to FMU
 - `NEW` Table editor for 1-d and 2-d array variables
-- 'FIXED' Logger callback for FMI 1.0
+- `FIXED` Logger callback for FMI 1.0
 - `FIXED` Handling of `None` in setString()
 - `NEW` Handle events in input signals
 - `FIXED` Handling of time events
 - `NEW` Plot events
 - `NEW` Regular time grid for model-exchange results
-- `NEW` Optionally apply start values in the model description
+- `NEW` Apply start values in the model description
 - `FIXED` Conversion of Boolean start values
+- `NEW` Debug and FMI logging on the command line and in the GUI
+- `NEW` Log filtering by type and message in the GUI
 
 ## v0.2.2 (2018-03-13)
 

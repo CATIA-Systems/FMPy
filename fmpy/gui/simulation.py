@@ -8,7 +8,7 @@ class SimulationThread(QThread):
     progressChanged = pyqtSignal(int)
     messageChanged = pyqtSignal(str, str)
 
-    def __init__(self, filename, stopTime, solver, stepSize, relativeTolerance, outputInterval, startValues, applyDefaultStartValues, input, output, parent=None):
+    def __init__(self, filename, stopTime, solver, stepSize, relativeTolerance, outputInterval, startValues, applyDefaultStartValues, input, output, debugLogging, fmiLogging, parent=None):
 
         super(SimulationThread, self).__init__(parent)
 
@@ -22,6 +22,8 @@ class SimulationThread(QThread):
         self.applyDefaultStartValues = applyDefaultStartValues
         self.input = input
         self.output = output
+        self.debugLogging = debugLogging
+        self.fmiLogging = fmiLogging
         self.progress = 0
         self.stopped = False
 
@@ -42,6 +44,9 @@ class SimulationThread(QThread):
             level = 'info'
 
         self.messageChanged.emit(level, message.decode('utf-8'))
+
+    def logFMICall(self, message):
+        self.messageChanged.emit('debug', message)
 
     def stepFinished(self, time, recorder):
 
@@ -74,6 +79,8 @@ class SimulationThread(QThread):
                                        apply_default_start_values=self.applyDefaultStartValues,
                                        input=self.input,
                                        output=self.output,
+                                       debug_logging=self.debugLogging,
+                                       fmi_call_logger=self.logFMICall if self.fmiLogging else None,
                                        logger=self.logFMUMessage,
                                        step_finished=self.stepFinished)
         except Exception as e:
@@ -86,3 +93,6 @@ class SimulationThread(QThread):
             self.messageChanged.emit('info', 'Simulation stopped after %s s' % totalTime)
         else:
             self.messageChanged.emit('info', 'Simulation took %s s' % totalTime)
+
+    def logFMICall(self, message):
+        self.messageChanged.emit('debug', message)

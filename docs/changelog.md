@@ -1,20 +1,20 @@
-## unreleased
+## v0.2.3 (2018-04-11)
 
 - `NEW` Allow simulation of extracted FMUs and pre-loaded model descriptions
 - `NEW` Re-load an FMU in the GUI
 - `NEW` Load start values from an FMU
-- `NEW` Write changed start values to FMU
+- `NEW` Write changed start values back to the FMU
 - `NEW` Table editor for 1-d and 2-d array variables
-- `FIXED` Logger callback for FMI 1.0
-- `FIXED` Handling of `None` in setString()
 - `NEW` Handle events in input signals
-- `FIXED` Handling of time events
 - `NEW` Plot events
 - `NEW` Regular time grid for model-exchange results
 - `NEW` Apply start values in the model description
-- `FIXED` Conversion of Boolean start values
 - `NEW` Debug and FMI logging on the command line and in the GUI
 - `NEW` Log filtering by type and message in the GUI
+- `FIXED` Logger callback for FMI 1.0
+- `FIXED` Handling of `None` in setString()
+- `FIXED` Handling of time events
+- `FIXED` Conversion of Boolean start values
 
 ## v0.2.2 (2018-03-13)
 

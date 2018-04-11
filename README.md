@@ -11,8 +11,8 @@ FMPy is a free Python library to simulate [Functional Mock-up Units (FMUs)](http
 - supports FMI 1.0 and 2.0
 - supports Co-Simulation and Model Exchange
 - runs on Windows, Linux and macOS
-- has a graphical user interface ``NEW``
-- compiles source code FMUs ``NEW``
+- has a graphical user interface
+- compiles source code FMUs
 
 ## Installation
 
@@ -22,7 +22,7 @@ Several options are available:
 - Install with from PyPI: `python -m pip install fmpy[complete]`
 - Install the latest development version directly from GitHub: `python -m pip install https://github.com/CATIA-Systems/FMPy/archive/develop.zip`
 
-If you don't have Python on your machine you can install [Anaconda Python 3.6](https://www.anaconda.com/download/).
+If you don't have Python on your machine you can install [Anaconda Python](https://www.anaconda.com/download/).
 
 ## Start the Graphical User Interface
 

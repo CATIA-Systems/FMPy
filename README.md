@@ -2,6 +2,7 @@
 [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/CATIA-Systems/FMPy?branch=master&svg=true)](https://ci.appveyor.com/project/TorstenSommer/fmpy)
 [![PyPI version](https://badge.fury.io/py/fmpy.svg)](https://badge.fury.io/py/fmpy)
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/fmpy/badges/version.svg)](https://anaconda.org/conda-forge/fmpy)
+[![Documentation Status](https://readthedocs.org/projects/fmpy/badge/?version=latest)](http://fmpy.readthedocs.io/en/latest/?badge=latest)
 
 # FMPy
 
@@ -10,8 +11,8 @@ FMPy is a free Python library to simulate [Functional Mock-up Units (FMUs)](http
 - supports FMI 1.0 and 2.0
 - supports Co-Simulation and Model Exchange
 - runs on Windows, Linux and macOS
-- has a graphical user interface ``NEW``
-- compiles source code FMUs ``NEW``
+- has a graphical user interface
+- compiles source code FMUs
 
 ## Installation
 
@@ -21,7 +22,7 @@ Several options are available:
 - Install with from PyPI: `python -m pip install fmpy[complete]`
 - Install the latest development version directly from GitHub: `python -m pip install https://github.com/CATIA-Systems/FMPy/archive/develop.zip`
 
-If you don't have Python on your machine you can install [Anaconda Python 3.6](https://www.anaconda.com/download/).
+If you don't have Python on your machine you can install [Anaconda Python](https://www.anaconda.com/download/).
 
 ## Start the Graphical User Interface
 

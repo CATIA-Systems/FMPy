@@ -1,5 +1,7 @@
 """ Command line interface for FMPy """
 
+from __future__ import print_function
+
 
 def main():
 
@@ -39,8 +41,10 @@ def main():
     parser.add_argument('--stop-time', type=float, help="stop time for the simulation")
     parser.add_argument('--show-plot', action='store_true', help="plot the results")
     parser.add_argument('--timeout', type=float, help="max. time to wait for the simulation to finish")
-    parser.add_argument('--fmi-logging', action='store_true', help="enable FMI logging")
     parser.add_argument('--start-values', nargs='+', help="name-value pairs of start values")
+    parser.add_argument('--apply-default-start-values', action='store_true', help="apply the default values from the model description")
+    parser.add_argument('--debug-logging', action='store_true', help="enable the FMU's debug logging")
+    parser.add_argument('--fmi-logging', action='store_true', help="enable FMI logging")
 
     args = parser.parse_args()
 
@@ -68,6 +72,11 @@ def main():
 
         input = read_csv(args.input_file) if args.input_file else None
 
+        if args.fmi_logging:
+            fmi_call_logger = lambda s: print('[FMI] ' + s)
+        else:
+            fmi_call_logger = None
+
         result = simulate_fmu(args.fmu_filename,
                               validate=True,
                               start_time=args.start_time,
@@ -77,10 +86,12 @@ def main():
                               output_interval=None,
                               fmi_type=None,
                               start_values=start_values,
+                              apply_default_start_values=args.apply_default_start_values,
                               input=input,
                               output=args.output_variables,
                               timeout=args.timeout,
-                              fmi_logging=args.fmi_logging)
+                              debug_logging=args.debug_logging,
+                              fmi_call_logger=fmi_call_logger)
 
         if args.output_file:
             write_csv(filename=args.output_file, result=result)

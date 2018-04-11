@@ -609,6 +609,140 @@
            <bool>true</bool>
           </property>
           <layout class="QGridLayout" name="gridLayout_13">
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_14">
+             <property name="text">
+              <string>Relative Tolerance</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_13">
+             <property name="text">
+              <string>Solver</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_6">
+             <property name="text">
+              <string>Max. Samples</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QLineEdit" name="inputFilenameLineEdit">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="placeholderText">
+              <string>No input file selected</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string>Step Size</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="2">
+            <widget class="QToolButton" name="selectInputButton">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>45</width>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Select input file</string>
+             </property>
+             <property name="text">
+              <string>...</string>
+             </property>
+             <property name="popupMode">
+              <enum>QToolButton::MenuButtonPopup</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QCheckBox" name="inputCheckBox">
+             <property name="text">
+              <string>Input</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="0" colspan="2">
+            <widget class="QCheckBox" name="logFMICallsCheckBox">
+             <property name="text">
+              <string>Log FMI calls</string>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="0" colspan="2">
+            <widget class="QCheckBox" name="debugLoggingCheckBox">
+             <property name="text">
+              <string>Debug Logging</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QWidget" name="widget_11" native="true">
+             <layout class="QHBoxLayout" name="horizontalLayout_10">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLineEdit" name="relativeToleranceLineEdit">
+                <property name="minimumSize">
+                 <size>
+                  <width>70</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>70</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>1e-5</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_12">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>359</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </widget>
+           </item>
            <item row="0" column="1">
             <widget class="QWidget" name="widget_10" native="true">
              <layout class="QHBoxLayout" name="horizontalLayout_9">
@@ -658,6 +792,56 @@
                 <property name="sizeHint" stdset="0">
                  <size>
                   <width>340</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QWidget" name="widget_3" native="true">
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLineEdit" name="stepSizeLineEdit">
+                <property name="minimumSize">
+                 <size>
+                  <width>70</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>70</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>1e-3</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_4">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>336</width>
                   <height>20</height>
                  </size>
                 </property>
@@ -734,193 +918,10 @@
              </layout>
             </widget>
            </item>
-           <item row="1" column="1">
-            <widget class="QWidget" name="widget_3" native="true">
-             <layout class="QHBoxLayout" name="horizontalLayout_2">
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <property name="bottomMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QLineEdit" name="stepSizeLineEdit">
-                <property name="minimumSize">
-                 <size>
-                  <width>70</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>70</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>1e-3</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_4">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>336</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="label_6">
-             <property name="text">
-              <string>Max. Samples</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="0">
-            <widget class="QCheckBox" name="inputCheckBox">
-             <property name="text">
-              <string>Input</string>
-             </property>
-            </widget>
-           </item>
            <item row="5" column="0" colspan="2">
-            <widget class="QCheckBox" name="logFMICallsCheckBox">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
+            <widget class="QCheckBox" name="applyDefaultStartValuesCheckBox">
              <property name="text">
-              <string>Log FMI calls</string>
-             </property>
-            </widget>
-           </item>
-           <item row="6" column="0" colspan="2">
-            <widget class="QCheckBox" name="debugLoggingCheckBox">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="text">
-              <string>Debug Logging</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="1">
-            <widget class="QLineEdit" name="inputFilenameLineEdit">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="placeholderText">
-              <string>No input file selected</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_14">
-             <property name="text">
-              <string>Relative Tolerance</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_13">
-             <property name="text">
-              <string>Solver</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_2">
-             <property name="text">
-              <string>Step Size</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QWidget" name="widget_11" native="true">
-             <layout class="QHBoxLayout" name="horizontalLayout_10">
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <property name="bottomMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QLineEdit" name="relativeToleranceLineEdit">
-                <property name="minimumSize">
-                 <size>
-                  <width>70</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>70</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>1e-5</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_12">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>359</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item row="4" column="2">
-            <widget class="QToolButton" name="selectInputButton">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>45</width>
-               <height>22</height>
-              </size>
-             </property>
-             <property name="toolTip">
-              <string>Select input file</string>
-             </property>
-             <property name="text">
-              <string>...</string>
-             </property>
-             <property name="popupMode">
-              <enum>QToolButton::MenuButtonPopup</enum>
+              <string>Apply default start values</string>
              </property>
             </widget>
            </item>
@@ -980,20 +981,32 @@
         <item>
          <widget class="QWidget" name="logWidget" native="true">
           <layout class="QHBoxLayout" name="horizontalLayout_11">
+           <property name="spacing">
+            <number>4</number>
+           </property>
            <property name="leftMargin">
-            <number>6</number>
+            <number>4</number>
            </property>
            <property name="topMargin">
-            <number>6</number>
+            <number>4</number>
            </property>
            <property name="rightMargin">
-            <number>6</number>
+            <number>4</number>
            </property>
            <property name="bottomMargin">
             <number>6</number>
            </property>
            <item>
             <widget class="QToolButton" name="clearLogButton">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>21</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Clear messages</string>
+             </property>
              <property name="text">
               <string>clear</string>
              </property>
@@ -1004,6 +1017,15 @@
            </item>
            <item>
             <widget class="QToolButton" name="clearLogOnStartButton">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>21</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Clear messages on simulation start</string>
+             </property>
              <property name="text">
               <string>clear on start</string>
              </property>
@@ -1019,22 +1041,28 @@
             </widget>
            </item>
            <item>
-            <spacer name="horizontalSpacer_5">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+            <widget class="QLineEdit" name="logFilterLineEdit">
+             <property name="styleSheet">
+              <string notr="true">QLineEdit {
+     border: 1px solid palette(midlight);
+	 border-radius: 2px;
+     padding: 0 5px 2px 5px;
+     background: transparent;
+	font-size: 11px;
+ }</string>
              </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>286</width>
-               <height>20</height>
-              </size>
+             <property name="placeholderText">
+              <string>filter messages</string>
              </property>
-            </spacer>
+             <property name="clearButtonEnabled">
+              <bool>true</bool>
+             </property>
+            </widget>
            </item>
            <item>
             <widget class="QToolButton" name="showDebugMessagesButton">
-             <property name="enabled">
-              <bool>false</bool>
+             <property name="toolTip">
+              <string>Show debug messages</string>
              </property>
              <property name="text">
               <string>0</string>
@@ -1059,8 +1087,8 @@
            </item>
            <item>
             <widget class="QToolButton" name="showInfoMessagesButton">
-             <property name="enabled">
-              <bool>false</bool>
+             <property name="toolTip">
+              <string>Show info messages</string>
              </property>
              <property name="text">
               <string>0</string>
@@ -1085,8 +1113,8 @@
            </item>
            <item>
             <widget class="QToolButton" name="showWarningMessagesButton">
-             <property name="enabled">
-              <bool>false</bool>
+             <property name="toolTip">
+              <string>Show warning messages</string>
              </property>
              <property name="text">
               <string>0</string>
@@ -1111,8 +1139,8 @@
            </item>
            <item>
             <widget class="QToolButton" name="showErrorMessagesButton">
-             <property name="enabled">
-              <bool>false</bool>
+             <property name="toolTip">
+              <string>Show error messages</string>
              </property>
              <property name="text">
               <string>0</string>
@@ -1191,6 +1219,12 @@
     </property>
     <addaction name="actionOpen"/>
     <addaction name="actionNewWindow"/>
+    <addaction name="separator"/>
+    <addaction name="actionLoadStartValues"/>
+    <addaction name="separator"/>
+    <addaction name="actionReload"/>
+    <addaction name="separator"/>
+    <addaction name="actionSaveChanges"/>
     <addaction name="separator"/>
     <addaction name="actionSaveResult"/>
     <addaction name="actionSavePlottedResult"/>
@@ -1291,7 +1325,7 @@ QStatusBar::item {
  }</string>
           </property>
           <property name="placeholderText">
-           <string>filter</string>
+           <string>filter variables</string>
           </property>
           <property name="clearButtonEnabled">
            <bool>true</bool>
@@ -1678,6 +1712,24 @@ QStatusBar::item {
   <action name="actionShowReleaseNotes">
    <property name="text">
     <string>&amp;Release Notes</string>
+   </property>
+  </action>
+  <action name="actionReload">
+   <property name="text">
+    <string>&amp;Reload</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
+  </action>
+  <action name="actionSaveChanges">
+   <property name="text">
+    <string>Save Changes</string>
+   </property>
+  </action>
+  <action name="actionLoadStartValues">
+   <property name="text">
+    <string>Load Start Values</string>
    </property>
   </action>
  </widget>

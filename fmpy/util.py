@@ -181,7 +181,7 @@ def validate_result(result, reference, stop_time=None):
     return rel_out
 
 
-def plot_result(result, reference=None, names=None, filename=None, window_title=None):
+def plot_result(result, reference=None, names=None, filename=None, window_title=None, events=False):
     """ Plot a collection of time series.
 
     Parameters:
@@ -190,6 +190,7 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
         names:        variables to plot
         filename:     when provided the plot is saved as `filename` instead of showing the figure
         window_title: title for the figure window
+        events:       draw vertical lines at events
     """
 
     import matplotlib.pylab as pylab
@@ -225,6 +226,9 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
         if not isinstance(axes, Iterable):
             axes = [axes]
 
+        if events:
+            t_event = time[np.argwhere(np.diff(time) == 0)]
+
         for ax, name in zip(axes, names):
 
             y = result[name]
@@ -232,6 +236,10 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
             ax.grid(b=True, which='both', color='0.8', linestyle='-', zorder=0)
 
             ax.tick_params(direction='in')
+
+            if events:
+                for t in t_event:
+                    ax.axvline(x=t, color='y', linewidth=1)
 
             if reference is not None and name in reference.dtype.names:
                 t_ref = reference[reference.dtype.names[0]]
@@ -628,3 +636,151 @@ def compile_platform_binary(filename, output_filename=None):
     # clean up
     rmtree(unzipdir)
     rmtree(unzipdir2)
+
+
+def auto_interval(t):
+    """ Find a nice interval that divides t into 500 - 1000 steps """
+
+    h = 10 ** (np.round(np.log10(t)) - 3)
+
+    n_samples = t / h
+
+    if n_samples >= 2500:
+        h *= 5
+    elif n_samples >= 2000:
+        h *= 4
+    elif n_samples >= 1000:
+        h *= 2
+    elif n_samples <= 200:
+        h /= 5
+    elif n_samples <= 250:
+        h /= 4
+    elif n_samples <= 500:
+        h /= 2
+
+    return h
+
+
+def change_fmu(input_file, output_file=None, start_values={}):
+    """ Make changes to an FMU """
+
+    from lxml import etree
+    import zipfile
+    from fmpy import extract
+    from shutil import rmtree
+
+    if output_file is None:
+        output_file = input_file
+
+    tempdir = extract(input_file)
+
+    # read the model description
+    with zipfile.ZipFile(input_file, 'r') as zf:
+        xml = zf.open('modelDescription.xml')
+        tree = etree.parse(xml)
+
+    root = tree.getroot()
+
+    # apply the start values
+    for variable in root.find('ModelVariables'):
+        if variable.get("name") in start_values:
+            for child in variable.getchildren():
+                if child.tag in ['Real', 'Integer', 'Enumeration', 'Boolean', 'String']:
+                    child.set('start', start_values[variable.get("name")])
+
+    # write the new model description
+    tree.write(os.path.join(tempdir, 'modelDescription.xml'))
+
+    # create a new archive from the modified files
+    with zipfile.ZipFile(output_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+        base_path = os.path.normpath(tempdir)
+        for dirpath, dirnames, filenames in os.walk(tempdir):
+            for name in sorted(dirnames):
+                path = os.path.normpath(os.path.join(dirpath, name))
+                zf.write(path, os.path.relpath(path, base_path))
+            for name in filenames:
+                path = os.path.normpath(os.path.join(dirpath, name))
+                if os.path.isfile(path):
+                    zf.write(path, os.path.relpath(path, base_path))
+
+    # clean up
+    rmtree(tempdir)
+
+
+def get_start_values(filename):
+    """ Get the start values of an FMU's variables
+
+    Parameters:
+        filename    the filename of the FMU
+
+    Returns:
+        a dictionary of variables_name -> start_value
+    """
+
+    from .model_description import read_model_description
+    from . import extract
+    from .fmi1 import FMU1Slave, FMU1Model
+    from .fmi2 import FMU2Slave, FMU2Model
+    from shutil import rmtree
+
+    unzipdir = extract(filename)
+
+    model_description = read_model_description(filename, validate=False)
+
+    if model_description.coSimulation is not None:
+        implementation = model_description.coSimulation
+    else:
+        implementation = model_description.modelExchange
+
+    # instantiate and initialize the FMU
+    fmu_kwargs = {
+        'guid': model_description.guid,
+        'modelIdentifier': implementation.modelIdentifier,
+        'unzipDirectory': unzipdir,
+    }
+
+    if model_description.fmiVersion == '1.0':
+        if model_description.coSimulation is not None:
+            fmu = FMU1Slave(**fmu_kwargs)
+        else:
+            fmu = FMU1Model(**fmu_kwargs)
+        fmu.instantiate()
+        fmu.initialize()
+    else:
+        if model_description.coSimulation is not None:
+            fmu = FMU2Slave(**fmu_kwargs)
+        else:
+            fmu = FMU2Model(**fmu_kwargs)
+        fmu.instantiate()
+        fmu.enterInitializationMode()
+        fmu.exitInitializationMode()
+
+    # read the start values
+    start_values = {}
+
+    for variable in model_description.modelVariables:
+        try:
+            vr = [variable.valueReference]
+
+            if variable.type == 'Real':
+                value = fmu.getReal(vr=vr)
+                start_values[variable.name] = str(value[0])
+            elif variable.type in ['Integer', 'Enumeration']:
+                value = fmu.getInteger(vr=vr)
+                start_values[variable.name] = str(value[0])
+            elif variable.type == 'Boolean':
+                value = fmu.getBoolean(vr=vr)
+                start_values[variable.name] = 'true' if value[0] != 0 else 'false'
+            elif variable.type == 'String':
+                value = fmu.getString(vr=vr)
+                start_values[variable.name] = value[0]
+        except Exception as e:
+            print(e)  # do nothing
+
+    fmu.terminate()
+    fmu.freeInstance()
+
+    # clean up
+    rmtree(unzipdir)
+
+    return start_values

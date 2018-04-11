@@ -5,7 +5,7 @@ import os
 from ctypes import *
 import _ctypes
 
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 
 
 # determine the platform
@@ -50,7 +50,7 @@ def supported_platforms(filename):
     """ Get the platforms supported by the FMU without extracting it
 
     Parameters:
-        filename    filename of the FMU
+        filename    filename of the FMU or directory with extracted FMU
 
     Returns:
         platforms   a list of supported platforms supported by the FMU
@@ -60,41 +60,46 @@ def supported_platforms(filename):
 
     platforms = []
 
-    # open the FMU
-    with zipfile.ZipFile(filename, 'r') as zf:
+    # get the files within the FMU
+    if os.path.isdir(filename):
+        names = []
+        for dirpath, _, filenames in os.walk(filename):
+            for name in filenames:
+                abspath = os.path.join(dirpath, name)
+                names.append(os.path.relpath(abspath, start=filename).replace('\\', '/'))
+    else:
+        with zipfile.ZipFile(filename, 'r') as zf:
+            names = zf.namelist()
 
-        # get the supported platforms
-        names = zf.namelist()
+    # check for the C-sources
+    for name in names:
+        head, tail = os.path.split(name)
+        if head == 'sources' and tail.endswith('.c'):
+            platforms.append('c-code')
+            break
 
-        # check for the C-sources
+    # check for *.dylib on Mac
+    for name in names:
+        head, tail = os.path.split(name)
+        if head == 'binaries/darwin64' and tail.endswith('.dylib'):
+            platforms.append('darwin64')
+            break
+
+    # check for *.so on Linux
+    for platform in ['linux32', 'linux64']:
         for name in names:
             head, tail = os.path.split(name)
-            if head == 'sources' and tail.endswith('.c'):
-                platforms.append('c-code')
+            if head == 'binaries/' + platform and tail.endswith('.so'):
+                platforms.append(platform)
                 break
 
-        # check for *.dylib on Mac
+    # check for *.dll on Windows
+    for platform in ['win32', 'win64']:
         for name in names:
             head, tail = os.path.split(name)
-            if head == 'binaries/darwin64' and tail.endswith('.dylib'):
-                platforms.append('darwin64')
+            if head == 'binaries/' + platform and tail.endswith('.dll'):
+                platforms.append(platform)
                 break
-
-        # check for *.so on Linux
-        for platform in ['linux32', 'linux64']:
-            for name in names:
-                head, tail = os.path.split(name)
-                if head == 'binaries/' + platform and tail.endswith('.so'):
-                    platforms.append(platform)
-                    break
-
-        # check for *.dll on Windows
-        for platform in ['win32', 'win64']:
-            for name in names:
-                head, tail = os.path.split(name)
-                if head == 'binaries/' + platform and tail.endswith('.dll'):
-                    platforms.append(platform)
-                    break
 
     return platforms
 

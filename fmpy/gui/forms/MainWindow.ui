@@ -1004,6 +1004,9 @@
                <height>21</height>
               </size>
              </property>
+             <property name="toolTip">
+              <string>Clear messages</string>
+             </property>
              <property name="text">
               <string>clear</string>
              </property>
@@ -1019,6 +1022,9 @@
                <width>0</width>
                <height>21</height>
               </size>
+             </property>
+             <property name="toolTip">
+              <string>Clear messages on simulation start</string>
              </property>
              <property name="text">
               <string>clear on start</string>
@@ -1055,6 +1061,9 @@
            </item>
            <item>
             <widget class="QToolButton" name="showDebugMessagesButton">
+             <property name="toolTip">
+              <string>Show debug messages</string>
+             </property>
              <property name="text">
               <string>0</string>
              </property>
@@ -1078,6 +1087,9 @@
            </item>
            <item>
             <widget class="QToolButton" name="showInfoMessagesButton">
+             <property name="toolTip">
+              <string>Show info messages</string>
+             </property>
              <property name="text">
               <string>0</string>
              </property>
@@ -1101,6 +1113,9 @@
            </item>
            <item>
             <widget class="QToolButton" name="showWarningMessagesButton">
+             <property name="toolTip">
+              <string>Show warning messages</string>
+             </property>
              <property name="text">
               <string>0</string>
              </property>
@@ -1124,6 +1139,9 @@
            </item>
            <item>
             <widget class="QToolButton" name="showErrorMessagesButton">
+             <property name="toolTip">
+              <string>Show error messages</string>
+             </property>
              <property name="text">
               <string>0</string>
              </property>

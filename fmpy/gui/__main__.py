@@ -735,7 +735,12 @@ class MainWindow(QMainWindow):
         self.ui.tableView.setColumnHidden(i, not show)
 
     def setStatusMessage(self, level, text):
-        self.statusIconLabel.setPixmap(QPixmap(':/icons/%s-16x16.png' % level))
+
+        if level in ['debug', 'info', 'warning', 'error']:
+            self.statusIconLabel.setPixmap(QPixmap(':/icons/%s-16x16.png' % level))
+        else:
+            self.statusIconLabel.setPixmap(QPixmap())
+
         self.statusTextLabel.setText(text)
 
     def dragEnterEvent(self, event):

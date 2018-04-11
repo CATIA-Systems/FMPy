@@ -29,6 +29,8 @@ class Log(QAbstractTableModel):
         self.messages.clear()
         self.endResetModel()
 
+        self.currentMessageChanged.emit('', '')
+
         self.numberOfDebugMessages = 0
         self.numberOfInfoMessages = 0
         self.numberOfWarningMessages = 0

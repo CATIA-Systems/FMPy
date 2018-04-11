@@ -8,11 +8,12 @@ class SimulationThread(QThread):
     progressChanged = pyqtSignal(int)
     messageChanged = pyqtSignal(str, str)
 
-    def __init__(self, filename, stopTime, solver, stepSize, relativeTolerance, outputInterval, startValues, applyDefaultStartValues, input, output, debugLogging, fmiLogging, parent=None):
+    def __init__(self, filename, fmiType, stopTime, solver, stepSize, relativeTolerance, outputInterval, startValues, applyDefaultStartValues, input, output, debugLogging, fmiLogging, parent=None):
 
         super(SimulationThread, self).__init__(parent)
 
         self.filename = filename
+        self.fmiType = fmiType
         self.stopTime = stopTime
         self.solver = solver
         self.stepSize = stepSize
@@ -68,13 +69,13 @@ class SimulationThread(QThread):
         startTime = QDateTime.currentMSecsSinceEpoch()
 
         try:
-            # TODO: pass fmi_type
             self.result = simulate_fmu(self.filename,
                                        stop_time=self.stopTime,
                                        solver=self.solver,
                                        step_size=self.stepSize,
                                        relative_tolerance=self.relativeTolerance,
                                        output_interval=self.outputInterval,
+                                       fmi_type=self.fmiType,
                                        start_values=self.startValues,
                                        apply_default_start_values=self.applyDefaultStartValues,
                                        input=self.input,

@@ -597,7 +597,10 @@ class MainWindow(QMainWindow):
         for variable in self.modelDescription.modelVariables:
             output.append(variable.name)
 
+        fmi_type = 'CoSimulation' if self.fmiTypeComboBox.currentText() == 'Co-Simulation' else 'ModelExchange'
+
         self.simulationThread = SimulationThread(filename=self.filename,
+                                                 fmiType=fmi_type,
                                                  stopTime=stop_time,
                                                  solver=solver,
                                                  stepSize=step_size,

@@ -4,6 +4,9 @@
 *.csv
 *.html
 
+# Affinity Designer documents
+*.afdesign
+
 # compiled files
 *.py[cod]
 

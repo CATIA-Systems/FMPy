@@ -373,7 +373,7 @@ def simulate_fmu(filename,
         step_size           step size for the 'Euler' solver
         relative_tolerance  relative tolerance for the 'CVode' solver
         output_interval     interval for sampling the output
-        record_events       whether outputs should be recorded at events (model exchange only)
+        record_events       record outputs at events (model exchange only)
         fmi_type            FMI type for the simulation (None: determine from FMU)
         use_source_code     compile the shared library (requires C sources)
         start_values        dictionary of variable name -> value pairs

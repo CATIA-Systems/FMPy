@@ -30,21 +30,23 @@ def main():
     parser.add_argument('command', choices=['info', 'simulate', 'compile'], help="Command to execute")
     parser.add_argument('fmu_filename', help="filename of the FMU")
 
-    parser.add_argument('--solver', choices=['Euler', 'CVode'], default='CVode',
-                        help="solver to use for Model Exchange")
+    parser.add_argument('--validate', action='store_true', help="validate the FMU")
+    parser.add_argument('--start-time', type=float, help="start time for the simulation")
+    parser.add_argument('--stop-time', type=float, help="stop time for the simulation")
+    parser.add_argument('--solver', choices=['Euler', 'CVode'], default='CVode', help="solver to use for Model Exchange")
+    parser.add_argument('--step-size', type=float, help="step size for fixed-step solvers")
+    parser.add_argument('--relative-tolerance', type=float, help="relative tolerance for the 'CVode' solver")
+    parser.add_argument('--dont-record-events', action='store_true', help="dont't record outputs at events (model exchange only)")
+    parser.add_argument('--start-values', nargs='+', help="name-value pairs of start values")
+    parser.add_argument('--apply-default-start-values', action='store_true', help="apply the start values from the model description")
+    parser.add_argument('--output-interval', type=float, help="interval for sampling the output")
     parser.add_argument('--input-file', help="CSV file to use as input")
     parser.add_argument('--output-variables', nargs='+', help="Variables to record")
     parser.add_argument('--output-file', help="CSV to store the results")
-    parser.add_argument('--num-samples', default=500, type=int, help="number of samples to record")
-    parser.add_argument('--step-size', type=float, help="step size for fixed-step solvers")
-    parser.add_argument('--start-time', type=float, help="start time for the simulation")
-    parser.add_argument('--stop-time', type=float, help="stop time for the simulation")
-    parser.add_argument('--show-plot', action='store_true', help="plot the results")
     parser.add_argument('--timeout', type=float, help="max. time to wait for the simulation to finish")
-    parser.add_argument('--start-values', nargs='+', help="name-value pairs of start values")
-    parser.add_argument('--apply-default-start-values', action='store_true', help="apply the default values from the model description")
     parser.add_argument('--debug-logging', action='store_true', help="enable the FMU's debug logging")
     parser.add_argument('--fmi-logging', action='store_true', help="enable FMI logging")
+    parser.add_argument('--show-plot', action='store_true', help="plot the results")
 
     args = parser.parse_args()
 
@@ -78,12 +80,14 @@ def main():
             fmi_call_logger = None
 
         result = simulate_fmu(args.fmu_filename,
-                              validate=True,
+                              validate=args.validate,
                               start_time=args.start_time,
                               stop_time=args.stop_time,
                               solver=args.solver,
                               step_size=args.step_size,
-                              output_interval=None,
+                              relative_tolerance=args.relative_tolerance,
+                              output_interval=args.output_interval,
+                              record_events=not args.dont_record_events,
                               fmi_type=None,
                               start_values=start_values,
                               apply_default_start_values=args.apply_default_start_values,

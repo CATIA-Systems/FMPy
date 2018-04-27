@@ -27,7 +27,7 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
                                      description=textwrap.dedent(description))
 
-    parser.add_argument('command', choices=['info', 'simulate', 'compile'], help="Command to execute")
+    parser.add_argument('command', choices=['info', 'validate', 'simulate', 'compile'], help="Command to execute")
     parser.add_argument('fmu_filename', help="filename of the FMU")
 
     parser.add_argument('--validate', action='store_true', help="validate the FMU")
@@ -54,6 +54,22 @@ def main():
 
         from fmpy import dump
         dump(args.fmu_filename)
+
+    elif args.command == 'validate':
+
+        import sys
+        from fmpy.util import validate_fmu
+
+        messages = validate_fmu(args.fmu_filename)
+
+        if len(messages) == 0:
+            print('The validation passed')
+        else:
+            print('The following errors were found:')
+            for message in messages:
+                print()
+                print(message)
+            sys.exit(1)
 
     elif args.command == 'compile':
 

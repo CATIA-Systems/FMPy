@@ -13,9 +13,11 @@ class CommandLineTest(unittest.TestCase):
         download_test_file('2.0', 'ModelExchange', 'MapleSim', '2017', 'CoupledClutches', 'CoupledClutches_in.csv')
 
     def test_info(self):
-
         status = call(['fmpy', 'info', 'CoupledClutches.fmu'])
+        self.assertEqual(0, status)
 
+    def test_validate(self):
+        status = call(['fmpy', 'validate', 'CoupledClutches.fmu'])
         self.assertEqual(0, status)
 
     def test_simulate(self):

@@ -32,10 +32,11 @@ def set_value(component, name, value):
     vr = [variable.valueReference]
 
     if variable.type == 'Real':
-        component.fmu.setReal(vr, [value])
+        component.fmu.setReal(vr, [float(value)])
     elif variable.type in ['Integer', 'Enumeration']:
         component.fmu.setInteger(vr, [int(value)])[0]
     elif variable.type == 'Boolean':
+        # TODO: convert literals
         component.fmu.setBoolean(vr, [value != 0.0])
     else:
         raise Exception("Unsupported type: %s" % variable.type)
@@ -51,7 +52,7 @@ def add_path(element, path=''):
         connector.path = path + connector.name
 
 
-def set_parameters(component, parameters):
+def set_parameters(component, parameter_set):
     """ Apply the parameters (start values) to a component """
 
     path = component.name
@@ -62,13 +63,14 @@ def set_parameters(component, parameters):
         path = parent.name + '.' + path
         parent = parent.parent
 
-    for name, value in parameters.items():
-        if name.startswith(path):
-            variable_name = name[len(path) + 1:]
-            set_value(component, variable_name, value)
+    for parameter in parameter_set.parameters:
+        if parameter.name.startswith(path):
+            variable_name = parameter.name[len(path) + 1:]
+            set_value(component, variable_name, parameter.value)
 
 
-def instantiate_fmu(component, ssp_unzipdir, start_time, parameters={}):
+def instantiate_fmu(component, ssp_unzipdir, start_time, parameter_set=None):
+    """ Instantiate an FMU """
 
     fmu_filename = os.path.join(ssp_unzipdir, component.source)
 
@@ -94,18 +96,21 @@ def instantiate_fmu(component, ssp_unzipdir, start_time, parameters={}):
     if model_description.fmiVersion == '1.0':
         component.fmu = FMU1Slave(**fmu_kwargs)
         component.fmu.instantiate()
-        set_parameters(component, parameters)
+        if parameter_set is not None:
+            set_parameters(component, parameter_set)
         component.fmu.initialize()
     else:
         component.fmu = FMU2Slave(**fmu_kwargs)
         component.fmu.instantiate()
         component.fmu.setupExperiment(startTime=start_time)
-        set_parameters(component, parameters)
+        if parameter_set is not None:
+            set_parameters(component, parameter_set)
         component.fmu.enterInitializationMode()
         component.fmu.exitInitializationMode()
 
 
 def free_fmu(component):
+    """ Free an FMU and remove its unzip dir """
 
     component.fmu.terminate()
     component.fmu.freeInstance()
@@ -116,6 +121,7 @@ def free_fmu(component):
 
 
 def do_step(component, time, step_size):
+    """ Perform one simulation step """
 
     # set inputs
     for connector in component.connectors:
@@ -131,7 +137,7 @@ def do_step(component, time, step_size):
             connector.value = get_value(component, connector.name)
 
 
-def simulate_ssp(ssp_filename, start_time=0.0, stop_time=None, step_size=None, parameters={}, input={}):
+def simulate_ssp(ssp_filename, start_time=0.0, stop_time=None, step_size=None, parameter_set=None, input={}):
     """ Simulate a system of FMUs """
 
     if stop_time is None:
@@ -175,7 +181,7 @@ def simulate_ssp(ssp_filename, start_time=0.0, stop_time=None, step_size=None, p
 
     # instantiate the FMUs
     for component in components:
-        instantiate_fmu(component, ssp_unzipdir, start_time, parameters)
+        instantiate_fmu(component, ssp_unzipdir, start_time, parameter_set)
 
     time = start_time
 

@@ -4,117 +4,284 @@ import os
 
 # namespaces for XML parsing
 ns = {
-    'ssd': 'http://www.pmsf.net/xsd/SystemStructureDescriptionDraft',
     'ssc': 'http://www.pmsf.net/xsd/SystemStructureCommonDraft',
+    'ssd': 'http://www.pmsf.net/xsd/SystemStructureDescriptionDraft',
+    'ssm': 'http://www.pmsf.net/xsd/SystemStructureParameterMappingDraft',
+    'ssv': 'http://www.pmsf.net/xsd/SystemStructureParameterValuesDraft',
+    'sss': 'http://www.pmsf.net/xsd/SystemStructureSignalDictionaryDraft',
 }
 
 
-class SystemStructureDescription(object):
+# common
+class BaseElement(object):
 
-    def __init__(self):
-        self.version = None
-        self.name = None
-        self.system = None
-        self.units = []
-
-
-class System(object):
-
-    def __init__(self):
-        self.name = None
-        self.description = None
-        self.connectors = []
-        self.elements = []
-        self.connections = []
-        self.signalDictionaries = []
-        self.parameterBindings = []
-
-    def __repr__(self):
-        return "System (name: %s, description: %s)" % (self.name, self.description)
+    def __init__(self, **kwargs):
+        super(BaseElement, self).__init__()
+        self.id = kwargs.get('id', None)
+        self.description = kwargs.get('description', None)
 
 
-class Connector(object):
+class TopLevelMetaData(object):
 
-    def __init__(self, name=None, kind=None):
-        self.name = name
-        self.kind = kind
-
-    def __repr__(self):
-        return "Connector (name: %s, kind: %s)" % (self.name, self.kind)
-
-
-class Component(object):
-
-    def __init__(self, name=None, source=None, type=None):
-        self.name = name
-        self.source = source
-        self.type = type
-        self.connectors = []
-
-    def __repr__(self):
-        return "Component (name: %s, source: %s, type: %s)" % (self.name, self.source, self.type)
-
-
-class SignalDictionaryReference(object):
-
-    def __init__(self, name=None, dictionary=None):
-        self.name = name
-        self.dictionary = dictionary
-        self.connectors = []
-
-    def __repr__(self):
-        return "SignalDictionaryReference (name: %s, dictionary: %s)" % (self.name, self.dictionary)
-
-
-class Connection(object):
-
-    def __init__(self, startElement=None, startConnector=None, endElement=None, endConnector=None):
-        self.startElement = startElement
-        self.startConnector = startConnector
-        self.endElement = endElement
-        self.endConnector = endConnector
-
-    def __repr__(self):
-        return "Connection (startElement: %s, startConnector: %s, endElement: %s, endConnector: %s)" % (self.startElement, self.startConnector, self.endElement, self.endConnector)
+    def __init__(self, **kwargs):
+        super(TopLevelMetaData, self).__init__()
+        self.author = kwargs.get('author', None)
+        self.fileversion = kwargs.get('fileversion', None)
+        self.copyright = kwargs.get('copyright', None)
+        self.license = kwargs.get('license', None)
+        self.generationTool = kwargs.get('generationTool', None)
+        self.generationDateAndTime = kwargs.get('generationDateAndTime', None)
 
 
 class LinearTransformation(object):
 
     def __init__(self, factor=1.0, offset=0.0):
+        super(LinearTransformation, self).__init__()
         self.factor = factor
         self.offset = offset
 
     def __repr__(self):
-        return "LinearTransformation (factor: %g, offset: %g)" % (self.factor, self.offset)
+        return "LinearTransformation (factor: %s, offset: %s)" % (self.factor, self.offset)
 
 
-class ParameterBinding(object):
+class BooleanMappingTransformation(object):
 
-    def __init__(self, prefix=None, source=None, type=None):
-        self.prefix = prefix
-        self.source = source
-        self.type = type
+    def __init__(self):
+        super(BooleanMappingTransformation, self).__init__()
+        self.entries = {}
+
+    def __repr__(self):
+        return "BooleanMappingTransformation (entries: %s)" % (self.entries,)
+
+
+class IntegerMappingTransformation(object):
+
+    def __init__(self):
+        super(IntegerMappingTransformation, self).__init__()
+        self.entries = {}
+
+    def __repr__(self):
+        return "IntegerMappingTransformation (entries: %s)" % (self.entries,)
+
+
+class EnumerationMappingTransformation(object):
+
+    def __init__(self):
+        super(EnumerationMappingTransformation, self).__init__()
+        self.entries = {}
+
+    def __repr__(self):
+        return "EnumerationMappingTransformation (entries: %s)" % (self.entries,)
+
+
+# system structure description
+class SystemStructureDescription(BaseElement, TopLevelMetaData):
+
+    def __init__(self, **kwargs):
+        super(SystemStructureDescription, self).__init__(**kwargs)
+        self.system = kwargs.get('system')
+        self.enumerations = kwargs.get('enumerations', [])
+        self.units = kwargs.get('units', [])
+        self.defaultExperiment = kwargs.get('defaultExperiment')
+        self.annotations = kwargs.get('annotations', [])
+        self.version = kwargs.get('version')
+        self.name = kwargs.get('name')
+
+    def __repr__(self):
+        return "SystemStructureDescription (name: %s)" % self.name
+
+
+class Element(BaseElement):
+
+    def __init__(self, **kwargs):
+        super(Element, self).__init__(**kwargs)
+        self.connectors = kwargs.get('connectors', [])
+        self.parameterBindings = kwargs.get('parameterBindings', [])
+        self.name = kwargs.get('name')
+
+
+class Component(Element):
+
+    def __init__(self, **kwargs):
+        super(Component, self).__init__(**kwargs)
+        self.type = kwargs.get('type')
+        self.source = kwargs.get('source')
+        self.implementation = kwargs.get('implementation')
+
+    def __repr__(self):
+        return "Component (name: %s, source: %s, type: %s)" % (self.name, self.source, self.type)
+
+
+class System(Element):
+
+    def __init__(self, **kwargs):
+        super(System, self).__init__(**kwargs)
+        self.elements = kwargs.get('elements', [])
+        self.connections = kwargs.get('connections', [])
+        self.signalDictionaries = kwargs.get('signalDictionaries', [])
+        self.systemGeometry = kwargs.get('systemGeometry')
+        self.graphicalElements = kwargs.get('graphicalElements', [])
+        self.simulationInformation = kwargs.get('simulationInformation')
+        self.annotations = kwargs.get('annotations', [])
+
+    def __repr__(self):
+        return "System (name: %s, description: %s)" % (self.name, self.description)
+
+
+class Connector(BaseElement):
+
+    def __init__(self, **kwargs):
+        super(Connector, self).__init__(**kwargs)
+        self.name = kwargs.get('name')
+        self.kind = kwargs.get('kind')
+
+    def __repr__(self):
+        return "Connector (name: %s, kind: %s)" % (self.name, self.kind)
+
+
+class Connection(BaseElement):
+
+    def __init__(self, **kwargs):
+        super(Connection, self).__init__(**kwargs)
+        self.startElement = kwargs.get('startElement')
+        self.startConnector = kwargs.get('startConnector')
+        self.endElement = kwargs.get('endElement')
+        self.endConnector = kwargs.get('endConnector')
+
+    def __repr__(self):
+        return "Connection (startElement: %s, startConnector: %s, endElement: %s, endConnector: %s)" % (self.startElement, self.startConnector, self.endElement, self.endConnector)
+
+
+class ParameterBinding(BaseElement):
+
+    def __init__(self, **kwargs):
+        super(ParameterBinding, self).__init__(**kwargs)
+        self.parameterValues = kwargs.get('parameterValues', [])
+        self.parameterMapping = kwargs.get('parameterMapping', [])
+        self.annotations = kwargs.get('annotations', [])
+        self.type = kwargs.get('type')
+        self.source = kwargs.get('source')
+        self.sourceBase = kwargs.get('sourceBase')
+        self.prefix = kwargs.get('prefix')
 
     def __repr__(self):
         return "ParameterBinding (prefix: %s, source: %s, type: %s)" % (self.prefix, self.source, self.type)
 
 
-class SignalDictionary(object):
+class DefaultExperiment(object):
 
-    def __init__(self, name=None):
-        self.name = name
-        self.entries = []
+    def __init__(self):
+        super(DefaultExperiment, self).__init__()
+        self.annotations = []
+        self.startTime = None
+        self.stopTime = None
+
+
+class SimulationInformation(object):
+
+    def __init__(self, **kwargs):
+        super(SimulationInformation, self).__init__()
+        self.fixedStepSolver = kwargs.get('fixedStepSolver')
+        self.variableStepSolver = kwargs.get('variableStepSolver')
+        self.fixedStepMaster = kwargs.get('fixedStepMaster')
+        self.variableStepMaster = kwargs.get('variableStepMaster')
+        self.annotations = kwargs.get('annotations', [])
+
+
+class FixedStepSolver(object):
+
+    def __init__(self, **kwargs):
+        super(FixedStepSolver, self).__init__()
+        self.description = kwargs.get('description')
+        self.stepSize = kwargs.get('stepSize')
+
+
+class VariableStepSolver(object):
+
+    def __init__(self, **kwargs):
+        super(VariableStepSolver, self).__init__()
+        self.description = kwargs.get('description')
+        self.absoluteTolerance = kwargs.get('absoluteTolerance')
+        self.relativeTolerance = kwargs.get('relativeTolerance')
+        self.minimumStepSize = kwargs.get('minimumStepSize')
+        self.maximumStepSize = kwargs.get('maximumStepSize')
+        self.initialStepSize = kwargs.get('initialStepSize')
+
+
+class FixedStepMaster(object):
+
+    def __init__(self, **kwargs):
+        super(FixedStepMaster, self).__init__()
+        self.description = kwargs.get('description')
+        self.stepSize = kwargs.get('stepSize')
+
+
+class VariableStepMaster(object):
+
+    def __init__(self, **kwargs):
+        super(VariableStepMaster, self).__init__()
+        self.description = kwargs.get('description')
+        self.minimumStepSize = kwargs.get('minimumStepSize')
+        self.maximumStepSize = kwargs.get('maximumStepSize')
+        self.initialStepSize = kwargs.get('initialStepSize')
+
+
+# parameter mapping
+class ParameterMapping(BaseElement, TopLevelMetaData):
+
+    def __init__(self, **kwargs):
+        super(ParameterMapping, self).__init__(**kwargs)
+        self.mappingEntries = kwargs.get('mappingEntries', [])
+        self.annotations = kwargs.get('annotations', [])
+        self.version = kwargs.get('version')
+
+
+class MappingEntry(BaseElement):
+
+    def __init__(self, **kwargs):
+        super(MappingEntry, self).__init__(**kwargs)
+        self.transformation = kwargs.get('transformation')
+        self.source = kwargs.get('source')
+        self.target = kwargs.get('target')
+        self.suppressUnitConversion = kwargs.get('suppressUnitConversion')
+
+
+class SignalDictionaryReference(object):
+
+    def __init__(self, **kwargs):
+        self.name = kwargs.get('name')
+        self.dictionary = kwargs.get('dictionary')
+        self.connectors = kwargs.get('connectors', [])
 
     def __repr__(self):
-        return "SignalDictionary (name: %s)" % self.name
+        return "SignalDictionaryReference (name: %s, dictionary: %s)" % (self.name, self.dictionary)
 
 
-class DictionaryEntry(object):
+# signal dictionary
+class SignalDictionary(BaseElement, TopLevelMetaData):
 
-    def __init__(self, name=None):
-        self.name = name
-        self.type = None
-        self.unit = None
+    def __init__(self, **kwargs):
+        super(SignalDictionary, self).__init__(**kwargs)
+        self.entries = kwargs.get('entries', [])
+        self.enumerations = kwargs.get('enumerations', [])
+        self.units = kwargs.get('units', [])
+        self.annotations = kwargs.get('annotations', [])
+        self.version = kwargs.get('version')
+        self.type = kwargs.get('type')
+        self.source = kwargs.get('source')
+        self.name = kwargs.get('name')
+
+    def __repr__(self):
+        return "SignalDictionary"
+
+
+class DictionaryEntry(BaseElement):
+
+    def __init__(self, **kwargs):
+        super(DictionaryEntry, self).__init__(**kwargs)
+        self.name = kwargs.get('name')
+        self.type = kwargs.get('type')
+        self.unit = kwargs.get('unit')
 
     def __repr__(self):
         return "DictionaryEntry (name: %s, type: %s, unit=%s)" % (self.name, self.type, self.unit)
@@ -122,21 +289,50 @@ class DictionaryEntry(object):
 
 class Unit(object):
 
-    def __init__(self, name=None):
-        self.name = name
-        self.kg = 0
-        self.m = 0
-        self.s = 0
-        self.A = 0
-        self.K = 0
-        self.mol = 0
-        self.cd = 0
-        self.rad = 0
-        self.factor = 1.0
-        self.offset = 0.0
+    def __init__(self, **kwargs):
+        super(Unit, self).__init__()
+        self.name = kwargs.get('name')
+        self.kg = int(kwargs.get('kg', 0))
+        self.m = int(kwargs.get('m', 0))
+        self.s = int(kwargs.get('s', 0))
+        self.A = int(kwargs.get('A', 0))
+        self.K = int(kwargs.get('K', 0))
+        self.mol = int(kwargs.get('mol', 0))
+        self.cd = int(kwargs.get('cd', 0))
+        self.rad = int(kwargs.get('rad', 0))
+        self.factor = float(kwargs.get('factor', 1.0))
+        self.offset = float(kwargs.get('offset', 0.0))
 
     def __repr__(self):
         return "Unit (name: %s, kg: %d, m: %d, s: %d, A: %d, K: %d, mol: %d, cd: %d, rad: %d, factor: %g, offset: %g)" % (self.name, self.kg, self.m, self.s, self.A, self.K, self.mol, self.cd, self.rad, self.factor, self.offset)
+
+
+class ParameterSet(BaseElement, TopLevelMetaData):
+
+    def __init__(self, **kwargs):
+        super(ParameterSet, self).__init__(**kwargs)
+        self.parameters = kwargs.get('parameters', [])
+        self.enumerations = kwargs.get('enumerations', [])
+        self.units = kwargs.get('units', [])
+        self.annotations = kwargs.get('annotations', [])
+        self.version = kwargs.get('version')
+        self.name = kwargs.get('name')
+
+    def __repr__(self):
+        return "ParameterSet (name: %s)" % self.name
+
+
+class Parameter(BaseElement):
+
+    def __init__(self, **kwargs):
+        super(Parameter, self).__init__()
+        self.name = kwargs.get('name')
+        self.type = kwargs.get('type')
+        self.value = kwargs.get('value')
+        self.unit = kwargs.get('unit')
+
+    def __repr__(self):
+        return "Parameter (name: %s, type: %s, value: %s, unit: %s)" % (self.name, self.type, self.value, self.unit)
 
 
 def validate_tree(root, schema_file):
@@ -152,27 +348,109 @@ def validate_tree(root, schema_file):
         raise Exception(message)
 
 
-def read_ssv(filename, validate=True):
+def read_ssv(filename, resource=None, validate=True):
 
-    ns = {
-        'ssv': 'http://www.pmsf.net/xsd/SystemStructureParameterValuesDraft',
-    }
-
-    tree = etree.parse(filename)
+    if resource is None:
+        tree = etree.parse(filename)
+    else:
+        # load parameter set
+        with zipfile.ZipFile(filename, 'r') as zf:
+            xml = zf.open(resource)
+            tree = etree.parse(xml)
 
     root = tree.getroot()
 
     if validate:
         validate_tree(root, 'SystemStructureParameterValues.xsd')
 
-    parameters = {}
+    return _get_parameter_set(root)
 
-    for parameter in root.findall('ssv:Parameters/ssv:Parameter', namespaces=ns):
-        name = parameter.get('name')
-        real = parameter.find('ssv:Real', namespaces=ns)
-        value = real.get('value')
-        parameters[name] = float(value)
-    return parameters
+
+def _get_transformation(element):
+
+    for t in element.findall('ssc:LinearTransformation', namespaces=ns):
+        return LinearTransformation(**t.attrib)
+
+    # TODO:
+    # for type in [BooleanMappingTransformation, IntegerMappingTransformation, EnumerationMappingTransformation]:
+    #     pass
+
+    return None
+
+
+def _get_parameter_set(element):
+
+    parameter_set = ParameterSet(name=element.get('name'))
+
+    for p in element.findall('ssv:Parameters/ssv:Parameter', namespaces=ns):
+
+        parameter = Parameter(name=p.get('name'))
+        real = p.find('ssv:Real', namespaces=ns)
+
+        if real is not None:
+            parameter.type = 'Real'
+            parameter.value = real.get('value')
+            parameter.unit = real.get('unit')
+        else:
+            for type in ['Integer', 'Boolean', 'String', 'Enumeration', 'Binary']:
+                entry = p.find('ssv:' + type, namespaces=ns)
+                if entry is not None:
+                    parameter.type = type
+                    parameter.value = entry.get('value')
+                    break
+
+        parameter_set.parameters.append(parameter)
+
+    return parameter_set
+
+
+def read_ssm(filename, resource=None, validate=True):
+
+    if resource is None:
+        tree = etree.parse(filename)
+    else:
+        # load parameter set
+        with zipfile.ZipFile(filename, 'r') as zf:
+            xml = zf.open(resource)
+            tree = etree.parse(xml)
+
+    root = tree.getroot()
+
+    if validate:
+        validate_tree(root, 'SystemStructureParameterMapping.xsd')
+
+    parameter_mapping = ParameterMapping()
+
+    for m in root.findall('ssm:MappingEntry', namespaces=ns):
+        mapping_entry = MappingEntry(**m.attrib)
+        mapping_entry.transformation = _get_transformation(m)
+        parameter_mapping.mappingEntries.append(mapping_entry)
+
+    return parameter_mapping
+
+
+def _handle_signal_dictionary(element):
+
+    dictionary = SignalDictionary(**element.attrib)
+
+    for e in element.findall('sss:DictionaryEntry', namespaces=ns):
+
+        entry = DictionaryEntry(name=e.get('name'))
+
+        real = e.find('ssc:Real', namespaces=ns)
+        if real is not None:
+            entry.type = 'Real'
+            entry.unit = real.get('unit')
+        else:
+            for type in ['Integer', 'Boolean', 'String', 'Enumeration', 'Binary']:
+                entry = e.find('ssc:' + type, namespaces=ns)
+                if entry is not None:
+                    entry.type = type
+                    break
+
+        dictionary.entries.append(entry)
+
+    return dictionary
 
 
 def get_connectors(element):
@@ -186,22 +464,60 @@ def get_connectors(element):
     return connectors
 
 
-def handle_system(system):
+def _handle_element(object, element, filename):
+
+    for b in element.findall('ssd:ParameterBindings/ssd:ParameterBinding', namespaces=ns):
+
+        parameter_binding = ParameterBinding(**b.attrib)
+
+        if parameter_binding.source is not None:
+            parameter_set = read_ssv(filename, resource=parameter_binding.source)
+            parameter_binding.parameterValues.append(parameter_set)
+
+        for s in b.findall('ssd:ParameterValues/ssv:ParameterSet', namespaces=ns):
+            parameter_set = _get_parameter_set(s)
+            parameter_binding.parameterValues.append(parameter_set)
+
+        for m in b.findall('ssd:ParameterMapping', namespaces=ns):
+
+            source = m.get('source')
+
+            if source is None:
+                parameter_mapping = ParameterMapping()
+            else:
+                parameter_mapping = read_ssm(filename, resource=source)
+
+            parameter_binding.parameterMapping.append(parameter_mapping)
+
+        object.parameterBindings.append(parameter_binding)
+
+
+def handle_system(system, filename):
+    """
+    Parameters:
+        system      ...
+        filename    filename of the SSP file
+
+    Returns:
+        A System object
+    """
 
     system_obj = System()
 
     system_obj.name = system.get('name')
     system_obj.description = system.get('description')
+    _handle_element(system_obj, system, filename)
 
-    for b in system.findall('ssd:ParameterBindings/ssd:ParameterBinding', namespaces=ns):
-        system_obj.parameterBindings.append(
-            ParameterBinding(prefix=b.get('prefix'), source=b.get('source'), type=b.get('type')))
+    # for b in system.findall('ssd:ParameterBindings/ssd:ParameterBinding', namespaces=ns):
+    #     system_obj.parameterBindings.append(
+    #         ParameterBinding(prefix=b.get('prefix'), source=b.get('source'), type=b.get('type')))
 
     system_obj.connectors = get_connectors(system)
 
     # Components
     for c in system.findall('ssd:Elements/ssd:Component', namespaces=ns):
         component = Component(name=c.get('name'), source=c.get('source'), type=c.get('type'))
+        _handle_element(component, c, filename)
         component.connectors = get_connectors(c)
         system_obj.elements.append(component)
 
@@ -227,19 +543,30 @@ def handle_system(system):
 
     # SignalDictionaries
     for d in system.findall('ssd:SignalDictionaries/ssd:SignalDictionary', namespaces=ns):
-        dictionary = SignalDictionary(name=d.get('name'))
-        for e in d.findall('ssd:DictionaryEntry', namespaces=ns):
-            entry = DictionaryEntry(name=e.get('name'))
-            dictionary.entries.append(entry)
-            r = e.find('ssc:Real', namespaces=ns)
-            if r is not None:
-                entry.unit = r.get('unit')
 
-        system_obj.signalDictionaries.append(dictionary)
+        source = d.get('source')
+
+        if source is not None:
+            # referenced
+            with zipfile.ZipFile(filename, 'r') as zf:
+                xml = zf.open(source)
+                tree = etree.parse(xml)
+                sd = tree.getroot()
+        else:
+            # inline
+            sd = d.find('sss:SignalDictionary', namespaces=ns)
+
+        signal_dictionary = _handle_signal_dictionary(sd)
+
+        signal_dictionary.name = d.get('name')
+        signal_dictionary.source = d.get('source')
+        signal_dictionary.type = d.get('type')
+
+        system_obj.signalDictionaries.append(signal_dictionary)
 
     # Systems
     for system in system.findall('ssd:Elements/ssd:System', namespaces=ns):
-        child_system_obj = handle_system(system)
+        child_system_obj = handle_system(system, filename=filename)
         system_obj.elements.append(child_system_obj)
 
     return system_obj
@@ -263,19 +590,15 @@ def read_ssd(filename, validate=True):
 
     # Units
     for u in root.findall('ssd:Units/ssc:Unit', namespaces=ns):
-        unit = Unit(name=u.get('name'))
-        b = u.find('ssc:BaseUnit', namespaces=ns)
-        for s in ['kg', 'm', 's', 'A', 'K', 'mol', 'cd', 'rad', 'factor', 'offset']:
-            value = b.get(s)
-            if value is not None:
-                setattr(unit, s, float(value) if s in ['factor', 'offset'] else int(value))
-        ssd.units.append(unit)
-
+        attr = dict(u.attrib)
+        bu = u.find('ssc:BaseUnit', namespaces=ns)
+        attr.update(bu.attrib)
+        ssd.units.append(Unit(**attr))
     ssd.system = System()
 
     system = root.find('ssd:System', namespaces=ns)
 
-    ssd.system = handle_system(system)
+    ssd.system = handle_system(system, filename=filename)
 
     # add parent elements
     add_tree_info(ssd.system)

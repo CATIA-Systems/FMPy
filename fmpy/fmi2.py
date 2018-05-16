@@ -173,6 +173,11 @@ class _FMU2(_FMU):
                            ['component', 'FMUstate', 'serializedState', 'size'],
                            [fmi2Component, POINTER(fmi2Byte), c_size_t, POINTER(fmi2FMUstate)],
                            fmi2Status)
+        
+        self._fmi2Function('fmi2GetDirectionalDerivative',
+                           ['component', 'vUnknown_ref', 'nUnknown', 'vKnown_ref', 'nKnown', 'dvKnown', 'dvUnknown'],
+                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Real), POINTER(fmi2Real)],
+                           fmi2Status)
 
     def _fmi2Function(self, fname, argnames, argtypes, restype):
 
@@ -335,6 +340,14 @@ class _FMU2(_FMU):
         buffer = create_string_buffer(serializedState)
         self.fmi2DeSerializeFMUstate(self.component, buffer, len(buffer), byref(state))
 
+    def getDirectionalDerivative(self, vUnknown_ref, vKnown_ref, dvKnown):
+        vUnknown_ref = (fmi2ValueReference * len(vUnknown_ref))(*vUnknown_ref)
+        vKnown_ref = (fmi2ValueReference * len(vKnown_ref))(*vKnown_ref)
+        dvKnown = (fmi2Real * len(dvKnown))(*dvKnown)
+        dvUnknown = (fmi2Real * len(vUnknown_ref))()
+        self.fmi2GetDirectionalDerivative(self.component, vUnknown_ref, len(vUnknown_ref), vKnown_ref, len(vKnown_ref), dvKnown, dvUnknown)
+
+        return list(dvUnknown)        
 
 class FMU2Model(_FMU2):
     """ Base class for FMI 2.0 model exchange FMUs """

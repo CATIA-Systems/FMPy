@@ -1,6 +1,6 @@
 ## v0.2.4 (unreleased)
 
-- `NEW` getDirectionalDerivative()
+- `NEW` Remaining FMI functions added
 
 
 ## v0.2.3 (2018-04-11)

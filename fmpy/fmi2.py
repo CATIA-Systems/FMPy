@@ -18,7 +18,7 @@ fmi2String               = c_char_p
 fmi2Type                 = c_int
 fmi2Byte                 = c_char
 
-fmi2Status  = c_int
+fmi2Status = c_int
 
 fmi2OK      = 0
 fmi2Warning = 1
@@ -39,6 +39,7 @@ fmi2True  = 1
 fmi2False = 0
 
 fmi2StatusKind = c_int
+
 fmi2DoStepStatus       = 0
 fmi2PendingStatus      = 1
 fmi2LastSuccessfulTime = 2
@@ -84,6 +85,15 @@ class _FMU2(_FMU):
         super(_FMU2, self).__init__(**kwargs)
 
         # Inquire version numbers of header files and setting logging status
+        self._fmi2Function('fmi2GetTypesPlatform', [], [], fmi2String)
+
+        self._fmi2Function('fmi2GetVersion', [], [], fmi2String)
+
+        self._fmi2Function('fmi2SetDebugLogging',
+                           ['component', 'loggingOn', 'nCategories', 'categories'],
+                           [fmi2Component, fmi2Boolean, c_size_t, POINTER(fmi2String)])
+
+        # Creation and destruction of FMU instances and setting debug status
         self._fmi2Function('fmi2Instantiate',
                            ['instanceName', 'fmuType', 'guid', 'resourceLocation', 'callbacks', 'visible', 'loggingOn'],
                            [fmi2String, fmi2Type, fmi2String, fmi2String, POINTER(fmi2CallbackFunctions), fmi2Boolean, fmi2Boolean],
@@ -94,8 +104,7 @@ class _FMU2(_FMU):
         # Enter and exit initialization mode, terminate and reset
         self._fmi2Function('fmi2SetupExperiment',
                            ['component', 'toleranceDefined', 'tolerance', 'startTime', 'stopTimeDefined', 'stopTime'],
-                           [fmi2Component, fmi2Boolean, fmi2Real, fmi2Real, fmi2Boolean, fmi2Real],
-                           fmi2Status)
+                           [fmi2Component, fmi2Boolean, fmi2Real, fmi2Real, fmi2Boolean, fmi2Real])
 
         self._fmi2Function('fmi2EnterInitializationMode', ['component'], [fmi2Component], fmi2Status)
 
@@ -108,103 +117,118 @@ class _FMU2(_FMU):
         # Getting and setting variable values
         self._fmi2Function('fmi2GetReal',
                            ['component', 'vr', 'nvr', 'value'],
-                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Real)],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Real)])
 
         self._fmi2Function('fmi2GetInteger',
                            ['component', 'vr', 'nvr', 'value'],
-                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer)],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer)])
 
         self._fmi2Function('fmi2GetBoolean',
                            ['component', 'vr', 'nvr', 'value'],
-                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Boolean)],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Boolean)])
 
         self._fmi2Function('fmi2GetString',
                            ['component', 'vr', 'nvr', 'value'],
-                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2String)],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2String)])
 
         self._fmi2Function('fmi2SetReal',
                            ['component', 'vr', 'nvr', 'value'],
-                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Real)],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Real)])
 
         self._fmi2Function('fmi2SetInteger',
                            ['component', 'vr', 'nvr', 'value'],
-                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer)],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer)])
 
         self._fmi2Function('fmi2SetBoolean',
                            ['component', 'vr', 'nvr', 'value'],
-                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Boolean)],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Boolean)])
 
         self._fmi2Function('fmi2SetString',
                            ['component', 'vr', 'nvr', 'value'],
-                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2String)],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2String)])
 
         # Getting and setting the internal FMU state
         self._fmi2Function('fmi2GetFMUstate', ['component', 'FMUstate'],
-                           [fmi2Component, POINTER(fmi2FMUstate)],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2FMUstate)])
 
         self._fmi2Function('fmi2SetFMUstate', ['component', 'FMUstate'],
-                           [fmi2Component, fmi2FMUstate],
-                           fmi2Status)
+                           [fmi2Component, fmi2FMUstate])
 
         self._fmi2Function('fmi2FreeFMUstate', ['component', 'FMUstate'],
-                           [fmi2Component, POINTER(fmi2FMUstate)],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2FMUstate)])
 
         self._fmi2Function('fmi2SerializedFMUstateSize',
                            ['component', 'FMUstate', 'size'],
-                           [fmi2Component, fmi2FMUstate, POINTER(c_size_t)],
-                           fmi2Status)
+                           [fmi2Component, fmi2FMUstate, POINTER(c_size_t)])
 
         self._fmi2Function('fmi2SerializeFMUstate',
                            ['component', 'FMUstate', 'serializedState', 'size'],
-                           [fmi2Component, fmi2FMUstate, POINTER(fmi2Byte), c_size_t],
-                           fmi2Status)
+                           [fmi2Component, fmi2FMUstate, POINTER(fmi2Byte), c_size_t])
 
         self._fmi2Function('fmi2DeSerializeFMUstate',
                            ['component', 'FMUstate', 'serializedState', 'size'],
-                           [fmi2Component, POINTER(fmi2Byte), c_size_t, POINTER(fmi2FMUstate)],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2Byte), c_size_t, POINTER(fmi2FMUstate)])
 
         # Getting partial derivatives
         self._fmi2Function('fmi2GetDirectionalDerivative',
                            ['component', 'vUnknown_ref', 'nUnknown', 'vKnown_ref', 'nKnown', 'dvKnown', 'dvUnknown'],
-                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Real), POINTER(fmi2Real)],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Real), POINTER(fmi2Real)])
 
-    def _fmi2Function(self, fname, argnames, argtypes, restype):
+    def _fmi2Function(self, fname, argnames, argtypes, restype=fmi2Status):
+        """ Add an FMI 2.0 function to this instance and add a wrapper that allows
+        logging and checks the return code if the return type is fmi2Status
+
+        Parameters:
+            fname     the name of the function
+            argnames  names of the arguments
+            argtypes  types of the arguments
+            restype   return type
+        """
 
         if not hasattr(self.dll, fname):
             setattr(self, fname, None)
             return
 
+        # get the exported function form the shared library
         f = getattr(self.dll, fname)
         f.argtypes = argtypes
         f.restype = restype
 
-        def w(*args, **kwargs):
+        def w(*args):
+            """ Wrapper function for the FMI call """
 
-            res = f(*args, **kwargs)
+            # call the FMI function
+            res = f(*args)
 
             if self.fmiCallLogger is not None:
-                self._print_fmi_args(fname, argnames, argtypes, args, restype, res)
+                # log the call
+                self._log_fmi_args(fname, argnames, argtypes, args, restype, res)
 
             if restype == fmi2Status:  # status code
                 # check the status code
-                if res > 1:
+                if res > fmi2Warning:
                     raise Exception("FMI call failed with status %d." % res)
 
             return res
 
         setattr(self, fname, w)
+
+    # Inquire version numbers of header files and setting logging status
+
+    def getTypesPlatform(self):
+        types_platform = self.fmi2GetTypesPlatform()
+        return types_platform.decode('utf-8')
+
+    def getVersion(self):
+        version = self.fmi2GetVersion()
+        return version.decode('utf-8')
+
+    def setDebugLogging(self, loggingOn, categories):
+        categories_ = (fmi2String * len(categories))()
+        categories_[:] = [c.encode('utf-8') for c in categories]
+        self.fmi2SetDebugLogging(self.component, fmi2True if loggingOn else fmi2False, len(categories), categories_)
+
+    # Creation and destruction of FMU instances and setting debug status
 
     def instantiate(self, visible=False, callbacks=None, loggingOn=False):
 
@@ -227,6 +251,12 @@ class _FMU2(_FMU):
                                               fmi2True if visible else fmi2False,
                                               fmi2True if loggingOn else fmi2False)
 
+    def freeInstance(self):
+        self.fmi2FreeInstance(self.component)
+        self.freeLibrary()
+
+    # Enter and exit initialization mode, terminate and reset
+
     def setupExperiment(self, tolerance=None, startTime=0.0, stopTime=None):
 
         toleranceDefined = fmi2True if tolerance is not None else fmi2False
@@ -247,11 +277,13 @@ class _FMU2(_FMU):
     def exitInitializationMode(self):
         return self.fmi2ExitInitializationMode(self.component)
 
+    def terminate(self):
+        return self.fmi2Terminate(self.component)
+
     def reset(self):
         return self.fmi2Reset(self.component)
 
-    def terminate(self):
-        return self.fmi2Terminate(self.component)
+    # Getting and setting variable values
 
     def getReal(self, vr):
         vr = (fmi2ValueReference * len(vr))(*vr)
@@ -299,6 +331,7 @@ class _FMU2(_FMU):
         self.fmi2SetString(self.component, vr, len(vr), value)
 
     # Getting and setting the internal FMU state
+
     def getFMUstate(self):
         state = fmi2FMUstate()
         self.fmi2GetFMUstate(self.component, byref(state))
@@ -309,10 +342,6 @@ class _FMU2(_FMU):
 
     def freeFMUstate(self, state):
         self.fmi2FreeFMUstate(self.component, byref(state))
-
-    def freeInstance(self):
-        self.fmi2FreeInstance(self.component)
-        self.freeLibrary()
 
     def serializeFMUstate(self, state):
         """ Serialize an FMU state
@@ -341,8 +370,10 @@ class _FMU2(_FMU):
         buffer = create_string_buffer(serializedState)
         self.fmi2DeSerializeFMUstate(self.component, buffer, len(buffer), byref(state))
 
+    # Getting partial derivatives
+
     def getDirectionalDerivative(self, vUnknown_ref, vKnown_ref, dvKnown):
-        """ Get the partial derivative
+        """ Get partial derivatives
 
         Parameters:
             vUnknown_ref    a list of value references of the unknowns
@@ -364,7 +395,7 @@ class _FMU2(_FMU):
 
 
 class FMU2Model(_FMU2):
-    """ Base class for FMI 2.0 model exchange FMUs """
+    """ An FMI 2.0 Model Exchange FMU """
 
     def __init__(self, **kwargs):
 
@@ -374,48 +405,44 @@ class FMU2Model(_FMU2):
 
         self._fmi2Function('fmi2NewDiscreteStates',
                            ['component', 'eventInfo'],
-                           [fmi2Component, POINTER(fmi2EventInfo)],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2EventInfo)])
 
         self._fmi2Function('fmi2EnterContinuousTimeMode',
                            ['component'],
-                           [fmi2Component],
-                           fmi2Status)
+                           [fmi2Component])
 
         self._fmi2Function('fmi2EnterEventMode',
                            ['component'],
-                           [fmi2Component],
-                           fmi2Status)
+                           [fmi2Component])
 
         self._fmi2Function('fmi2GetContinuousStates',
                            ['component', 'x', 'nx'],
-                           [fmi2Component, POINTER(fmi2Real), c_size_t],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2Real), c_size_t])
 
         self._fmi2Function('fmi2SetContinuousStates',
                            ['component', 'x', 'nx'],
-                           [fmi2Component, POINTER(fmi2Real), c_size_t],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2Real), c_size_t])
 
         self._fmi2Function('fmi2GetDerivatives',
                            ['component', 'derivatives', 'nx'],
-                           [fmi2Component, POINTER(fmi2Real), c_size_t],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2Real), c_size_t])
 
         self._fmi2Function('fmi2GetEventIndicators',
                            ['component', 'eventIndicators', 'ni'],
-                           [fmi2Component, POINTER(fmi2Real), c_size_t],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2Real), c_size_t])
 
         self._fmi2Function('fmi2SetTime',
                            ['component', 'time'],
-                           [fmi2Component, fmi2Real],
-                           fmi2Status)
+                           [fmi2Component, fmi2Real])
 
         self._fmi2Function('fmi2CompletedIntegratorStep',
                            ['component', 'noSetFMUStatePriorToCurrentPoint', 'enterEventMode', 'terminateSimulation'],
-                           [fmi2Component, fmi2Boolean, POINTER(fmi2Boolean), POINTER(fmi2Boolean)],
-                           fmi2Status)
+                           [fmi2Component, fmi2Boolean, POINTER(fmi2Boolean), POINTER(fmi2Boolean)])
+
+    # Enter and exit the different modes
+
+    def enterEventMode(self):
+        return self.fmi2EnterEventMode(self.component)
 
     def newDiscreteStates(self):
         return self.fmi2NewDiscreteStates(self.component, byref(self.eventInfo))
@@ -423,14 +450,21 @@ class FMU2Model(_FMU2):
     def enterContinuousTimeMode(self):
         return self.fmi2EnterContinuousTimeMode(self.component)
 
-    def enterEventMode(self):
-        return self.fmi2EnterEventMode(self.component)
+    def completedIntegratorStep(self, noSetFMUStatePriorToCurrentPoint=fmi2True):
+        enterEventMode = fmi2Boolean()
+        terminateSimulation = fmi2Boolean()
+        self.fmi2CompletedIntegratorStep(self.component, noSetFMUStatePriorToCurrentPoint, byref(enterEventMode), byref(terminateSimulation))
+        return enterEventMode.value, terminateSimulation.value
 
-    def getContinuousStates(self, x, nx):
-        return self.fmi2GetContinuousStates(self.component, x, nx)
+    # Providing independent variables and re-initialization of caching
+
+    def setTime(self, time):
+        return self.fmi2SetTime(self.component, time)
 
     def setContinuousStates(self, x, nx):
         return self.fmi2SetContinuousStates(self.component, x, nx)
+
+    # Evaluation of the model equations
 
     def getDerivatives(self, dx, nx):
         return self.fmi2GetDerivatives(self.component, dx, nx)
@@ -438,18 +472,15 @@ class FMU2Model(_FMU2):
     def getEventIndicators(self, z, nz):
         return self.fmi2GetEventIndicators(self.component, z, nz)
 
-    def setTime(self, time):
-        return self.fmi2SetTime(self.component, time)
+    def getContinuousStates(self, x, nx):
+        return self.fmi2GetContinuousStates(self.component, x, nx)
 
-    def completedIntegratorStep(self, noSetFMUStatePriorToCurrentPoint=fmi2True):
-        enterEventMode = fmi2Boolean()
-        terminateSimulation = fmi2Boolean()
-        self.fmi2CompletedIntegratorStep(self.component, noSetFMUStatePriorToCurrentPoint, byref(enterEventMode), byref(terminateSimulation))
-        return enterEventMode.value, terminateSimulation.value
+    def getNominalsOfContinuousStatesTYPE(self):
+        pass
 
 
 class FMU2Slave(_FMU2):
-    """ Base class for FMI 2.0 co-simulation FMUs """
+    """ An FMI 2.0 Co-Simulation FMU """
 
     def __init__(self, instanceName=None, **kwargs):
 
@@ -457,26 +488,45 @@ class FMU2Slave(_FMU2):
 
         super(FMU2Slave, self).__init__(**kwargs)
 
+        # Simulating the slave
+
         self._fmi2Function('fmi2SetRealInputDerivatives',
                            ['c', 'vr', 'nvr', 'order', 'value'],
-                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer), POINTER(fmi2Real)],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer), POINTER(fmi2Real)])
 
         self._fmi2Function('fmi2GetRealOutputDerivatives',
                            ['c', 'vr', 'nvr', 'order', 'value'],
-                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer), POINTER(fmi2Real)],
-                           fmi2Status)
+                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer), POINTER(fmi2Real)])
 
         self._fmi2Function('fmi2DoStep',
-                           ['component', 'currentCommunicationPoint', 'communicationStepSize',
-                            'noSetFMUStatePriorToCurrentPoint'],
-                           [fmi2Component, fmi2Real, fmi2Real, fmi2Boolean],
-                           fmi2Status)
+                           ['component', 'currentCommunicationPoint', 'communicationStepSize', 'noSetFMUStatePriorToCurrentPoint'],
+                           [fmi2Component, fmi2Real, fmi2Real, fmi2Boolean])
+
+        self._fmi2Function('fmi2CancelStep', ['component'], [fmi2Component])
+
+        # Inquire slave status
+
+        self._fmi2Function('fmi2GetStatus',
+                           ['component', 'kind', 'value'],
+                           [fmi2Component, fmi2StatusKind, POINTER(fmi2Status)])
+
+        self._fmi2Function('fmi2GetRealStatus',
+                           ['component', 'kind', 'value'],
+                           [fmi2Component, fmi2StatusKind, POINTER(fmi2Real)])
+
+        self._fmi2Function('fmi2GetIntegerStatus',
+                           ['component', 'kind', 'value'],
+                           [fmi2Component, fmi2StatusKind, POINTER(fmi2Integer)])
 
         self._fmi2Function('fmi2GetBooleanStatus',
                            ['component', 'kind', 'value'],
-                           [fmi2Component, fmi2StatusKind, POINTER(fmi2Boolean)],
-                           fmi2Status)
+                           [fmi2Component, fmi2StatusKind, POINTER(fmi2Boolean)])
+
+        self._fmi2Function('fmi2GetStringStatus',
+                           ['component', 'kind', 'value'],
+                           [fmi2Component, fmi2StatusKind, POINTER(fmi2String)])
+
+    # Simulating the slave
 
     def setRealInputDerivatives(self, vr, order, value):
         vr = (fmi2ValueReference * len(vr))(*vr)
@@ -494,6 +544,32 @@ class FMU2Slave(_FMU2):
     def doStep(self, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint=fmi2True):
         return self.fmi2DoStep(self.component, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint)
 
+    def cancelStep(self):
+        self.fmi2CancelStep(self.component)
+
+    # Inquire slave status
+
+    def getStatus(self, kind):
+        value = fmi2Status(fmi2OK)
+        self.fmi2GetStatus(self.component, kind, byref(value))
+        return value
+
+    def getRealStatus(self, kind):
+        value = fmi2Real(0.0)
+        self.fmi2GetRealStatus(self.component, kind, byref(value))
+        return value
+
+    def getIntegerStatus(self, kind):
+        value = fmi2Integer(0)
+        self.fmi2GetIntegerStatus(self.component, kind, byref(value))
+        return value
+
     def getBooleanStatus(self, kind):
         value = fmi2Boolean(fmi2False)
-        return self.fmi2GetBooleanStatus(self.component, kind, byref(value))
+        self.fmi2GetBooleanStatus(self.component, kind, byref(value))
+        return value
+
+    def getStringStatus(self, kind):
+        value = fmi2String(b'')
+        self.fmi2GetStringStatus(self.component, kind, byref(value))
+        return value

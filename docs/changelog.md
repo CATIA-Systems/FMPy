@@ -1,3 +1,12 @@
+## v0.2.4 (2018-05-22)
+
+- `NEW` Remaining FMI functions added
+- `NEW` More options for command line interface
+- `NEW` More elements added to SSP parser
+- `NEW` Polished GUI
+- `FIXED` No more warning when starting GUI
+
+
 ## v0.2.3 (2018-04-11)
 
 - `NEW` Allow simulation of extracted FMUs and pre-loaded model descriptions
@@ -15,6 +24,7 @@
 - `FIXED` Handling of `None` in setString()
 - `FIXED` Handling of time events
 - `FIXED` Conversion of Boolean start values
+
 
 ## v0.2.2 (2018-03-13)
 

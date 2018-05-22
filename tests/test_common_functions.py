@@ -6,9 +6,9 @@ from fmpy.util import download_test_file
 import shutil
 
 
-class GettersAndSettersTest(unittest.TestCase):
+class CommonFunctionsTest(unittest.TestCase):
 
-    def test_getters_and_setters(self):
+    def test_common_functions(self):
 
         if platform.startswith('win'):
             fmi_versions = ['1.0', '2.0']
@@ -22,21 +22,22 @@ class GettersAndSettersTest(unittest.TestCase):
 
             download_test_file(fmi_version, 'CoSimulation', 'Dymola', '2017', model_name, filename)
 
-            modelDescription = read_model_description(filename)
+            model_description = read_model_description(filename)
             unzipdir = extract(filename)
 
-            guid = modelDescription.guid
-            modelIdentifier = modelDescription.coSimulation.modelIdentifier
+            guid = model_description.guid
 
             variables = {}
 
-            for v in modelDescription.modelVariables:
+            for v in model_description.modelVariables:
                 variables[v.name] = v
 
-            args = {'guid': guid,
-                    'modelIdentifier': modelIdentifier,
-                    'unzipDirectory': unzipdir,
-                    'instanceName': None}
+            args = {
+                'guid': guid,
+                'modelIdentifier': model_description.coSimulation.modelIdentifier,
+                'unzipDirectory': unzipdir,
+                'instanceName': None
+            }
 
             if fmi_version == '1.0':
                 fmu = FMU1Slave(**args)
@@ -48,6 +49,24 @@ class GettersAndSettersTest(unittest.TestCase):
                 fmu.setupExperiment(tolerance=None)
                 fmu.enterInitializationMode()
                 fmu.exitInitializationMode()
+
+            # get types platform
+            types_platform = fmu.getTypesPlatform()
+
+            if fmi_version == '1.0':
+                self.assertEqual('standard32', types_platform)
+            else:
+                self.assertEqual('default', types_platform)
+
+            # get FMI version
+            version = fmu.getVersion()
+            self.assertEqual(fmi_version, version)
+
+            # set debug logging
+            if fmi_version == '1.0':
+                fmu.setDebugLogging(True)
+            else:
+                fmu.setDebugLogging(True, ['logAll'])
 
             # set and get Real
             vr = [variables['booleanPulse1.width'].valueReference]

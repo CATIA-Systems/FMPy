@@ -12,26 +12,28 @@ def compile_resources():
     generated_dir = os.path.join(gui_dir, 'generated')
 
     # compile the forms
-    for file in os.listdir(forms_dir):
+    if os.path.isdir(forms_dir):
 
-        if not file.endswith('.ui'):
-            continue
+        for file in os.listdir(forms_dir):
 
-        form = os.path.basename(file)
-        form, _ = os.path.splitext(form)
+            if not file.endswith('.ui'):
+                continue
 
-        ui_file = os.path.join(forms_dir, form + '.ui')
-        py_file = os.path.join(generated_dir, form + '.py')
+            form = os.path.basename(file)
+            form, _ = os.path.splitext(form)
 
-        if os.path.isfile(ui_file):
-            if not os.path.isfile(py_file) or os.path.getmtime(ui_file) > os.path.getmtime(py_file):
-                print("UIC'ing %s" % ui_file)
-                os.system('pyuic5 %s -o %s --import-from .' % (ui_file, py_file))
+            ui_file = os.path.join(forms_dir, form + '.ui')
+            py_file = os.path.join(generated_dir, form + '.py')
 
-    # compile the resources
+            if os.path.isfile(ui_file):
+                if not os.path.isfile(py_file) or os.path.getmtime(ui_file) > os.path.getmtime(py_file):
+                    print("UIC'ing %s" % ui_file)
+                    os.system('pyuic5 %s -o %s --import-from .' % (ui_file, py_file))
+
     icons_qrc = os.path.join(gui_dir, 'icons', 'icons.qrc')
     icons_rc_py = os.path.join(generated_dir, 'icons_rc.py')
 
+    # compile the resources
     if os.path.isfile(icons_qrc):
         if not os.path.isfile(icons_rc_py) or os.path.getmtime(icons_qrc) > os.path.getmtime(icons_rc_py):
             print("RCC'ing %s" % icons_qrc)

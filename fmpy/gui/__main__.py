@@ -7,6 +7,7 @@ except Exception as e:
     print("Failed to compiled resources. %s" % e)
 
 import os
+import sys
 
 from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QStandardPaths, QPointF
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, QMenu, QMessageBox, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, QGraphicsTextItem, QGraphicsPathItem
@@ -100,6 +101,17 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        # use a smaller default font size on Mac and Linux
+        if sys.platform in ['darwin', 'linux']:
+            defaultFont = QFont()
+            defaultFont.setPixelSize(11)
+            QApplication.setFont(defaultFont)
+            self.setStyleSheet("QWidget { font-size: 11px; }")
+
+        self.ui.treeView.setAttribute(Qt.WA_MacShowFocusRect, False)
+        self.ui.tableView.setAttribute(Qt.WA_MacShowFocusRect, False)
+        self.ui.logTreeView.setAttribute(Qt.WA_MacShowFocusRect, False)
+
         # set the window size to 85% of the available space
         geo = QApplication.desktop().availableGeometry()
         width = min(geo.width() * 0.85, 1100.0)
@@ -142,7 +154,7 @@ class MainWindow(QMainWindow):
         # hide the dock's title bar
         self.ui.dockWidget.setTitleBarWidget(QWidget())
 
-        self.ui.tableView.setMinimumWidth(500)
+        self.ui.dockWidgetContents.setMinimumWidth(500)
 
         self.tableModel = VariablesTableModel(self.selectedVariables, self.startValues)
         self.tableFilterModel = VariablesFilterModel()
@@ -240,7 +252,7 @@ class MainWindow(QMainWindow):
         self.ui.actionOpenFMI2Spec.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://svn.modelica.org/fmi/branches/public/specifications/v2.0/FMI_for_ModelExchange_and_CoSimulation_v2.0.pdf')))
         self.ui.actionOpenTestFMUs.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://trac.fmi-standard.org/browser/branches/public/Test_FMUs')))
         self.ui.actionOpenWebsite.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/CATIA-Systems/FMPy')))
-        self.ui.actionShowReleaseNotes.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/CATIA-Systems/FMPy/blob/master/CHANGELOG.md')))
+        self.ui.actionShowReleaseNotes.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://fmpy.readthedocs.io/en/latest/changelog/')))
 
         # filter menu
         self.filterMenu = QMenu()

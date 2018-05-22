@@ -1,6 +1,10 @@
-## v0.2.4 (unreleased)
+## v0.2.4 (2018-05-22)
 
 - `NEW` Remaining FMI functions added
+- `NEW` More options for command line interface
+- `NEW` More elements added to SSP parser
+- `NEW` Polished GUI
+- `FIXED` No more warning when starting GUI
 
 
 ## v0.2.3 (2018-04-11)

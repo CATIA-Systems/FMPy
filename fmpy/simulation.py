@@ -195,8 +195,22 @@ class Input(object):
 
     @staticmethod
     def nextEvent(time, t):
+        """ Find the next event in t after time
+
+        Parameters:
+            time  time after which to search for events
+            t     the time grid to search for events
+
+        Returns:
+            the next event time or sys.float_info.max if no more events are detected after time
+        """
 
         i_events = np.argwhere(np.diff(t) == 0)
+
+        if len(i_events) < 1:
+            # no events detected
+            return sys.float_info.max
+
         t_events = t[i_events]
 
         i = np.argmax(t_events > time)

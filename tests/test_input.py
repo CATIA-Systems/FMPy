@@ -34,10 +34,14 @@ class InputTest(unittest.TestCase):
 
     def test_event_detection(self):
 
+        fmx = sys.float_info.max
+
+        # no event
+        t = np.array([0.0, 1.0])
+        self.assertEqual(fmx, Input.nextEvent(0.8, t), "Expecting no events")
+
         # time grid with events at 0.5 and 0.8
         t = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 0.6, 0.7, 0.8, 0.8, 0.8, 0.9, 1.0])
-
-        fmx = sys.float_info.max
 
         self.assertEqual(0.5, Input.nextEvent(0.0, t), "Expecting first event before first sample")
         self.assertEqual(0.5, Input.nextEvent(0.2, t), "Expecting first event before first event")

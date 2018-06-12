@@ -555,10 +555,10 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
         fmu.instantiate(callbacks=callbacks, loggingOn=debug_logging)
         fmu.setupExperiment(startTime=start_time)
 
-    # set the start values
-    apply_start_values(fmu, model_description, start_values, apply_default_start_values)
-
     input = Input(fmu, model_description, input_signals)
+
+    # apply input and start values
+    apply_start_values(fmu, model_description, start_values, apply_default_start_values)
     input.apply(time)
 
     if is_fmi1:
@@ -716,27 +716,31 @@ def simulateCS(model_description, fmu_kwargs, start_time, stop_time, start_value
 
     sim_start = current_time()
 
+    # instantiate the model
     if model_description.fmiVersion == '1.0':
         fmu = FMU1Slave(**fmu_kwargs)
         fmu.instantiate(functions=callbacks, loggingOn=debug_logging)
-        apply_start_values(fmu, model_description, start_values, apply_default_start_values)
-        fmu.initialize()
     else:
         fmu = FMU2Slave(**fmu_kwargs)
         fmu.instantiate(callbacks=callbacks, loggingOn=debug_logging)
         fmu.setupExperiment(tolerance=None, startTime=start_time)
-        apply_start_values(fmu, model_description, start_values, apply_default_start_values)
-        fmu.enterInitializationMode()
-        fmu.exitInitializationMode()
 
     input = Input(fmu=fmu, modelDescription=model_description, signals=input_signals)
 
-    recorder = Recorder(fmu=fmu,
-                        modelDescription=model_description,
-                        variableNames=output,
-                        interval=output_interval)
-
     time = start_time
+
+    # apply input and start values
+    apply_start_values(fmu, model_description, start_values, apply_default_start_values)
+    input.apply(time)
+
+    # initialize the model
+    if model_description.fmiVersion == '1.0':
+        fmu.initialize()
+    else:
+        fmu.enterInitializationMode()
+        fmu.exitInitializationMode()
+
+    recorder = Recorder(fmu=fmu, modelDescription=model_description, variableNames=output, interval=output_interval)
 
     # simulation loop
     while time < stop_time:

@@ -108,13 +108,23 @@ class Input(object):
             fmu               the FMU instance
             modelDescription  the model description instance
             signals           a structured numpy array that contains the input
+
+        Example:
+
+        Create a Real signal 'step' and a Boolean signal 'switch' with a discrete step at t=0.5
+
+        >>> import numpy as np
+        >>> dtype = [('time', np.double), ('step', np.double), ('switch', np.bool_)]
+        >>> signals = np.array([(0.0, 0.0, False), (0.5, 0.0, False), (0.5, 0.1, True), (1.0, 1.0, True)], dtype=dtype)
         """
 
         self.fmu = fmu
-        self.signals = signals
 
         if signals is None:
+            self.t = None
             return
+
+        self.t = signals[signals.dtype.names[0]]
 
         is_fmi1 = isinstance(fmu, _FMU1)
 
@@ -138,7 +148,7 @@ class Input(object):
                 continue
 
             if sv.causality == 'input':
-                if sv.name not in self.signals.dtype.names:
+                if sv.name not in signals.dtype.names:
                     print("Warning: missing input for " + sv.name)
                     continue
                 self.values['Integer' if sv.type == 'Enumeration' else sv.type].append((sv.valueReference, sv.name))
@@ -147,7 +157,7 @@ class Input(object):
             real_vrs, self.real_names = zip(*self.values['Real'])
             self.real_vrs = (c_uint32 * len(real_vrs))(*real_vrs)
             self.real_values = (c_double * len(real_vrs))()
-            self.real_table = np.stack(map(lambda n: self.signals[n], self.real_names))
+            self.real_table = np.stack(map(lambda n: signals[n], self.real_names))
         else:
             self.real_vrs = []
 
@@ -155,7 +165,7 @@ class Input(object):
             integer_vrs, self.integer_names = zip(*self.values['Integer'])
             self.integer_vrs = (c_uint32 * len(integer_vrs))(*integer_vrs)
             self.integer_values = (c_int32 * len(integer_vrs))()
-            self.integer_table = np.asarray(np.stack(map(lambda n: self.signals[n], self.integer_names)), dtype=np.int32)
+            self.integer_table = np.asarray(np.stack(map(lambda n: signals[n], self.integer_names)), dtype=np.int32)
         else:
             self.integer_vrs = []
 
@@ -163,35 +173,43 @@ class Input(object):
             boolean_vrs, self.boolean_names = zip(*self.values['Boolean'])
             self.boolean_vrs = (c_uint32 * len(boolean_vrs))(*boolean_vrs)
             self.boolean_values = ((c_int8 if is_fmi1 else c_int32) * len(boolean_vrs))()
-            self.boolean_table = np.asarray(np.stack(map(lambda n: self.signals[n], self.boolean_names)), dtype=np.int32)
+            self.boolean_table = np.asarray(np.stack(map(lambda n: signals[n], self.boolean_names)), dtype=np.int32)
         else:
             self.boolean_vrs = []
 
     def apply(self, time, continuous=True, discrete=True, after_event=False):
+        """ Apply the input
 
-        if self.signals is None:
+        Parameters:
+            continuous   apply continuous inputs
+            discrete     apply discrete inputs
+            after_event  apply right hand side inputs at discontinuities
+
+        Returns:
+            the next event time or sys.float_info.max if no more events exist
+        """
+
+        if self.t is None:
             return sys.float_info.max
-
-        t = self.signals['time']
 
         # TODO: check for event
 
         if len(self.real_vrs) > 0 and continuous:
-            self.real_values[:] = self.interpolate(time=time, t=t, table=self.real_table, after_event=after_event)
+            self.real_values[:] = self.interpolate(time=time, t=self.t, table=self.real_table, after_event=after_event)
             self._setReal(self.fmu.component, self.real_vrs, len(self.real_vrs), self.real_values)
 
         # TODO: discrete apply Reals
 
         if len(self.integer_vrs) > 0 and discrete:
-            self.integer_values[:] = self.interpolate(time=time, t=t, table=self.integer_table, discrete=True, after_event=after_event)
+            self.integer_values[:] = self.interpolate(time=time, t=self.t, table=self.integer_table, discrete=True, after_event=after_event)
             self._setInteger(self.fmu.component, self.integer_vrs, len(self.integer_vrs), self.integer_values)
 
         if len(self.boolean_vrs) > 0 and discrete:
-            self.boolean_values[:] = self.interpolate(time=time, t=t, table=self.boolean_table, discrete=True, after_event=after_event)
+            self.boolean_values[:] = self.interpolate(time=time, t=self.t, table=self.boolean_table, discrete=True, after_event=after_event)
             self._setBoolean(self.fmu.component, self.boolean_vrs, len(self.boolean_vrs),
                              cast(self.boolean_values, POINTER(self._bool_type)))
 
-        return Input.nextEvent(time, t)
+        return Input.nextEvent(time, self.t)
 
     @staticmethod
     def nextEvent(time, t):
@@ -392,7 +410,7 @@ def simulate_fmu(filename,
         use_source_code     compile the shared library (requires C sources)
         start_values        dictionary of variable name -> value pairs
         apply_default_start_values  apply the start values from the model description
-        input               a structured numpy array that contains the input
+        input               a structured numpy array that contains the input (see :class:`Input`)
         output              list of variables to record (None: record outputs)
         timeout             timeout for the simulation
         debug_logging       enable the FMU's debug logging

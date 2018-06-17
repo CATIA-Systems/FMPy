@@ -1,3 +1,11 @@
+## v0.2.5 (2018-06-17)
+
+Improved handling of input signals
+
+- input is now applied before initialization for co-simulation
+- "time" column for input signals can now have an arbitrary name
+
+
 ## v0.2.4 (2018-05-22)
 
 - `NEW` Remaining FMI functions added

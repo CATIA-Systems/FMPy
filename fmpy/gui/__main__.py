@@ -701,7 +701,7 @@ class MainWindow(QMainWindow):
 
         self.ui.plotWidget.clear()
 
-        self.curves.clear()
+        self.curves[:] = []
 
         if self.simulationThread is not None:
             stop_time = self.simulationThread.stopTime

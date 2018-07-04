@@ -26,7 +26,7 @@ class Log(QAbstractTableModel):
     def clear(self):
         self.beginResetModel()
         self.currentLevel = 'debug'
-        self.messages.clear()
+        self.messages[:] = []
         self.endResetModel()
 
         self.currentMessageChanged.emit('', '')

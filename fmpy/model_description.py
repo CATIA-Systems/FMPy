@@ -98,21 +98,35 @@ class ScalarVariable(object):
 
 
 class SimpleType(object):
+    """ Type Definition """
 
-    def __init__(self, name, type):
-        self.name = name
-        self.type = type
-        self.quantity = None
-        self.unit = None
-        self.displayUnit = None
-        self.relativeQuantity = None
-        self.min = None
-        self.max = None
-        self.nominal = None
-        self.unbounded = None
+    def __init__(self, **kwargs):
+        self.name = kwargs.get('name')
+        self.type = kwargs.get('type')
+        self.quantity = kwargs.get('quantity')
+        self.unit = kwargs.get('unit')
+        self.displayUnit = kwargs.get('displayUnit')
+        self.relativeQuantity = kwargs.get('relativeQuantity')
+        self.min = kwargs.get('min')
+        self.max = kwargs.get('max')
+        self.nominal = kwargs.get('nominal')
+        self.unbounded = kwargs.get('unbounded')
+        self.items = kwargs.get('items', [])
 
     def __repr__(self):
         return '%s "%s" [%s]' % (self.type, self.name, self.unit)
+
+
+class Item(object):
+    """ Enumeration Item """
+
+    def __init__(self, **kwargs):
+        self.name = kwargs.get('name')
+        self.value = kwargs.get('value')
+        self.description = kwargs.get('description')
+
+    def __repr__(self):
+        return '%s (%s) %s' % (self.name, self.value, self.description)
 
 
 class Unit(object):
@@ -337,18 +351,27 @@ def read_model_description(filename, validate=True):
             modelDescription.unitDefinitions.append(unit)
 
     # type definitions
-    typeDefinitions = {None: None}
+    type_definitions = {None: None}
 
     for t in root.findall('TypeDefinitions/' + ('Type' if fmiVersion == "1.0" else 'SimpleType')):
-        simpleType = SimpleType(name=t.get('name'), type=t[0].tag[:-len('Type')])
 
-        for attribute in ['quantity', 'unit', 'displayUnit', 'relativeQuantity', 'min', 'max', 'nominal', 'unbounded']:
-            setattr(simpleType, attribute, t[0].get(attribute))
+        first = t[0]  # first element
 
-        # TODO: add enumeration items
+        simple_type = SimpleType(
+            name=t.get('name'),
+            type=first.tag[:-len('Type')] if fmiVersion == '1.0' else first.tag,
+            **first.attrib
+        )
 
-        modelDescription.typeDefinitions.append(simpleType)
-        typeDefinitions[simpleType.name] = simpleType
+        # add enumeration items
+        for i, item in enumerate(first.findall('Item')):
+            it = Item(**item.attrib)
+            if fmiVersion == '1.0':
+                it.value = i + 1
+            simple_type.items.append(it)
+
+        modelDescription.typeDefinitions.append(simple_type)
+        type_definitions[simple_type.name] = simple_type
 
     # default values for 'initial' derived from variability and causality
     initial_defaults = {
@@ -380,7 +403,7 @@ def read_model_description(filename, validate=True):
             sv.unit = value.get('unit')
 
         # resolve the declared type
-        sv.declaredType = typeDefinitions[value.get('declaredType')]
+        sv.declaredType = type_definitions[value.get('declaredType')]
 
         if fmiVersion == '1.0':
             if sv.causality == 'internal':

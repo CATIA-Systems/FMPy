@@ -7,7 +7,6 @@ except Exception as e:
     print("Failed to compiled resources. %s" % e)
 
 import os
-import sys
 
 from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QStandardPaths, QPointF
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, QMenu, QMessageBox, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, QGraphicsTextItem, QGraphicsPathItem
@@ -253,6 +252,7 @@ class MainWindow(QMainWindow):
         self.ui.actionOpenTestFMUs.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://trac.fmi-standard.org/browser/branches/public/Test_FMUs')))
         self.ui.actionOpenWebsite.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/CATIA-Systems/FMPy')))
         self.ui.actionShowReleaseNotes.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://fmpy.readthedocs.io/en/latest/changelog/')))
+        self.ui.actionCreateCMakeProject.triggered.connect(self.createCMakeProject)
 
         # filter menu
         self.filterMenu = QMenu()
@@ -394,6 +394,9 @@ class MainWindow(QMainWindow):
         if md.defaultExperiment is not None:
             if md.defaultExperiment.stopTime is not None:
                 self.stopTimeLineEdit.setText(str(md.defaultExperiment.stopTime))
+
+        # actions
+        self.ui.actionCreateCMakeProject.setEnabled(md.fmiVersion == '2.0' and 'c-code' in platforms)
 
         # variables view
         self.treeModel.setModelDescription(md)
@@ -575,6 +578,7 @@ class MainWindow(QMainWindow):
     def startSimulation(self):
 
         from .simulation import SimulationThread
+        from fmpy.gui.simulation import SimulationThread
 
         # TODO: catch exceptions
         stop_time = float(self.stopTimeLineEdit.text())
@@ -1042,6 +1046,19 @@ class MainWindow(QMainWindow):
             if dialog.exec_() == QDialog.Accepted:
                 self.startValues.clear()
                 self.startValues.update(start_values)
+
+    def createCMakeProject(self):
+        """ Create a CMake project from a C code FMU """
+
+        from fmpy.util import create_cmake_project
+
+        project_dir = QFileDialog.getExistingDirectory(
+            parent=self,
+            caption='Select CMake Project Folder',
+            directory=os.path.dirname(self.filename))
+
+        if project_dir:
+            create_cmake_project(self.filename, project_dir)
 
 
 if __name__ == '__main__':

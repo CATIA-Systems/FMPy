@@ -73,3 +73,27 @@ To learn more about how to use FMPy in you own scripts take a look at the
 [coupled_clutches.py](https://github.com/CATIA-Systems/FMPy/blob/master/fmpy/examples/coupled_clutches.py),
 [custom_input.py](https://github.com/CATIA-Systems/FMPy/blob/master/fmpy/examples/custom_input.py) and
 [parameter_variation.py](https://github.com/CATIA-Systems/FMPy/blob/master/fmpy/examples/parameter_variation.py) examples.
+
+## Debugging C code FMUs
+
+FMPy can generate [CMake](https://cmake.org/) projects for C code FMUs that allow you to conveniently build and debug FMUs in your favorite IDE. To debug an FMU using Visual Studio Solution follow these steps:
+
+- Open the FMU in the FMPy GUI, click `Help > Create CMake Project...` and select the directory to save the project files
+
+- Open the CMake GUI and select the source and build directories (you can set both to the above directory)
+
+- Click `Configure` and select the generator (e.g. `Visual Studio 14 2015 Win64` to create a Visual Studio 2015 solution for 64-bit Windows)
+
+- Click `Generate` to create the Visual Studio solution
+
+- Click `Open Project` to open the solution
+
+- In Visual Studio select `Build > Build Solution` to build the debug FMU
+
+- Open the FMU that has been created in the project directory in the FMPy GUI
+
+- In Visual Studio select `Debug > Attach to Process...`, select the Python process that runs the FMPy GUI and click `Attach`
+
+- Set a breakpoint
+
+- Run the simulation in the FMPy GUI and start debugging

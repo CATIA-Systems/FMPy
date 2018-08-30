@@ -151,20 +151,22 @@ def fmi_info(filename):
     return fmi_version, fmi_types
 
 
-def extract(filename):
+def extract(filename, unzipdir=None):
     """ Extract a ZIP archive to a temporary directory
 
     Parameters:
         filename    filename of the ZIP archive
+        unzipdir    target directory (None: create temporary directory)
 
     Returns:
-        unzipdir    the path to the directory that contains the extracted files
+        unzipdir    path to the directory that contains the extracted files
     """
 
     from tempfile import mkdtemp
     import zipfile
 
-    unzipdir = mkdtemp()
+    if unzipdir is None:
+        unzipdir = mkdtemp()
 
     # expand the 8.3 paths on windows
     if sys.platform.startswith('win'):

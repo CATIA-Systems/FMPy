@@ -1,3 +1,7 @@
+## v0.2.6 (unreleased)
+
+- `NEW` CMake project generation for C code FMUs
+
 ## v0.2.5 (2018-06-17)
 
 Improved handling of input signals

@@ -12,7 +12,7 @@ FMPy is a free Python library to simulate [Functional Mock-up Units (FMUs)](http
 - supports Co-Simulation and Model Exchange
 - runs on Windows, Linux and macOS
 - has a graphical user interface
-- compiles source code FMUs
+- compiles C code FMUs and generates CMake projects for debugging `NEW`
 
 ## Installation
 

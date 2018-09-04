@@ -801,3 +801,53 @@ def get_start_values(filename):
     rmtree(unzipdir)
 
     return start_values
+
+
+def create_cmake_project(filename, project_dir):
+    """ Create a CMake project from a C code FMU
+
+    Parameters:
+
+        filename     filename of the C code FMU
+        project_dir  existing directory for the CMake project
+    """
+
+    from fmpy import read_model_description, extract
+    import shutil
+
+    model_description = read_model_description(filename)
+
+    extract(filename, unzipdir=project_dir)
+
+    fmpy_dir = os.path.dirname(__file__)
+    source_dir = os.path.join(fmpy_dir, 'c-code', 'fmi2')
+
+    # copy the FMI headers and the source FMU wrapper
+    for source_file in ['fmi2_wrapper.c', 'fmi2Functions.h', 'fmi2FunctionTypes.h', 'fmi2TypesPlatform.h']:
+        shutil.copy(os.path.join(source_dir, source_file), os.path.join(project_dir, 'sources'))
+
+    with open(os.path.join(source_dir, 'CMakeLists.txt'), 'r') as cmake_file:
+        txt = cmake_file.read()
+
+    definitions = []
+
+    if model_description.coSimulation is not None:
+        implementation = model_description.coSimulation
+        definitions.append('CO_SIMULATION')
+    else:
+        implementation = model_description.modelExchange
+
+    if model_description.modelExchange is not None:
+        definitions.append('MODEL_EXCHANGE')
+
+    sources = ['modelDescription.xml', 'sources/fmi2_wrapper.c']
+    sources += ['sources/' + file for file in implementation.sourceFiles]
+
+    # substitute the variables
+    txt = txt.replace('%MODEL_NAME%', model_description.modelName)
+    txt = txt.replace('%MODEL_IDENTIFIER%', implementation.modelIdentifier)
+    txt = txt.replace('%DEFINITIONS%', ' '.join(definitions))
+    txt = txt.replace('%SOURCES%', ' '.join(sources))
+
+    with open(os.path.join(project_dir, 'CMakeLists.txt'), 'w') as outfile:
+        outfile.write(txt)

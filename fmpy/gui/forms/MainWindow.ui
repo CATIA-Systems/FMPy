@@ -1271,6 +1271,8 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="actionCreateDesktopShortcut"/>
     <addaction name="actionAddFileAssociation"/>
     <addaction name="separator"/>
+    <addaction name="actionCreateCMakeProject"/>
+    <addaction name="separator"/>
     <addaction name="actionOpenWebsite"/>
     <addaction name="actionShowReleaseNotes"/>
     <addaction name="separator"/>
@@ -1792,6 +1794,14 @@ QToolButton::menu-button {
   <action name="actionLoadStartValues">
    <property name="text">
     <string>Load Start Values</string>
+   </property>
+  </action>
+  <action name="actionCreateCMakeProject">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Create C&amp;Make Project...</string>
    </property>
   </action>
  </widget>

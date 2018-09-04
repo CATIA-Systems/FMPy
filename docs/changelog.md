@@ -1,3 +1,9 @@
+## v0.2.6 (2018-09-04)
+
+- `NEW` CMake project generation for C code FMUs
+- `NEW` Read Enumeration items from modelDescription.xml
+- `FIXED` GUI with Python 2.7
+
 ## v0.2.5 (2018-06-17)
 
 Improved handling of input signals

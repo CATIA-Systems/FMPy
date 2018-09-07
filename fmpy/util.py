@@ -540,7 +540,7 @@ def compile_dll(model_description, sources_dir, compiler=None):
         preprocessor_definitions.append('MODEL_EXCHANGE')
         for source_file in model_description.modelExchange.sourceFiles:
             if source_file not in source_files:
-                source_files += source_file
+                source_files.append(source_file)
 
     if len(source_files) == 0:
         raise Exception("No source files specified in the model description.")

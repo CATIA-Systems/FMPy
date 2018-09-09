@@ -534,9 +534,6 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
         while step_size > max_step:
             step_size /= 2
 
-    if not np.isclose(round(output_interval / step_size) * step_size, output_interval):
-        raise Exception("output_interval must be a multiple of step_size")
-
     sim_start = current_time()
 
     # absolute tolerance for equality when comparing two floats
@@ -602,6 +599,10 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
         fixed_step = False
     else:
         raise Exception("Unknown solver: %s. Must be one of 'Euler' or 'CVode'." % solver_name)
+
+    # check step size
+    if fixed_step and not np.isclose(round(output_interval / step_size) * step_size, output_interval):
+        raise Exception("output_interval must be a multiple of step_size for fixed step solvers")
 
     recorder = Recorder(fmu=fmu,
                         modelDescription=model_description,

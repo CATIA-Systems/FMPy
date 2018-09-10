@@ -10,8 +10,8 @@ import os
 import sys
 
 from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QStandardPaths, QPointF
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, QMenu, QMessageBox, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, QGraphicsTextItem, QGraphicsPathItem
-from PyQt5.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QBrush, QFontMetricsF, QPolygonF, QPainterPath
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, QMenu, QMessageBox, QProgressDialog, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, QGraphicsTextItem, QGraphicsPathItem
+from PyQt5.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, QPolygonF, QPainterPath
 
 from fmpy.gui.generated.MainWindow import Ui_MainWindow
 import fmpy
@@ -253,6 +253,7 @@ class MainWindow(QMainWindow):
         self.ui.actionOpenTestFMUs.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://trac.fmi-standard.org/browser/branches/public/Test_FMUs')))
         self.ui.actionOpenWebsite.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/CATIA-Systems/FMPy')))
         self.ui.actionShowReleaseNotes.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://fmpy.readthedocs.io/en/latest/changelog/')))
+        self.ui.actionCompilePlatformBinary.triggered.connect(self.compilePlatformBinary)
         self.ui.actionCreateCMakeProject.triggered.connect(self.createCMakeProject)
 
         # filter menu
@@ -397,7 +398,9 @@ class MainWindow(QMainWindow):
                 self.stopTimeLineEdit.setText(str(md.defaultExperiment.stopTime))
 
         # actions
-        self.ui.actionCreateCMakeProject.setEnabled(md.fmiVersion == '2.0' and 'c-code' in platforms)
+        can_compile = md.fmiVersion == '2.0' and 'c-code' in platforms
+        self.ui.actionCompilePlatformBinary.setEnabled(can_compile)
+        self.ui.actionCreateCMakeProject.setEnabled(can_compile)
 
         # variables view
         self.treeModel.setModelDescription(md)
@@ -1047,6 +1050,26 @@ class MainWindow(QMainWindow):
             if dialog.exec_() == QDialog.Accepted:
                 self.startValues.clear()
                 self.startValues.update(start_values)
+
+    def compilePlatformBinary(self):
+        """ Compile the platform binary """
+
+        from ..util import compile_platform_binary
+
+        platforms = supported_platforms(self.filename)
+
+        if fmpy.platform in platforms:
+            button = QMessageBox.question(self, "Platform binary already exists", "The FMU already contains a binary for the current platform. Do you want to compile and overwrite the existing binary?")
+            if button == QMessageBox.No:
+                return
+
+        try:
+            compile_platform_binary(self.filename)
+        except Exception as e:
+            QMessageBox.critical(self, "Failed to compile platform binaries", str(e))
+            return
+
+        self.load(self.filename)
 
     def createCMakeProject(self):
         """ Create a CMake project from a C code FMU """

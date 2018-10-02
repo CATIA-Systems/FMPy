@@ -35,7 +35,7 @@ def main():
     parser.add_argument('--stop-time', type=float, help="stop time for the simulation")
     parser.add_argument('--solver', choices=['Euler', 'CVode'], default='CVode', help="solver to use for Model Exchange")
     parser.add_argument('--step-size', type=float, help="step size for fixed-step solvers")
-    parser.add_argument('--relative-tolerance', type=float, help="relative tolerance for the 'CVode' solver")
+    parser.add_argument('--relative-tolerance', type=float, help="relative tolerance for the 'CVode' solver and FMI 2.0 co-simulation FMUs")
     parser.add_argument('--dont-record-events', action='store_true', help="dont't record outputs at events (model exchange only)")
     parser.add_argument('--start-values', nargs='+', help="name-value pairs of start values")
     parser.add_argument('--apply-default-start-values', action='store_true', help="apply the start values from the model description")

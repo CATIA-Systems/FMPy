@@ -394,7 +394,7 @@ def download_file(url, checksum=None):
                 response = requests.get(url)
                 status_code = response.status_code
     except:
-        pass
+        pass  # ignore
 
     if status_code != 200:
         raise Exception("Failed to download %s (status code: %d)" % (url, status_code))
@@ -409,9 +409,15 @@ def download_test_file(fmi_version, fmi_type, tool_name, tool_version, model_nam
 
     from . import platform
 
+    # for backwards compatibility
+    if fmi_type == 'ModelExchange':
+        fmi_type = 'me'
+    elif fmi_type == 'CoSimulation':
+        fmi_type = 'cs'
+
     # build the URL
-    url = 'https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_' + fmi_version
-    url = '/'.join([url, fmi_type, platform, tool_name, tool_version, model_name, filename])
+    url = 'https://github.com/modelica/fmi-cross-check/raw/master/fmus'
+    url = '/'.join([url, fmi_version, fmi_type, platform, tool_name, tool_version, model_name, filename])
 
     download_file(url)
 

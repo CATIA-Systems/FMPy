@@ -1,3 +1,10 @@
+## v0.2.7 (2018-11-13)
+
+- `FIXED` Test files are now downloaded form GitHub
+- `FIXED` Compilation of model exchange FMUs works now
+- `NEW` --relative-tolerance parameter is now passed to FMI 2.0 co-simulation FMUs
+- `NEW` Platform binary can now be compiled from within the GUI (Help > Compile Platform Binary)
+
 ## v0.2.6 (2018-09-04)
 
 - `NEW` CMake project generation for C code FMUs

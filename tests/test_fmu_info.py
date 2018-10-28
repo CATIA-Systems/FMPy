@@ -25,10 +25,10 @@ class FMUInfoTest(unittest.TestCase):
         info = fmu_info('CoupledClutches.fmu')
 
         generation_dates = {
-            'darwin64': '2017-10-04T12:04:24Z',
-            'linux64':  '2017-10-04T12:03:05Z',
-            'win32':    '2017-10-04T12:08:16Z',
-            'win64':    '2017-10-04T12:06:59Z',
+            'darwin64': '2017-01-19T17:56:19Z',
+            'linux64':  '2017-01-19T18:38:03Z',
+            'win32':    '2017-01-19T18:48:24Z',
+            'win64':    '2017-01-19T18:42:35Z',
         }
 
         expected = """
@@ -42,7 +42,7 @@ Model Info
   Continuous States 18
   Event Indicators  25
   Variables         178
-  Generation Tool   MapleSim (1267140/1267140/1267140)
+  Generation Tool   MapleSim (1196527/1196706/1196706)
   Generation Date   %s
 
 Default Experiment

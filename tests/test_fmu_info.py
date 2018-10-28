@@ -8,7 +8,7 @@ class FMUInfoTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # download the FMU
-        download_test_file('2.0', 'ModelExchange', 'MapleSim', '2017', 'CoupledClutches', 'CoupledClutches.fmu')
+        download_test_file('2.0', 'ModelExchange', 'MapleSim', '2016.2', 'CoupledClutches', 'CoupledClutches.fmu')
 
     def test_illegal_fmi_type(self):
         with self.assertRaises(Exception) as context:

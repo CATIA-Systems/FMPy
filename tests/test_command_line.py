@@ -9,8 +9,8 @@ class CommandLineTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # download the FMU and input file
-        download_test_file('2.0', 'ModelExchange', 'MapleSim', '2017', 'CoupledClutches', 'CoupledClutches.fmu')
-        download_test_file('2.0', 'ModelExchange', 'MapleSim', '2017', 'CoupledClutches', 'CoupledClutches_in.csv')
+        download_test_file('2.0', 'ModelExchange', 'MapleSim', '2016.2', 'CoupledClutches', 'CoupledClutches.fmu')
+        download_test_file('2.0', 'ModelExchange', 'MapleSim', '2016.2', 'CoupledClutches', 'CoupledClutches_in.csv')
 
     def test_info(self):
         status = call(['fmpy', 'info', 'CoupledClutches.fmu'])

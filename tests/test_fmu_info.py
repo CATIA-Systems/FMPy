@@ -8,7 +8,7 @@ class FMUInfoTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # download the FMU
-        download_test_file('2.0', 'ModelExchange', 'MapleSim', '2017', 'CoupledClutches', 'CoupledClutches.fmu')
+        download_test_file('2.0', 'me', 'MapleSim', '2018', 'CoupledClutches', 'CoupledClutches.fmu')
 
     def test_illegal_fmi_type(self):
         with self.assertRaises(Exception) as context:
@@ -25,10 +25,10 @@ class FMUInfoTest(unittest.TestCase):
         info = fmu_info('CoupledClutches.fmu')
 
         generation_dates = {
-            'darwin64': '2017-10-04T12:04:24Z',
-            'linux64':  '2017-10-04T12:03:05Z',
-            'win32':    '2017-10-04T12:08:16Z',
-            'win64':    '2017-10-04T12:06:59Z',
+            'darwin64': '2018-10-25T13:27:34Z',
+            'linux64':  '2018-10-25T13:26:02Z',
+            'win32':    '2018-10-25T13:24:25Z',
+            'win64':    '2018-10-25T13:27:23Z',
         }
 
         expected = """
@@ -42,7 +42,7 @@ Model Info
   Continuous States 18
   Event Indicators  25
   Variables         178
-  Generation Tool   MapleSim (1267140/1267140/1267140)
+  Generation Tool   MapleSim (1357016/1357197/1357197)
   Generation Date   %s
 
 Default Experiment

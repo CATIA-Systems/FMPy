@@ -12,7 +12,7 @@ class SerializeFMUStateTest(unittest.TestCase):
         fmu_filename = 'Rectifier.fmu'
 
         # download the FMU
-        download_test_file('2.0', 'CoSimulation', 'MapleSim', '2017', 'Rectifier', fmu_filename)
+        download_test_file('2.0', 'cs', 'MapleSim', '2018', 'Rectifier', fmu_filename)
 
         # read the model description
         model_description = read_model_description(fmu_filename)

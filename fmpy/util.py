@@ -410,8 +410,8 @@ def download_test_file(fmi_version, fmi_type, tool_name, tool_version, model_nam
     from . import platform
 
     # build the URL
-    url = 'https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_' + fmi_version
-    url = '/'.join([url, fmi_type, platform, tool_name, tool_version, model_name, filename])
+    url = 'https://github.com/modelica/fmi-cross-check/raw/master/fmus'
+    url = '/'.join([url, fmi_version, fmi_type, platform, tool_name, tool_version, model_name, filename])
 
     download_file(url)
 

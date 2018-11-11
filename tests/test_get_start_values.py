@@ -16,7 +16,7 @@ class GetStartValuesTest(unittest.TestCase):
 
         for fmi_version in fmi_versions:
 
-            for fmi_type in ['CoSimulation', 'ModelExchange']:
+            for fmi_type in ['cs', 'me']:
 
                 download_test_file(fmi_version, fmi_type, 'MapleSim', '2016.2', 'CoupledClutches', 'CoupledClutches.fmu')
 

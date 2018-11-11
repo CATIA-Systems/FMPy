@@ -26,7 +26,7 @@ class ExamplesTest(unittest.TestCase):
             self.fail('Platform not supported')
 
         for fmi_version in fmi_versions:
-            for fmi_type in ['CoSimulation', 'ModelExchange']:
+            for fmi_type in ['cs', 'me']:
 
                 solvers = ['Euler']
 

@@ -9,11 +9,10 @@ from fmpy.util import compile_platform_binary, create_cmake_project
 class CCodeTest(unittest.TestCase):
     """ Test compilation of source code FMUs from various vendors """
 
-    url = 'https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_2.0/CoSimulation/'
+    url = 'https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/'
 
     fmus = [
-        'c-code/dSPACE_TargetLink/Release_2016-B/poscontrol/FmuController.fmu',
-        'c-code/MapleSim/2016.2/Rectifier/Rectifier.fmu',
+        'c-code/MapleSim/2018/Rectifier/Rectifier.fmu',
         'c-code/Dymola/2017/IntegerNetwork1/IntegerNetwork1.fmu',
     ]
 

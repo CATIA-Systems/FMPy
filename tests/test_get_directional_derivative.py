@@ -14,7 +14,7 @@ class GetDirectionalDerivativeTest(unittest.TestCase):
 
         fmu_filename = 'Rectifier.fmu'
 
-        download_test_file('2.0', 'CoSimulation', 'Dymola', '2017', 'Rectifier', fmu_filename)
+        download_test_file('2.0', 'cs', 'Dymola', '2017', 'Rectifier', fmu_filename)
 
         model_description = read_model_description(filename=fmu_filename)
 

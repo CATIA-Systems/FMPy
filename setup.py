@@ -1,4 +1,5 @@
 from setuptools import setup
+import sys
 
 try:
     from fmpy.gui import compile_resources
@@ -36,7 +37,9 @@ package_data = {
     'fmpy.ssp': ['schema/*.xsd'],
 }
 
-install_requires = ['lxml', 'numpy', 'pathlib', 'pywin32;platform_system=="Windows"']
+install_requires = ['lxml', 'numpy', 'pathlib']
+if sys.platform == 'win32':
+    install_requires.append('pywin32')
 
 extras_require = {
     'examples': ['dask[bag]', 'requests'],

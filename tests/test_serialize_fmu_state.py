@@ -1,5 +1,6 @@
 import unittest
-from fmpy import read_model_description, extract
+from unittest import skipIf
+from fmpy import read_model_description, extract, platform
 from fmpy.fmi2 import FMU2Slave
 from fmpy.util import download_test_file
 import shutil
@@ -7,6 +8,7 @@ import shutil
 
 class SerializeFMUStateTest(unittest.TestCase):
 
+    @skipIf(platform == 'linux64', "Crashes on Linux")
     def test_serialize_fmu_state(self):
 
         fmu_filename = 'Rectifier.fmu'

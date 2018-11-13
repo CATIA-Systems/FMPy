@@ -16,6 +16,10 @@ dist/
 MANIFEST
 *.egg-info
 
+# test artifacts
+tests/IntegerNetwork1/
+tests/Rectifier/
+
 # PyCharm project
 .idea/
 

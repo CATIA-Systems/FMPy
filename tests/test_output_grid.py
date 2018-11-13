@@ -15,7 +15,7 @@ class OutputGridTest(unittest.TestCase):
 
         # download the FMU and input file
         for filename in ['CoupledClutches.fmu', 'CoupledClutches_in.csv']:
-            download_test_file('2.0', 'ModelExchange', 'MapleSim', '2016.2', 'CoupledClutches', filename)
+            download_test_file('2.0', 'me', 'MapleSim', '2016.2', 'CoupledClutches', filename)
 
         # load the input
         input = np.genfromtxt('CoupledClutches_in.csv', delimiter=',', names=True)

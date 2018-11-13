@@ -20,7 +20,7 @@ class CommonFunctionsTest(unittest.TestCase):
             model_name = 'BooleanNetwork1'
             filename = model_name + '.fmu'
 
-            download_test_file(fmi_version, 'CoSimulation', 'Dymola', '2017', model_name, filename)
+            download_test_file(fmi_version, 'cs', 'Dymola', '2017', model_name, filename)
 
             model_description = read_model_description(filename)
             unzipdir = extract(filename)

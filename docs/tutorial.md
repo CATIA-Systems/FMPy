@@ -7,10 +7,10 @@ You can start the FMPy GUI with `python -m fmpy.gui`
 ## Python
 
 To follow this example download `Rectifier.fmu` for your platform by clicking on the respective link:
-[Linux](https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_2.0/CoSimulation/linux64/MapleSim/2017/Rectifier/Rectifier.fmu),
-[macOS](https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_2.0/CoSimulation/darwin64/MapleSim/2017/Rectifier/Rectifier.fmu),
-[Windows (32-bit)](https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_2.0/CoSimulation/win32/MapleSim/2017/Rectifier/Rectifier.fmu),
-[Windows (64-bit)](https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_2.0/CoSimulation/win64/MapleSim/2017/Rectifier/Rectifier.fmu).
+[Linux](https://github.com/modelica/fmi-cross-check/blob/master/fmus/2.0/cs/linux64/MapleSim/2017/Rectifier/Rectifier.fmu),
+[macOS](hhttps://github.com/modelica/fmi-cross-check/blob/master/fmus/2.0/cs/darwin64/MapleSim/2017/Rectifier/Rectifier.fmu),
+[Windows (32-bit)](https://github.com/modelica/fmi-cross-check/blob/master/fmus/2.0/cs/win32/MapleSim/2017/Rectifier/Rectifier.fmu),
+[Windows (64-bit)](https://github.com/modelica/fmi-cross-check/blob/master/fmus/2.0/cs/win64/MapleSim/2017/Rectifier/Rectifier.fmu).
 Change to the folder where you've saved the FMU and open a Python prompt.
 
 ```

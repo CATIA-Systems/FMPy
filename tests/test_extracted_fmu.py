@@ -11,7 +11,7 @@ class ExtractedFMUTest(unittest.TestCase):
     def test_extracted_fmu(self):
         """ Simulate an extracted FMU """
 
-        download_test_file('2.0', 'CoSimulation', 'MapleSim', '2017', 'CoupledClutches', 'CoupledClutches.fmu')
+        download_test_file('2.0', 'cs', 'MapleSim', '2016.2', 'CoupledClutches', 'CoupledClutches.fmu')
 
         # extract the FMU
         tempdir = extract('CoupledClutches.fmu')

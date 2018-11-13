@@ -941,7 +941,7 @@
             <number>0</number>
            </property>
            <property name="topMargin">
-            <number>0</number>
+            <number>5</number>
            </property>
            <property name="rightMargin">
             <number>0</number>
@@ -1229,7 +1229,7 @@ QToolButton:checked, QToolButton:hover:pressed {
      <x>0</x>
      <y>0</y>
      <width>1125</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -1271,6 +1271,7 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="actionCreateDesktopShortcut"/>
     <addaction name="actionAddFileAssociation"/>
     <addaction name="separator"/>
+    <addaction name="actionCompilePlatformBinary"/>
     <addaction name="actionCreateCMakeProject"/>
     <addaction name="separator"/>
     <addaction name="actionOpenWebsite"/>
@@ -1802,6 +1803,14 @@ QToolButton::menu-button {
    </property>
    <property name="text">
     <string>Create C&amp;Make Project...</string>
+   </property>
+  </action>
+  <action name="actionCompilePlatformBinary">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Compile Platform Binary</string>
    </property>
   </action>
  </widget>

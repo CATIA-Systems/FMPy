@@ -5,7 +5,7 @@ import os
 from ctypes import *
 import _ctypes
 
-__version__ = '0.2.6'
+__version__ = '0.2.7'
 
 
 # determine the platform

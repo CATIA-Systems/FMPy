@@ -1,5 +1,6 @@
 import unittest
-from fmpy import read_model_description, extract
+from unittest import skipIf
+from fmpy import read_model_description, extract, platform
 from fmpy.fmi2 import FMU2Slave
 from fmpy.util import download_test_file
 import shutil
@@ -7,12 +8,13 @@ import shutil
 
 class SerializeFMUStateTest(unittest.TestCase):
 
+    @skipIf(platform == 'linux64', "Crashes on Linux")
     def test_serialize_fmu_state(self):
 
         fmu_filename = 'Rectifier.fmu'
 
         # download the FMU
-        download_test_file('2.0', 'CoSimulation', 'MapleSim', '2017', 'Rectifier', fmu_filename)
+        download_test_file('2.0', 'cs', 'MapleSim', '2016.2', 'Rectifier', fmu_filename)
 
         # read the model description
         model_description = read_model_description(fmu_filename)

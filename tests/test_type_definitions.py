@@ -10,8 +10,8 @@ class TypeDefinitionsTest(unittest.TestCase):
 
         for fmi_version in ['1.0', '2.0']:
 
-            download_file('https://trac.fmi-standard.org/export/HEAD/branches/public/Test_FMUs/FMI_'
-                          + fmi_version + '/CoSimulation/win64/Dymola/2017/DFFREG/DFFREG.fmu')
+            download_file('https://github.com/modelica/fmi-cross-check/raw/master/fmus/'
+                          + fmi_version + '/cs/win64/Dymola/2017/DFFREG/DFFREG.fmu')
 
             model_description = read_model_description('DFFREG.fmu')
 

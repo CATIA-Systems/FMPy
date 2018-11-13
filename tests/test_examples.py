@@ -19,7 +19,7 @@ class ExamplesTest(unittest.TestCase):
     def test_coupled_clutches_example(self):
 
         if platform.startswith('win'):
-            fmi_versions = ['1.0', '2.0']
+            fmi_versions = ['2.0']  # ['1.0', '2.0'] quick fix until 1.0 is available again
         elif platform.startswith(('darwin', 'linux')):
             fmi_versions = ['2.0']
         else:

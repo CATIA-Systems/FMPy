@@ -9,28 +9,29 @@ class InputTest(unittest.TestCase):
 
     def test_input_continuous(self):
 
-        t = np.array([0, 1, 2, 3])
-        y = np.array([[0, 0, 3, 3], [-1, 0, 1, 2]])
+        t = np.array( [ 0, 1, 2, 3])
+        y = np.array([[ 0, 0, 3, 3],
+                      [-1, 0, 1, 2]])
 
-        # extrapolate left
+        # extrapolate left (hold)
         v1, v2 = Input.interpolate(-1, t, y)
-        self.assertEqual(v1, 0)
-        self.assertEqual(v2, -2)
+        self.assertEqual(v1,  0)
+        self.assertEqual(v2, -1)
 
         # hit sample
         v1, v2 = Input.interpolate(1, t, y)
         self.assertEqual(v1, 0)
         self.assertEqual(v2, 0)
 
-        # interpolate
+        # interpolate (linear)
         v1, v2 = Input.interpolate(1.5, t, y)
-        self.assertEqual(v1, 1.5)
-        self.assertEqual(v2, 0.5)
+        self.assertAlmostEqual(v1, 1.5)
+        self.assertAlmostEqual(v2, 0.5)
 
-        # extrapolate right
+        # extrapolate right (hold)
         v1, v2 = Input.interpolate(4, t, y)
         self.assertEqual(v1, 3)
-        self.assertEqual(v2, 3)
+        self.assertEqual(v2, 2)
 
     def test_event_detection(self):
 
@@ -53,32 +54,32 @@ class InputTest(unittest.TestCase):
 
     def test_input_discrete(self):
 
-        t = np.array([0, 1, 1, 2])
-        y = np.array([[0, 0, 3, 3]])
+        t = np.array( [0, 1, 1, 1, 2])
+        y = np.array([[0, 0, 4, 3, 3]])
 
         # extrapolate left
         v = Input.interpolate(-1, t, y)
-        self.assertEqual(v, 0)
+        self.assertEqual(v, 0, "Expecting first value")
 
         # hit sample
         v = Input.interpolate(0, t, y)
-        self.assertEqual(v, 0)
+        self.assertEqual(v, 0, "Expecting value at sample")
 
         # interpolate
         v = Input.interpolate(0.5, t, y)
-        self.assertEqual(v, 0)
+        self.assertEqual(v, 0, "Expecting to hold previous value")
 
         # before event
         v = Input.interpolate(1, t, y)
-        self.assertEqual(v, 0)
+        self.assertEqual(v, 0, "Expecting value before event")
 
         # after event
         v = Input.interpolate(1, t, y, after_event=True)
-        self.assertEqual(v, 3)
+        self.assertEqual(v, 3, "Expecting value after event")
 
         # extrapolate right
-        v = Input.interpolate(0, t, y)
-        self.assertEqual(v, 0)
+        v = Input.interpolate(3, t, y)
+        self.assertEqual(v, 3, "Expecting last value")
 
 
 if __name__ == '__main__':

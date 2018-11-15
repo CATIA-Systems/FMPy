@@ -244,30 +244,28 @@ class Input(object):
         # find the left insert index
         i0 = np.searchsorted(t, time)
 
+        if i0 == 0:
+            return table[:, 0]  # hold first value
+
+        if i0 == len(t):
+            return table[:, -1]  # hold last value
+
         # check for event
-        is_event = i0 < len(t) - 1 and t[i0] == t[i0 + 1]
+        if i0 < len(t) - 1 and t[i0] == t[i0 + 1]:
 
-        if is_event:
             if after_event:
-                return table[:, i0 + 1]
-            else:
-                return table[:, i0]
+                # take the value after the event
+                while i0 < len(t) - 1 and t[i0] == t[i0 + 1]:
+                    i0 += 1
 
-        if i0 >= len(t):
-            # extrapolate right
-            i0 = len(t) - 2
-        elif i0 > 0:
-            # interpolate
-            i0 -= 1
+            return table[:, i0]
 
-        # take the value after the event
-        while i0 < len(t) - 1 and t[i0] == t[i0 + 1]:
-            i0 += 1
-
-        i1 = i0 + 1
+        i0 -= 1  # interpolate
 
         if discrete:
-            return table[:, i0]
+            return table[:, i0]  # hold
+
+        i1 = i0 + 1
 
         t0 = t[i0]
         t1 = t[i1]

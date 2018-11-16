@@ -367,7 +367,7 @@ class _FMU2(_FMU):
             state             the FMU state
         """
 
-        buffer = create_string_buffer(serializedState)
+        buffer = create_string_buffer(serializedState, size=len(serializedState))
         self.fmi2DeSerializeFMUstate(self.component, buffer, len(buffer), byref(state))
 
     # Getting partial derivatives

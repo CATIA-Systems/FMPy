@@ -11,8 +11,8 @@ class ModelDescription(object):
         self.generationTool = None
         self.generationDateAndTime = None
         self.variableNamingConvention = 'flat'
-        self.numberOfContinuousStates = None
-        self.numberOfEventIndicators = None
+        self.numberOfContinuousStates = 0
+        self.numberOfEventIndicators = 0
 
         self.defaultExperiment = None
 

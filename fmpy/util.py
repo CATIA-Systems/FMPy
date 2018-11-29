@@ -447,9 +447,9 @@ def fmu_info(filename, causalities=['input', 'output']):
     l.append("  Model Name        %s" % md.modelName)
     l.append("  Description       %s" % md.description)
     l.append("  Platforms         %s" % ', '.join(platforms))
-    l.append("  Continuous States %d" % md.numberOfContinuousStates)
-    l.append("  Event Indicators  %d" % md.numberOfEventIndicators)
-    l.append("  Variables         %d" % len(md.modelVariables))
+    l.append("  Continuous States %s" % md.numberOfContinuousStates)
+    l.append("  Event Indicators  %s" % md.numberOfEventIndicators)
+    l.append("  Variables         %s" % len(md.modelVariables))
     l.append("  Generation Tool   %s" % md.generationTool)
     l.append("  Generation Date   %s" % md.generationDateAndTime)
 

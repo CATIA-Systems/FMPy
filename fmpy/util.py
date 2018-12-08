@@ -497,6 +497,23 @@ def fmu_info(filename, causalities=['input', 'output']):
     return '\n'.join(l)
 
 
+def visual_studio_installation_path():
+    """ Get the VisualStudio 2017 installation path """
+
+    try:
+        from subprocess import Popen, PIPE
+        import os
+        vswhere = '"' + os.environ['ProgramFiles(x86)'] + r'\Microsoft Visual Studio\Installer\vswhere.exe"'
+        command = vswhere +  ' -latest -products * -requires Microsoft.Component.MSBuild -property installationPath'
+        proc = Popen(command, stdout=PIPE)
+        output, _ = proc.communicate()
+        return output.decode('utf-8').strip()
+    except Exception as e:
+        pass  # do noting
+
+    return None
+
+
 def visual_c_versions():
     """ Detect installed Visual C compilers
 
@@ -505,9 +522,16 @@ def visual_c_versions():
 
     versions = []
 
+    # up to Visual Studio 2015
     for key in os.environ.keys():
         if key.upper().startswith('VS') and key.upper().endswith('COMNTOOLS'):
             versions.append(int(key[len('VS'):-len('COMNTOOLS')]))
+
+    # Visual Studio 2017
+    installation_path = visual_studio_installation_path()
+
+    if installation_path is not None and '2017' in installation_path:
+        versions.append(150)
 
     return sorted(versions)
 
@@ -568,7 +592,15 @@ def compile_dll(model_description, sources_dir, compiler=None):
         if len(vc_versions) == 0:
             raise Exception("No VisualStudio found")
 
-        command = r'call "%%VS%dCOMNTOOLS%%\..\..\VC\vcvarsall.bat"' % vc_versions[-1]
+        # use the latest version
+        vc_version = vc_versions[-1]
+
+        if vc_version < 150:
+            command = r'call "%%VS%dCOMNTOOLS%%\..\..\VC\vcvarsall.bat"' % vc_version
+        else:
+            installation_path = visual_studio_installation_path()
+            command = 'call "' + installation_path + r'\VC\Auxiliary\Build\vcvarsall.bat"'
+
         if platform == 'win64':
             command += ' x86_amd64'
         command += ' && cl /LD /I. /I"%s"' % fmi_include_dir

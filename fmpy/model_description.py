@@ -500,6 +500,13 @@ def read_model_description(filename, validate=True):
 
         if modelDescription.fmiVersion == '2.0':
 
+            # validate outputs
+            outputs = set([v for v in modelDescription.modelVariables if v.causality == 'output'])
+            unknowns = set([u.variable for u in modelDescription.outputs])
+
+            if outputs != unknowns:
+                raise Exception('ModelStructure/Outputs must have exactly one entry for each variable with causality="output"')
+
             # validate units
             for variable in modelDescription.modelVariables:
 

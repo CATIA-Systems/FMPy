@@ -424,7 +424,12 @@ def read_model_description(filename, validate=True):
         sv.variability = variable.get('variability')
         sv.initial = variable.get('initial')
 
-        value = next(variable.iterchildren())
+        # get the "value" tag
+        for child in variable.iterchildren():
+            if child.tag in ['Real', 'Integer', 'Boolean', 'String', 'Enumeration']:
+                value = child
+                break
+
         sv.type = value.tag
         sv.start = value.get('start')
 

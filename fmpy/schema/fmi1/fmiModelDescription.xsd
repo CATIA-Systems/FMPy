@@ -128,7 +128,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       </xs:attribute>
       <xs:attribute name="description" type="xs:string"/>
       <xs:attribute name="author" type="xs:string"/>
-      <xs:attribute name="version" type="xs:decimal">
+      <xs:attribute name="version" type="xs:normalizedString">
         <xs:annotation>
           <xs:documentation>Version of FMU, e.g., 1.2</xs:documentation>
         </xs:annotation>

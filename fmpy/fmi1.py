@@ -160,8 +160,9 @@ class _FMU(object):
             a = n + '='
 
             if t == c_void_p:
-                # component pointer
-                a += hex(v)
+                if isinstance(v, c_void_p):
+                    v = v.value
+                a += hex(0 if v is None else v)
             elif t == POINTER(c_uint):
                 # value references
                 a += '[' + ', '.join(map(str, v)) + ']'

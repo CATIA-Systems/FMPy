@@ -11,8 +11,8 @@ class ModelDescription(object):
         self.generationTool = None
         self.generationDateAndTime = None
         self.variableNamingConvention = 'flat'
-        self.numberOfContinuousStates = None
-        self.numberOfEventIndicators = None
+        self.numberOfContinuousStates = 0
+        self.numberOfEventIndicators = 0
 
         self.defaultExperiment = None
 
@@ -78,9 +78,35 @@ class ScalarVariable(object):
         self.type = None
         "One of 'Real', 'Integer', 'Enumeration', 'Boolean', 'String'"
 
+        self.quantitiy = None
+        "Physical quantity"
+
         self.unit = None
+        "Unit"
+
+        self.displayUnit = None
+        "Default display unit"
+
+        self.relativeQuantity = False
+        "Relative quantity"
+
+        self.min = None
+        "Minimum value"
+
+        self.max = None
+        "Maximum value"
+
+        self.nominal = None
+        "Nominal value"
+
+        self.unbounded = False
+        "Value is unbounded"
 
         self.start = None
+        "Initial or guess value"
+
+        self.derivative = None
+        "Derivative"
 
         self.causality = None
         "One of 'parameter', 'calculatedParameter', 'input', 'output', 'local', 'independent'"
@@ -92,6 +118,9 @@ class ScalarVariable(object):
         "One of 'exact', 'approx', 'calculated' or None"
 
         self.declaredType = None
+
+        self.reinit = False
+        "Can be reinitialized at an event by the FMU"
 
     def __repr__(self):
         return '%s "%s"' % (self.type, self.name)
@@ -395,12 +424,27 @@ def read_model_description(filename, validate=True):
         sv.variability = variable.get('variability')
         sv.initial = variable.get('initial')
 
-        value = next(variable.iterchildren())
+        # get the "value" tag
+        for child in variable.iterchildren():
+            if child.tag in ['Real', 'Integer', 'Boolean', 'String', 'Enumeration']:
+                value = child
+                break
+
         sv.type = value.tag
         sv.start = value.get('start')
 
         if sv.type == 'Real':
             sv.unit = value.get('unit')
+            sv.displayUnit = value.get('displayUnit')
+            sv.relativeQuantity = value.get('relativeQuantity') == 'true'
+            sv.derivative = value.get('derivative')
+            sv.nominal = value.get('nominal')
+            sv.unbounded = value.get('unbounded') == 'true'
+
+        if sv.type in ['Real', 'Integer', 'Enumeration']:
+            sv.quantity = value.get('quantity')
+            sv.min = value.get('min')
+            sv.max = value.get('max')
 
         # resolve the declared type
         sv.declaredType = type_definitions[value.get('declaredType')]
@@ -446,5 +490,40 @@ def read_model_description(filename, validate=True):
                 unknown.dependenciesKind = u.get('dependenciesKind').split(' ')
 
             attr.append(unknown)
+
+    if validate:
+
+        # validate derivatives
+        for i, derivative in enumerate(modelDescription.derivatives):
+            if derivative.variable.derivative is None:
+                raise Exception("State variable '%s' (state index %d) does not define a derivative." % (derivative.variable.name, i + 1))
+
+        unit_definitions = {}
+
+        for unit in modelDescription.unitDefinitions:
+            unit_definitions[unit.name] = [display_unit.name for display_unit in unit.displayUnits]
+
+        if modelDescription.fmiVersion == '2.0':
+
+            # validate outputs
+            outputs = set([v for v in modelDescription.modelVariables if v.causality == 'output'])
+            unknowns = set([u.variable for u in modelDescription.outputs])
+
+            if outputs != unknowns:
+                raise Exception('ModelStructure/Outputs must have exactly one entry for each variable with causality="output"')
+
+            # validate units
+            for variable in modelDescription.modelVariables:
+
+                unit = variable.unit
+
+                if unit is None and variable.declaredType is not None:
+                    unit = variable.declaredType.unit
+
+                if unit is not None and unit not in unit_definitions:
+                    raise Exception("The unit '%s' of variable '%s' is not defined." % (unit, variable.name))
+
+                if variable.displayUnit is not None and variable.displayUnit not in unit_definitions[unit]:
+                    raise Exception("The display unit '%s' of variable '%s' is not defined." % (variable.displayUnit, variable.name))
 
     return modelDescription

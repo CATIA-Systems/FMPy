@@ -1,3 +1,14 @@
+## v0.2.8 (2018-12-24)
+
+- `FIXED` Handle optional elements in ScalarVariable tag
+- `FIXED` Handle null pointers in FMI logging
+- `FIXED` Relax type of attribute "version" in fmiModelDescription.xsd to "normalizedString"
+- `FIXED` Fix size of memory passed to fmi2DeSerializeFMUstate()
+- `NEW` Validate modelDescription.outputs
+- `NEW` Add compilation with Visual Studio 2017
+- `NEW` Add missing attributes to ScalarVariable and validate derivatives and units
+- `NEW` Change input extrapolation to "hold"
+
 ## v0.2.7 (2018-11-13)
 
 - `FIXED` Test files are now downloaded form GitHub

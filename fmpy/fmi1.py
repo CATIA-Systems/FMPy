@@ -182,6 +182,9 @@ class _FMU(object):
                 else:
                     # struct
                     a += str(v._obj)
+            elif hasattr(v, 'decode'):
+                # UTF-8 byte string
+                a += '"' + v.decode('utf-8') + '"'
             else:
                 a += str(v)
 

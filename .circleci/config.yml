@@ -1,0 +1,49 @@
+version: 2.1
+
+jobs:
+  build:
+    parameters:
+      installer:
+        description: "URL of the Anaconda installer script"
+        type: string
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: Install Anaconda
+          command: |
+            wget << parameters.installer >> -O anaconda.sh
+            bash anaconda.sh -b -p ~/anaconda
+      - run:
+          name: Add Anaconda to PATH
+          command: echo 'export PATH=$HOME/anaconda/bin:$PATH' >> $BASH_ENV
+      - run:
+          name: Install dependencies
+          command: |
+            conda info -a
+            conda install -c anaconda pathlib
+      - run:
+          name: Build wheel
+          command: |
+            which python
+            python setup.py bdist_wheel --universal
+      - run:
+          name: Install wheel
+          command: |
+            for f in dist/FMPy-*.whl; do
+              pip install $f --no-deps -vv
+            done
+      - run:
+          name: Run tests
+          command: |
+            which fmpy
+            cd tests
+            python -m unittest discover
+
+workflows:
+  build:
+    jobs:
+      - build:
+          installer: https://repo.continuum.io/archive/Anaconda2-2018.12-Linux-x86_64.sh
+      - build:
+          installer: https://repo.continuum.io/archive/Anaconda3-2018.12-Linux-x86_64.sh

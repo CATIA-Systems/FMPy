@@ -1,8 +1,9 @@
-[![Travis CI](https://travis-ci.org/CATIA-Systems/FMPy.svg?branch=master)](https://travis-ci.org/CATIA-Systems/FMPy)
-[![AppVeyor](https://ci.appveyor.com/api/projects/status/github/CATIA-Systems/FMPy?branch=master&svg=true)](https://ci.appveyor.com/project/TorstenSommer/fmpy)
-[![PyPI version](https://badge.fury.io/py/fmpy.svg)](https://badge.fury.io/py/fmpy)
-[![Anaconda-Server Badge](https://anaconda.org/conda-forge/fmpy/badges/version.svg)](https://anaconda.org/conda-forge/fmpy)
-[![Documentation Status](https://readthedocs.org/projects/fmpy/badge/?version=latest)](http://fmpy.readthedocs.io/en/latest/?badge=latest)
+[![Linux](https://img.shields.io/circleci/project/github/CATIA-Systems/FMPy/master.svg?label=Linux&logo=circleci)](https://circleci.com/gh/CATIA-Systems/FMPy)
+[![OSX](https://img.shields.io/travis/CATIA-Systems/FMPy/master.svg?label=macOS&logo=travis)](https://travis-ci.org/CATIA-Systems/FMPy)
+[![Windows](https://img.shields.io/appveyor/ci/TorstenSommer/FMPy/master.svg?label=Windows&logo=appveyor)](https://ci.appveyor.com/project/TorstenSommer/FMPy/branch/master)
+[![PyPI](https://img.shields.io/pypi/dm/FMPy.svg?label=PyPI%20downloads)](https://pypi.org/project/FMPy/)
+[![Conda](https://img.shields.io/conda/dn/conda-forge/FMPy.svg?label=Conda%20downloads)](https://anaconda.org/conda-forge/fmpy)
+[![Read the Docs](https://readthedocs.org/projects/fmpy/badge/?version=latest)](https://fmpy.readthedocs.io/)
 
 # FMPy
 
@@ -12,7 +13,7 @@ FMPy is a free Python library to simulate [Functional Mock-up Units (FMUs)](http
 - supports Co-Simulation and Model Exchange
 - runs on Windows, Linux and macOS
 - has a graphical user interface
-- compiles C code FMUs and generates CMake projects for debugging `NEW`
+- compiles C code FMUs and generates [CMake](https://cmake.org/) projects for debugging
 
 ## Installation
 

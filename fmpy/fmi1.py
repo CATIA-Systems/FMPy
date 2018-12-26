@@ -86,7 +86,7 @@ def printLogMessage(component, instanceName, status, category, message):
     """ Print the FMU's log messages to the command line (works for both FMI 1.0 and 2.0) """
 
     label = ['OK', 'WARNING', 'DISCARD', 'ERROR', 'FATAL', 'PENDING'][status]
-    print("[%s] %s" % (label, message))
+    print("[%s] %s" % (label, message.decode("utf-8")))
 
 
 def allocateMemory(nobj, size):

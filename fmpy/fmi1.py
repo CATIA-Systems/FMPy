@@ -258,7 +258,7 @@ class _FMU1(_FMU):
                            ['component', 'vr', 'nvr', 'value'],
                            [fmi1Component, POINTER(fmi1ValueReference), c_size_t, POINTER(fmi1String)])
 
-    def _fmi1Function(self, name, argnames, argtypes, restype=fmi1Status):
+    def _fmi1Function(self, fname, argnames, argtypes, restype=fmi1Status):
         """ Add an FMI 1.0 function to this instance and add a wrapper that allows
         logging and checks the return code if the return type if fmi1Status
 
@@ -269,8 +269,11 @@ class _FMU1(_FMU):
             restype   return type
         """
 
+        # add the prefix
+        fname = 'fmi' + fname
+
         # get the exported function form the shared library
-        f = getattr(self.dll, self.modelIdentifier + '_fmi' + name)
+        f = getattr(self.dll, self.modelIdentifier + '_' + fname)
         f.argtypes = argtypes
         f.restype = restype
 
@@ -282,12 +285,12 @@ class _FMU1(_FMU):
 
             if self.fmiCallLogger is not None:
                 # log the call
-                self._log_fmi_args('fmi' + name, argnames, argtypes, args, restype, res)
+                self._log_fmi_args(fname, argnames, argtypes, args, restype, res)
 
             if restype == fmi1Status:
                 # check the status code
                 if res > fmi1Warning:
-                    raise Exception("FMI call failed with status %d." % res)
+                    raise Exception("%s failed with status %d." % (fname, res))
 
             return res
 

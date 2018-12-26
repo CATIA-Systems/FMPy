@@ -207,7 +207,7 @@ class _FMU2(_FMU):
             if restype == fmi2Status:  # status code
                 # check the status code
                 if res > fmi2Warning:
-                    raise Exception("FMI call failed with status %d." % res)
+                    raise Exception("%s failed with status %d." % (fname, res))
 
             return res
 

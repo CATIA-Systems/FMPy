@@ -37,20 +37,17 @@ class InputTest(unittest.TestCase):
 
         fmx = sys.float_info.max
 
+        dtype = np.dtype([('time', np.float64)])
+
         # no event
-        t = np.array([0.0, 1.0])
-        self.assertEqual(fmx, Input.nextEvent(0.8, t), "Expecting no events")
+        signals = np.array([(0,), (1,)], dtype=dtype)
+        t_events = Input.findEvents(signals)
+        self.assertEqual([fmx], t_events)
 
         # time grid with events at 0.5 and 0.8
-        t = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 0.6, 0.7, 0.8, 0.8, 0.8, 0.9, 1.0])
-
-        self.assertEqual(0.5, Input.nextEvent(0.0, t), "Expecting first event before first sample")
-        self.assertEqual(0.5, Input.nextEvent(0.2, t), "Expecting first event before first event")
-        self.assertEqual(0.8, Input.nextEvent(0.5, t), "Expecting second event at first event")
-        self.assertEqual(0.8, Input.nextEvent(0.6, t), "Expecting second event between first and second event")
-        self.assertEqual(fmx, Input.nextEvent(0.8, t), "Expecting no more events after second (multi) event")
-        self.assertEqual(fmx, Input.nextEvent(1.0, t), "Expecting no more events after last event")
-        self.assertEqual(fmx, Input.nextEvent(2.0, t), "Expecting no more events after last sample")
+        signals = np.array(list(zip([0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 0.6, 0.7, 0.8, 0.8, 0.8, 0.9, 1.0])), dtype=dtype)
+        t_events = Input.findEvents(signals)
+        self.assertTrue(np.all([0.5, 0.8, fmx] == t_events))
 
     def test_input_discrete(self):
 

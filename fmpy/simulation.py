@@ -124,7 +124,11 @@ class Input(object):
             self.t = None
             return
 
+        # get the time grid
         self.t = signals[signals.dtype.names[0]]
+
+        # find events
+        self.t_events = Input.findEvents(signals)
 
         is_fmi1 = isinstance(fmu, _FMU1)
 
@@ -209,34 +213,17 @@ class Input(object):
             self._setBoolean(self.fmu.component, self.boolean_vrs, len(self.boolean_vrs),
                              cast(self.boolean_values, POINTER(self._bool_type)))
 
-        return Input.nextEvent(time, self.t)
+        # find the next event
+        i = np.argmax(self.t_events > time)
+        return self.t_events[i]
 
     @staticmethod
-    def nextEvent(time, t):
-        """ Find the next event in t after time
-
-        Parameters:
-            time  time after which to search for events
-            t     the time grid to search for events
-
-        Returns:
-            the next event time or sys.float_info.max if no more events are detected after time
-        """
-
-        i_events = np.argwhere(np.diff(t) == 0)
-
-        if len(i_events) < 1:
-            # no events detected
-            return sys.float_info.max
-
-        t_events = t[i_events]
-
-        i = np.argmax(t_events > time)
-
-        if t_events[i] > time:
-            return t_events[i][0]
-        else:
-            return sys.float_info.max
+    def findEvents(signals):
+        """ Find time events """
+        t = signals[signals.dtype.names[0]]
+        i_events = np.where(np.diff(t) == 0)
+        t_events = np.append(t[i_events], [sys.float_info.max])
+        return np.unique(t_events)
 
     @staticmethod
     def interpolate(time, t, table, discrete=False, after_event=False):
@@ -251,7 +238,7 @@ class Input(object):
             return table[:, -1]  # hold last value
 
         # check for event
-        if i0 < len(t) - 1 and t[i0] == t[i0 + 1]:
+        if time == t[i0] and i0 < len(t) - 1 and t[i0] == t[i0 + 1]:
 
             if after_event:
                 # take the value after the event
@@ -628,7 +615,8 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
                 # integrate to the next grid point
                 t_next = round(time / output_interval) * output_interval + output_interval
 
-        t_input_event = input.apply(time)
+        # apply continuous inputs
+        t_input_event = input.apply(time, discrete=False)
 
         # check for input event
         input_event = t_input_event <= t_next
@@ -668,14 +656,14 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
                 # record the values before the event
                 recorder.sample(time, force=True)
 
-            if input_event:
-                input.apply(time=time, after_event=True)
-
             if is_fmi1:
                 fmu.eventUpdate()
             else:
                 # handle events
                 fmu.enterEventMode()
+
+                if input_event:
+                    input.apply(time=time, after_event=True)
 
                 fmu.eventInfo.newDiscreteStatesNeeded = fmi2True
                 fmu.eventInfo.terminateSimulation = fmi2False

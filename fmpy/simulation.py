@@ -657,9 +657,11 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
                 recorder.sample(time, force=True)
 
             if is_fmi1:
+                if input_event:
+                    input.apply(time=time, after_event=True)
+                    
                 fmu.eventUpdate()
             else:
-                # handle events
                 fmu.enterEventMode()
 
                 if input_event:

@@ -251,6 +251,9 @@ class _FMU2(_FMU):
                                               fmi2True if visible else fmi2False,
                                               fmi2True if loggingOn else fmi2False)
 
+        if self.component is None:
+            raise Exception("Failed to instantiate model")
+
     def freeInstance(self):
         self.fmi2FreeInstance(self.component)
         self.freeLibrary()

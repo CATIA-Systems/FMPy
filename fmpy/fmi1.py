@@ -599,6 +599,9 @@ class FMU1Model(_FMU1):
                                                    self.callbacks,
                                                    fmi1True if loggingOn else fmi1False)
 
+        if self.component is None:
+            raise Exception("Failed to instantiate model")
+
     def freeInstance(self):
         self.fmi1FreeModelInstance(self.component)
         self.freeLibrary()

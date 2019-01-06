@@ -211,7 +211,7 @@ class _FMU(object):
             else:
                 f += str(res)
         elif restype == c_void_p:
-            f += ' -> ' + hex(res)
+            f += ' -> ' + hex(0 if res is None else res)
 
         self.fmiCallLogger(f)
 

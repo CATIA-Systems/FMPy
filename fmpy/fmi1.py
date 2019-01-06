@@ -272,11 +272,8 @@ class _FMU1(_FMU):
             restype   return type
         """
 
-        # add the prefix
-        fname = 'fmi' + fname
-
         # get the exported function form the shared library
-        f = getattr(self.dll, self.modelIdentifier + '_' + fname)
+        f = getattr(self.dll, self.modelIdentifier + '_fmi' + fname)
         f.argtypes = argtypes
         f.restype = restype
 
@@ -288,17 +285,17 @@ class _FMU1(_FMU):
 
             if self.fmiCallLogger is not None:
                 # log the call
-                self._log_fmi_args(fname, argnames, argtypes, args, restype, res)
+                self._log_fmi_args('fmi' + fname, argnames, argtypes, args, restype, res)
 
             if restype == fmi1Status:
                 # check the status code
                 if res > fmi1Warning:
-                    raise Exception("%s failed with status %d." % (fname, res))
+                    raise Exception("fmi%s failed with status %d." % (fname, res))
 
             return res
 
         # add the function to the instance
-        setattr(self, 'fmi1' + name, w)
+        setattr(self, 'fmi1' + fname, w)
 
     # Inquire version numbers of header files
 

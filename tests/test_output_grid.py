@@ -61,7 +61,9 @@ class OutputGridTest(unittest.TestCase):
         time = result['time']
         self.assertAlmostEqual(time[0], start_time, msg="First sample time must be equal to start_time")
         self.assertAlmostEqual(time[-1], stop_time, msg="Last sample time must be equal to stop_time")
-        self.assertTrue(np.all(np.isclose(np.diff(time), output_interval)), msg="Output intervals must be regular")
+        steps = np.diff(time)
+        steps = steps[steps > 1e-13]  # remove events
+        self.assertTrue(np.all(np.isclose(steps, output_interval)), msg="Output intervals must be regular")
 
         # variable step w/ events
         result = simulate_fmu(solver='CVode', record_events=True, **kwargs)

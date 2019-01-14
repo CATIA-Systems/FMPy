@@ -157,14 +157,14 @@ class Input(object):
 
         for sv in modelDescription.modelVariables:
 
-            if sv.causality != 'input':
+            if sv.causality != 'input' and sv.variability != 'tunable':
                 continue
 
             if sv.name not in signals.dtype.names:
                 print("Warning: missing input for " + sv.name)
                 continue
 
-            if sv.type == 'Real' and sv.variability != 'discrete':
+            if sv.type == 'Real' and sv.variability not in ['discrete', 'tunable']:
                 continuous_inputs[sv.type].append((sv.valueReference, sv.name))
             else:
                 # use the same table for Integer and Enumeration
@@ -235,7 +235,7 @@ class Input(object):
 
         # discrete
         for variable in model_description.modelVariables:
-            if variable.name in signals.dtype.names and variable.variability == 'discrete':
+            if variable.name in signals.dtype.names and variable.variability in ['discrete', 'tunable']:
                 y = signals[variable.name]
                 i_event = np.flatnonzero(np.diff(y))
                 t_event.update(t[i_event + 1])
@@ -552,14 +552,14 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
 
     input = Input(fmu, model_description, input_signals)
 
-    # apply start values
-    apply_start_values(fmu, model_description, start_values, apply_default_start_values)
-
+    # initialize
     if is_fmi1:
+        apply_start_values(fmu, model_description, start_values, apply_default_start_values)
         input.apply(time)
         fmu.initialize()
     else:
         fmu.enterInitializationMode()
+        apply_start_values(fmu, model_description, start_values, apply_default_start_values)
         input.apply(time)
         fmu.exitInitializationMode()
 
@@ -737,15 +737,15 @@ def simulateCS(model_description, fmu_kwargs, start_time, stop_time, relative_to
 
     time = start_time
 
-    # apply input and start values
-    apply_start_values(fmu, model_description, start_values, apply_default_start_values)
-    input.apply(time)
-
     # initialize the model
     if model_description.fmiVersion == '1.0':
+        apply_start_values(fmu, model_description, start_values, apply_default_start_values)
+        input.apply(time)
         fmu.initialize()
     else:
         fmu.enterInitializationMode()
+        apply_start_values(fmu, model_description, start_values, apply_default_start_values)
+        input.apply(time)
         fmu.exitInitializationMode()
 
     recorder = Recorder(fmu=fmu, modelDescription=model_description, variableNames=output, interval=output_interval)

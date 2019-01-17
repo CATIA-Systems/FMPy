@@ -241,12 +241,16 @@ class CVodeSolver(object):
     def step(self, t, tNext):
 
         if not self.discrete:
+            # get the states
             self.get_x(self.px, self.nx)
 
         tret = realtype(0.0)
 
         # perform one step
         flag = CVode(self.cvode_mem, tNext, self.x, byref(tret), CV_NORMAL)
+
+        # set the states
+        self.set_x(self.px, self.nx)
 
         stateEvent = flag > 0
 

@@ -72,6 +72,11 @@ CVodeSetErrHandlerFn = getattr(sundials_cvode, 'CVodeSetErrHandlerFn')
 CVodeSetErrHandlerFn.argtypes = [c_void_p, CVErrHandlerFn, c_void_p]
 CVodeSetErrHandlerFn.restype = c_int
 
+# int CVodeSetNoInactiveRootWarn(void *cvode_mem);
+CVodeSetNoInactiveRootWarn = getattr(sundials_cvode, 'CVodeSetNoInactiveRootWarn')
+CVodeSetNoInactiveRootWarn.argtypes = [c_void_p]
+CVodeSetNoInactiveRootWarn.restype = c_int
+
 # int CVodeInit(void *cvode_mem, CVRhsFn f, realtype t0, N_Vector y0)
 CVodeInit = getattr(sundials_cvode, 'CVodeInit')
 CVodeInit.argtypes = [c_void_p, CVRhsFn, realtype, N_Vector]
@@ -208,6 +213,8 @@ class CVodeSolver(object):
         assert CVodeSetMaxStep(self.cvode_mem, maxStep) == CV_SUCCESS
 
         assert CVodeSetMaxNumSteps(self.cvode_mem, maxNumSteps) == CV_SUCCESS
+
+        assert CVodeSetNoInactiveRootWarn(self.cvode_mem) == CV_SUCCESS
 
     def ehfun(self, error_code, module, function, msg,  user_data):
         """ Error handler function """

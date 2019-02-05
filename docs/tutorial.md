@@ -7,10 +7,10 @@ You can start the FMPy GUI with `python -m fmpy.gui`
 ## Python
 
 To follow this example download `Rectifier.fmu` for your platform by clicking on the respective link:
-[Linux](https://github.com/modelica/fmi-cross-check/blob/master/fmus/2.0/cs/linux64/MapleSim/2017/Rectifier/Rectifier.fmu),
-[macOS](hhttps://github.com/modelica/fmi-cross-check/blob/master/fmus/2.0/cs/darwin64/MapleSim/2017/Rectifier/Rectifier.fmu),
-[Windows (32-bit)](https://github.com/modelica/fmi-cross-check/blob/master/fmus/2.0/cs/win32/MapleSim/2017/Rectifier/Rectifier.fmu),
-[Windows (64-bit)](https://github.com/modelica/fmi-cross-check/blob/master/fmus/2.0/cs/win64/MapleSim/2017/Rectifier/Rectifier.fmu).
+[Linux](https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/linux64/MapleSim/2016.2/Rectifier/Rectifier.fmu),
+[macOS](https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/darwin64/MapleSim/2016.2/Rectifier/Rectifier.fmu),
+[Windows (32-bit)](https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/win32/MapleSim/2016.2/Rectifier/Rectifier.fmu),
+[Windows (64-bit)](https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/win64/MapleSim/2016.2/Rectifier/Rectifier.fmu).
 Change to the folder where you've saved the FMU and open a Python prompt.
 
 ```
@@ -21,14 +21,15 @@ Change to the folder where you've saved the FMU and open a Python prompt.
 Model Info
 
   FMI Version       2.0
+  FMI Type          Co-Simulation
   Model Name        Rectifier
   Description       Model Rectifier
   Platforms         win64
   Continuous States 4
   Event Indicators  6
   Variables         63
-  Generation Tool   MapleSim (1267140/1267140/1267140)
-  Generation Date   2017-10-04T12:07:10Z
+  Generation Tool   MapleSim (1196527/1196706/1196706)
+  Generation Date   2017-01-19T18:42:46Z
 
 Default Experiment
 
@@ -37,11 +38,11 @@ Default Experiment
 
 Variables (input, output)
 
-Name                Causality          Start Value  Unit     Description
-outputs             output        282.842712474619  V        Rectifier1.Capacitor1.v
+Name                Causality              Start Value  Unit     Description
+outputs             output                              V        Rectifier1.Capacitor1.v
 >>> result = simulate_fmu(fmu)         # simulate the FMU
 >>> from fmpy.util import plot_result  # import the plot function
->>> plot_result(result)                # plot two variables
+>>> plot_result(result)                # plot the result
 ```
 
 ![Rectifier Result](Rectifier_result.png)

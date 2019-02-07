@@ -229,7 +229,7 @@ def cross_check(fmus_dir, report, result_dir, simulate, tool_name, tool_version,
                 start_time = time.time()
 
                 options['fmu_filename'] = fmu_filename
-                options['step_size'] = step_size
+                options['step_size'] = None if step_size == 0 else step_size
                 options['stop_time'] = stop_time
 
                 if in_path is not None:

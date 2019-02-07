@@ -1,3 +1,14 @@
+## v0.2.9 (2019-02-07)
+
+Improved logging, discrete inputs and tunable parameters
+
+- `FIXED` handling of discrete inputs
+- `FIXED` set continuous states after solver step
+- `NEW` set tunable parameters via input
+- `IMPROVED` disable inactive root warnings for CVode
+- `IMPROVED` error and log messages
+- `IMPROVED` plotting of discrete signals
+
 ## v0.2.8 (2018-12-24)
 
 - `FIXED` Handle optional elements in ScalarVariable tag

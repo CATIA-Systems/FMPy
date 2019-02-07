@@ -85,6 +85,9 @@ def cross_check(fmus_dir, report, result_dir, simulate, tool_name, tool_version,
 
         fmu_filename = None
 
+        if 'notCompliantWithLatestRules' in files:
+            continue  # skip
+
         for file in files:
             if file.endswith('.fmu'):
                 fmu_name, _ = os.path.splitext(file)  # FMU name without file extension
@@ -92,7 +95,7 @@ def cross_check(fmus_dir, report, result_dir, simulate, tool_name, tool_version,
                 break
 
         if fmu_filename is None:
-            continue
+            continue  # skip
 
         # dictionary that contains the information about the FMU
         options = {'fmu_filename': fmu_filename}

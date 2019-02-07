@@ -404,7 +404,7 @@ def read_model_description(filename, validate=True):
 
     # default values for 'initial' derived from variability and causality
     initial_defaults = {
-        'constant':   {'output': 'exact', 'local': 'exact'},
+        'constant':   {'output': 'exact', 'local': 'exact', 'parameter': 'exact'},
         'fixed':      {'parameter': 'exact', 'calculatedParameter': 'calculated', 'local': 'calculated'},
         'tunable':    {'parameter': 'exact', 'calculatedParameter': 'calculated', 'local': 'calculated'},
         'discrete':   {'input': None, 'output': 'calculated', 'local': 'calculated'},

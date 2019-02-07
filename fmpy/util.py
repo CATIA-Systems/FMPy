@@ -109,6 +109,7 @@ def validate_signal(t, y, t_ref, y_ref, num=1000, dx=20, dy=0.1):
     """
 
     from scipy.ndimage.filters import maximum_filter1d, minimum_filter1d
+    from scipy.interpolate import interp1d
 
     # re-sample the reference signal into a uniform grid
     t_band = np.linspace(start=t_ref[0], stop=t_ref[-1], num=num)
@@ -116,7 +117,8 @@ def validate_signal(t, y, t_ref, y_ref, num=1000, dx=20, dy=0.1):
     # sort out the duplicate samples before the interpolation
     m = np.concatenate(([True], np.diff(t_ref) > 0))
 
-    y_band = np.interp(x=t_band, xp=t_ref[m], fp=y_ref[m])
+    interp_method = 'linear' if y.dtype == np.float64 else 'zero'
+    y_band = interp1d(x=t_ref[m], y=y_ref[m], kind=interp_method)(t_band)
 
     y_band_min = np.min(y_band)
     y_band_max = np.max(y_band)

@@ -1,27 +1,13 @@
-language: python
+language: generic
+os: osx
 
 matrix:
   include:
-    - os: linux
-      env:
-        - PYTHON_VERSION=2.7
-        - MINICONDA=Miniconda2-latest-Linux-x86_64.sh
-
-    - os: linux
-      env:
-        - PYTHON_VERSION=3.6
-        - MINICONDA=Miniconda3-latest-Linux-x86_64.sh
-
-    - os: osx
-      language: generic
-      env:
+    - env:
         - PYTHON_VERSION=2.7
         - MINICONDA=Miniconda2-latest-MacOSX-x86_64.sh
-
-    - os: osx
-      language: generic
-      env:
-        - PYTHON_VERSION=3.6
+    - env:
+        - PYTHON_VERSION=3.7
         - MINICONDA=Miniconda3-latest-MacOSX-x86_64.sh
 
 install:
@@ -46,7 +32,7 @@ install:
   # install the wheel
   - |
     for f in dist/FMPy-*.whl; do
-      pip install $f --no-deps
+      pip install $f --no-deps -vv
     done
 
 script:

@@ -3,6 +3,9 @@ import numpy as np
 import sys
 
 from fmpy.simulation import Input
+from fmpy.model_description import ModelDescription, ScalarVariable
+
+inf = float('Inf')
 
 
 class InputTest(unittest.TestCase):
@@ -33,24 +36,42 @@ class InputTest(unittest.TestCase):
         self.assertEqual(v1, 3)
         self.assertEqual(v2, 2)
 
-    def test_event_detection(self):
+    def test_continuous_signal_events(self):
 
-        fmx = sys.float_info.max
+        dtype = np.dtype([('time', np.float64)])
+
+        model_description = ModelDescription()
 
         # no event
-        t = np.array([0.0, 1.0])
-        self.assertEqual(fmx, Input.nextEvent(0.8, t), "Expecting no events")
+        signals = np.array([(0,), (1,)], dtype=dtype)
+        t_events = Input.findEvents(signals, model_description)
+        self.assertEqual([inf], t_events)
 
         # time grid with events at 0.5 and 0.8
-        t = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 0.6, 0.7, 0.8, 0.8, 0.8, 0.9, 1.0])
+        signals = np.array(list(zip([0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 0.6, 0.7, 0.8, 0.8, 0.8, 0.9, 1.0])), dtype=dtype)
+        t_events = Input.findEvents(signals, model_description)
+        self.assertTrue(np.all([0.5, 0.8, inf] == t_events))
 
-        self.assertEqual(0.5, Input.nextEvent(0.0, t), "Expecting first event before first sample")
-        self.assertEqual(0.5, Input.nextEvent(0.2, t), "Expecting first event before first event")
-        self.assertEqual(0.8, Input.nextEvent(0.5, t), "Expecting second event at first event")
-        self.assertEqual(0.8, Input.nextEvent(0.6, t), "Expecting second event between first and second event")
-        self.assertEqual(fmx, Input.nextEvent(0.8, t), "Expecting no more events after second (multi) event")
-        self.assertEqual(fmx, Input.nextEvent(1.0, t), "Expecting no more events after last event")
-        self.assertEqual(fmx, Input.nextEvent(2.0, t), "Expecting no more events after last sample")
+    def test_discrete_signal_events(self):
+
+        # model with one discrete variable 'x'
+        model_description = ModelDescription()
+        variable = ScalarVariable('x', 0)
+        variable.variability = 'discrete'
+        model_description.modelVariables.append(variable)
+
+        # discrete events at 0.1 and 0.4
+        signals = np.array([
+            (0.0, 0),
+            (0.1, 0),
+            (0.2, 1),
+            (0.3, 1),
+            (0.4, 2)],
+            dtype=np.dtype([('time', np.float64), ('x', np.int)]))
+
+        t_event = Input.findEvents(signals, model_description)
+
+        self.assertTrue(np.all([0.2, 0.4, inf] == t_event))
 
     def test_input_discrete(self):
 

@@ -109,6 +109,7 @@ def validate_signal(t, y, t_ref, y_ref, num=1000, dx=20, dy=0.1):
     """
 
     from scipy.ndimage.filters import maximum_filter1d, minimum_filter1d
+    from scipy.interpolate import interp1d
 
     # re-sample the reference signal into a uniform grid
     t_band = np.linspace(start=t_ref[0], stop=t_ref[-1], num=num)
@@ -116,7 +117,8 @@ def validate_signal(t, y, t_ref, y_ref, num=1000, dx=20, dy=0.1):
     # sort out the duplicate samples before the interpolation
     m = np.concatenate(([True], np.diff(t_ref) > 0))
 
-    y_band = np.interp(x=t_band, xp=t_ref[m], fp=y_ref[m])
+    interp_method = 'linear' if y.dtype == np.float64 else 'zero'
+    y_band = interp1d(x=t_ref[m], y=y_ref[m], kind=interp_method)(t_band)
 
     y_band_min = np.min(y_band)
     y_band_max = np.max(y_band)
@@ -213,6 +215,7 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
     import matplotlib.pylab as pylab
     import matplotlib.pyplot as plt
     import matplotlib.transforms as mtransforms
+    from matplotlib.ticker import MaxNLocator
     from collections import Iterable
 
     params = {
@@ -274,10 +277,16 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
                 ax.fill_between(time, 0, 1, where=i_out, facecolor='red', alpha=0.5, transform=trans)
 
             if y.dtype == np.float64:
-                ax.plot(time, y, color='b', linewidth=0.9, label='result', zorder=101)
+                # find left indices of discontinuities
+                i_disc = np.flatnonzero(np.diff(time) == 0)
+                i_disc = np.append(i_disc + 1, len(time))
+                i0 = 0
+                for i1 in i_disc:
+                    ax.plot(time[i0:i1], y[i0:i1], color='b', linewidth=0.9, label='result', zorder=101)
+                    i0 = i1
             else:
-                ax.hlines(y, time[:-1], time[1:], colors='b', linewidth=1, label='result', zorder=101)
-                # ax.step(time, y, where='post', color='b', linewidth=0.9, label='result', zorder=101)
+                ax.hlines(y[:-1], time[:-1], time[1:], colors='b', linewidth=1, label='result', zorder=101)
+                ax.yaxis.set_major_locator(MaxNLocator(integer=True))
 
             if y.dtype == bool:
                 # use fixed range and labels and fill area

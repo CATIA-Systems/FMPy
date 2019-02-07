@@ -207,7 +207,7 @@ class _FMU2(_FMU):
             if restype == fmi2Status:  # status code
                 # check the status code
                 if res > fmi2Warning:
-                    raise Exception("FMI call failed with status %d." % res)
+                    raise Exception("%s failed with status %d." % (fname, res))
 
             return res
 
@@ -250,6 +250,9 @@ class _FMU2(_FMU):
                                               byref(self.callbacks),
                                               fmi2True if visible else fmi2False,
                                               fmi2True if loggingOn else fmi2False)
+
+        if self.component is None:
+            raise Exception("Failed to instantiate model")
 
     def freeInstance(self):
         self.fmi2FreeInstance(self.component)

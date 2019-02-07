@@ -85,6 +85,9 @@ def cross_check(fmus_dir, report, result_dir, simulate, tool_name, tool_version,
 
         fmu_filename = None
 
+        if 'notCompliantWithLatestRules' in files:
+            continue  # skip
+
         for file in files:
             if file.endswith('.fmu'):
                 fmu_name, _ = os.path.splitext(file)  # FMU name without file extension
@@ -92,7 +95,7 @@ def cross_check(fmus_dir, report, result_dir, simulate, tool_name, tool_version,
                 break
 
         if fmu_filename is None:
-            continue
+            continue  # skip
 
         # dictionary that contains the information about the FMU
         options = {'fmu_filename': fmu_filename}
@@ -101,7 +104,7 @@ def cross_check(fmus_dir, report, result_dir, simulate, tool_name, tool_version,
         options.update(fmu_path_info(root))
 
         # skip FMUs in _FMIModelicaTest and other directories
-        if options['fmi_version'] not in ['FMI_1.0', 'FMI_2.0']:
+        if options['fmi_version'] not in ['1.0', '2.0']:
             continue
 
         if skip(options):
@@ -226,7 +229,7 @@ def cross_check(fmus_dir, report, result_dir, simulate, tool_name, tool_version,
                 start_time = time.time()
 
                 options['fmu_filename'] = fmu_filename
-                options['step_size'] = step_size
+                options['step_size'] = None if step_size == 0 else step_size
                 options['stop_time'] = stop_time
 
                 if in_path is not None:

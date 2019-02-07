@@ -628,7 +628,7 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
             if time + eps >= t_next:  # t_next has been reached
                 # integrate to the next grid point
                 t_next = np.floor(time / output_interval) * output_interval + output_interval
-                if t_next <= time:
+                if t_next < time + eps:
                     t_next += output_interval
 
         # get the next input event
@@ -701,7 +701,7 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
                 # record values after the event
                 recorder.sample(time, force=True)
 
-        if abs(time - round(time / output_interval) * output_interval) < eps and time != recorder.lastSampleTime:
+        if abs(time - round(time / output_interval) * output_interval) < eps and time > recorder.lastSampleTime + eps:
             # record values for this step
             recorder.sample(time, force=True)
 

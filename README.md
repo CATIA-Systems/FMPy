@@ -34,9 +34,9 @@ You can start the FMPy GUI with `python -m fmpy.gui`
 ## Simulate an FMU in Python
 
 To follow this example download `Rectifier.fmu` for your platform by clicking on the respective link:
-[Linux](https://github.com/modelica/fmi-cross-check/blob/master/fmus/2.0/cs/linux64/MapleSim/2018/Rectifier/Rectifier.fmu),
-[macOS](https://github.com/modelica/fmi-cross-check/blob/master/fmus/2.0/cs/darwin64/MapleSim/2018/Rectifier/Rectifier.fmu),
-[Windows](https://github.com/modelica/fmi-cross-check/blob/master/fmus/2.0/cs/win64/MapleSim/2018/Rectifier/Rectifier.fmu).
+[Linux](https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/linux64/MapleSim/2018/Rectifier/Rectifier.fmu),
+[macOS](https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/darwin64/MapleSim/2018/Rectifier/Rectifier.fmu),
+[Windows](https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/win64/MapleSim/2018/Rectifier/Rectifier.fmu).
 Change to the folder where you've saved the FMU and open a Python prompt.
 
 ```

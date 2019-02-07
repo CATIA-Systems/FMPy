@@ -104,7 +104,7 @@ def cross_check(fmus_dir, report, result_dir, simulate, tool_name, tool_version,
         options.update(fmu_path_info(root))
 
         # skip FMUs in _FMIModelicaTest and other directories
-        if options['fmi_version'] not in ['FMI_1.0', 'FMI_2.0']:
+        if options['fmi_version'] not in ['1.0', '2.0']:
             continue
 
         if skip(options):

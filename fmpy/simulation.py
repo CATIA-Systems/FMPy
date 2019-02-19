@@ -45,12 +45,15 @@ class Recorder(object):
 
             # collect the variables to record
             if (variableNames is not None and sv.name in variableNames) or (variableNames is None and sv.causality == 'output'):
-                names, vrs, shapes, n_values, getter = self.info.get(sv.type, ([], [], [], 0, getattr(self.fmu, 'get' + sv.type)))
+                type = sv.type
+                if type == 'Enumeration':
+                    type = 'Integer' if modelDescription.fmiVersion in {'1.0', '2.0'} else 'Int32'
+                names, vrs, shapes, n_values, getter = self.info.get(type, ([], [], [], 0, getattr(self.fmu, 'get' + type)))
                 names.append(sv.name)
                 vrs.append(sv.valueReference)
                 shapes.append(sv.dimensions)
                 n_values += np.prod(sv.dimensions) if sv.dimensions else 1
-                self.info[sv.type] = names, vrs, shapes, n_values, getter
+                self.info[type] = names, vrs, shapes, n_values, getter
 
         # create the columns for the NumPy array
         if modelDescription.fmiVersion in ['1.0', '2.0']:
@@ -58,6 +61,7 @@ class Recorder(object):
         else:
             types = [('Float64', np.float64), ('Int32', np.int32), ('UInt64', np.uint64), ('Boolean', np.bool_)]
 
+        # collect the columns
         for t, dt in types:
             if t in self.info:
                 self.types.append(t)

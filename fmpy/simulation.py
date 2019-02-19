@@ -562,12 +562,16 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
 
     is_fmi1 = model_description.fmiVersion == '1.0'
 
-    if is_fmi1:
+    if model_description.fmiVersion == '1.0':
         fmu = FMU1Model(**fmu_kwargs)
         fmu.instantiate(functions=callbacks, loggingOn=debug_logging)
         fmu.setTime(time)
-    else:
+    elif model_description.fmiVersion == '2.0':
         fmu = FMU2Model(**fmu_kwargs)
+        fmu.instantiate(callbacks=callbacks, loggingOn=debug_logging)
+        fmu.setupExperiment(startTime=start_time)
+    else:
+        fmu = fmi3.FMU3Model(**fmu_kwargs)
         fmu.instantiate(callbacks=callbacks, loggingOn=debug_logging)
         fmu.setupExperiment(startTime=start_time)
 

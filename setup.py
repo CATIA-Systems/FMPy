@@ -28,6 +28,7 @@ package_data = {
              'c-code/fmi2/CMakeLists.txt',
              'schema/fmi1/*.xsd',
              'schema/fmi2/*.xsd',
+             'schema/fmi3/*.xsd',
              'sundials/darwin64/*.dylib',
              'sundials/linux64/*.so',
              'sundials/win32/*.dll',

@@ -6,6 +6,8 @@ import sys
 from .fmi1 import *
 from .fmi1 import _FMU1
 from .fmi2 import *
+from .fmi2 import _FMU2
+from . import fmi3
 from . import extract
 from .util import auto_interval
 import numpy as np
@@ -30,17 +32,10 @@ class Recorder(object):
         self.fmu = fmu
         self.interval = interval
 
-        self.cols = [('time', np.float64)]
+        self.cols = [('time', np.float64, None)]  # name, dtype, shape
         self.rows = []
-
-        real_names = []
-        self.real_vrs = []
-
-        integer_names = []
-        self.integer_vrs = []
-
-        boolean_names = []
-        self.boolean_vrs = []
+        self.info = {}  # type -> (names, vrs, shapes, n_values, getter)
+        self.types = []
 
         self.constants = {}
         self.modelDescription = modelDescription
@@ -50,22 +45,40 @@ class Recorder(object):
 
             # collect the variables to record
             if (variableNames is not None and sv.name in variableNames) or (variableNames is None and sv.causality == 'output'):
+                names, vrs, shapes, n_values, getter = self.info.get(sv.type, ([], [], [], 0, getattr(self.fmu, 'get' + sv.type)))
+                names.append(sv.name)
+                vrs.append(sv.valueReference)
+                shapes.append(sv.dimensions)
+                n_values += np.prod(sv.dimensions) if sv.dimensions else 1
+                self.info[sv.type] = names, vrs, shapes, n_values, getter
 
-                if sv.type == 'Real':
-                    real_names.append(sv.name)
-                    self.real_vrs.append(sv.valueReference)
-                elif sv.type in ['Integer', 'Enumeration']:
-                    integer_names.append(sv.name)
-                    self.integer_vrs.append(sv.valueReference)
-                elif sv.type == 'Boolean':
-                    boolean_names.append(sv.name)
-                    self.boolean_vrs.append(sv.valueReference)
-                else:
-                    pass  # skip String variables
+        # create the columns for the NumPy array
+        if modelDescription.fmiVersion in ['1.0', '2.0']:
+            types = [('Real', np.float64), ('Integer', np.int32), ('Boolean', np.bool_)]
+        else:
+            types = [('Float64', np.float64), ('Int32', np.int32), ('UInt64', np.uint64), ('Boolean', np.bool_)]
 
-        self.cols += zip(real_names, [np.float64] * len(real_names))
-        self.cols += zip(integer_names, [np.int32] * len(integer_names))
-        self.cols += zip(boolean_names, [np.bool_] * len(boolean_names))
+        for t, dt in types:
+            if t in self.info:
+                self.types.append(t)
+                names, _, shapes, _, _ = self.info[t]
+                self.cols += zip(names, [dt] * len(names), shapes)
+
+        # strip the shape for scalars
+        self.cols = [(n, t) if s is None else (n, t, s) for n, t, s in self.cols]
+
+    @staticmethod
+    def _append_reshaped(row, values, shapes):
+        i = 0
+        for d in shapes:
+            if d:
+                s = np.prod(d)
+                value = np.array(values[i:i + s]).reshape(d)
+                i += s
+            else:
+                value = values[i]
+                i += 1
+            row.append(value)
 
     def sample(self, time, force=False):
         """ Record the variables """
@@ -77,14 +90,13 @@ class Recorder(object):
 
         row = [time]
 
-        if self.real_vrs:
-            row += self.fmu.getReal(vr=self.real_vrs)
-
-        if self.integer_vrs:
-            row += self.fmu.getInteger(vr=self.integer_vrs)
-
-        if self.boolean_vrs:
-            row += self.fmu.getBoolean(vr=self.boolean_vrs)
+        for t in self.types:
+            names, vrs, shapes, nValues, getter = self.info[t]
+            if self.modelDescription.fmiVersion in ['1.0', '2.0']:
+                values = getter(vr=vrs)
+            else:
+                values = getter(vr=vrs, nValues=nValues)
+            self._append_reshaped(row, values, shapes)
 
         self.rows.append(tuple(row))
 
@@ -493,11 +505,16 @@ def simulate_fmu(filename,
         callbacks.allocateMemory = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
         callbacks.freeMemory = fmi1CallbackFreeMemoryTYPE(freeMemory)
         callbacks.stepFinished = None
-    else:
+    elif model_description.fmiVersion == '2.0':
         callbacks = fmi2CallbackFunctions()
         callbacks.logger = fmi2CallbackLoggerTYPE(logger)
         callbacks.allocateMemory = fmi2CallbackAllocateMemoryTYPE(allocateMemory)
         callbacks.freeMemory = fmi2CallbackFreeMemoryTYPE(freeMemory)
+    else:
+        callbacks = fmi3.fmi3CallbackFunctions()
+        callbacks.logger = fmi3.fmi3CallbackLoggerTYPE(logger)
+        callbacks.allocateMemory = fmi3.fmi3CallbackAllocateMemoryTYPE(fmi3.allocateMemory)
+        callbacks.freeMemory = fmi3.fmi3CallbackFreeMemoryTYPE(fmi3.freeMemory)
 
     # simulate_fmu the FMU
     if fmi_type == 'ModelExchange' and model_description.modelExchange is not None:
@@ -728,8 +745,12 @@ def simulateCS(model_description, fmu_kwargs, start_time, stop_time, relative_to
     if model_description.fmiVersion == '1.0':
         fmu = FMU1Slave(**fmu_kwargs)
         fmu.instantiate(functions=callbacks, loggingOn=debug_logging)
-    else:
+    elif model_description.fmiVersion == '2.0':
         fmu = FMU2Slave(**fmu_kwargs)
+        fmu.instantiate(callbacks=callbacks, loggingOn=debug_logging)
+        fmu.setupExperiment(tolerance=relative_tolerance, startTime=start_time)
+    else:
+        fmu = fmi3.FMU3Slave(**fmu_kwargs)
         fmu.instantiate(callbacks=callbacks, loggingOn=debug_logging)
         fmu.setupExperiment(tolerance=relative_tolerance, startTime=start_time)
 

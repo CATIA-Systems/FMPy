@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:annotation>
+		<xs:documentation>
+Copyright(c) 2008-2011 MODELISAR consortium,
+             2012-2018 Modelica Association Project "FMI".
+             All rights reserved.
+
+This file is licensed by the copyright holders under the 2-Clause BSD License
+(https://opensource.org/licenses/BSD-2-Clause):
+
+----------------------------------------------------------------------------
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+- Redistributions of source code must retain the above copyright notice,
+ this list of conditions and the following disclaimer.
+
+- Redistributions in binary form must reproduce the above copyright notice,
+ this list of conditions and the following disclaimer in the documentation
+ and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+----------------------------------------------------------------------------
+		</xs:documentation>
+	</xs:annotation>
+	<xs:attributeGroup name="fmi3RealAttributes">
+		<xs:attribute name="quantity" type="xs:normalizedString"/>
+		<xs:attribute name="unit" type="xs:normalizedString"/>
+		<xs:attribute name="displayUnit" type="xs:normalizedString">
+			<xs:annotation>
+				<xs:documentation>Default display unit, provided the conversion of values in "unit" to values in "displayUnit" is defined in UnitDefinitions / Unit / DisplayUnit.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="relativeQuantity" type="xs:boolean" default="false">
+			<xs:annotation>
+				<xs:documentation>If relativeQuantity=true, offset for displayUnit must be ignored.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="unbounded" type="xs:boolean" default="false">
+			<xs:annotation>
+				<xs:documentation>Set to true, e.g., for crank angle. If true and variable is a state, relative tolerance should be zero on this variable.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="fmi3Float64Attributes">
+		<xs:attributeGroup ref="fmi3RealAttributes"/>
+		<xs:attribute name="min" type="xs:double"/>
+		<xs:attribute name="max" type="xs:double">
+			<xs:annotation>
+				<xs:documentation>max >= min required</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="nominal" type="xs:double">
+			<xs:annotation>
+				<xs:documentation>nominal > 0.0 required</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="fmi3Float32Attributes">
+		<xs:attributeGroup ref="fmi3RealAttributes"/>
+		<xs:attribute name="min" type="xs:float"/>
+		<xs:attribute name="max" type="xs:float">
+			<xs:annotation>
+				<xs:documentation>max >= min required</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="nominal" type="xs:float">
+			<xs:annotation>
+				<xs:documentation>nominal > 0.0 required</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="fmi3IntegerAttributes">
+		<xs:attribute name="quantity" type="xs:normalizedString"/>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="fmi3Int8Attributes">
+		<xs:attributeGroup ref="fmi3IntegerAttributes"/>
+		<xs:attribute name="min" type="xs:byte"/>
+		<xs:attribute name="max" type="xs:byte">
+			<xs:annotation>
+				<xs:documentation>max >= min required</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="fmi3UInt8Attributes">
+		<xs:attributeGroup ref="fmi3IntegerAttributes"/>
+		<xs:attribute name="min" type="xs:unsignedByte"/>
+		<xs:attribute name="max" type="xs:unsignedByte">
+			<xs:annotation>
+				<xs:documentation>max >= min required</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="fmi3Int16Attributes">
+		<xs:attributeGroup ref="fmi3IntegerAttributes"/>
+		<xs:attribute name="min" type="xs:short"/>
+		<xs:attribute name="max" type="xs:short">
+			<xs:annotation>
+				<xs:documentation>max >= min required</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="fmi3UInt16Attributes">
+		<xs:attributeGroup ref="fmi3IntegerAttributes"/>
+		<xs:attribute name="min" type="xs:unsignedShort"/>
+		<xs:attribute name="max" type="xs:unsignedShort">
+			<xs:annotation>
+				<xs:documentation>max >= min required</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="fmi3Int32Attributes">
+		<xs:attributeGroup ref="fmi3IntegerAttributes"/>
+		<xs:attribute name="min" type="xs:int"/>
+		<xs:attribute name="max" type="xs:int">
+			<xs:annotation>
+				<xs:documentation>max >= min required</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="fmi3UInt32Attributes">
+		<xs:attributeGroup ref="fmi3IntegerAttributes"/>
+		<xs:attribute name="min" type="xs:unsignedInt"/>
+		<xs:attribute name="max" type="xs:unsignedInt">
+			<xs:annotation>
+				<xs:documentation>max >= min required</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="fmi3Int64Attributes">
+		<xs:attributeGroup ref="fmi3IntegerAttributes"/>
+		<xs:attribute name="min" type="xs:long"/>
+		<xs:attribute name="max" type="xs:long">
+			<xs:annotation>
+				<xs:documentation>max >= min required</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="fmi3UInt64Attributes">
+		<xs:attributeGroup ref="fmi3IntegerAttributes"/>
+		<xs:attribute name="min" type="xs:unsignedLong"/>
+		<xs:attribute name="max" type="xs:unsignedLong">
+			<xs:annotation>
+				<xs:documentation>max >= min required</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="fmi3RealVariableAttributes">
+		<xs:attribute name="derivative" type="xs:unsignedInt">
+			<xs:annotation>
+				<xs:documentation>If present, this variable is the derivative of variable with Variable index "derivative".</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="reinit" type="xs:boolean" use="optional" default="false">
+			<xs:annotation>
+				<xs:documentation>Only for ModelExchange and if variable is a continuous-time state:
+					If true, state can be reinitialized at an event by the FMU
+					If false, state will never be reinitialized at an event by the FMU</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+</xs:schema>

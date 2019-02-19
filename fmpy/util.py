@@ -7,12 +7,13 @@ class ValidationError(Exception):
     pass
 
 
-def read_csv(filename, variable_names=[], validate=True):
+def read_csv(filename, variable_names=[], validate=True, structured=False):
     """ Read a CSV file that conforms to the FMI cross-check rules
 
     Parameters:
         filename         name of the CSV file to read
         variable_names   list of variables to read (default: read all)
+        structured       convert structured names to arrays
 
     Returns:
         traj             the trajectories read from the CSV file
@@ -20,6 +21,30 @@ def read_csv(filename, variable_names=[], validate=True):
 
     # pass an empty string as deletechars to preserve special characters
     traj = np.genfromtxt(filename, delimiter=',', names=True, deletechars='')
+
+    if structured:
+        arrays = {}
+
+        cols = []
+        traj_ = []
+
+        for name, type_ in traj.dtype.descr:
+            if name.endswith(']'):
+                i = name.rfind('[')
+                basename = name[:i]
+                if basename not in arrays:
+                    arrays[basename] = []
+                arrays[basename].append((int(name[i + 1:-1]) - 1, traj[name]))
+            else:
+                cols.append((name, type_))
+                traj_.append(traj[name].tolist())
+
+        for name, value in arrays.items():
+            subs, arrs = zip(*value)
+            cols.append((name, '<f8', (max(subs) + 1,)))
+            traj_.append(list(zip(*arrs)))
+
+        traj = np.array(list(zip(*traj_)), dtype=np.dtype(cols))
 
     if not validate:
         return traj
@@ -53,6 +78,27 @@ def write_csv(filename, result, columns=None):
 
     if columns is not None:
         result = result[['time'] + columns]
+
+    # serialize multi-dimensional signals
+    cols = []
+    data = []
+
+    for descr in result.dtype.descr:
+        if len(descr) > 2:
+            name, type_, shape = descr
+            y = result[name]
+            for i in np.ndindex(shape):
+                # convert index to 1-based subscripts
+                subs = ','.join(map(lambda sub: str(sub + 1), i))
+                cols.append(('%s[%s]' % (name, subs), type_))
+                sl = [slice(0, None)] + [slice(s, s + 1) for s in i]
+                data.append(y[sl].flatten())
+        else:
+            name, _ = descr
+            cols.append(descr)
+            data.append(result[name])
+
+    result = np.array(list(zip(*data)), dtype=np.dtype(cols))
 
     header = ','.join(map(lambda s: '"' + s + '"', result.dtype.names))
     np.savetxt(filename, result, delimiter=',', header=header, comments='', fmt='%g')
@@ -293,7 +339,8 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
                 ax.set_ylim(-0.25, 1.25)
                 ax.yaxis.set_ticks([0, 1])
                 ax.yaxis.set_ticklabels(['false', 'true'])
-                ax.fill_between(time, y, 0, step='post', facecolor='b', alpha=0.1)
+                if y.ndim == 1:
+                    ax.fill_between(time, y, 0, step='post', facecolor='b', alpha=0.1)
             else:
                 ax.margins(x=0, y=0.05)
 

@@ -1,8 +1,6 @@
 # noinspection PyPep8
 
 import shutil
-import sys
-
 from .fmi1 import *
 from .fmi1 import _FMU1
 from .fmi2 import *
@@ -150,6 +148,7 @@ class Input(object):
         self.t_events = Input.findEvents(signals, modelDescription)
 
         is_fmi1 = isinstance(fmu, _FMU1)
+        is_fmi2 = isinstance(fmu, _FMU2)
 
         setters = dict()
 
@@ -158,10 +157,14 @@ class Input(object):
             setters['Real']    = (fmu.fmi1SetReal,    fmi1Real)
             setters['Integer'] = (fmu.fmi1SetInteger, fmi1Integer)
             setters['Boolean'] = (fmu.fmi1SetBoolean, c_int8)
-        else:
+        elif is_fmi2:
             setters['Real']    = (fmu.fmi2SetReal,    fmi2Real)
             setters['Integer'] = (fmu.fmi2SetInteger, fmi2Integer)
             setters['Boolean'] = (fmu.fmi2SetBoolean, fmi2Boolean)
+        else:
+            setters['Float64'] = (fmu.fmi3SetFloat64, fmi3.fmi3Float64)
+            setters['Int32']   = (fmu.fmi3SetInt32,   fmi3.fmi3Int32)
+            setters['Boolean'] = (fmu.fmi3SetBoolean, fmi3.fmi3Boolean)
 
         from collections import defaultdict
 
@@ -180,7 +183,7 @@ class Input(object):
                 print("Warning: missing input for " + sv.name)
                 continue
 
-            if sv.type == 'Real' and sv.variability not in ['discrete', 'tunable']:
+            if sv.type in {'Float32', 'Float64', 'Real'} and sv.variability not in ['discrete', 'tunable']:
                 continuous_inputs[sv.type].append((sv.valueReference, sv.name))
             else:
                 # use the same table for Integer and Enumeration
@@ -210,11 +213,16 @@ class Input(object):
         if self.t is None:
             return
 
+        is_fmi3 = isinstance(self.fmu, fmi3._FMU3)
+
         # continuous
         if continuous:
             for vrs, values, table, setter in self.continuous:
                 values[:] = self.interpolate(time=time, t=self.t, table=table, discrete=False, after_event=after_event)
-                setter(self.fmu.component, vrs, len(vrs), values)
+                if is_fmi3:
+                    setter(self.fmu.component, vrs, len(vrs), values, len(values))
+                else:
+                    setter(self.fmu.component, vrs, len(vrs), values)
 
         # discrete
         if discrete:
@@ -225,7 +233,10 @@ class Input(object):
                     # special treatment for fmi1Boolean
                     setter(self.fmu.component, vrs, len(vrs), cast(values, POINTER(c_char)))
                 else:
-                    setter(self.fmu.component, vrs, len(vrs), values)
+                    if is_fmi3:
+                        setter(self.fmu.component, vrs, len(vrs), values, len(values))
+                    else:
+                        setter(self.fmu.component, vrs, len(vrs), values)
 
     def nextEvent(self, time):
         """ Get the next input event """
@@ -324,20 +335,28 @@ def apply_start_values(fmu, model_description, start_values, apply_default_start
 
         vr = variable.valueReference
 
-        if variable.type == 'Real':
-            fmu.setReal([vr], [float(value)])
-        elif variable.type in ['Integer', 'Enumeration']:
-            fmu.setInteger([vr], [int(value)])
-        elif variable.type == 'Boolean':
+        # get the setter function
+        if variable.type == 'Enumeration':
+            if model_description.fmiVersion in {'1.0', '2.0'}:
+                setter = getattr(fmu, 'setInteger')
+            else:
+                setter = getattr(fmu, 'setInt32')
+        else:
+            setter = getattr(fmu, 'set' + variable.type)
+
+        # convert Boolean values
+        if variable.type == 'Boolean':
             if isinstance(value, str):
                 if value.lower() not in ['true', 'false']:
                     raise Exception('The start value "%s" for variable "%s" could not be converted to Boolean' %
                                     (value, variable.name))
                 else:
                     value = value.lower() == 'true'
-            fmu.setBoolean([vr], [bool(value)])
-        elif variable.type == 'String':
-            fmu.setString([vr], [value])
+
+        # convert the type
+        value = variable._python_type(value)
+
+        setter([vr], [value])
 
     if len(start_values) > 0:
         raise Exception("The start values for the following variables could not be set because they don't exist: " +

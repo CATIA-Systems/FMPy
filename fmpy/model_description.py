@@ -447,6 +447,27 @@ def read_model_description(filename, validate=True):
         sv.type = value.tag
         sv.start = value.get('start')
 
+        type_map = {
+            'Real':        float,
+            'Integer':     int,
+            'Enumeration': int,
+            'Boolean':     bool,
+            'String':      str,
+
+            'Float32':     float,
+            'Float64':     float,
+            'Int8':        int,
+            'UInt8':       int,
+            'Int16':       int,
+            'UInt16':      int,
+            'Int32':       int,
+            'UInt32':      int,
+            'Int64':       int,
+            'UInt64':      int,
+        }
+
+        sv._python_type = type_map[sv.type]
+
         if sv.type == 'Real':
             sv.unit = value.get('unit')
             sv.displayUnit = value.get('displayUnit')
@@ -472,10 +493,7 @@ def read_model_description(filename, validate=True):
                 sv.variability = None
         else:
             if sv.variability is None:
-                if sv.type == 'Real':
-                    sv.variability = 'continuous'
-                else:
-                    sv.variability = 'discrete'
+                sv.variability = 'continuous' if sv.type in {'Float32', 'Float64', 'Real'} else 'discrete'
 
             if sv.initial is None:
                 sv.initial = initial_defaults[sv.variability][sv.causality]
@@ -492,8 +510,8 @@ def read_model_description(filename, validate=True):
 
         modelDescription.modelVariables.append(sv)
 
-    variables = dict((v.valueReference, v) for v in modelDescription.modelVariables)
-
+    # variables = dict((v.valueReference, v) for v in modelDescription.modelVariables)
+    #
     # resolve dimensions and calculate extent
     # for variable in modelDescription.modelVariables:
     #     variable.dimensions = list(map(lambda vr: variables[vr], variable.dimensions))

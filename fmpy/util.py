@@ -160,11 +160,13 @@ def validate_signal(t, y, t_ref, y_ref, num=1000, dx=20, dy=0.1):
     # re-sample the reference signal into a uniform grid
     t_band = np.linspace(start=t_ref[0], stop=t_ref[-1], num=num)
 
-    # sort out the duplicate samples before the interpolation
-    m = np.concatenate(([True], np.diff(t_ref) > 0))
+    # make t_ref strictly monotonic by adding epsilon to duplicate sample times
+    for i in range(1, len(t_ref)):
+        while t_ref[i - 1] >= t_ref[i]:
+            t_ref[i] = t_ref[i] + 1e-13
 
     interp_method = 'linear' if y.dtype == np.float64 else 'zero'
-    y_band = interp1d(x=t_ref[m], y=y_ref[m], kind=interp_method)(t_band)
+    y_band = interp1d(x=t_ref, y=y_ref, kind=interp_method)(t_band)
 
     y_band_min = np.min(y_band)
     y_band_max = np.max(y_band)

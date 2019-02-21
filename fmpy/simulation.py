@@ -577,14 +577,14 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
 
     input = Input(fmu, model_description, input_signals)
 
+    apply_start_values(fmu, model_description, start_values, apply_default_start_values)
+
     # initialize
     if is_fmi1:
-        apply_start_values(fmu, model_description, start_values, apply_default_start_values)
         input.apply(time)
         fmu.initialize()
     else:
         fmu.enterInitializationMode()
-        apply_start_values(fmu, model_description, start_values, apply_default_start_values)
         input.apply(time)
         fmu.exitInitializationMode()
 
@@ -766,14 +766,14 @@ def simulateCS(model_description, fmu_kwargs, start_time, stop_time, relative_to
 
     time = start_time
 
+    apply_start_values(fmu, model_description, start_values, apply_default_start_values)
+
     # initialize the model
     if model_description.fmiVersion == '1.0':
-        apply_start_values(fmu, model_description, start_values, apply_default_start_values)
         input.apply(time)
         fmu.initialize()
     else:
         fmu.enterInitializationMode()
-        apply_start_values(fmu, model_description, start_values, apply_default_start_values)
         input.apply(time)
         fmu.exitInitializationMode()
 

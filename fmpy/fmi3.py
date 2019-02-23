@@ -335,26 +335,26 @@ class _FMU3(_FMU):
         self.fmi3GetString(self.component, vr, len(vr), value)
         return list(value)
 
-    def setFloat64(self, vr, value):
+    def setFloat64(self, vr, values):
         vr = (fmi3ValueReference * len(vr))(*vr)
-        value = (fmi3Float64 * len(vr))(*value)
-        self.fmi3SetFloat64(self.component, vr, len(vr), value, 1)
+        values = (fmi3Float64 * len(values))(*values)
+        self.fmi3SetFloat64(self.component, vr, len(vr), values, len(values))
 
-    def setInt32(self, vr, value):
+    def setInt32(self, vr, values):
         vr = (fmi3ValueReference * len(vr))(*vr)
-        value = (fmi3Int32 * len(vr))(*value)
-        self.fmi3SetInt32(self.component, vr, len(vr), value)
+        values = (fmi3Int32 * len(values))(*values)
+        self.fmi3SetInt32(self.component, vr, len(vr), values, len(values))
 
-    def setBoolean(self, vr, value):
+    def setBoolean(self, vr, values):
         vr = (fmi3ValueReference * len(vr))(*vr)
-        value = (fmi3Boolean * len(vr))(*value)
-        self.fmi3SetBoolean(self.component, vr, len(vr), value)
+        values = (fmi3Boolean * len(values))(*values)
+        self.fmi3SetBoolean(self.component, vr, len(vr), values, len(values))
 
-    def setString(self, vr, value):
+    def setString(self, vr, values):
         vr = (fmi3ValueReference * len(vr))(*vr)
-        value = map(lambda s: s.encode('utf-8') if s is not None else s, value)
-        value = (fmi3String * len(vr))(*value)
-        self.fmi3SetString(self.component, vr, len(vr), value)
+        values = list(map(lambda s: s.encode('utf-8') if s is not None else s, values))
+        values = (fmi3String * len(values))(*values)
+        self.fmi3SetString(self.component, vr, len(vr), values, len(values))
 
     # Getting and setting the internal FMU state
 

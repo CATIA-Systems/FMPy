@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:include schemaLocation="fmi3AttributeGroups.xsd"/>
+	<xs:annotation>
+		<xs:documentation>
+Copyright(c) 2008-2011 MODELISAR consortium,
+             2012-2018 Modelica Association Project "FMI".
+             All rights reserved.
+
+This file is licensed by the copyright holders under the 2-Clause BSD License
+(https://opensource.org/licenses/BSD-2-Clause):
+
+----------------------------------------------------------------------------
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+- Redistributions of source code must retain the above copyright notice,
+ this list of conditions and the following disclaimer.
+
+- Redistributions in binary form must reproduce the above copyright notice,
+ this list of conditions and the following disclaimer in the documentation
+ and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+----------------------------------------------------------------------------
+		</xs:documentation>
+	</xs:annotation>
+	<xs:complexType name="fmi3SimpleType">
+		<xs:annotation>
+			<xs:documentation>Type attributes of a scalar variable</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:choice>
+				<xs:element name="Float64">
+					<xs:complexType>
+						<xs:attributeGroup ref="fmi3Float64Attributes"/>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Float32">
+					<xs:complexType>
+						<xs:attributeGroup ref="fmi3Float32Attributes"/>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Int8">
+					<xs:complexType>
+						<xs:attributeGroup ref="fmi3Int8Attributes"/>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="UInt8">
+					<xs:complexType>
+						<xs:attributeGroup ref="fmi3UInt8Attributes"/>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Int16">
+					<xs:complexType>
+						<xs:attributeGroup ref="fmi3Int16Attributes"/>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="UInt16">
+					<xs:complexType>
+						<xs:attributeGroup ref="fmi3UInt16Attributes"/>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Int32">
+					<xs:complexType>
+						<xs:attributeGroup ref="fmi3Int32Attributes"/>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="UInt32">
+					<xs:complexType>
+						<xs:attributeGroup ref="fmi3UInt32Attributes"/>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Int64">
+					<xs:complexType>
+						<xs:attributeGroup ref="fmi3Int64Attributes"/>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="UInt64">
+					<xs:complexType>
+						<xs:attributeGroup ref="fmi3UInt64Attributes"/>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Boolean"/>
+				<xs:element name="String"/>
+				<xs:element name="Binary">
+					<xs:complexType>
+						<xs:attribute name="mimeType" type="xs:normalizedString" use="optional" default="application/octet-stream">
+							<xs:annotation>
+								<xs:documentation>Should indicate the type of data passed as a binary. Defaults to application/octet-stream,
+									which is unspecific.  Implementations can use this information to provide guidance to the user about
+									valid/useful connections.</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="maxSize" type="xs:nonNegativeInteger" use="optional">
+							<xs:annotation>
+								<xs:documentation>If present, limits the maximum size of the binary to the indicated value.
+									All variable accesses, both getting and setting of values must guarantee that the returned
+									size of the binary is strictly equal or less than this maximum size.</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Enumeration">
+					<xs:complexType>
+						<xs:sequence maxOccurs="unbounded">
+							<xs:element name="Item">
+								<xs:complexType>
+									<xs:attribute name="name" type="xs:normalizedString" use="required"/>
+									<xs:attribute name="value" type="xs:int" use="required">
+										<xs:annotation>
+											<xs:documentation>Must be a unique number in the same enumeration</xs:documentation>
+										</xs:annotation>
+									</xs:attribute>
+									<xs:attribute name="description" type="xs:string"/>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+						<xs:attribute name="quantity" type="xs:normalizedString"/>
+					</xs:complexType>
+				</xs:element>
+			</xs:choice>
+		</xs:sequence>
+		<xs:attribute name="name" type="xs:normalizedString" use="required">
+			<xs:annotation>
+				<xs:documentation>Name of SimpleType element. "name" must be unique with respect to all other elements of the TypeDefinitions list. Furthermore,  "name" of a SimpleType must be different to all "name"s of ScalarVariable.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="description" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>Description of the SimpleType</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+</xs:schema>

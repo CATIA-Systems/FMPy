@@ -78,6 +78,12 @@ class ScalarVariable(object):
         self.type = None
         "One of 'Real', 'Integer', 'Enumeration', 'Boolean', 'String'"
 
+        self.dimensions = None
+        "List of fixed dimensions"
+
+        self.dimensionValueReferences = []
+        "List of value references to the variables that hold the dimensions"
+
         self.quantitiy = None
         "Physical quantity"
 
@@ -263,7 +269,7 @@ def read_model_description(filename, validate=True):
 
     fmiVersion = root.get('fmiVersion')
 
-    if fmiVersion not in ['1.0', '2.0']:
+    if not fmiVersion.startswith('3.0') and fmiVersion not in ['1.0', '2.0']:
         raise Exception("Unsupported FMI version: %s" % fmiVersion)
 
     if validate:
@@ -272,8 +278,10 @@ def read_model_description(filename, validate=True):
 
         if fmiVersion == '1.0':
             schema = etree.XMLSchema(file=os.path.join(module_dir, 'schema', 'fmi1', 'fmiModelDescription.xsd'))
-        else:
+        elif fmiVersion == '2.0':
             schema = etree.XMLSchema(file=os.path.join(module_dir, 'schema', 'fmi2', 'fmi2ModelDescription.xsd'))
+        else:
+            schema = etree.XMLSchema(file=os.path.join(module_dir, 'schema', 'fmi3', 'fmi3ModelDescription.xsd'))
 
         if not schema.validate(root):
             message = "Failed to validate modelDescription.xml:"
@@ -284,6 +292,9 @@ def read_model_description(filename, validate=True):
     modelDescription = ModelDescription()
     _copy_attributes(root, modelDescription, ['fmiVersion', 'guid', 'modelName', 'description', 'generationTool',
                                               'generationDateAndTime', 'variableNamingConvention'])
+
+    if fmiVersion.startswith('3.0'):
+        modelDescription.guid = root.get('instantiationToken')
 
     if root.get('numberOfEventIndicators') is not None:
         modelDescription.numberOfEventIndicators = int(root.get('numberOfEventIndicators'))
@@ -406,7 +417,7 @@ def read_model_description(filename, validate=True):
     initial_defaults = {
         'constant':   {'output': 'exact', 'local': 'exact', 'parameter': 'exact'},
         'fixed':      {'parameter': 'exact', 'calculatedParameter': 'calculated', 'local': 'calculated'},
-        'tunable':    {'parameter': 'exact', 'calculatedParameter': 'calculated', 'local': 'calculated'},
+        'tunable':    {'parameter': 'exact', 'calculatedParameter': 'calculated', 'structuralParameter': 'exact', 'local': 'calculated'},
         'discrete':   {'input': None, 'output': 'calculated', 'local': 'calculated'},
         'continuous': {'input': None, 'output': 'calculated', 'local': 'calculated', 'independent': None},
     }
@@ -424,14 +435,38 @@ def read_model_description(filename, validate=True):
         sv.variability = variable.get('variability')
         sv.initial = variable.get('initial')
 
-        # get the "value" tag
-        for child in variable.iterchildren():
-            if child.tag in ['Real', 'Integer', 'Boolean', 'String', 'Enumeration']:
-                value = child
-                break
+        if fmiVersion in ['1.0', '2.0']:
+            # get the "value" element
+            for child in variable.iterchildren():
+                if child.tag in {'Real', 'Integer', 'Boolean', 'String', 'Enumeration'}:
+                    value = child
+                    break
+        else:
+            value = variable
 
         sv.type = value.tag
         sv.start = value.get('start')
+
+        type_map = {
+            'Real':        float,
+            'Integer':     int,
+            'Enumeration': int,
+            'Boolean':     bool,
+            'String':      str,
+
+            'Float32':     float,
+            'Float64':     float,
+            'Int8':        int,
+            'UInt8':       int,
+            'Int16':       int,
+            'UInt16':      int,
+            'Int32':       int,
+            'UInt32':      int,
+            'Int64':       int,
+            'UInt64':      int,
+        }
+
+        sv._python_type = type_map[sv.type]
 
         if sv.type == 'Real':
             sv.unit = value.get('unit')
@@ -458,38 +493,54 @@ def read_model_description(filename, validate=True):
                 sv.variability = None
         else:
             if sv.variability is None:
-                if sv.type == 'Real':
-                    sv.variability = 'continuous'
-                else:
-                    sv.variability = 'discrete'
+                sv.variability = 'continuous' if sv.type in {'Float32', 'Float64', 'Real'} else 'discrete'
 
             if sv.initial is None:
                 sv.initial = initial_defaults[sv.variability][sv.causality]
 
+        dimensions = variable.findall('Dimensions/Dimension')
+
+        if dimensions:
+            sv.dimensions = []
+            for dimension in dimensions:
+                start = dimension.get('start')
+                sv.dimensions.append(int(start) if start is not None else None)
+                vr = dimension.get('valueReference')
+                sv.dimensionValueReferences.append(int(vr) if vr is not None else None)
+
         modelDescription.modelVariables.append(sv)
 
-    # model structure
-    for attr, element in [(modelDescription.outputs, 'Outputs'),
-                          (modelDescription.derivatives, 'Derivatives'),
-                          (modelDescription.initialUnknowns, 'InitialUnknowns')]:
+    # variables = dict((v.valueReference, v) for v in modelDescription.modelVariables)
+    #
+    # resolve dimensions and calculate extent
+    # for variable in modelDescription.modelVariables:
+    #     variable.dimensions = list(map(lambda vr: variables[vr], variable.dimensions))
+    #     variable.extent = tuple(map(lambda d: int(d.start), variable.dimensions))
 
-        for u in root.findall('ModelStructure/' + element + '/Unknown'):
-            unknown = Unknown()
+    if fmiVersion == '2.0':
 
-            unknown.variable = modelDescription.modelVariables[int(u.get('index')) - 1]
+        # model structure
+        for attr, element in [(modelDescription.outputs, 'Outputs'),
+                              (modelDescription.derivatives, 'Derivatives'),
+                              (modelDescription.initialUnknowns, 'InitialUnknowns')]:
 
-            dependencies = u.get('dependencies')
+            for u in root.findall('ModelStructure/' + element + '/Unknown'):
+                unknown = Unknown()
 
-            if dependencies:
-                for i in dependencies.split(' '):
-                    unknown.dependencies.append(modelDescription.modelVariables[int(i) - 1])
+                unknown.variable = modelDescription.modelVariables[int(u.get('index')) - 1]
 
-            dependenciesKind = u.get('dependenciesKind')
+                dependencies = u.get('dependencies')
 
-            if dependenciesKind:
-                unknown.dependenciesKind = u.get('dependenciesKind').split(' ')
+                if dependencies:
+                    for i in dependencies.split(' '):
+                        unknown.dependencies.append(modelDescription.modelVariables[int(i) - 1])
 
-            attr.append(unknown)
+                dependenciesKind = u.get('dependenciesKind')
+
+                if dependenciesKind:
+                    unknown.dependenciesKind = u.get('dependenciesKind').split(' ')
+
+                attr.append(unknown)
 
     if validate:
 

@@ -28,6 +28,7 @@ package_data = {
              'c-code/fmi2/CMakeLists.txt',
              'schema/fmi1/*.xsd',
              'schema/fmi2/*.xsd',
+             'schema/fmi3/*.xsd',
              'sundials/darwin64/*.dylib',
              'sundials/linux64/*.so',
              'sundials/win32/*.dll',
@@ -47,7 +48,7 @@ extras_require = {
 extras_require['complete'] = sorted(set(sum(extras_require.values(), [])))
 
 setup(name='FMPy',
-      version='0.2.9',
+      version='0.2.10',
       description="Simulate Functional Mock-up Units (FMUs) in Python",
       long_description=long_description,
       author="Torsten Sommer",

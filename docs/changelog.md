@@ -1,3 +1,12 @@
+## v0.2.10 (2019-02-26)
+
+Experimental FMI 3.0 support, FMI Cross-Check validation scripts
+
+- `FIXED` set start values before entering initialization mode
+- `NEW` experimental FMI 3.0 support
+- `NEW` FMI Cross-Check validation scripts to validate FMUs and results 
+- `IMPROVED` handling of reference signals with duplicate sample times
+
 ## v0.2.9 (2019-02-07)
 
 Improved logging, discrete inputs and tunable parameters

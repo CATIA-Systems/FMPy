@@ -633,12 +633,6 @@ def compile_dll(model_description, sources_dir, compiler=None):
     if len(source_files) == 0:
         raise Exception("No source files specified in the model description.")
 
-    source_files += [os.path.join(include_dir, 'fmi2', 'fmi2_wrapper.c')]
-
-    preprocessor_definitions.append('FMI2_FUNCTION_PREFIX=' + model_identifier + '_')
-
-    fmi_include_dir = os.path.join(include_dir, 'fmi1' if model_description.fmiVersion == '1.0' else 'fmi2')
-
     target = model_identifier + sharedLibraryExtension
 
     print('Compiling %s...' % target)
@@ -661,7 +655,7 @@ def compile_dll(model_description, sources_dir, compiler=None):
 
         if platform == 'win64':
             command += ' x86_amd64'
-        command += ' && cl /LD /I. /I"%s"' % fmi_include_dir
+        command += ' && cl /LD /I. /I"%s"' % include_dir
         for definition in preprocessor_definitions:
             command += ' /D' + definition
         command += ' /Fe' + model_identifier + ' shlwapi.lib ' + ' '.join(source_files)
@@ -671,7 +665,7 @@ def compile_dll(model_description, sources_dir, compiler=None):
         command = ''
         if platform.startswith('win'):
             command += r'set PATH=C:\MinGW\bin;%%PATH%% && '
-        command += 'gcc -c -I. -I%s' % fmi_include_dir
+        command += 'gcc -c -I. -I%s' % include_dir
         if platform in ['linux32', 'linux64']:
             command += ' -fPIC'
         for definition in preprocessor_definitions:
@@ -909,18 +903,13 @@ def create_cmake_project(filename, project_dir):
     """
 
     from fmpy import read_model_description, extract
-    import shutil
 
     model_description = read_model_description(filename)
 
     extract(filename, unzipdir=project_dir)
 
     fmpy_dir = os.path.dirname(__file__)
-    source_dir = os.path.join(fmpy_dir, 'c-code', 'fmi2')
-
-    # copy the FMI headers and the source FMU wrapper
-    for source_file in ['fmi2_wrapper.c', 'fmi2Functions.h', 'fmi2FunctionTypes.h', 'fmi2TypesPlatform.h']:
-        shutil.copy(os.path.join(source_dir, source_file), os.path.join(project_dir, 'sources'))
+    source_dir = os.path.join(fmpy_dir, 'c-code')
 
     with open(os.path.join(source_dir, 'CMakeLists.txt'), 'r') as cmake_file:
         txt = cmake_file.read()
@@ -936,13 +925,13 @@ def create_cmake_project(filename, project_dir):
     if model_description.modelExchange is not None:
         definitions.append('MODEL_EXCHANGE')
 
-    sources = ['modelDescription.xml', 'sources/fmi2_wrapper.c']
-    sources += ['sources/' + file for file in implementation.sourceFiles]
+    sources = ['sources/' + file for file in implementation.sourceFiles]
 
     # substitute the variables
     txt = txt.replace('%MODEL_NAME%', model_description.modelName)
     txt = txt.replace('%MODEL_IDENTIFIER%', implementation.modelIdentifier)
     txt = txt.replace('%DEFINITIONS%', ' '.join(definitions))
+    txt = txt.replace('%INCLUDE_DIRS%', '"' + source_dir.replace('\\', '/') + '"')
     txt = txt.replace('%SOURCES%', ' '.join(sources))
 
     with open(os.path.join(project_dir, 'CMakeLists.txt'), 'w') as outfile:

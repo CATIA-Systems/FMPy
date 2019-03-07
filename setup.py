@@ -23,9 +23,8 @@ packages = ['fmpy', 'fmpy.cross_check', 'fmpy.examples', 'fmpy.gui', 'fmpy.gui.g
             'fmpy.ssp.examples', 'fmpy.sundials']
 
 package_data = {
-    'fmpy': ['c-code/fmi2/*.h',
-             'c-code/fmi2/*.c',
-             'c-code/fmi2/CMakeLists.txt',
+    'fmpy': ['c-code/*.h',
+             'c-code/CMakeLists.txt',
              'schema/fmi1/*.xsd',
              'schema/fmi2/*.xsd',
              'schema/fmi3/*.xsd',

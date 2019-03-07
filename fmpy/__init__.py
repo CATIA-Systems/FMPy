@@ -179,7 +179,7 @@ def extract(filename, unzipdir=None):
         unzipdir = mkdtemp()
 
     # expand the 8.3 paths on windows
-    if sys.platform.startswith('win'):
+    if sys.platform.startswith('win') and '~' in unzipdir:
         import win32file
         unzipdir = win32file.GetLongPathName(unzipdir)
 

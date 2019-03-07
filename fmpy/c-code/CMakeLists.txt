@@ -3,7 +3,13 @@ cmake_minimum_required (VERSION 3.2)
 set (MODEL_NAME %MODEL_NAME%)
 set (MODEL_IDENTIFIER %MODEL_IDENTIFIER%)
 
-project (${MODEL_IDENTIFIER})
+project (${MODEL_NAME})
+
+if (MSVC)
+  # link statically against the the Visual C runtime
+  string(REPLACE "/MD"  "/MT"  CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+  string(REPLACE "/MDd" "/MTd" CMAKE_C_FLAGS_DEBUG   "${CMAKE_C_FLAGS_DEBUG}")
+endif ()
 
 if (WIN32)
    set(FMI_PLATFORM win)
@@ -19,12 +25,21 @@ else ()
     set (FMI_PLATFORM ${FMI_PLATFORM}32)
 endif ()
 
-add_library(${MODEL_IDENTIFIER} SHARED %SOURCES%)
+add_library(${MODEL_IDENTIFIER} SHARED modelDescription.xml %SOURCES%)
 
-target_compile_definitions(${MODEL_IDENTIFIER} PUBLIC FMI2_FUNCTION_PREFIX=${MODEL_IDENTIFIER}_)
 target_compile_definitions(${MODEL_IDENTIFIER} PUBLIC %DEFINITIONS%)
 
+if (MSVC)
+    target_compile_definitions(${MODEL_IDENTIFIER} PUBLIC _CRT_SECURE_NO_WARNINGS)
+endif ()
+
+target_include_directories(${MODEL_IDENTIFIER} PUBLIC
+    %INCLUDE_DIRS%
+    ${CMAKE_CURRENT_SOURCE_DIR}/sources
+)
+
 set_target_properties(${MODEL_IDENTIFIER} PROPERTIES
+    PREFIX ""
     RUNTIME_OUTPUT_DIRECTORY         "${CMAKE_CURRENT_SOURCE_DIR}/binaries/${FMI_PLATFORM}"
     RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_CURRENT_SOURCE_DIR}/binaries/${FMI_PLATFORM}"
     RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/binaries/${FMI_PLATFORM}"
@@ -36,16 +51,15 @@ set_target_properties(${MODEL_IDENTIFIER} PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/binaries/${FMI_PLATFORM}"
 )
 
-set_target_properties(${TARGET_NAME} PROPERTIES PREFIX "")
-set_target_properties(${TARGET_NAME} PROPERTIES OUTPUT_NAME ${MODEL_NAME})
-
-target_include_directories(${MODEL_IDENTIFIER} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/sources)
-
-target_link_libraries(${MODEL_IDENTIFIER} shlwapi.lib)
+if (WIN32)
+    # needed for Dymola FMUs
+    target_link_libraries(${MODEL_IDENTIFIER} shlwapi.lib)
+endif ()
 
 add_custom_command(TARGET ${MODEL_NAME} POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_SOURCE_DIR}/${MODEL_NAME}.fmu" --format=zip
-  "modelDescription.xml"
-  "binaries"
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND ${CMAKE_COMMAND} -E tar cfv "${CMAKE_CURRENT_SOURCE_DIR}/${MODEL_NAME}.fmu" --format=zip
+    modelDescription.xml
+    binaries
+    sources
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )

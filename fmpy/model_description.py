@@ -532,13 +532,13 @@ def read_model_description(filename, validate=True):
                 dependencies = u.get('dependencies')
 
                 if dependencies:
-                    for i in dependencies.split(' '):
-                        unknown.dependencies.append(modelDescription.modelVariables[int(i) - 1])
+                    for vr in dependencies.strip().split(' '):
+                        unknown.dependencies.append(modelDescription.modelVariables[int(vr) - 1])
 
                 dependenciesKind = u.get('dependenciesKind')
 
                 if dependenciesKind:
-                    unknown.dependenciesKind = u.get('dependenciesKind').split(' ')
+                    unknown.dependenciesKind = dependenciesKind.strip().split(' ')
 
                 attr.append(unknown)
 

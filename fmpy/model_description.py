@@ -556,6 +556,11 @@ def read_model_description(filename, validate=True):
 
         if modelDescription.fmiVersion == '2.0':
 
+            # check required start values
+            for variable in modelDescription.modelVariables:
+                if (variable.initial in {'exact', 'approx'} or variable.causality == 'input') and variable.start is None:
+                    raise Exception('Variable "%s" has no start value.' % variable.name)
+
             # validate outputs
             outputs = set([v for v in modelDescription.modelVariables if v.causality == 'output'])
             unknowns = set([u.variable for u in modelDescription.outputs])

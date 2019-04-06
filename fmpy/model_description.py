@@ -556,6 +556,30 @@ def read_model_description(filename, validate=True):
 
         if modelDescription.fmiVersion == '2.0':
 
+            # legal combinations of causality and variability (see FMI 2.0 spec, p. 49)
+            legal_combinations = {
+                ('parameter', 'fixed'),
+                ('parameter', 'tunable'),
+                ('calculatedParameter', 'fixed'),
+                ('calculatedParameter', 'tunable'),
+                ('input', 'discrete'),
+                ('input', 'continuous'),
+                ('output', 'constant'),
+                ('output', 'discrete'),
+                ('output', 'continuous'),
+                ('local', 'constant'),
+                ('local', 'fixed'),
+                ('local', 'tunable'),
+                ('local', 'discrete'),
+                ('local', 'continuous'),
+                ('independent', 'continuous'),
+            }
+
+            for variable in modelDescription.modelVariables:
+                if (variable.causality, variable.variability) not in legal_combinations:
+                    raise Exception('The combination causlity="%s" and variability="%s" in variable "%s" is not allowed.'
+                                    % (variable.causality, variable.variability, variable.name))
+
             # check required start values
             for variable in modelDescription.modelVariables:
                 if (variable.initial in {'exact', 'approx'} or variable.causality == 'input') and variable.start is None:

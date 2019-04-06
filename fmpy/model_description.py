@@ -556,6 +556,11 @@ def read_model_description(filename, validate=True):
 
         if modelDescription.fmiVersion == '2.0':
 
+            # assert required start values (see FMI 2.0 spec, p. 47)
+            for variable in modelDescription.modelVariables:
+                if (variable.initial in {'exact', 'approx'} or variable.causality == 'input') and variable.start is None:
+                    raise Exception('Variable "%s" has no start value.' % variable.name)
+
             # legal combinations of causality and variability (see FMI 2.0 spec, p. 49)
             legal_combinations = {
                 ('parameter', 'fixed'),

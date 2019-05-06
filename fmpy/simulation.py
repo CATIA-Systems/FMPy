@@ -255,6 +255,9 @@ class Input(object):
 
         t_event = {float('Inf')}
 
+        if signals.size < 2:
+            return np.array(list(t_event))  # only one sample
+
         t = signals[signals.dtype.names[0]]
 
         # continuous
@@ -272,6 +275,9 @@ class Input(object):
 
     @staticmethod
     def interpolate(time, t, table, discrete=False, after_event=False):
+
+        if t.size < 2:
+            return table  # only one sample
 
         # find the left insert index
         i0 = np.searchsorted(t, time)

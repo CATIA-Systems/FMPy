@@ -10,6 +10,15 @@ inf = float('Inf')
 
 class InputTest(unittest.TestCase):
 
+    def test_single_sample(self):
+        t = np.array([0])
+        y = np.array([2])
+
+        # "interpolate" input with only one sample
+        v = Input.interpolate(1, t, y)
+
+        self.assertEqual(v,  2)
+
     def test_input_continuous(self):
 
         t = np.array( [ 0, 1, 2, 3])

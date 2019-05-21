@@ -558,7 +558,7 @@ def simulate_fmu(filename,
 
     # clean up
     if tempdir is not None:
-        shutil.rmtree(tempdir)
+        shutil.rmtree(tempdir, ignore_errors=True)
 
     return result
 

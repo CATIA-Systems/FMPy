@@ -554,6 +554,14 @@ def read_model_description(filename, validate=True):
         for unit in modelDescription.unitDefinitions:
             unit_definitions[unit.name] = [display_unit.name for display_unit in unit.displayUnits]
 
+        variable_names = set()
+
+        # assert unique variable names (FMI 1.0 spec, p. 34, FMI 2.0 spec, p. 45)
+        for variable in modelDescription.modelVariables:
+            if variable.name in variable_names:
+                raise Exception('Variable name "%s" is not unique.' % variable.name)
+            variable_names.add(variable.name)
+
         if modelDescription.fmiVersion == '2.0':
 
             # assert required start values (see FMI 2.0 spec, p. 47)

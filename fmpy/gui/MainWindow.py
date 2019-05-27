@@ -564,7 +564,7 @@ class MainWindow(QMainWindow):
         if self.fmiTypeComboBox.currentText() == 'Co-Simulation':
             self.ui.solverComboBox.setEnabled(False)
             self.ui.stepSizeLineEdit.setEnabled(False)
-            self.ui.relativeToleranceLineEdit.setEnabled(False)
+            self.ui.relativeToleranceLineEdit.setEnabled(True)
         else:
             self.ui.solverComboBox.setEnabled(True)
             fixed_step = self.ui.solverComboBox.currentText() == 'Fixed-step'

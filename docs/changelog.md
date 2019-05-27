@@ -1,3 +1,16 @@
+## v0.2.11 (2019-05-27)
+
+FMPy 0.2.11: improved robustness and validation
+
+- `FIXED` leading spaces in dependency list are now handled correctly
+- `FIXED` input files with only one sample can now be handled
+- `IMPROVED` errors during cleanup of temporary directories are now ignored
+- `IMPROVED` "Relative Tolerance" input field is now enabled for Co-Simulation FMUs
+- `IMPROVED` compilation of source code FMUs is now more robust
+- `IMPROVED` combinations of causality and variability are now validated
+- `IMPROVED` assertions for required start values have been added
+- `IMPROVED` assertions for unique variable names have been added
+
 ## v0.2.10 (2019-02-26)
 
 Experimental FMI 3.0 support, FMI Cross-Check validation scripts

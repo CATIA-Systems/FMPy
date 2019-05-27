@@ -100,7 +100,7 @@
                     meeting with additional improvements (by Martin Otter, DLR).
    - Dec. 3 , 2008: First version by Martin Otter (DLR) and Hans Olsson (Dynasim).
 
-   Copyright © 2008-2011 MODELISAR consortium,
+   Copyright ï¿½ 2008-2011 MODELISAR consortium,
                2012-2013 Modelica Association Project "FMI"
                All rights reserved.
    This file is licensed by the copyright holders under the BSD 2-Clause License
@@ -150,37 +150,27 @@ extern "C" {
 
 
 /*
-  Export FMI2 API functions on Windows and under GCC.
-  If custom linking is desired then the FMI2_Export must be
-  defined before including this file. For instance,
-  it may be set to __declspec(dllimport).
+Export FMI2 API functions on Windows and under GCC. 
+This definition has been changed to always export the symbols.
 */
-#if !defined(FMI2_Export)
-  #if !defined(FMI2_FUNCTION_PREFIX)
-    #if defined _WIN32 || defined __CYGWIN__
-     /* Note: both gcc & MSVC on Windows support this syntax. */
-        #define FMI2_Export __declspec(dllexport)
+#if defined _WIN32 || defined __CYGWIN__
+    /* Note: both gcc & MSVC on Windows support this syntax. */
+    #define FMI2_Export __declspec(dllexport)
+#else
+    #if __GNUC__ >= 4
+    #define FMI2_Export __attribute__ ((visibility ("default")))
     #else
-      #if __GNUC__ >= 4
-        #define FMI2_Export __attribute__ ((visibility ("default")))
-      #else
-        #define FMI2_Export
-      #endif
-    #endif
-  #else
     #define FMI2_Export
-  #endif
+    #endif
 #endif
 
-/* Macros to construct the real function name
-   (prepend function name by FMI2_FUNCTION_PREFIX) */
-#if defined(FMI2_FUNCTION_PREFIX)
-  #define fmi2Paste(a,b)     a ## b
-  #define fmi2PasteB(a,b)    fmi2Paste(a,b)
-  #define fmi2FullName(name) fmi2PasteB(FMI2_FUNCTION_PREFIX, name)
-#else
-  #define fmi2FullName(name) name
-#endif
+
+/* 
+Macro to construct the real function name.
+This definition has been changed to add no prefix.
+*/
+#define fmi2FullName(name) name
+
 
 /***************************************************
 Common Functions

@@ -37,18 +37,19 @@ class CCodeTest(unittest.TestCase):
     def test_cmake(self):
         """ Create a CMake project """
 
-        from subprocess import call, list2cmdline
+        from subprocess import check_call
         import shutil
-
-        cmake_available = False
+        from fmpy import platform
 
         try:
-            res = call(['cmake'])
+            # check if CMake is installed
+            check_call(['cmake'])
             cmake_available = True
-        except OSError as e:
-            pass
+        except:
+            cmake_available = False
 
         for fmu in self.fmus:
+
             download_file(self.url + fmu)
 
             filename = os.path.basename(fmu)
@@ -59,32 +60,29 @@ class CCodeTest(unittest.TestCase):
             if os.path.isdir(model_name):
                 shutil.rmtree(model_name)
 
-            # create an empty directory
-            os.makedirs(model_name)
-
             # create the CMake project
             create_cmake_project(filename, model_name)
 
-            if cmake_available and os.name == 'nt':
+            if not cmake_available:
+                continue  # skip compilation
 
-                params = [
-                    'cd', model_name, '&',
-                    'cmake', '-G', 'Visual Studio 14 2015 Win64', '.', '&',  # create a Visual Studio 2015 solution
-                    r'%VS140COMNTOOLS%..\..\VC\vcvarsall.bat ', '&',         # set VS environment variables
-                    'msbuild', model_name + '.sln'                           # build the solution
-                ]
+            if platform == 'win32':
+                generator = 'Visual Studio 14 2015'
+            elif platform == 'win64':
+                generator = 'Visual Studio 14 2015 Win64'
+            else:
+                generator = 'Unix Makefiles'
 
-                print(list2cmdline(params))
+            # generate the build system
+            check_call(args=['cmake', '-G', generator, '.'], cwd=model_name)
 
-                # create and build the solution
-                status = call(params, shell=True)
+            # run the build system
+            check_call(args=['cmake', '--build', '.'], cwd=model_name)
 
-                self.assertEqual(0, status)
+            # simulate the FMU
+            result = simulate_fmu(filename=os.path.join(model_name, filename))
 
-                # simulate the FMU
-                result = simulate_fmu(filename=os.path.join(model_name, filename))
-
-                self.assertIsNotNone(result)
+            self.assertIsNotNone(result)
 
 
 if __name__ == '__main__':

@@ -174,21 +174,22 @@ class Input(object):
         self.continuous = []
         self.discrete = []
 
-        for sv in modelDescription.modelVariables:
+        for variable in modelDescription.modelVariables:
 
-            if sv.causality != 'input' and sv.variability != 'tunable':
+            if variable.causality != 'input' and variable.variability != 'tunable':
                 continue
 
-            if sv.name not in signals.dtype.names:
-                print("Warning: missing input for " + sv.name)
+            if variable.name not in signals.dtype.names:
+                if variable.causality == 'input':
+                    print('Warning: missing input for variable "%s"' % variable.name)
                 continue
 
-            if sv.type in {'Float32', 'Float64', 'Real'} and sv.variability not in ['discrete', 'tunable']:
-                continuous_inputs[sv.type].append((sv.valueReference, sv.name))
+            if variable.type in {'Float32', 'Float64', 'Real'} and variable.variability not in ['discrete', 'tunable']:
+                continuous_inputs[variable.type].append((variable.valueReference, variable.name))
             else:
                 # use the same table for Integer and Enumeration
-                type_ = 'Integer' if sv.type == 'Enumeration' else sv.type
-                discrete_inputs[type_].append((sv.valueReference, sv.name))
+                type_ = 'Integer' if variable.type == 'Enumeration' else variable.type
+                discrete_inputs[type_].append((variable.valueReference, variable.name))
 
         for inputs, buf in [(continuous_inputs, self.continuous), (discrete_inputs, self.discrete)]:
             for type_, vrs_and_names in inputs.items():
@@ -254,6 +255,9 @@ class Input(object):
 
         t_event = {float('Inf')}
 
+        if signals.size < 2:
+            return np.array(list(t_event))  # only one sample
+
         t = signals[signals.dtype.names[0]]
 
         # continuous
@@ -271,6 +275,9 @@ class Input(object):
 
     @staticmethod
     def interpolate(time, t, table, discrete=False, after_event=False):
+
+        if t.size < 2:
+            return table  # only one sample
 
         # find the left insert index
         i0 = np.searchsorted(t, time)
@@ -551,7 +558,7 @@ def simulate_fmu(filename,
 
     # clean up
     if tempdir is not None:
-        shutil.rmtree(tempdir)
+        shutil.rmtree(tempdir, ignore_errors=True)
 
     return result
 

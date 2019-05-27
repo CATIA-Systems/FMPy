@@ -532,13 +532,13 @@ def read_model_description(filename, validate=True):
                 dependencies = u.get('dependencies')
 
                 if dependencies:
-                    for i in dependencies.split(' '):
-                        unknown.dependencies.append(modelDescription.modelVariables[int(i) - 1])
+                    for vr in dependencies.strip().split(' '):
+                        unknown.dependencies.append(modelDescription.modelVariables[int(vr) - 1])
 
                 dependenciesKind = u.get('dependenciesKind')
 
                 if dependenciesKind:
-                    unknown.dependenciesKind = u.get('dependenciesKind').split(' ')
+                    unknown.dependenciesKind = dependenciesKind.strip().split(' ')
 
                 attr.append(unknown)
 
@@ -554,7 +554,49 @@ def read_model_description(filename, validate=True):
         for unit in modelDescription.unitDefinitions:
             unit_definitions[unit.name] = [display_unit.name for display_unit in unit.displayUnits]
 
+        variable_names = set()
+
+        # assert unique variable names (FMI 1.0 spec, p. 34, FMI 2.0 spec, p. 45)
+        for variable in modelDescription.modelVariables:
+            if variable.name in variable_names:
+                raise Exception('Variable name "%s" is not unique.' % variable.name)
+            variable_names.add(variable.name)
+
         if modelDescription.fmiVersion == '2.0':
+
+            # assert required start values (see FMI 2.0 spec, p. 47)
+            for variable in modelDescription.modelVariables:
+                if (variable.initial in {'exact', 'approx'} or variable.causality == 'input') and variable.start is None:
+                    raise Exception('Variable "%s" has no start value.' % variable.name)
+
+            # legal combinations of causality and variability (see FMI 2.0 spec, p. 49)
+            legal_combinations = {
+                ('parameter', 'fixed'),
+                ('parameter', 'tunable'),
+                ('calculatedParameter', 'fixed'),
+                ('calculatedParameter', 'tunable'),
+                ('input', 'discrete'),
+                ('input', 'continuous'),
+                ('output', 'constant'),
+                ('output', 'discrete'),
+                ('output', 'continuous'),
+                ('local', 'constant'),
+                ('local', 'fixed'),
+                ('local', 'tunable'),
+                ('local', 'discrete'),
+                ('local', 'continuous'),
+                ('independent', 'continuous'),
+            }
+
+            for variable in modelDescription.modelVariables:
+                if (variable.causality, variable.variability) not in legal_combinations:
+                    raise Exception('The combination causlity="%s" and variability="%s" in variable "%s" is not allowed.'
+                                    % (variable.causality, variable.variability, variable.name))
+
+            # check required start values
+            for variable in modelDescription.modelVariables:
+                if (variable.initial in {'exact', 'approx'} or variable.causality == 'input') and variable.start is None:
+                    raise Exception('Variable "%s" has no start value.' % variable.name)
 
             # validate outputs
             outputs = set([v for v in modelDescription.modelVariables if v.causality == 'output'])

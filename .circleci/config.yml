@@ -21,7 +21,7 @@ jobs:
           name: Install dependencies
           command: |
             conda info -a
-            conda install -c anaconda pathlib
+            conda install -c anaconda pathlib cmake
       - run:
           name: Build wheel
           command: |

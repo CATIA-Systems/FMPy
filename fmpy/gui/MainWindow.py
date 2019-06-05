@@ -422,6 +422,14 @@ class MainWindow(QMainWindow):
         self.ui.generationToolLabel.setText(md.generationTool)
         self.ui.generationDateAndTimeLabel.setText(md.generationDateAndTime)
 
+        if md.defaultExperiment is not None and md.defaultExperiment.stepSize is not None:
+            output_interval = float(md.defaultExperiment.stepSize)
+            while output_interval > 1000:
+                output_interval *= 0.5
+        else:
+            output_interval = float(self.stopTimeLineEdit.text()) / 500
+        self.ui.outputIntervalLineEdit.setText(str(output_interval))
+
         self.fmiTypeComboBox.clear()
         self.fmiTypeComboBox.addItems(fmi_types)
 
@@ -583,12 +591,20 @@ class MainWindow(QMainWindow):
 
         from fmpy.gui.simulation import SimulationThread
 
-        # TODO: catch exceptions
-        stop_time = float(self.stopTimeLineEdit.text())
-        step_size = float(self.ui.stepSizeLineEdit.text())
-        relative_tolerance = float(self.ui.relativeToleranceLineEdit.text())
-        max_samples = float(self.ui.maxSamplesLineEdit.text())
-        output_interval = stop_time / max_samples
+        try:
+            stop_time = float(self.stopTimeLineEdit.text())
+            step_size = float(self.ui.stepSizeLineEdit.text())
+            relative_tolerance = float(self.ui.relativeToleranceLineEdit.text())
+
+            if self.ui.outputIntervalRadioButton.isChecked():
+                output_interval = float(self.ui.outputIntervalLineEdit.text())
+            else:
+                max_samples = float(self.ui.maxSamplesLineEdit.text())
+                output_interval = stop_time / max_samples
+        except Exception as ex:
+            self.log.log('error', "Failed to start simulation: %s" % ex)
+            self.ui.stackedWidget.setCurrentWidget(self.ui.logPage)
+            return
 
         step_size = min(step_size, output_interval)
 

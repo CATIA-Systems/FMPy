@@ -5,7 +5,7 @@
 	<xs:annotation>
 		<xs:documentation>
 Copyright(c) 2008-2011 MODELISAR consortium,
-             2012-2018 Modelica Association Project "FMI".
+             2012-2019 Modelica Association Project "FMI".
              All rights reserved.
 
 This file is licensed by the copyright holders under the 2-Clause BSD License
@@ -41,10 +41,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<xs:extension base="fmi3VariableBase">
 				<xs:attributeGroup ref="fmi3Float64Attributes"/>
 				<xs:attribute name="start">
-					<xs:annotation>
-						<xs:documentation>List of start values. Value before initialization, if initial=exact or approx.
-					max >= start[i] >= min required</xs:documentation>
-					</xs:annotation>
 					<xs:simpleType>
 						<xs:list>
 							<xs:simpleType>
@@ -62,10 +58,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<xs:extension base="fmi3VariableBase">
 				<xs:attributeGroup ref="fmi3Float32Attributes"/>
 				<xs:attribute name="start">
-					<xs:annotation>
-						<xs:documentation>List of start values. Value before initialization, if initial=exact or approx.
-							max >= start[i] >= min required</xs:documentation>
-					</xs:annotation>
 					<xs:simpleType>
 						<xs:list>
 							<xs:simpleType>
@@ -83,10 +75,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<xs:extension base="fmi3VariableBase">
 				<xs:attributeGroup ref="fmi3Int8Attributes"/>
 				<xs:attribute name="start">
-					<xs:annotation>
-						<xs:documentation>Value before initialization, if initial=exact or approx.
-							max >= start[i] >= min required</xs:documentation>
-					</xs:annotation>
 					<xs:simpleType>
 						<xs:list>
 							<xs:simpleType>
@@ -103,10 +91,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<xs:extension base="fmi3VariableBase">
 				<xs:attributeGroup ref="fmi3UInt8Attributes"/>
 				<xs:attribute name="start">
-					<xs:annotation>
-						<xs:documentation>Value before initialization, if initial=exact or approx.
-							max >= start[i] >= min required</xs:documentation>
-					</xs:annotation>
 					<xs:simpleType>
 						<xs:list>
 							<xs:simpleType>
@@ -123,10 +107,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<xs:extension base="fmi3VariableBase">
 				<xs:attributeGroup ref="fmi3Int16Attributes"/>
 				<xs:attribute name="start">
-					<xs:annotation>
-						<xs:documentation>Value before initialization, if initial=exact or approx.
-							max >= start[i] >= min required</xs:documentation>
-					</xs:annotation>
 					<xs:simpleType>
 						<xs:list>
 							<xs:simpleType>
@@ -143,10 +123,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<xs:extension base="fmi3VariableBase">
 				<xs:attributeGroup ref="fmi3UInt16Attributes"/>
 				<xs:attribute name="start">
-					<xs:annotation>
-						<xs:documentation>Value before initialization, if initial=exact or approx.
-							max >= start[i] >= min required</xs:documentation>
-					</xs:annotation>
 					<xs:simpleType>
 						<xs:list>
 							<xs:simpleType>
@@ -163,10 +139,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<xs:extension base="fmi3VariableBase">
 				<xs:attributeGroup ref="fmi3Int32Attributes"/>
 				<xs:attribute name="start">
-					<xs:annotation>
-						<xs:documentation>Value before initialization, if initial=exact or approx.
-							max >= start[i] >= min required</xs:documentation>
-					</xs:annotation>
 					<xs:simpleType>
 						<xs:list>
 							<xs:simpleType>
@@ -183,10 +155,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<xs:extension base="fmi3VariableBase">
 				<xs:attributeGroup ref="fmi3UInt32Attributes"/>
 				<xs:attribute name="start">
-					<xs:annotation>
-						<xs:documentation>Value before initialization, if initial=exact or approx.
-							max >= start[i] >= min required</xs:documentation>
-					</xs:annotation>
 					<xs:simpleType>
 						<xs:list>
 							<xs:simpleType>
@@ -203,10 +171,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<xs:extension base="fmi3VariableBase">
 				<xs:attributeGroup ref="fmi3Int64Attributes"/>
 				<xs:attribute name="start">
-					<xs:annotation>
-						<xs:documentation>Value before initialization, if initial=exact or approx.
-							max >= start[i] >= min required</xs:documentation>
-					</xs:annotation>
 					<xs:simpleType>
 						<xs:list>
 							<xs:simpleType>
@@ -223,10 +187,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<xs:extension base="fmi3VariableBase">
 				<xs:attributeGroup ref="fmi3UInt64Attributes"/>
 				<xs:attribute name="start">
-					<xs:annotation>
-						<xs:documentation>Value before initialization, if initial=exact or approx.
-							max >= start[i] >= min required</xs:documentation>
-					</xs:annotation>
 					<xs:simpleType>
 						<xs:list>
 							<xs:simpleType>
@@ -242,9 +202,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableBase">
 				<xs:attribute name="start">
-					<xs:annotation>
-						<xs:documentation>Value before initialization, if initial=exact or approx</xs:documentation>
-					</xs:annotation>
 					<xs:simpleType>
 						<xs:list>
 							<xs:simpleType>
@@ -263,9 +220,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					<xs:element name="Start">
 						<xs:complexType>
 							<xs:attribute name="value" type="xs:string">
-								<xs:annotation>
-									<xs:documentation>Value before initialization, if initial=exact or approx</xs:documentation>
-								</xs:annotation>
 							</xs:attribute>
 						</xs:complexType>
 					</xs:element>
@@ -277,23 +231,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableBase">
 				<xs:attribute name="mimeType" type="xs:normalizedString" use="optional" default="application/octet-stream">
-					<xs:annotation>
-						<xs:documentation>Should indicate the type of data passed as a binary. Defaults to application/octet-stream,
-							which is unspecific.  Implementations can use this information to provide guidance to the user about
-							valid/useful connections.</xs:documentation>
-					</xs:annotation>
 				</xs:attribute>
 				<xs:attribute name="maxSize" type="xs:nonNegativeInteger" use="optional">
-					<xs:annotation>
-						<xs:documentation>If present, limits the maximum size of the binary to the indicated value.
-							All variable accesses, both getting and setting of values must guarantee that the returned
-							size of the binary is strictly equal or less than this maximum size.</xs:documentation>
-					</xs:annotation>
 				</xs:attribute>
 				<xs:attribute name="start">
-					<xs:annotation>
-						<xs:documentation>Value before initialization, if initial=exact or approx</xs:documentation>
-					</xs:annotation>
 					<xs:simpleType>
 						<xs:list itemType="xs:hexBinary"/>
 					</xs:simpleType>
@@ -312,22 +253,11 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		<xs:complexContent>
 			<xs:extension base="fmi3EnumerationBase">
 				<xs:attribute name="declaredType" type="xs:normalizedString" use="required">
-					<xs:annotation>
-						<xs:documentation>Name of type defined with TypeDefinitions / SimpleType </xs:documentation>
-					</xs:annotation>
 				</xs:attribute>
 				<xs:attribute name="quantity" type="xs:normalizedString"/>
 				<xs:attribute name="min" type="xs:int"/>
-				<xs:attribute name="max" type="xs:int">
-					<xs:annotation>
-						<xs:documentation>max >= min required</xs:documentation>
-					</xs:annotation>
-				</xs:attribute>
+				<xs:attribute name="max" type="xs:int"/>
 				<xs:attribute name="start">
-					<xs:annotation>
-						<xs:documentation>Value before initialization, if initial=exact or approx.
-							max >= start >= min required</xs:documentation>
-					</xs:annotation>
 					<xs:simpleType>
 						<xs:list>
 							<xs:simpleType>
@@ -340,57 +270,25 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		</xs:complexContent>
 	</xs:complexType>
 	<xs:complexType name="fmi3VariableBase" abstract="true">
-		<xs:annotation>
-			<xs:documentation>Properties of a variable</xs:documentation>
-		</xs:annotation>
 		<xs:sequence>
 			<xs:element name="Dimensions" minOccurs="0">
 				<xs:complexType>
 					<xs:sequence maxOccurs="unbounded">
 						<xs:element name="Dimension">
 							<xs:complexType>
-								<xs:attribute name="start" type="xs:unsignedInt">
-									<xs:annotation>
-										<xs:documentation>If start value is defined, the size is constant.
-start value must only be defined if index to structuralParameter is not given.</xs:documentation>
-									</xs:annotation>
-								</xs:attribute>
-								<xs:attribute name="valueReference" type="xs:unsignedInt">
-									<xs:annotation>
-										<xs:documentation>Link to structuralParameter element. Must be defined if no start value exist.</xs:documentation>
-									</xs:annotation>
-								</xs:attribute>
+								<xs:attribute name="start" type="xs:unsignedInt"/>
+								<xs:attribute name="valueReference" type="xs:unsignedInt"/>
 							</xs:complexType>
 						</xs:element>
 					</xs:sequence>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="Annotations" type="fmi3Annotation" minOccurs="0">
-				<xs:annotation>
-					<xs:documentation>Additional data of the variable, e.g., for the dialog menu or the graphical layout</xs:documentation>
-				</xs:annotation>
-			</xs:element>
+			<xs:element name="Annotations" type="fmi3Annotation" minOccurs="0"/>
 		</xs:sequence>
-		<xs:attribute name="name" type="xs:normalizedString" use="required">
-			<xs:annotation>
-				<xs:documentation>Identifier of variable, e.g. "A_Matrix.", "abc'.d". "name" must be unique with respect to all other elements of the ModelVariables list</xs:documentation>
-			</xs:annotation>
-		</xs:attribute>
-		<xs:attribute name="valueReference" type="xs:unsignedInt" use="required">
-			<xs:annotation>
-				<xs:documentation>Identifier for variable value in FMI3 function calls (not necessarily unique with respect to all variables)</xs:documentation>
-			</xs:annotation>
-		</xs:attribute>
+		<xs:attribute name="name" type="xs:normalizedString" use="required"/>
+		<xs:attribute name="valueReference" type="xs:unsignedInt" use="required"/>
 		<xs:attribute name="description" type="xs:string"/>
 		<xs:attribute name="causality" default="local">
-			<xs:annotation>
-				<xs:documentation>parameter: independent parameter
-calculatedParameter: calculated parameter
-input/output: can be used in connections
-local: variable calculated from other variables
-independent: independent variable (usually time)
-structuralParameter: structural parameter usually used for sizes</xs:documentation>
-			</xs:annotation>
 			<xs:simpleType>
 				<xs:restriction base="xs:normalizedString">
 					<xs:enumeration value="parameter"/>
@@ -404,13 +302,6 @@ structuralParameter: structural parameter usually used for sizes</xs:documentati
 			</xs:simpleType>
 		</xs:attribute>
 		<xs:attribute name="variability" default="continuous">
-			<xs:annotation>
-				<xs:documentation>constant: value never changes
-fixed: value fixed after initialization
-tunable: value constant between external events
-discrete: value constant between internal events
-continuous: no restriction on value changes</xs:documentation>
-			</xs:annotation>
 			<xs:simpleType>
 				<xs:restriction base="xs:normalizedString">
 					<xs:enumeration value="constant"/>
@@ -422,12 +313,6 @@ continuous: no restriction on value changes</xs:documentation>
 			</xs:simpleType>
 		</xs:attribute>
 		<xs:attribute name="initial">
-			<xs:annotation>
-				<xs:documentation>exact: initialized with start value
-approx: iteration variable that starts with start value
-calculated: calculated from other variables.
-If not provided, initial is deduced from causality and variability (details see specification)</xs:documentation>
-			</xs:annotation>
 			<xs:simpleType>
 				<xs:restriction base="xs:normalizedString">
 					<xs:enumeration value="exact"/>
@@ -436,19 +321,10 @@ If not provided, initial is deduced from causality and variability (details see 
 				</xs:restriction>
 			</xs:simpleType>
 		</xs:attribute>
-		<xs:attribute name="canHandleMultipleSetPerTimeInstant" type="xs:boolean">
-			<xs:annotation>
-				<xs:documentation>Only for ModelExchange and only for variables with variability = "input":
-If present with value = false, then only one fmi3SetXXX call is allowed at one super dense time instant. In other words, this input is not allowed to appear in an algebraic loop.</xs:documentation>
-			</xs:annotation>
-		</xs:attribute>
-		<xs:attribute name="declaredType" type="xs:normalizedString">
-			<xs:annotation>
-				<xs:documentation>If present, name of type defined with TypeDefinitions / SimpleType providing defaults.</xs:documentation>
-			</xs:annotation>
-		</xs:attribute>
+		<xs:attribute name="canHandleMultipleSetPerTimeInstant" type="xs:boolean"/>
+		<xs:attribute name="declaredType" type="xs:normalizedString"/>
 	</xs:complexType>
-	
+
 	<xs:group name="fmi3Variable">
 		<xs:choice>
 			<xs:element name="Float32" type="fmi3Float32"/>

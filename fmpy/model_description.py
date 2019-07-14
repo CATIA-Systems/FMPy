@@ -464,6 +464,7 @@ def read_model_description(filename, validate=True):
             'UInt32':      int,
             'Int64':       int,
             'UInt64':      int,
+            'Binary':      bytes
         }
 
         sv._python_type = type_map[sv.type]

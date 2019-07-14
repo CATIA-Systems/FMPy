@@ -25,6 +25,7 @@ fmi3UInt64               = c_uint64
 fmi3Boolean              = c_int
 fmi3Char                 = c_char
 fmi3String               = c_char_p
+fmi3Binary               = c_char_p
 fmi3Type                 = c_int
 fmi3Byte                 = c_char
 
@@ -137,6 +138,7 @@ class _FMU3(_FMU):
 
         self._fmi3Function('fmi3Reset', ['component'], [fmi3Component], fmi3Status)
 
+        # Getting and setting variable values
         types = [
             ('Float32', fmi3Float32),
             ('Float64', fmi3Float64),
@@ -152,7 +154,6 @@ class _FMU3(_FMU):
             ('String',  fmi3String),
         ]
 
-        # Getting and setting variable values
         for name, _type in types:
 
             self._fmi3Function('fmi3Get' + name,
@@ -162,6 +163,14 @@ class _FMU3(_FMU):
             self._fmi3Function('fmi3Set' + name,
                                ['component', 'vr', 'nvr', 'value', 'nValues'],
                                [fmi3Component, POINTER(fmi3ValueReference), c_size_t, POINTER(_type), c_size_t])
+
+        self._fmi3Function('fmi3GetBinary',
+                           ['component', 'vr', 'nvr', 'size', 'value', 'nValues'],
+                           [fmi3Component, POINTER(fmi3ValueReference), c_size_t, POINTER(c_size_t), POINTER(fmi3Binary), c_size_t])
+
+        self._fmi3Function('fmi3SetBinary',
+                           ['component', 'vr', 'nvr', 'size', 'value', 'nValues'],
+                           [fmi3Component, POINTER(fmi3ValueReference), c_size_t, POINTER(c_size_t), POINTER(fmi3Binary), c_size_t])
 
         # Getting and setting the internal FMU state
         self._fmi3Function('fmi3GetFMUstate', ['component', 'FMUstate'],
@@ -335,6 +344,19 @@ class _FMU3(_FMU):
         self.fmi3GetString(self.component, vr, len(vr), value)
         return list(value)
 
+    def getString(self, vr):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        value = (fmi3String * len(vr))()
+        self.fmi3GetString(self.component, vr, len(vr), value)
+        return list(value)
+
+    def getBinary(self, vr):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        value = (fmi3Binary * len(vr))()
+        size = (c_size_t * len(vr))()
+        self.fmi3GetBinary(self.component, vr, len(vr), size, value, len(value))
+        return list(value)
+
     def setFloat64(self, vr, values):
         vr = (fmi3ValueReference * len(vr))(*vr)
         values = (fmi3Float64 * len(values))(*values)
@@ -355,6 +377,12 @@ class _FMU3(_FMU):
         values = list(map(lambda s: s.encode('utf-8') if s is not None else s, values))
         values = (fmi3String * len(values))(*values)
         self.fmi3SetString(self.component, vr, len(vr), values, len(values))
+
+    def setBinary(self, vr, values):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values_ = (fmi3Binary * len(values))(*values)
+        size = (c_size_t * len(vr))(*[len(v) for v in values])
+        self.fmi3SetBinary(self.component, vr, len(vr), size, values_, len(values))
 
     # Getting and setting the internal FMU state
 

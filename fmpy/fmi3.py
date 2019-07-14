@@ -250,7 +250,7 @@ class _FMU3(_FMU):
         if callbacks is None:
             callbacks = fmi3CallbackFunctions()
             callbacks.logger = fmi3CallbackLoggerTYPE(printLogMessage)
-            callbacks.reallocateMemory = fmi3CallbackReallocateMemoryTYPE(reallocateMemory)
+            callbacks.allocateMemory = fmi3CallbackAllocateMemoryTYPE(allocateMemory)
             callbacks.freeMemory = fmi3CallbackFreeMemoryTYPE(freeMemory)
 
         self.callbacks = callbacks

@@ -415,7 +415,11 @@ def read_model_description(filename, validate=True):
         type_definitions[simple_type.name] = simple_type
 
     # FMI 3
-    for t in root.findall('TypeDefinitions'):
+    for t in root.findall('TypeDefinitions/*'):
+
+        if t.tag not in {'Float32', 'Float64', 'Int8', 'UInt8', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Int64', 'UInt64',
+                         'Boolean', 'String', 'Binary', 'Enumeration'}:
+            continue
 
         simple_type = SimpleType(type=t.tag, **t.attrib)
 

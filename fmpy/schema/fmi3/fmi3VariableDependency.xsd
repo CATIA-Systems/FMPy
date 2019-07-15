@@ -34,33 +34,27 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ----------------------------------------------------------------------------
 		</xs:documentation>
 	</xs:annotation>
-	<xs:complexType name="fmi3VariableDependency">
-		<xs:sequence maxOccurs="unbounded">
-			<xs:element name="Unknown">
-				<xs:complexType>
-					<xs:attribute name="valueReference" type="xs:unsignedInt" use="required"/>
-					<xs:attribute name="dependencies">
-						<xs:simpleType>
-							<xs:list itemType="xs:unsignedInt"/>
-						</xs:simpleType>
-					</xs:attribute>
-					<xs:attribute name="dependenciesKind">
-						<xs:simpleType>
-							<xs:list>
-								<xs:simpleType>
-									<xs:restriction base="xs:normalizedString">
-										<xs:enumeration value="dependent"/>
-										<xs:enumeration value="constant"/>
-										<xs:enumeration value="fixed"/>
-										<xs:enumeration value="tunable"/>
-										<xs:enumeration value="discrete"/>
-									</xs:restriction>
-								</xs:simpleType>
-							</xs:list>
-						</xs:simpleType>
-					</xs:attribute>
-				</xs:complexType>
-			</xs:element>
-		</xs:sequence>
+	<xs:complexType name="fmi3Unknown">
+		<xs:attribute name="valueReference" type="xs:unsignedInt" use="required"/>
+		<xs:attribute name="dependencies">
+			<xs:simpleType>
+				<xs:list itemType="xs:unsignedInt"/>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="dependenciesKind">
+			<xs:simpleType>
+				<xs:list>
+					<xs:simpleType>
+						<xs:restriction base="xs:normalizedString">
+							<xs:enumeration value="dependent"/>
+							<xs:enumeration value="constant"/>
+							<xs:enumeration value="fixed"/>
+							<xs:enumeration value="tunable"/>
+							<xs:enumeration value="discrete"/>
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:list>
+			</xs:simpleType>
+		</xs:attribute>
 	</xs:complexType>
 </xs:schema>

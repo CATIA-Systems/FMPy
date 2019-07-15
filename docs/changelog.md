@@ -1,3 +1,12 @@
+## v0.2.12 (2019-07-15)
+
+Support for FMI 3.0 Alpha 1, output interval in GUI
+
+- `FIXED` compilation of platform binary on Windows 32-bit
+- `IMPROVED` support for FMI 3.0 Alpha 1
+- `IMPROVED` output interval can now be set in the GUI
+- `IMPROVED` output interval is now calculated based on stepSize attribute
+
 ## v0.2.11 (2019-05-27)
 
 FMPy 0.2.11: improved robustness and validation

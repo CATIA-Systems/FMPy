@@ -301,8 +301,10 @@ def read_model_description(filename, validate=True):
 
     if fmiVersion == '1.0':
         modelDescription.numberOfContinuousStates = int(root.get('numberOfContinuousStates'))
-    else:
+    elif fmiVersion == '2.0':
         modelDescription.numberOfContinuousStates = len(root.findall('ModelStructure/Derivatives/Unknown'))
+    else:
+        modelDescription.numberOfContinuousStates = len(root.findall('ModelStructure/Derivative'))
 
     # default experiment
     for d in root.findall('DefaultExperiment'):

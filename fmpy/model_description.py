@@ -393,6 +393,7 @@ def read_model_description(filename, validate=True):
     # type definitions
     type_definitions = {None: None}
 
+    # FMI 1 and 2
     for t in root.findall('TypeDefinitions/' + ('Type' if fmiVersion == "1.0" else 'SimpleType')):
 
         first = t[0]  # first element
@@ -408,6 +409,19 @@ def read_model_description(filename, validate=True):
             it = Item(**item.attrib)
             if fmiVersion == '1.0':
                 it.value = i + 1
+            simple_type.items.append(it)
+
+        modelDescription.typeDefinitions.append(simple_type)
+        type_definitions[simple_type.name] = simple_type
+
+    # FMI 3
+    for t in root.findall('TypeDefinitions'):
+
+        simple_type = SimpleType(type=t.tag, **t.attrib)
+
+        # add enumeration items
+        for item in t.findall('Item'):
+            it = Item(**item.attrib)
             simple_type.items.append(it)
 
         modelDescription.typeDefinitions.append(simple_type)

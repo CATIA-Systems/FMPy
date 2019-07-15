@@ -35,84 +35,134 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ----------------------------------------------------------------------------
 		</xs:documentation>
 	</xs:annotation>
-	<xs:complexType name="fmi3SimpleType">
-		<xs:sequence>
-			<xs:choice>
-				<xs:element name="Float64">
-					<xs:complexType>
-						<xs:attributeGroup ref="fmi3Float64Attributes"/>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="Float32">
-					<xs:complexType>
-						<xs:attributeGroup ref="fmi3Float32Attributes"/>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="Int8">
-					<xs:complexType>
-						<xs:attributeGroup ref="fmi3Int8Attributes"/>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="UInt8">
-					<xs:complexType>
-						<xs:attributeGroup ref="fmi3UInt8Attributes"/>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="Int16">
-					<xs:complexType>
-						<xs:attributeGroup ref="fmi3Int16Attributes"/>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="UInt16">
-					<xs:complexType>
-						<xs:attributeGroup ref="fmi3UInt16Attributes"/>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="Int32">
-					<xs:complexType>
-						<xs:attributeGroup ref="fmi3Int32Attributes"/>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="UInt32">
-					<xs:complexType>
-						<xs:attributeGroup ref="fmi3UInt32Attributes"/>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="Int64">
-					<xs:complexType>
-						<xs:attributeGroup ref="fmi3Int64Attributes"/>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="UInt64">
-					<xs:complexType>
-						<xs:attributeGroup ref="fmi3UInt64Attributes"/>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="Boolean"/>
-				<xs:element name="String"/>
-				<xs:element name="Binary">
-					<xs:complexType>
-						<xs:attribute name="mimeType" type="xs:normalizedString" use="optional" default="application/octet-stream"/>
-						<xs:attribute name="maxSize" type="xs:nonNegativeInteger" use="optional"/>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="Enumeration">
-					<xs:complexType>
-						<xs:sequence maxOccurs="unbounded">
-							<xs:element name="Item">
-								<xs:complexType>
-									<xs:attribute name="name" type="xs:normalizedString" use="required"/>
-									<xs:attribute name="value" type="xs:int" use="required"/>
-									<xs:attribute name="description" type="xs:string"/>
-								</xs:complexType>
-							</xs:element>
-						</xs:sequence>
-						<xs:attribute name="quantity" type="xs:normalizedString"/>
-					</xs:complexType>
-				</xs:element>
-			</xs:choice>
-		</xs:sequence>
+
+	<xs:complexType name="fmi3TypeDefintionBase" abstract="true">
 		<xs:attribute name="name" type="xs:normalizedString" use="required"/>
 		<xs:attribute name="description" type="xs:string"/>
 	</xs:complexType>
+
+	<xs:group name="fmi3TypeDefintion">
+		<xs:choice>
+			<xs:element name="Float32">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="fmi3TypeDefintionBase">
+							<xs:attributeGroup ref="fmi3Float32Attributes"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="Float64">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="fmi3TypeDefintionBase">
+							<xs:attributeGroup ref="fmi3Float64Attributes"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="Int8">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="fmi3TypeDefintionBase">
+							<xs:attributeGroup ref="fmi3Int8Attributes"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="UInt8">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="fmi3TypeDefintionBase">
+							<xs:attributeGroup ref="fmi3UInt8Attributes"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="Int16">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="fmi3TypeDefintionBase">
+							<xs:attributeGroup ref="fmi3Int16Attributes"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="UInt16">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="fmi3TypeDefintionBase">
+							<xs:attributeGroup ref="fmi3UInt16Attributes"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="Int32">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="fmi3TypeDefintionBase">
+							<xs:attributeGroup ref="fmi3Int32Attributes"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="UInt32">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="fmi3TypeDefintionBase">
+							<xs:attributeGroup ref="fmi3UInt32Attributes"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="Int64">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="fmi3TypeDefintionBase">
+							<xs:attributeGroup ref="fmi3Int64Attributes"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="UInt64">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="fmi3TypeDefintionBase">
+							<xs:attributeGroup ref="fmi3UInt64Attributes"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="Boolean" type="fmi3TypeDefintionBase"/>
+			<xs:element name="String" type="fmi3TypeDefintionBase"/>
+			<xs:element name="Binary">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="fmi3TypeDefintionBase">
+							<xs:attribute name="mimeType" type="xs:normalizedString" use="optional" default="application/octet-stream"/>
+							<xs:attribute name="maxSize" type="xs:nonNegativeInteger" use="optional"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="Enumeration">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="fmi3TypeDefintionBase">
+							<xs:sequence maxOccurs="unbounded">
+								<xs:element name="Item">
+									<xs:complexType>
+										<xs:attribute name="name" type="xs:normalizedString" use="required"/>
+										<xs:attribute name="value" type="xs:int" use="required"/>
+										<xs:attribute name="description" type="xs:string"/>
+									</xs:complexType>
+								</xs:element>
+							</xs:sequence>
+							<xs:attribute name="quantity" type="xs:normalizedString"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+		</xs:choice>
+	</xs:group>
 </xs:schema>

@@ -591,27 +591,14 @@ class FMU3Slave(_FMU3):
 
     # Inquire slave status
 
-    def getStatus(self, kind):
-        value = fmi3Status(fmi3OK)
-        self.fmi3GetStatus(self.component, kind, byref(value))
-        return value
+    def getDoStepPendingStatus(self):
+        status = fmi3Status(fmi3OK)
+        message = fmi3String()
+        self.fmi3GetDoStepPendingStatus(self.component, byref(status), byref(message))
+        return status, message
 
-    def getRealStatus(self, kind):
-        value = fmi3Float64(0.0)
-        self.fmi3GetRealStatus(self.component, kind, byref(value))
-        return value
-
-    def getIntegerStatus(self, kind):
-        value = fmi3Int32(0)
-        self.fmi3GetIntegerStatus(self.component, kind, byref(value))
-        return value
-
-    def getBooleanStatus(self, kind):
-        value = fmi3Boolean(fmi3False)
-        self.fmi3GetBooleanStatus(self.component, kind, byref(value))
-        return value
-
-    def getStringStatus(self, kind):
-        value = fmi3String(b'')
-        self.fmi3GetStringStatus(self.component, kind, byref(value))
-        return value
+    def getDoStepDiscardedStatus(self):
+        terminate = fmi3Boolean(fmi3False)
+        lastSuccessfulTime = fmi3Float64(0)
+        self.fmi3GetDoStepDiscardedStatus(self.component, byref(terminate), byref(lastSuccessfulTime))
+        return terminate, lastSuccessfulTime

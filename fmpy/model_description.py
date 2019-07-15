@@ -394,7 +394,7 @@ def read_model_description(filename, validate=True):
     type_definitions = {None: None}
 
     # FMI 1 and 2
-    for t in root.findall('TypeDefinitions/' + ('Type' if fmiVersion == "1.0" else 'SimpleType')):
+    for t in root.findall('TypeDefinitions/' + ('Type' if fmiVersion == '1.0' else 'SimpleType')):
 
         first = t[0]  # first element
 

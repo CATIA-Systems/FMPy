@@ -67,9 +67,9 @@ class CCodeTest(unittest.TestCase):
                 continue  # skip compilation
 
             if platform == 'win32':
-                generator = 'Visual Studio 14 2015'
+                generator = 'Visual Studio 15 2017'
             elif platform == 'win64':
-                generator = 'Visual Studio 14 2015 Win64'
+                generator = 'Visual Studio 15 2017 Win64'
             else:
                 generator = 'Unix Makefiles'
 

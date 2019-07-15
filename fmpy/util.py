@@ -655,6 +655,9 @@ def compile_dll(model_description, sources_dir, compiler=None):
 
         if platform == 'win64':
             command += ' x86_amd64'
+        else:
+            command += ' x86'
+
         command += ' && cl /LD /I. /I"%s"' % include_dir
         for definition in preprocessor_definitions:
             command += ' /D' + definition

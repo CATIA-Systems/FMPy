@@ -1,6 +1,7 @@
 [![Linux](https://img.shields.io/circleci/project/github/CATIA-Systems/FMPy/master.svg?label=Linux&logo=circleci)](https://circleci.com/gh/CATIA-Systems/FMPy)
 [![OSX](https://img.shields.io/travis/CATIA-Systems/FMPy/master.svg?label=macOS&logo=travis)](https://travis-ci.org/CATIA-Systems/FMPy)
 [![Windows](https://img.shields.io/appveyor/ci/TorstenSommer/FMPy/master.svg?label=Windows&logo=appveyor)](https://ci.appveyor.com/project/TorstenSommer/FMPy/branch/master)
+[![Build Status](https://dev.azure.com/CATIA-Systems/FMPy/_apis/build/status/CATIA-Systems.FMPy?branchName=develop)](https://dev.azure.com/CATIA-Systems/FMPy/_build/latest?definitionId=1&branchName=develop)
 [![PyPI](https://img.shields.io/pypi/dm/FMPy.svg?label=PyPI%20downloads)](https://pypi.org/project/FMPy/)
 [![Conda](https://img.shields.io/conda/dn/conda-forge/FMPy.svg?label=Conda%20downloads)](https://anaconda.org/conda-forge/fmpy)
 [![Read the Docs](https://readthedocs.org/projects/fmpy/badge/?version=latest)](https://fmpy.readthedocs.io/)

@@ -183,8 +183,18 @@ def extract(filename, unzipdir=None):
         import win32file
         unzipdir = win32file.GetLongPathName(unzipdir)
 
-    # extract the archive
     with zipfile.ZipFile(filename, 'r') as zf:
+
+        # check filenames
+        for name in zf.namelist():
+            
+            if '\\' in name:
+                raise Exception("Illegal path %s found in %s. All slashes must be forward slashes." % (name, filename))
+
+            if ':' in name or name.startswith('/'):
+                raise Exception("Illegal path %s found in %s. The path must not contain a drive or device letter, or a leading slash." % (name, filename))
+
+        # extract the archive
         zf.extractall(unzipdir)
 
     return unzipdir

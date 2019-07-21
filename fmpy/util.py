@@ -618,17 +618,27 @@ def compile_dll(model_description, sources_dir, compiler=None):
 
     source_files = []
 
-    if model_description.coSimulation is not None:
+    if model_description.coSimulation is not None and len(model_description.coSimulation.buildConfigurations) != 0:
         model_identifier = model_description.coSimulation.modelIdentifier
-        preprocessor_definitions.append('CO_SIMULATION')
-        source_files += model_description.coSimulation.sourceFiles
-
-    if model_description.modelExchange is not None:
+        build_configuration = model_description.coSimulation.buildConfigurations[0]
+    elif model_description.modelExchange is not None and len(model_description.modelExchange.buildConfigurations) != 0:
         model_identifier = model_description.modelExchange.modelIdentifier
-        preprocessor_definitions.append('MODEL_EXCHANGE')
-        for source_file in model_description.modelExchange.sourceFiles:
-            if source_file not in source_files:
-                source_files.append(source_file)
+        build_configuration = model_description.coSimulation.buildConfigurations[0]
+    else:
+        raise Exception("No build configuration found.")
+
+    if len(build_configuration.sourceFileSets) > 1:
+        raise Exception("More than one SourceFileSet is not supported.")
+
+    source_file_set = build_configuration.sourceFileSets[0]
+
+    source_files += source_file_set.sourceFiles
+
+    for definition in source_file_set.preprocessorDefinitions:
+        literal = definition.name
+        if definition.value is not None:
+            literal += '=' + definition.value
+        preprocessor_definitions.append(literal)
 
     if len(source_files) == 0:
         raise Exception("No source files specified in the model description.")

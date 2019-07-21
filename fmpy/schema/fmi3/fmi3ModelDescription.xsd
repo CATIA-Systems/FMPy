@@ -4,6 +4,7 @@
 	<xs:include schemaLocation="fmi3Unit.xsd"/>
 	<xs:include schemaLocation="fmi3Variable.xsd"/>
 	<xs:include schemaLocation="fmi3Type.xsd"/>
+	<xs:include schemaLocation="fmi3FMUType.xsd"/>
 	<xs:annotation>
 		<xs:documentation>
 Copyright(c) 2008-2011 MODELISAR consortium,
@@ -44,59 +45,23 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:sequence maxOccurs="2">
 					<xs:element name="ModelExchange" minOccurs="0">
 						<xs:complexType>
-							<xs:sequence>
-								<xs:element name="SourceFiles" minOccurs="0">
-									<xs:complexType>
-										<xs:sequence maxOccurs="unbounded">
-											<xs:element name="File">
-												<xs:complexType>
-													<xs:attribute name="name" type="xs:normalizedString" use="required">
-													</xs:attribute>
-												</xs:complexType>
-											</xs:element>
-										</xs:sequence>
-									</xs:complexType>
-								</xs:element>
-							</xs:sequence>
-							<xs:attribute name="modelIdentifier" type="xs:normalizedString" use="required"/>
-							<xs:attribute name="needsExecutionTool" type="xs:boolean" default="false"/>
-							<xs:attribute name="completedIntegratorStepNotNeeded" type="xs:boolean" default="false"/>
-							<xs:attribute name="canBeInstantiatedOnlyOncePerProcess" type="xs:boolean" default="false"/>
-							<xs:attribute name="canNotUseMemoryManagementFunctions" type="xs:boolean" default="false"/>
-							<xs:attribute name="canGetAndSetFMUstate" type="xs:boolean" default="false"/>
-							<xs:attribute name="canSerializeFMUstate" type="xs:boolean" default="false"/>
-							<xs:attribute name="providesDirectionalDerivative" type="xs:boolean" default="false"/>
-							<xs:attribute name="providesPerElementDependencies" type="xs:boolean" default="false"/>
+							<xs:complexContent>
+								<xs:extension base="fmi3FMUType">
+									<xs:attribute name="completedIntegratorStepNotNeeded" type="xs:boolean" default="false"/>
+								</xs:extension>
+							</xs:complexContent>
 						</xs:complexType>
 					</xs:element>
 					<xs:element name="CoSimulation" minOccurs="0">
 						<xs:complexType>
-							<xs:sequence>
-								<xs:element name="SourceFiles" minOccurs="0">
-									<xs:complexType>
-										<xs:sequence maxOccurs="unbounded">
-											<xs:element name="File">
-												<xs:complexType>
-													<xs:attribute name="name" type="xs:normalizedString" use="required">
-													</xs:attribute>
-												</xs:complexType>
-											</xs:element>
-										</xs:sequence>
-									</xs:complexType>
-								</xs:element>
-							</xs:sequence>
-							<xs:attribute name="modelIdentifier" type="xs:normalizedString" use="required"/>
-							<xs:attribute name="needsExecutionTool" type="xs:boolean" default="false"/>
-							<xs:attribute name="canHandleVariableCommunicationStepSize" type="xs:boolean" default="false"/>
-							<xs:attribute name="canInterpolateInputs" type="xs:boolean" default="false"/>
-							<xs:attribute name="maxOutputDerivativeOrder" type="xs:unsignedInt" default="0"/>
-							<xs:attribute name="canRunAsynchronuously" type="xs:boolean" default="false"/>
-							<xs:attribute name="canBeInstantiatedOnlyOncePerProcess" type="xs:boolean" default="false"/>
-							<xs:attribute name="canNotUseMemoryManagementFunctions" type="xs:boolean" default="false"/>
-							<xs:attribute name="canGetAndSetFMUstate" type="xs:boolean" default="false"/>
-							<xs:attribute name="canSerializeFMUstate" type="xs:boolean" default="false"/>
-							<xs:attribute name="providesDirectionalDerivative" type="xs:boolean" default="false"/>
-							<xs:attribute name="providesPerElementDependencies" type="xs:boolean" default="false"/>
+							<xs:complexContent>
+								<xs:extension base="fmi3FMUType">
+									<xs:attribute name="canHandleVariableCommunicationStepSize" type="xs:boolean" default="false"/>
+									<xs:attribute name="canInterpolateInputs" type="xs:boolean" default="false"/>
+									<xs:attribute name="maxOutputDerivativeOrder" type="xs:unsignedInt" default="0"/>
+									<xs:attribute name="canRunAsynchronuously" type="xs:boolean" default="false"/>
+								</xs:extension>
+							</xs:complexContent>
 						</xs:complexType>
 					</xs:element>
 				</xs:sequence>

@@ -8,12 +8,13 @@ class SimulationThread(QThread):
     progressChanged = pyqtSignal(int)
     messageChanged = pyqtSignal(str, str)
 
-    def __init__(self, filename, fmiType, stopTime, solver, stepSize, relativeTolerance, outputInterval, startValues, applyDefaultStartValues, input, output, debugLogging, fmiLogging, parent=None):
+    def __init__(self, filename, fmiType, startTime, stopTime, solver, stepSize, relativeTolerance, outputInterval, startValues, applyDefaultStartValues, input, output, debugLogging, fmiLogging, parent=None):
 
         super(SimulationThread, self).__init__(parent)
 
         self.filename = filename
         self.fmiType = fmiType
+        self.startTime = startTime
         self.stopTime = stopTime
         self.solver = solver
         self.stepSize = stepSize
@@ -66,10 +67,11 @@ class SimulationThread(QThread):
 
     def run(self):
 
-        startTime = QDateTime.currentMSecsSinceEpoch()
+        #startTime = QDateTime.currentMSecsSinceEpoch()
 
         try:
             self.result = simulate_fmu(self.filename,
+									   start_time=self.startTime,
                                        stop_time=self.stopTime,
                                        solver=self.solver,
                                        step_size=self.stepSize,
@@ -86,7 +88,7 @@ class SimulationThread(QThread):
                                        step_finished=self.stepFinished)
         except Exception as e:
             self.messageChanged.emit('error', str(e))
-
+        startTime = QDateTime.currentMSecsSinceEpoch()
         stopTime = QDateTime.currentMSecsSinceEpoch()
         totalTime = ((stopTime - startTime) / 1000.)
 

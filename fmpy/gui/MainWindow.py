@@ -122,6 +122,14 @@ class MainWindow(QMainWindow):
         self.ui.dockWidget.hide()
 
         # toolbar
+        self.startTimeLineEdit = QLineEdit("1")
+        self.startTimeLineEdit.setToolTip("Start time")
+        self.startTimeLineEdit.setFixedWidth(50)
+        self.startTimeValidator = QDoubleValidator(self)
+        self.startTimeValidator.setBottom(0)
+        self.startTimeLineEdit.setValidator(self.startTimeValidator)
+        self.ui.toolBar.addWidget(self.startTimeLineEdit)
+
         self.stopTimeLineEdit = QLineEdit("1")
         self.stopTimeLineEdit.setToolTip("Stop time")
         self.stopTimeLineEdit.setFixedWidth(50)
@@ -148,6 +156,7 @@ class MainWindow(QMainWindow):
         self.ui.actionSimulate.setEnabled(False)
         self.ui.actionSaveResult.setEnabled(False)
         self.ui.actionSavePlottedResult.setEnabled(False)
+        self.startTimeLineEdit.setEnabled(False)
         self.stopTimeLineEdit.setEnabled(False)
         self.fmiTypeComboBox.setEnabled(False)
 
@@ -396,7 +405,8 @@ class MainWindow(QMainWindow):
         if md.defaultExperiment is not None:
             if md.defaultExperiment.stopTime is not None:
                 self.stopTimeLineEdit.setText(str(md.defaultExperiment.stopTime))
-
+            if md.defaultExperiment.startTime is not None:
+                self.startTimeLineEdit.setText(str(md.defaultExperiment.startTime))
         # actions
         can_compile = md.fmiVersion == '2.0' and 'c-code' in platforms
         self.ui.actionCompilePlatformBinary.setEnabled(can_compile)
@@ -446,6 +456,7 @@ class MainWindow(QMainWindow):
         can_simulate = platform in platforms
 
         self.ui.actionSimulate.setEnabled(can_simulate)
+        self.startTimeLineEdit.setEnabled(can_simulate)
         self.stopTimeLineEdit.setEnabled(can_simulate)
         self.fmiTypeComboBox.setEnabled(can_simulate and len(fmi_types) > 1)
         self.ui.settingsGroupBox.setEnabled(can_simulate)
@@ -592,6 +603,7 @@ class MainWindow(QMainWindow):
         from fmpy.gui.simulation import SimulationThread
 
         try:
+            start_time = float(self.startTimeLineEdit.text())
             stop_time = float(self.stopTimeLineEdit.text())
             step_size = float(self.ui.stepSizeLineEdit.text())
             relative_tolerance = float(self.ui.relativeToleranceLineEdit.text())
@@ -637,6 +649,7 @@ class MainWindow(QMainWindow):
 
         self.simulationThread = SimulationThread(filename=self.filename,
                                                  fmiType=fmi_type,
+                                                 startTime=start_time,
                                                  stopTime=stop_time,
                                                  solver=solver,
                                                  stepSize=step_size,
@@ -728,6 +741,7 @@ class MainWindow(QMainWindow):
         self.curves[:] = []
 
         if self.simulationThread is not None:
+            start_time = self.simulationThread.startTime
             stop_time = self.simulationThread.stopTime
         elif self.result is not None:
             stop_time = self.result['time'][-1]
@@ -751,7 +765,7 @@ class MainWindow(QMainWindow):
                 else:
                     curve = plot.plot(pen=pen, antialias=False)
 
-            plot.setXRange(0, stop_time, padding=0.05)
+            plot.setXRange(start_time, stop_time, padding=0.05)
 
             plot.setLabel('left', variable.name)
             plot.showGrid(x=True, y=True, alpha=0.25)

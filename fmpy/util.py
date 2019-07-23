@@ -716,22 +716,19 @@ def compile_platform_binary(filename, output_filename=None):
         output_filename:  filename of the FMU with the compiled binary (None: overwrite existing FMU)
     """
 
-    from . import read_model_description, extract, platform
+    from . import read_model_description, extract, platform, platform_tuple
     import zipfile
     from shutil import copyfile, rmtree
 
     unzipdir = extract(filename)
 
-    md = read_model_description(filename)
+    model_description = read_model_description(filename)
 
-    binary = compile_dll(model_description=md, sources_dir=os.path.join(unzipdir, 'sources'))
+    binary = compile_dll(model_description=model_description, sources_dir=os.path.join(unzipdir, 'sources'))
 
     unzipdir2 = extract(filename)
 
-    platform_dir = os.path.join(unzipdir2, 'binaries', platform)
-
-    # if os.path.exists(platform_dir):
-    #     rmtree(platform_dir)
+    platform_dir = os.path.join(unzipdir2, 'binaries', platform if model_description.fmiVersion in ['1.0', '2.0'] else platform_tuple)
 
     if not os.path.exists(platform_dir):
         os.makedirs(platform_dir)

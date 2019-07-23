@@ -3,9 +3,8 @@
 import os
 import pathlib
 from ctypes import *
-from . import free, calloc
+from . import free, calloc, sharedLibraryExtension, platform_tuple
 from .fmi1 import _FMU, printLogMessage
-from . import architecture, system, sharedLibraryExtension
 
 
 fmi3Component            = c_void_p
@@ -103,7 +102,7 @@ class _FMU3(_FMU):
     def __init__(self, **kwargs):
 
         # build the path to the shared library
-        kwargs['libraryPath'] = os.path.join(kwargs['unzipDirectory'], 'binaries', architecture + '-' + system,
+        kwargs['libraryPath'] = os.path.join(kwargs['unzipDirectory'], 'binaries', platform_tuple,
                                              kwargs['modelIdentifier'] + sharedLibraryExtension)
 
         super(_FMU3, self).__init__(**kwargs)

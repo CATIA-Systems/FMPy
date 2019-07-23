@@ -55,6 +55,8 @@ else:
     platform += '32'
     architecture = 'i686'
 
+platform_tuple = architecture + '-' + system
+
 
 def supported_platforms(filename):
     """ Get the platforms supported by the FMU without extracting it

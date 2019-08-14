@@ -935,7 +935,10 @@ def create_cmake_project(filename, project_dir):
     if model_description.modelExchange is not None:
         definitions.append('MODEL_EXCHANGE')
 
-    sources = ['sources/' + file for file in implementation.sourceFiles]
+    # use the first source file set of the first build configuration
+    source_file_set = implementation.buildConfigurations[0].sourceFileSets[0]
+
+    sources = ['sources/' + file for file in source_file_set.sourceFiles]
 
     # substitute the variables
     txt = txt.replace('%MODEL_NAME%', model_description.modelName)

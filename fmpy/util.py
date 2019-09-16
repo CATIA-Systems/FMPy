@@ -618,14 +618,10 @@ def compile_dll(model_description, sources_dir, compiler=None):
 
     source_files = []
 
-    if model_description.coSimulation is not None and len(model_description.coSimulation.buildConfigurations) != 0:
-        model_identifier = model_description.coSimulation.modelIdentifier
-        build_configuration = model_description.coSimulation.buildConfigurations[0]
-    elif model_description.modelExchange is not None and len(model_description.modelExchange.buildConfigurations) != 0:
-        model_identifier = model_description.modelExchange.modelIdentifier
-        build_configuration = model_description.coSimulation.buildConfigurations[0]
-    else:
+    if len(model_description.buildConfigurations) == 0:
         raise Exception("No build configuration found.")
+
+    build_configuration = model_description.buildConfigurations[0]
 
     if len(build_configuration.sourceFileSets) > 1:
         raise Exception("More than one SourceFileSet is not supported.")
@@ -643,7 +639,7 @@ def compile_dll(model_description, sources_dir, compiler=None):
     if len(source_files) == 0:
         raise Exception("No source files specified in the model description.")
 
-    target = model_identifier + sharedLibraryExtension
+    target = build_configuration.modelIdentifier + sharedLibraryExtension
 
     print('Compiling %s...' % target)
 
@@ -671,7 +667,7 @@ def compile_dll(model_description, sources_dir, compiler=None):
         command += ' && cl /LD /I. /I"%s"' % include_dir
         for definition in preprocessor_definitions:
             command += ' /D' + definition
-        command += ' /Fe' + model_identifier + ' shlwapi.lib ' + ' '.join(source_files)
+        command += ' /Fe' + build_configuration.modelIdentifier + ' shlwapi.lib ' + ' '.join(source_files)
 
     elif compiler == 'gcc':
 
@@ -927,22 +923,20 @@ def create_cmake_project(filename, project_dir):
     definitions = []
 
     if model_description.coSimulation is not None:
-        implementation = model_description.coSimulation
         definitions.append('CO_SIMULATION')
-    else:
-        implementation = model_description.modelExchange
 
     if model_description.modelExchange is not None:
         definitions.append('MODEL_EXCHANGE')
 
     # use the first source file set of the first build configuration
-    source_file_set = implementation.buildConfigurations[0].sourceFileSets[0]
+    build_configuration = model_description.buildConfigurations[0]
+    source_file_set = build_configuration.sourceFileSets[0]
 
     sources = ['sources/' + file for file in source_file_set.sourceFiles]
 
     # substitute the variables
     txt = txt.replace('%MODEL_NAME%', model_description.modelName)
-    txt = txt.replace('%MODEL_IDENTIFIER%', implementation.modelIdentifier)
+    txt = txt.replace('%MODEL_IDENTIFIER%', build_configuration.modelIdentifier)
     txt = txt.replace('%DEFINITIONS%', ' '.join(definitions))
     txt = txt.replace('%INCLUDE_DIRS%', '"' + source_dir.replace('\\', '/') + '"')
     txt = txt.replace('%SOURCES%', ' '.join(sources))

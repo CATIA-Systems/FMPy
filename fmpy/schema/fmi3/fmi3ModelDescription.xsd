@@ -59,12 +59,68 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 									<xs:attribute name="canHandleVariableCommunicationStepSize" type="xs:boolean" default="false"/>
 									<xs:attribute name="canInterpolateInputs" type="xs:boolean" default="false"/>
 									<xs:attribute name="maxOutputDerivativeOrder" type="xs:unsignedInt" default="0"/>
-									<xs:attribute name="canRunAsynchronuously" type="xs:boolean" default="false"/>
+									<xs:attribute name="providesIntermediateVariableAccess" type="xs:boolean" default="false"/>
+									<xs:attribute name="canReturnEarlyAfterIntermediateUpdate" type="xs:boolean" default="false"/>
+									<xs:attribute name="providesHybridCoSimulation" type="xs:boolean" default="false"/>
+									<xs:attribute name="providesScheduledExecutionSimulation" type="xs:boolean" default="false"/>
+									<xs:attribute name="canNotUseBasicCoSimulation" type="xs:boolean" default="false"/>
 								</xs:extension>
 							</xs:complexContent>
 						</xs:complexType>
 					</xs:element>
 				</xs:sequence>
+				<xs:element name="BuildConfiguration" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="SourceFileSet" minOccurs="0" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="SourceFile" maxOccurs="unbounded">
+											<xs:complexType>
+												<xs:attribute name="name" type="xs:normalizedString" use="required"/>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="PreprocessorDefinition" minOccurs="0" maxOccurs="unbounded">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="Option" minOccurs="0" maxOccurs="unbounded">
+														<xs:complexType>
+															<xs:attribute name="value" type="xs:normalizedString"/>
+															<xs:attribute name="description" type="xs:string"/>
+														</xs:complexType>
+													</xs:element>
+												</xs:sequence>
+												<xs:attribute name="name" type="xs:normalizedString" use="required"/>
+												<xs:attribute name="optional" type="xs:boolean" default="false"/>
+												<xs:attribute name="value" type="xs:normalizedString"/>
+												<xs:attribute name="description" type="xs:string"/>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="IncludeDirectory" minOccurs="0" maxOccurs="unbounded">
+											<xs:complexType>
+												<xs:attribute name="name" type="xs:normalizedString" use="required"/>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+									<xs:attribute name="language" type="xs:normalizedString"/>
+									<xs:attribute name="compiler" type="xs:normalizedString"/>
+									<xs:attribute name="compilerOptions" type="xs:string"/>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="Library" minOccurs="0" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:attribute name="name" type="xs:normalizedString" use="required"/>
+									<xs:attribute name="version" type="xs:normalizedString"/>
+									<xs:attribute name="external" type="xs:boolean" default="false"/>
+									<xs:attribute name="description" type="xs:string"/>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+						<xs:attribute name="modelIdentifier" type="xs:normalizedString" use="required"/>
+						<xs:attribute name="platform" type="xs:normalizedString"/>
+						<xs:attribute name="description" type="xs:string"/>
+					</xs:complexType>
+				</xs:element>
 				<xs:element name="UnitDefinitions" minOccurs="0">
 					<xs:complexType>
 						<xs:sequence maxOccurs="unbounded">
@@ -74,7 +130,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				</xs:element>
 				<xs:element name="TypeDefinitions" minOccurs="0">
 					<xs:complexType>
-						<xs:group ref="fmi3TypeDefintion" maxOccurs="unbounded"/>
+						<xs:group ref="fmi3TypeDefinition" maxOccurs="unbounded"/>
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="LogCategories" minOccurs="0">

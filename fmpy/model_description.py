@@ -19,6 +19,8 @@ class ModelDescription(object):
         self.coSimulation = None
         self.modelExchange = None
 
+        self.buildConfigurations = []
+
         self.unitDefinitions = []
         self.typeDefinitions = []
         self.modelVariables = []
@@ -51,7 +53,6 @@ class CoSimulation(object):
         self.canGetAndSetFMUstate = False
         self.canSerializeFMUstate = False
         self.providesDirectionalDerivative = False
-        self.buildConfigurations = []
 
 
 class ModelExchange(object):
@@ -65,12 +66,12 @@ class ModelExchange(object):
         self.canGetAndSetFMUstate = False
         self.canSerializeFMUstate = False
         self.providesDirectionalDerivative = False
-        self.buildConfigurations = []
 
 
 class BuildConfiguration(object):
 
     def __init__(self):
+        self.modelIdentifier = None
         self.sourceFileSets = []
 
     def __repr__(self):
@@ -274,53 +275,6 @@ def _copy_attributes(element, object, attributes):
         setattr(object, attribute, value)
 
 
-def _get_build_configurations(fmi_version, implementation):
-
-    build_configurations = []
-
-    if fmi_version == '2.0':
-
-        source_files = [file.get('name') for file in implementation.findall('SourceFiles/File')]
-
-        if len(source_files) > 0:
-            build_configuration = BuildConfiguration()
-            build_configurations.append(build_configuration)
-            source_file_set = SourceFileSet()
-            build_configuration.sourceFileSets.append(source_file_set)
-            source_file_set.sourceFiles = source_files
-
-        return build_configurations
-
-    for bc in implementation.findall('BuildConfiguration'):
-
-        buildConfiguration = BuildConfiguration()
-
-        build_configurations.append(buildConfiguration)
-
-        for sf in bc.findall('SourceFileSet'):
-
-            sourceFileSet = SourceFileSet()
-            sourceFileSet.language = sf.get('language')
-
-            for pd in sf.findall('PreprocessorDefinition'):
-                definition = PreProcessorDefinition()
-                definition.name = pd.get('name')
-                definition.value = pd.get('value')
-                definition.optional = pd.get('optional') == 'true'
-                definition.description = pd.get('description')
-                sourceFileSet.preprocessorDefinitions.append(definition)
-
-            for f in sf.findall('SourceFile'):
-                sourceFileSet.sourceFiles.append(f.get('name'))
-
-            for d in sf.findall('IncludeDirectory'):
-                sourceFileSet.includeDirectories.append(d.get('name'))
-
-            buildConfiguration.sourceFileSets.append(sourceFileSet)
-
-    return build_configurations
-
-
 def read_model_description(filename, validate=True):
     """ Read the model description from an FMU without extracting it
 
@@ -420,7 +374,6 @@ def read_model_description(filename, validate=True):
                               'canGetAndSetFMUstate',
                               'canSerializeFMUstate',
                               'providesDirectionalDerivative'])
-            modelDescription.modelExchange.buildConfigurations = _get_build_configurations(fmiVersion, me)
 
         for cs in root.findall('CoSimulation'):
             modelDescription.coSimulation = CoSimulation()
@@ -436,10 +389,59 @@ def read_model_description(filename, validate=True):
                               'canGetAndSetFMUstate',
                               'canSerializeFMUstate',
                               'providesDirectionalDerivative'])
-            modelDescription.coSimulation.buildConfigurations = _get_build_configurations(fmiVersion, cs)
+
+    # build configurations
+    if fmiVersion == '2.0':
+
+        for interface_type in root.findall('ModelExchange') + root.findall('CoSimulation'):
+
+            modelIdentifier = interface_type.get('modelIdentifier')
+
+            if len(modelDescription.buildConfigurations) > 0 and modelDescription.buildConfigurations[0].modelIdentifier == modelIdentifier:
+                continue  # use existing build configuration for both FMI types
+
+            source_files = [file.get('name') for file in interface_type.findall('SourceFiles/File')]
+
+            if len(source_files) > 0:
+                buildConfiguration = BuildConfiguration()
+                modelDescription.buildConfigurations.append(buildConfiguration)
+                buildConfiguration.modelIdentifier = modelIdentifier
+                source_file_set = SourceFileSet()
+                buildConfiguration.sourceFileSets.append(source_file_set)
+                source_file_set.sourceFiles = source_files
+
+    elif fmiVersion.startswith('3.0'):
+
+        for bc in root.findall('BuildConfiguration'):
+
+            buildConfiguration = BuildConfiguration()
+            buildConfiguration.modelIdentifier = bc.get('modelIdentifier')
+
+            modelDescription.buildConfigurations.append(buildConfiguration)
+
+            for sf in bc.findall('SourceFileSet'):
+
+                sourceFileSet = SourceFileSet()
+                sourceFileSet.language = sf.get('language')
+
+                for pd in sf.findall('PreprocessorDefinition'):
+                    definition = PreProcessorDefinition()
+                    definition.name = pd.get('name')
+                    definition.value = pd.get('value')
+                    definition.optional = pd.get('optional') == 'true'
+                    definition.description = pd.get('description')
+                    sourceFileSet.preprocessorDefinitions.append(definition)
+
+                for f in sf.findall('SourceFile'):
+                    sourceFileSet.sourceFiles.append(f.get('name'))
+
+                for d in sf.findall('IncludeDirectory'):
+                    sourceFileSet.includeDirectories.append(d.get('name'))
+
+                buildConfiguration.sourceFileSets.append(sourceFileSet)
 
     # unit definitions
-    if fmiVersion == "1.0":
+    if fmiVersion == '1.0':
 
         for u in root.findall('UnitDefinitions/BaseUnit'):
             unit = Unit(name=u.get('unit'))
@@ -518,6 +520,7 @@ def read_model_description(filename, validate=True):
         'tunable':    {'parameter': 'exact', 'calculatedParameter': 'calculated', 'structuralParameter': 'exact', 'local': 'calculated'},
         'discrete':   {'input': None, 'output': 'calculated', 'local': 'calculated'},
         'continuous': {'input': None, 'output': 'calculated', 'local': 'calculated', 'independent': None},
+        'clock':      {'inferred': None, 'triggered': None},
     }
 
     # model variables
@@ -562,7 +565,8 @@ def read_model_description(filename, validate=True):
             'UInt32':      int,
             'Int64':       int,
             'UInt64':      int,
-            'Binary':      bytes
+            'Binary':      bytes,
+            'Clock':       float,
         }
 
         sv._python_type = type_map[sv.type]

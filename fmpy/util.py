@@ -618,17 +618,27 @@ def compile_dll(model_description, sources_dir, compiler=None):
 
     source_files = []
 
-    if model_description.coSimulation is not None:
+    if model_description.coSimulation is not None and len(model_description.coSimulation.buildConfigurations) != 0:
         model_identifier = model_description.coSimulation.modelIdentifier
-        preprocessor_definitions.append('CO_SIMULATION')
-        source_files += model_description.coSimulation.sourceFiles
-
-    if model_description.modelExchange is not None:
+        build_configuration = model_description.coSimulation.buildConfigurations[0]
+    elif model_description.modelExchange is not None and len(model_description.modelExchange.buildConfigurations) != 0:
         model_identifier = model_description.modelExchange.modelIdentifier
-        preprocessor_definitions.append('MODEL_EXCHANGE')
-        for source_file in model_description.modelExchange.sourceFiles:
-            if source_file not in source_files:
-                source_files.append(source_file)
+        build_configuration = model_description.coSimulation.buildConfigurations[0]
+    else:
+        raise Exception("No build configuration found.")
+
+    if len(build_configuration.sourceFileSets) > 1:
+        raise Exception("More than one SourceFileSet is not supported.")
+
+    source_file_set = build_configuration.sourceFileSets[0]
+
+    source_files += source_file_set.sourceFiles
+
+    for definition in source_file_set.preprocessorDefinitions:
+        literal = definition.name
+        if definition.value is not None:
+            literal += '=' + definition.value
+        preprocessor_definitions.append(literal)
 
     if len(source_files) == 0:
         raise Exception("No source files specified in the model description.")
@@ -706,22 +716,19 @@ def compile_platform_binary(filename, output_filename=None):
         output_filename:  filename of the FMU with the compiled binary (None: overwrite existing FMU)
     """
 
-    from . import read_model_description, extract, platform
+    from . import read_model_description, extract, platform, platform_tuple
     import zipfile
     from shutil import copyfile, rmtree
 
     unzipdir = extract(filename)
 
-    md = read_model_description(filename)
+    model_description = read_model_description(filename)
 
-    binary = compile_dll(model_description=md, sources_dir=os.path.join(unzipdir, 'sources'))
+    binary = compile_dll(model_description=model_description, sources_dir=os.path.join(unzipdir, 'sources'))
 
     unzipdir2 = extract(filename)
 
-    platform_dir = os.path.join(unzipdir2, 'binaries', platform)
-
-    # if os.path.exists(platform_dir):
-    #     rmtree(platform_dir)
+    platform_dir = os.path.join(unzipdir2, 'binaries', platform if model_description.fmiVersion in ['1.0', '2.0'] else platform_tuple)
 
     if not os.path.exists(platform_dir):
         os.makedirs(platform_dir)
@@ -928,7 +935,10 @@ def create_cmake_project(filename, project_dir):
     if model_description.modelExchange is not None:
         definitions.append('MODEL_EXCHANGE')
 
-    sources = ['sources/' + file for file in implementation.sourceFiles]
+    # use the first source file set of the first build configuration
+    source_file_set = implementation.buildConfigurations[0].sourceFileSets[0]
+
+    sources = ['sources/' + file for file in source_file_set.sourceFiles]
 
     # substitute the variables
     txt = txt.replace('%MODEL_NAME%', model_description.modelName)

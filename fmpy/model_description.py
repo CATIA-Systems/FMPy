@@ -51,7 +51,7 @@ class CoSimulation(object):
         self.canGetAndSetFMUstate = False
         self.canSerializeFMUstate = False
         self.providesDirectionalDerivative = False
-        self.sourceFiles = []
+        self.buildConfigurations = []
 
 
 class ModelExchange(object):
@@ -65,7 +65,40 @@ class ModelExchange(object):
         self.canGetAndSetFMUstate = False
         self.canSerializeFMUstate = False
         self.providesDirectionalDerivative = False
+        self.buildConfigurations = []
+
+
+class BuildConfiguration(object):
+
+    def __init__(self):
+        self.sourceFileSets = []
+
+    def __repr__(self):
+        return 'BuildConfiguration %s' % self.sourceFileSets
+
+
+class PreProcessorDefinition(object):
+
+    def __init__(self):
+        self.name = None
+        self.value = None
+        self.optional = False
+        self.description = None
+
+    def __repr__(self):
+        return '%s=%s' % (self.name, self.value)
+
+
+class SourceFileSet(object):
+
+    def __init__(self):
+        self.language = None
+        self.preprocessorDefinitions = []
         self.sourceFiles = []
+        self.includeDirectories = []
+
+    def __repr__(self):
+        return '%s %s' % (self.language, self.sourceFiles)
 
 
 class ScalarVariable(object):
@@ -241,6 +274,53 @@ def _copy_attributes(element, object, attributes):
         setattr(object, attribute, value)
 
 
+def _get_build_configurations(fmi_version, implementation):
+
+    build_configurations = []
+
+    if fmi_version == '2.0':
+
+        source_files = [file.get('name') for file in implementation.findall('SourceFiles/File')]
+
+        if len(source_files) > 0:
+            build_configuration = BuildConfiguration()
+            build_configurations.append(build_configuration)
+            source_file_set = SourceFileSet()
+            build_configuration.sourceFileSets.append(source_file_set)
+            source_file_set.sourceFiles = source_files
+
+        return build_configurations
+
+    for bc in implementation.findall('BuildConfiguration'):
+
+        buildConfiguration = BuildConfiguration()
+
+        build_configurations.append(buildConfiguration)
+
+        for sf in bc.findall('SourceFileSet'):
+
+            sourceFileSet = SourceFileSet()
+            sourceFileSet.language = sf.get('language')
+
+            for pd in sf.findall('PreprocessorDefinition'):
+                definition = PreProcessorDefinition()
+                definition.name = pd.get('name')
+                definition.value = pd.get('value')
+                definition.optional = pd.get('optional') == 'true'
+                definition.description = pd.get('description')
+                sourceFileSet.preprocessorDefinitions.append(definition)
+
+            for f in sf.findall('SourceFile'):
+                sourceFileSet.sourceFiles.append(f.get('name'))
+
+            for d in sf.findall('IncludeDirectory'):
+                sourceFileSet.includeDirectories.append(d.get('name'))
+
+            buildConfiguration.sourceFileSets.append(sourceFileSet)
+
+    return build_configurations
+
+
 def read_model_description(filename, validate=True):
     """ Read the model description from an FMU without extracting it
 
@@ -301,8 +381,10 @@ def read_model_description(filename, validate=True):
 
     if fmiVersion == '1.0':
         modelDescription.numberOfContinuousStates = int(root.get('numberOfContinuousStates'))
-    else:
+    elif fmiVersion == '2.0':
         modelDescription.numberOfContinuousStates = len(root.findall('ModelStructure/Derivatives/Unknown'))
+    else:
+        modelDescription.numberOfContinuousStates = len(root.findall('ModelStructure/Derivative'))
 
     # default experiment
     for d in root.findall('DefaultExperiment'):
@@ -338,8 +420,7 @@ def read_model_description(filename, validate=True):
                               'canGetAndSetFMUstate',
                               'canSerializeFMUstate',
                               'providesDirectionalDerivative'])
-            for file in me.findall('SourceFiles/File'):
-                modelDescription.modelExchange.sourceFiles.append(file.get('name'))
+            modelDescription.modelExchange.buildConfigurations = _get_build_configurations(fmiVersion, me)
 
         for cs in root.findall('CoSimulation'):
             modelDescription.coSimulation = CoSimulation()
@@ -355,8 +436,7 @@ def read_model_description(filename, validate=True):
                               'canGetAndSetFMUstate',
                               'canSerializeFMUstate',
                               'providesDirectionalDerivative'])
-            for file in cs.findall('SourceFiles/File'):
-                modelDescription.coSimulation.sourceFiles.append(file.get('name'))
+            modelDescription.coSimulation.buildConfigurations = _get_build_configurations(fmiVersion, cs)
 
     # unit definitions
     if fmiVersion == "1.0":
@@ -393,7 +473,8 @@ def read_model_description(filename, validate=True):
     # type definitions
     type_definitions = {None: None}
 
-    for t in root.findall('TypeDefinitions/' + ('Type' if fmiVersion == "1.0" else 'SimpleType')):
+    # FMI 1 and 2
+    for t in root.findall('TypeDefinitions/' + ('Type' if fmiVersion == '1.0' else 'SimpleType')):
 
         first = t[0]  # first element
 
@@ -408,6 +489,23 @@ def read_model_description(filename, validate=True):
             it = Item(**item.attrib)
             if fmiVersion == '1.0':
                 it.value = i + 1
+            simple_type.items.append(it)
+
+        modelDescription.typeDefinitions.append(simple_type)
+        type_definitions[simple_type.name] = simple_type
+
+    # FMI 3
+    for t in root.findall('TypeDefinitions/*'):
+
+        if t.tag not in {'Float32', 'Float64', 'Int8', 'UInt8', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Int64', 'UInt64',
+                         'Boolean', 'String', 'Binary', 'Enumeration'}:
+            continue
+
+        simple_type = SimpleType(type=t.tag, **t.attrib)
+
+        # add enumeration items
+        for item in t.findall('Item'):
+            it = Item(**item.attrib)
             simple_type.items.append(it)
 
         modelDescription.typeDefinitions.append(simple_type)

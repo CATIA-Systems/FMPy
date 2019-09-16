@@ -3,14 +3,13 @@
 import os
 import pathlib
 from ctypes import *
-from . import free, calloc
+from . import free, calloc, sharedLibraryExtension, platform_tuple
 from .fmi1 import _FMU, printLogMessage
-from . import architecture, system, sharedLibraryExtension
 
 
 fmi3Component            = c_void_p
-fmi3ComponentEnvironment = c_void_p
-fmi3FMUstate             = c_void_p
+fmi3InstanceEnvironment  = c_void_p
+fmi3FMUState             = c_void_p
 fmi3ValueReference       = c_uint
 fmi3Float32              = c_float
 fmi3Float64              = c_double
@@ -26,7 +25,7 @@ fmi3Boolean              = c_int
 fmi3Char                 = c_char
 fmi3String               = c_char_p
 fmi3Binary               = c_char_p
-fmi3Type                 = c_int
+fmi3InterfaceType        = c_int
 fmi3Byte                 = c_char
 
 fmi3Status = c_int
@@ -38,10 +37,10 @@ fmi3Error   = 3
 fmi3Fatal   = 4
 fmi3Pending = 5
 
-fmi3CallbackLoggerTYPE         = CFUNCTYPE(None, fmi3ComponentEnvironment, fmi3String, fmi3Status, fmi3String, fmi3String)
-fmi3CallbackAllocateMemoryTYPE = CFUNCTYPE(c_void_p, fmi3ComponentEnvironment, c_size_t, c_size_t)
-fmi3CallbackFreeMemoryTYPE     = CFUNCTYPE(None, fmi3ComponentEnvironment, c_void_p)
-fmi3StepFinishedTYPE           = CFUNCTYPE(None, fmi3ComponentEnvironment, fmi3Status)
+fmi3CallbackLogMessageTYPE     = CFUNCTYPE(None, fmi3InstanceEnvironment, fmi3String, fmi3Status, fmi3String, fmi3String)
+fmi3CallbackAllocateMemoryTYPE = CFUNCTYPE(c_void_p, fmi3InstanceEnvironment, c_size_t, c_size_t)
+fmi3CallbackFreeMemoryTYPE     = CFUNCTYPE(None, fmi3InstanceEnvironment, c_void_p)
+fmi3CallbackStepFinishedTYPE   = CFUNCTYPE(None, fmi3InstanceEnvironment, fmi3Status)
 
 fmi3ModelExchange = 0
 fmi3CoSimulation  = 1
@@ -53,20 +52,20 @@ fmi3False = 0
 _mem_addr = set()
 
 
-def printLogMessage(componentEnvironment, instanceName, status, category, message):
+def printLogMessage(instanceEnvironment, instanceName, status, category, message):
     """ Print the FMU's log messages to the command line """
 
     label = ['OK', 'WARNING', 'DISCARD', 'ERROR', 'FATAL', 'PENDING'][status]
     print("[%s] %s" % (label, message))
 
 
-def allocateMemory(componentEnvironment, nobj, size):
+def allocateMemory(instanceEnvironment, nobj, size):
     mem = calloc(nobj, size)
     _mem_addr.add(mem)
     return mem
 
 
-def freeMemory(componentEnvironment, obj):
+def freeMemory(instanceEnvironment, obj):
     if obj in _mem_addr:
         free(obj)
         _mem_addr.remove(obj)
@@ -74,17 +73,17 @@ def freeMemory(componentEnvironment, obj):
         print("freeMemory() was called for a pointer (%s) that was not allocated" % obj)
 
 
-def stepFinished(componentEnvironment, status):
+def stepFinished(instanceEnvironment, status):
     pass
 
 
 class fmi3CallbackFunctions(Structure):
 
-    _fields_ = [('logger',               fmi3CallbackLoggerTYPE),
-                ('allocateMemory',       fmi3CallbackAllocateMemoryTYPE),
-                ('freeMemory',           fmi3CallbackFreeMemoryTYPE),
-                ('stepFinished',         fmi3StepFinishedTYPE),
-                ('componentEnvironment', fmi3ComponentEnvironment)]
+    _fields_ = [('logMessage',          fmi3CallbackLogMessageTYPE),
+                ('allocateMemory',      fmi3CallbackAllocateMemoryTYPE),
+                ('freeMemory',          fmi3CallbackFreeMemoryTYPE),
+                ('stepFinished',        fmi3CallbackStepFinishedTYPE),
+                ('instanceEnvironment', fmi3InstanceEnvironment)]
 
 
 class fmi3EventInfo(Structure):
@@ -103,7 +102,7 @@ class _FMU3(_FMU):
     def __init__(self, **kwargs):
 
         # build the path to the shared library
-        kwargs['libraryPath'] = os.path.join(kwargs['unzipDirectory'], 'binaries', architecture + '-' + system,
+        kwargs['libraryPath'] = os.path.join(kwargs['unzipDirectory'], 'binaries', platform_tuple,
                                              kwargs['modelIdentifier'] + sharedLibraryExtension)
 
         super(_FMU3, self).__init__(**kwargs)
@@ -120,7 +119,7 @@ class _FMU3(_FMU):
         # Creation and destruction of FMU instances and setting debug status
         self._fmi3Function('fmi3Instantiate',
                            ['instanceName', 'fmuType', 'guid', 'resourceLocation', 'callbacks', 'visible', 'loggingOn'],
-                           [fmi3String, fmi3Type, fmi3String, fmi3String, POINTER(fmi3CallbackFunctions), fmi3Boolean, fmi3Boolean],
+                           [fmi3String, fmi3InterfaceType, fmi3String, fmi3String, POINTER(fmi3CallbackFunctions), fmi3Boolean, fmi3Boolean],
                            fmi3Component)
 
         self._fmi3Function('fmi3FreeInstance', ['component'], [fmi3Component], None)
@@ -173,26 +172,26 @@ class _FMU3(_FMU):
                            [fmi3Component, POINTER(fmi3ValueReference), c_size_t, POINTER(c_size_t), POINTER(fmi3Binary), c_size_t])
 
         # Getting and setting the internal FMU state
-        self._fmi3Function('fmi3GetFMUstate', ['component', 'FMUstate'],
-                           [fmi3Component, POINTER(fmi3FMUstate)])
+        self._fmi3Function('fmi3GetFMUState', ['component', 'FMUState'],
+                           [fmi3Component, POINTER(fmi3FMUState)])
 
-        self._fmi3Function('fmi3SetFMUstate', ['component', 'FMUstate'],
-                           [fmi3Component, fmi3FMUstate])
+        self._fmi3Function('fmi3SetFMUState', ['component', 'FMUState'],
+                           [fmi3Component, fmi3FMUState])
 
-        self._fmi3Function('fmi3FreeFMUstate', ['component', 'FMUstate'],
-                           [fmi3Component, POINTER(fmi3FMUstate)])
+        self._fmi3Function('fmi3FreeFMUState', ['component', 'FMUState'],
+                           [fmi3Component, POINTER(fmi3FMUState)])
 
-        self._fmi3Function('fmi3SerializedFMUstateSize',
-                           ['component', 'FMUstate', 'size'],
-                           [fmi3Component, fmi3FMUstate, POINTER(c_size_t)])
+        self._fmi3Function('fmi3SerializedFMUStateSize',
+                           ['component', 'FMUState', 'size'],
+                           [fmi3Component, fmi3FMUState, POINTER(c_size_t)])
 
-        self._fmi3Function('fmi3SerializeFMUstate',
-                           ['component', 'FMUstate', 'serializedState', 'size'],
-                           [fmi3Component, fmi3FMUstate, POINTER(fmi3Byte), c_size_t])
+        self._fmi3Function('fmi3SerializeFMUState',
+                           ['component', 'FMUState', 'serializedState', 'size'],
+                           [fmi3Component, fmi3FMUState, POINTER(fmi3Byte), c_size_t])
 
-        self._fmi3Function('fmi3DeSerializeFMUstate',
-                           ['component', 'FMUstate', 'serializedState', 'size'],
-                           [fmi3Component, POINTER(fmi3Byte), c_size_t, POINTER(fmi3FMUstate)])
+        self._fmi3Function('fmi3DeSerializeFMUState',
+                           ['component', 'FMUState', 'serializedState', 'size'],
+                           [fmi3Component, POINTER(fmi3Byte), c_size_t, POINTER(fmi3FMUState)])
 
         # Getting partial derivatives
         self._fmi3Function('fmi3GetDirectionalDerivative',
@@ -258,7 +257,7 @@ class _FMU3(_FMU):
 
         if callbacks is None:
             callbacks = fmi3CallbackFunctions()
-            callbacks.logger = fmi3CallbackLoggerTYPE(printLogMessage)
+            callbacks.logger = fmi3CallbackLogMessageTYPE(printLogMessage)
             callbacks.allocateMemory = fmi3CallbackAllocateMemoryTYPE(allocateMemory)
             callbacks.freeMemory = fmi3CallbackFreeMemoryTYPE(freeMemory)
 
@@ -386,18 +385,18 @@ class _FMU3(_FMU):
 
     # Getting and setting the internal FMU state
 
-    def getFMUstate(self):
-        state = fmi3FMUstate()
-        self.fmi3GetFMUstate(self.component, byref(state))
+    def getFMUState(self):
+        state = fmi3FMUState()
+        self.fmi3GetFMUState(self.component, byref(state))
         return state
 
-    def setFMUstate(self, state):
-        self.fmi3SetFMUstate(self.component, state)
+    def setFMUState(self, state):
+        self.fmi3SetFMUState(self.component, state)
 
-    def freeFMUstate(self, state):
-        self.fmi3FreeFMUstate(self.component, byref(state))
+    def freeFMUState(self, state):
+        self.fmi3FreeFMUState(self.component, byref(state))
 
-    def serializeFMUstate(self, state):
+    def serializeFMUState(self, state):
         """ Serialize an FMU state
 
         Parameters:
@@ -408,12 +407,12 @@ class _FMU3(_FMU):
         """
 
         size = c_size_t()
-        self.fmi3SerializedFMUstateSize(self.component, state, byref(size))
+        self.fmi3SerializedFMUStateSize(self.component, state, byref(size))
         serializedState = create_string_buffer(size.value)
-        self.fmi3SerializeFMUstate(self.component, state, serializedState, size)
+        self.fmi3SerializeFMUState(self.component, state, serializedState, size)
         return serializedState.raw
 
-    def deSerializeFMUstate(self, serializedState, state):
+    def deSerializeFMUState(self, serializedState, state):
         """ De-serialize an FMU state
 
         Parameters:
@@ -422,7 +421,7 @@ class _FMU3(_FMU):
         """
 
         buffer = create_string_buffer(serializedState)
-        self.fmi3DeSerializeFMUstate(self.component, buffer, len(buffer), byref(state))
+        self.fmi3DeSerializeFMUState(self.component, buffer, len(buffer), byref(state))
 
     # Getting partial derivatives
 

@@ -536,20 +536,20 @@ def simulate_fmu(filename,
 
     if model_description.fmiVersion == '1.0':
         callbacks = fmi1CallbackFunctions()
-        callbacks.logger = fmi1CallbackLoggerTYPE(logger)
+        callbacks.logger         = fmi1CallbackLoggerTYPE(logger)
         callbacks.allocateMemory = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
-        callbacks.freeMemory = fmi1CallbackFreeMemoryTYPE(freeMemory)
+        callbacks.freeMemory     = fmi1CallbackFreeMemoryTYPE(freeMemory)
         callbacks.stepFinished = None
     elif model_description.fmiVersion == '2.0':
         callbacks = fmi2CallbackFunctions()
-        callbacks.logger = fmi2CallbackLoggerTYPE(logger)
+        callbacks.logger         = fmi2CallbackLoggerTYPE(logger)
         callbacks.allocateMemory = fmi2CallbackAllocateMemoryTYPE(allocateMemory)
-        callbacks.freeMemory = fmi2CallbackFreeMemoryTYPE(freeMemory)
+        callbacks.freeMemory     = fmi2CallbackFreeMemoryTYPE(freeMemory)
     else:
         callbacks = fmi3.fmi3CallbackFunctions()
-        callbacks.logger = fmi3.fmi3CallbackLoggerTYPE(logger)
+        callbacks.logMessage     = fmi3.fmi3CallbackLogMessageTYPE(logger)
         callbacks.allocateMemory = fmi3.fmi3CallbackAllocateMemoryTYPE(fmi3.allocateMemory)
-        callbacks.freeMemory = fmi3.fmi3CallbackFreeMemoryTYPE(fmi3.freeMemory)
+        callbacks.freeMemory     = fmi3.fmi3CallbackFreeMemoryTYPE(fmi3.freeMemory)
 
     # simulate_fmu the FMU
     if fmi_type == 'ModelExchange' and model_description.modelExchange is not None:

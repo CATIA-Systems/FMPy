@@ -45,6 +45,11 @@ jobs:
       summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
       reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
 
+  - task: PublishPipelineArtifact@1
+    inputs:
+      path: dist
+      artifact: 'linux-python-$(python.version)'
+
 - job:
   displayName: 'macOS 10.13'
   strategy:
@@ -97,6 +102,11 @@ jobs:
       summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
       reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
 
+  - task: PublishPipelineArtifact@1
+    inputs:
+      path: dist
+      artifact: 'macosx-python-$(python.version)'
+
 - job:
   displayName: 'Windows 2016'
   strategy:
@@ -141,3 +151,8 @@ jobs:
       codeCoverageTool: Cobertura
       summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
       reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      path: dist
+      artifact: 'windows-python-$(python.version)'

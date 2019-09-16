@@ -1,3 +1,10 @@
+## v0.2.13 (2019-09-16)
+
+- `NEW` check for illegal filenames in FMU archives
+- `NEW` reload button in GUI
+- `IMPROVED` extended FMI 3.0 alpha 2 support
+- `CHANGED` increased max. filesize for Cross-Check FMUs
+
 ## v0.2.12 (2019-07-15)
 
 Support for FMI 3.0 Alpha 1, output interval in GUI

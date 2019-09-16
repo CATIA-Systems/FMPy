@@ -57,7 +57,7 @@ def validate_test_fmu(model_dir):
         for file in files:
             filename = os.path.join(root, file)
             filesize = os.path.getsize(filename)
-            maxsize = 4e6 if file.endswith('.fmu') else 1e6
+            maxsize = 10e6 if file.endswith('.fmu') else 1e6
             if filesize > maxsize:
                 problems.append("%s is larger than %g MB (%g MB)" % (filename, maxsize * 1e-6, filesize * 1e-6))
 

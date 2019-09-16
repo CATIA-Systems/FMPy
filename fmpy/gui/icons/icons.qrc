@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icons">
+    <file>reload-16x16.png</file>
     <file>down_arrow.png</file>
     <file>log.png</file>
     <file>stop.png</file>

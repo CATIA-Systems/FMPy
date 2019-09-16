@@ -1594,6 +1594,7 @@ QToolButton::menu-button {
     <bool>false</bool>
    </attribute>
    <addaction name="actionOpen"/>
+   <addaction name="actionReload"/>
    <addaction name="separator"/>
    <addaction name="actionSettings"/>
    <addaction name="actionShowLog"/>
@@ -1843,6 +1844,10 @@ QToolButton::menu-button {
    </property>
   </action>
   <action name="actionReload">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/icons/reload-16x16.png</normaloff>:/icons/reload-16x16.png</iconset>
+   </property>
    <property name="text">
     <string>&amp;Reload</string>
    </property>

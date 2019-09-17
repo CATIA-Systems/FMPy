@@ -1,5 +1,7 @@
 ## v0.2.13 (2019-09-16)
 
+Extended FMI 3.0 alpha 2 support & improved GUI
+
 - `NEW` check for illegal filenames in FMU archives
 - `NEW` reload button in GUI
 - `IMPROVED` extended FMI 3.0 alpha 2 support

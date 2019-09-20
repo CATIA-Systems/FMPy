@@ -3,7 +3,7 @@
 
 /*
 Standard header file to define the argument types of the
-functions of the Functional Mock-up Interface 3.0-wg003.3.
+functions of the Functional Mock-up Interface 3.0-alpha.1.
 This header file must be utilized both by the model and
 by the simulation engine.
 
@@ -52,36 +52,42 @@ typedef void*           fmi3InstanceEnvironment;  /* Pointer to FMU environment 
 /* end::ComponentEnvironment[] */
 
 /* tag::FMUState[] */
-typedef void*           fmi3FMUState;              /* Pointer to internal FMU state */
+typedef void*           fmi3FMUState;             /* Pointer to internal FMU state */
 /* end::FMUState[] */
 
 /* tag::ValueReference[] */
-typedef unsigned int    fmi3ValueReference;        /* Handle to the value of a variable */
+typedef unsigned int    fmi3ValueReference;       /* Handle to the value of a variable */
 /* end::ValueReference[] */
 
 /* tag::VariableTypes[] */
-typedef float           fmi3Float32;  /* Single precision floating point (32-bit) */
-typedef double          fmi3Float64;  /* Double precision floating point (64-bit) */
-typedef   int8_t        fmi3Int8;     /* 8-bit signed integer */
-typedef  uint8_t        fmi3UInt8;    /* 8-bit unsigned integer */
-typedef  int16_t        fmi3Int16;    /* 16-bit signed integer */
-typedef uint16_t        fmi3UInt16;   /* 16-bit unsigned integer */
-typedef  int32_t        fmi3Int32;    /* 32-bit signed integer */
-typedef uint32_t        fmi3UInt32;   /* 32-bit unsigned integer */
-typedef  int64_t        fmi3Int64;    /* 64-bit signed integer */
-typedef uint64_t        fmi3UInt64;   /* 64-bit unsigned integer */
-typedef int             fmi3Boolean;  /* Data type to be used with fmi3True and fmi3False */
-typedef char            fmi3Char;     /* Data type for one character */
+typedef           float fmi3Float32;  /* Single precision floating point (32-bit) */
+typedef          double fmi3Float64;  /* Double precision floating point (64-bit) */
+typedef          int8_t fmi3Int8;     /* 8-bit signed integer */
+typedef         uint8_t fmi3UInt8;    /* 8-bit unsigned integer */
+typedef         int16_t fmi3Int16;    /* 16-bit signed integer */
+typedef        uint16_t fmi3UInt16;   /* 16-bit unsigned integer */
+typedef         int32_t fmi3Int32;    /* 32-bit signed integer */
+typedef        uint32_t fmi3UInt32;   /* 32-bit unsigned integer */
+typedef         int64_t fmi3Int64;    /* 64-bit signed integer */
+typedef        uint64_t fmi3UInt64;   /* 64-bit unsigned integer */
+typedef             int fmi3Boolean;  /* Data type to be used with fmi3True and fmi3False */
+typedef            char fmi3Char;     /* Data type for one character */
 typedef const fmi3Char* fmi3String;   /* Data type for character strings
                                          ('\0' terminated, UTF8 encoded) */
-typedef char            fmi3Byte;     /* Smallest addressable unit of the machine
+typedef            char fmi3Byte;     /* Smallest addressable unit of the machine
                                          (typically one byte) */
 typedef const fmi3Byte* fmi3Binary;   /* Data type for binary data
                                          (out-of-band length terminated) */
+typedef             int fmi3Clock ;   /* Data type to be used with fmi3ClockActive and
+                                         fmi3ClockInactive */
 
 /* Values for fmi3Boolean */
 #define fmi3True  1
 #define fmi3False 0
+
+/* Values for fmi3Clock */
+#define fmi3ClockActive   1
+#define fmi3ClockInactive 0
 /* end::VariableTypes[] */
 
 #endif /* fmi3PlatformTypes_h */

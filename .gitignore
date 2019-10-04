@@ -4,14 +4,23 @@
 *.csv
 *.html
 
+# source archives
+*.tar.gz
+
 # Affinity Designer documents
 *.afdesign
 
 # compiled files
 *.py[cod]
 
+# shared libraries
+*.dll
+*.dylib
+*.so
+
 # build artifacts
 build/
+cvode-*/
 dist/
 MANIFEST
 *.egg-info

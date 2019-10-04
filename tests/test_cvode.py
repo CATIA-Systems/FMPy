@@ -1,5 +1,10 @@
 import unittest
 from fmpy.sundials import *
+from fmpy.sundials.nvector_serial import N_VNew_Serial, N_VDestroy_Serial, NV_DATA_S
+from fmpy.sundials.sunmatrix_dense import SUNDenseMatrix
+from fmpy.sundials.sunlinsol_dense import SUNLinSol_Dense
+from fmpy.sundials.cvode import *
+from fmpy.sundials.cvode_ls import *
 import numpy as np
 
 
@@ -12,16 +17,14 @@ class CVodeTest(unittest.TestCase):
         time = []
         value = []
 
-        cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON)
-
         T0 = 0.0
         nx = 2  # number of states (height, velocity)
         nz = 1  # number of event indicators
 
         def rhsf(t, y, ydot, user_data):
-            x  = np.ctypeslib.as_array(NV_DATA_S(y), (2,))
+            x = np.ctypeslib.as_array(NV_DATA_S(y), (2,))
             dx = np.ctypeslib.as_array(NV_DATA_S(ydot), (2,))
-            dx[0] = x[1]   # velocity
+            dx[0] = x[1]  # velocity
             dx[1] = -9.81  # gravity
             time.append(t)
             value.append(x[0])
@@ -30,7 +33,7 @@ class CVodeTest(unittest.TestCase):
         f = CVRhsFn(rhsf)
 
         def rootf(t, y, gout, user_data):
-            x  = np.ctypeslib.as_array(NV_DATA_S(y), (nz,))
+            x = np.ctypeslib.as_array(NV_DATA_S(y), (nz,))
             gout_ = np.ctypeslib.as_array(gout, (nz,))
             gout_[0] = x[0]
             return 0
@@ -39,25 +42,31 @@ class CVodeTest(unittest.TestCase):
 
         RTOL = 1e-5
 
-        y = N_VNew_Serial(nx)
-
         abstol = N_VNew_Serial(nx)
         abstol_array = np.ctypeslib.as_array(NV_DATA_S(abstol), (nx,))
         abstol_array[:] = RTOL
 
-        x = NV_DATA_S(y)
-        x_ = np.ctypeslib.as_array(x, (nx,))
+        y = N_VNew_Serial(nx)
+        x_ = np.ctypeslib.as_array(NV_DATA_S(y), (nx,))
         x_[0] = 1
         x_[1] = 5
 
-        flag = CVodeInit(cvode_mem, f, T0, y)
+        cvode_mem = CVodeCreate(CV_BDF)
 
-        flag = CVodeRootInit(cvode_mem, nz, g)
+        flag = CVodeInit(cvode_mem, f, T0, y)
 
         flag = CVodeSVtolerances(cvode_mem, RTOL, abstol)
 
-        flag = CVDense(cvode_mem, nx)
+        flag = CVodeRootInit(cvode_mem, nz, g)
 
+        A = SUNDenseMatrix(nx, nx)
+
+        LS = SUNLinSol_Dense(y, A);
+
+        flag = CVodeSetLinearSolver(cvode_mem, LS, A)
+
+        # flag = CVDense(cvode_mem, nx)
+        #
         tNext = 2.0
         tret = realtype(0.0)
 

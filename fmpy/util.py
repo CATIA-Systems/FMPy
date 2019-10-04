@@ -461,6 +461,11 @@ def download_file(url, checksum=None):
     with open(filename, 'wb') as f:
         f.write(response.content)
 
+    if checksum is not None:
+        hash = sha256_checksum(filename)
+        if not hash.startswith(checksum):
+            raise Exception("%s has the wrong SHA256 checksum. Expected %s but was %s." % (filename, checksum, hash))
+
 
 def download_test_file(fmi_version, fmi_type, tool_name, tool_version, model_name, filename):
     """ Download a file from the Test FMUs repository to the current directory """
@@ -588,8 +593,11 @@ def visual_c_versions():
     # Visual Studio 2017
     installation_path = visual_studio_installation_path()
 
-    if installation_path is not None and '2017' in installation_path:
-        versions.append(150)
+    if installation_path is not None:
+        if '2017' in installation_path:
+            versions.append(150)
+        if '2019' in installation_path:
+            versions.append(160)
 
     return sorted(versions)
 
@@ -747,8 +755,8 @@ def compile_platform_binary(filename, output_filename=None):
                     zf.write(path, os.path.relpath(path, base_path))
 
     # clean up
-    rmtree(unzipdir)
-    rmtree(unzipdir2)
+    rmtree(unzipdir, ignore_errors=True)
+    rmtree(unzipdir2, ignore_errors=True)
 
 
 def auto_interval(t):
@@ -817,7 +825,7 @@ def change_fmu(input_file, output_file=None, start_values={}):
                     zf.write(path, os.path.relpath(path, base_path))
 
     # clean up
-    rmtree(tempdir)
+    rmtree(tempdir, ignore_errors=True)
 
 
 def get_start_values(filename):
@@ -894,7 +902,7 @@ def get_start_values(filename):
     fmu.freeInstance()
 
     # clean up
-    rmtree(unzipdir)
+    rmtree(unzipdir, ignore_errors=True)
 
     return start_values
 

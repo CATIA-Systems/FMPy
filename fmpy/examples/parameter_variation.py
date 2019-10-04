@@ -169,7 +169,7 @@ def run_experiment(show_plot=True):
                 break
 
     # clean up
-    shutil.rmtree(unzipdir)
+    shutil.rmtree(unzipdir, ignore_errors=True)
 
     if show_plot:
         print("Plotting results...")

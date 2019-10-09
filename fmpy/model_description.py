@@ -275,12 +275,13 @@ def _copy_attributes(element, object, attributes):
         setattr(object, attribute, value)
 
 
-def read_model_description(filename, validate=True):
+def read_model_description(filename, validate=True, validate_variable_names=False):
     """ Read the model description from an FMU without extracting it
 
     Parameters:
-        filename   filename of the FMU or directory with extracted FMU
-        validate   whether the model description should be validated
+        filename                 filename of the FMU or directory with extracted FMU
+        validate                 whether the model description should be validated
+        validate_variable_names  validate the variable names against the EBNF
 
     returns:
         model_description   a ModelDescription object
@@ -721,5 +722,32 @@ def read_model_description(filename, validate=True):
 
                 if variable.displayUnit is not None and variable.displayUnit not in unit_definitions[unit]:
                     raise Exception("The display unit '%s' of variable '%s' is not defined." % (variable.displayUnit, variable.name))
+
+    if modelDescription.variableNamingConvention == 'structured' and validate_variable_names:
+
+        from lark import Lark
+
+        grammar = r"""
+            name            : identifier | "der(" identifier ("," unsignedinteger)? ")"
+            identifier      : bname arrayindices? ("." bname arrayindices?)*
+            bname           : nondigit (nondigit|digit)* | qname
+            nondigit        : "_" | "a".."z" | "A".."Z"
+            digit           : "0".."9"
+            qname           : "’" ( qchar | escape ) ( qchar | escape ) "’"
+            qchar           : nondigit | digit | "!" | "#" | "$" | "%" | "&" | "(" | ")" 
+                              | "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" | ">"
+                              | "=" | "?" | "@" | "[" | "]" | "^" | "{" | "}" | "|" | "~" | " "
+            escape          : "\’" | "\"" | "\?" | "\\" | "\a" | "\b" | "\f" | "\n" | "\r" | "\t" | "\v"
+            arrayindices    : "[" unsignedinteger ("," unsignedinteger)* "]"
+            unsignedinteger : digit+
+            """
+
+        parser = Lark(grammar, start='name')
+
+        try:
+            for variable in modelDescription.modelVariables:
+                parser.parse(variable.name)
+        except Exception as e:
+            raise Exception('"%s" is not a legal variable name for naming convention "structured". %s' % (variable.name, e))
 
     return modelDescription

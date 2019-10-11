@@ -118,7 +118,7 @@ def cross_check(fmus_dir, report, result_dir, simulate, tool_name, tool_version,
 
         # read the model description
         try:
-            model_description = fmpy.read_model_description(fmu_filename)
+            model_description = fmpy.read_model_description(fmu_filename, validate=True, validate_variable_names=True)
             xml_cell = '<td class="status"><span class="label label-success">valid</span></td>'
         except Exception as e:
             # try again without validation

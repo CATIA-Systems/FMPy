@@ -648,7 +648,14 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
 
     if validate:
 
-        # validate derivatives
+        # assert attribute "derivative" for variables with name "der(...)"
+        if modelDescription.variableNamingConvention == 'structured' and modelDescription.fmiVersion == '2.0' or modelDescription.fmiVersion.startswith(
+                '3.0'):
+            for variable in modelDescription.modelVariables:
+                if variable.name.startswith('der(') and variable.name.endswith(')') and variable.derivative is None:
+                    raise Exception('Variable "%s" is missing attribute "derivative".' % variable.name)
+
+        # assert attribute "derivative" for derivatives defined in <ModelStructure>
         for i, derivative in enumerate(modelDescription.derivatives):
             if derivative.variable.derivative is None:
                 raise Exception("State variable '%s' (state index %d) does not define a derivative." % (derivative.variable.name, i + 1))

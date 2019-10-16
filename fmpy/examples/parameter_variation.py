@@ -120,7 +120,7 @@ def run_experiment(show_plot=True):
     print("  IDC", i_dc)
 
     if sync:
-        dask.set_options(get=dask.dask.local.get_sync)  # synchronized scheduler
+        dask.config.set(scheduler='synchronous')  # synchronized scheduler
 
     # download the FMU
     download_test_file('2.0', 'CoSimulation', 'Dymola', '2017', 'Rectifier', fmu_filename)

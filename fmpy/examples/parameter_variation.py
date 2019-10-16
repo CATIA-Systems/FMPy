@@ -101,12 +101,13 @@ def simulate_fmu(args):
 
     if sync:
         # remember the shared library handle so we can unload it later
+        global dll_handle
         dll_handle = fmu.dll._handle
     else:
         # unload the shared library directly
         fmpy.freeLibrary(fmu.dll._handle)
 
-    return zipped, fmu.dll._handle
+    return zipped
 
 
 def run_experiment(show_plot=True):
@@ -160,7 +161,7 @@ def run_experiment(show_plot=True):
     LOSSES = np.zeros_like(V_AC)
 
     # put the results together
-    for zipped, dll_handle in results:
+    for zipped in results:
         for i, res in zipped:
             LOSSES[i] = res[1]
 

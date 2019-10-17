@@ -441,7 +441,6 @@ class MainWindow(QMainWindow):
 
         self.ui.dockWidget.show()
 
-        self.ui.actionLoadStartValues.setEnabled(True)
         self.ui.actionReload.setEnabled(True)
         self.ui.actionSettings.setEnabled(True)
         self.ui.actionShowLog.setEnabled(True)
@@ -449,6 +448,7 @@ class MainWindow(QMainWindow):
 
         can_simulate = platform in platforms
 
+        self.ui.actionLoadStartValues.setEnabled(can_simulate)
         self.ui.actionSimulate.setEnabled(can_simulate)
         self.stopTimeLineEdit.setEnabled(can_simulate)
         self.fmiTypeComboBox.setEnabled(can_simulate and len(fmi_types) > 1)

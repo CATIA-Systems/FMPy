@@ -142,6 +142,7 @@ class MainWindow(QMainWindow):
         self.ui.toolBar.addWidget(self.fmiTypeComboBox)
 
         # disable widgets
+        self.ui.actionLoadStartValues.setEnabled(False)
         self.ui.actionReload.setEnabled(False)
         self.ui.actionSettings.setEnabled(False)
         self.ui.actionShowLog.setEnabled(False)
@@ -440,6 +441,7 @@ class MainWindow(QMainWindow):
 
         self.ui.dockWidget.show()
 
+        self.ui.actionLoadStartValues.setEnabled(True)
         self.ui.actionReload.setEnabled(True)
         self.ui.actionSettings.setEnabled(True)
         self.ui.actionShowLog.setEnabled(True)

@@ -162,6 +162,9 @@ class ScalarVariable(object):
         self.reinit = False
         "Can be reinitialized at an event by the FMU"
 
+        self.sourceline = None
+        "Line number in the modelDescription.xml or None if unknown"
+
     def __repr__(self):
         return '%s "%s"' % (self.type, self.name)
 
@@ -538,6 +541,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
         sv.causality = variable.get('causality', default='local')
         sv.variability = variable.get('variability')
         sv.initial = variable.get('initial')
+        sv.sourceline = variable.sourceline
 
         if fmiVersion in ['1.0', '2.0']:
             # get the "value" element
@@ -653,7 +657,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
         # assert attribute "derivative" for derivatives defined in <ModelStructure>
         for i, derivative in enumerate(modelDescription.derivatives):
             if derivative.variable.derivative is None:
-                raise Exception("State variable '%s' (state index %d) does not define a derivative." % (derivative.variable.name, i + 1))
+                raise Exception('State variable "%s" (line %s, state index %d) does not define a derivative.' % (derivative.variable.name, derivative.variable.sourceline, i + 1))
 
         unit_definitions = {}
 
@@ -665,7 +669,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
         # assert unique variable names (FMI 1.0 spec, p. 34, FMI 2.0 spec, p. 45)
         for variable in modelDescription.modelVariables:
             if variable.name in variable_names:
-                raise Exception('Variable name "%s" is not unique.' % variable.name)
+                raise Exception('Variable name "%s" (line %s) is not unique.' % (variable.name, variable.sourceline))
             variable_names.add(variable.name)
 
         if modelDescription.fmiVersion == '2.0':
@@ -673,7 +677,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
             # assert required start values (see FMI 2.0 spec, p. 47)
             for variable in modelDescription.modelVariables:
                 if (variable.initial in {'exact', 'approx'} or variable.causality == 'input') and variable.start is None:
-                    raise Exception('Variable "%s" has no start value.' % variable.name)
+                    raise Exception('Variable "%s" (line %s) has no start value.' % (variable.name, variable.sourceline))
 
             # legal combinations of causality and variability (see FMI 2.0 spec, p. 49)
             legal_combinations = {
@@ -696,20 +700,20 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
 
             for variable in modelDescription.modelVariables:
                 if (variable.causality, variable.variability) not in legal_combinations:
-                    raise Exception('The combination causlity="%s" and variability="%s" in variable "%s" is not allowed.'
-                                    % (variable.causality, variable.variability, variable.name))
+                    raise Exception('The combination causlity="%s" and variability="%s" in variable "%s" (line %s) is not allowed.'
+                                    % (variable.causality, variable.variability, variable.name, variable.sourceline))
 
             # check required start values
             for variable in modelDescription.modelVariables:
                 if (variable.initial in {'exact', 'approx'} or variable.causality == 'input') and variable.start is None:
-                    raise Exception('Variable "%s" has no start value.' % variable.name)
+                    raise Exception('Variable "%s" (line %s) has no start value.' % (variable.sourceline, variable.name))
 
             # validate outputs
             outputs = set([v for v in modelDescription.modelVariables if v.causality == 'output'])
             unknowns = set([u.variable for u in modelDescription.outputs])
 
             if outputs != unknowns:
-                raise Exception('ModelStructure/Outputs must have exactly one entry for each variable with causality="output"')
+                raise Exception('ModelStructure/Outputs must have exactly one entry for each variable with causality="output".')
 
             # validate units
             for variable in modelDescription.modelVariables:
@@ -720,10 +724,10 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
                     unit = variable.declaredType.unit
 
                 if unit is not None and unit not in unit_definitions:
-                    raise Exception("The unit '%s' of variable '%s' is not defined." % (unit, variable.name))
+                    raise Exception('The unit "%s" of variable "%s" (line %s) is not defined.' % (unit, variable.name, variable.sourceline))
 
                 if variable.displayUnit is not None and variable.displayUnit not in unit_definitions[unit]:
-                    raise Exception("The display unit '%s' of variable '%s' is not defined." % (variable.displayUnit, variable.name))
+                    raise Exception('The display unit "%s" of variable "%s" (line %s) is not defined.' % (variable.displayUnit, variable.name, variable.sourceline))
 
     if modelDescription.variableNamingConvention == 'structured' and validate_variable_names:
 
@@ -750,6 +754,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
             for variable in modelDescription.modelVariables:
                 parser.parse(variable.name)
         except Exception as e:
-            raise Exception('"%s" is not a legal variable name for naming convention "structured". %s' % (variable.name, e))
+            raise Exception('"%s" (line %s) is not a legal variable name for naming convention "structured". %s'
+                            % (variable.name, variable.sourceline, e))
 
     return modelDescription

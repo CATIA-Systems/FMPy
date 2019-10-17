@@ -20,7 +20,7 @@ class ValidationTest(unittest.TestCase):
         except Exception as e:
             message = str(e)
 
-        self.assertEqual(message, "The unit '' of variable 'inputs' is not defined.")
+        self.assertEqual(message, 'The unit "" of variable "inputs" (line 183) is not defined.')
 
     def test_validate_variable_name(self):
 
@@ -31,7 +31,7 @@ class ValidationTest(unittest.TestCase):
         except Exception as e:
             message = str(e)
 
-        self.assertTrue(message.startswith('"CoupledClutches_r(19)" is not a legal variable name for naming convention "structured".'))
+        self.assertTrue(message.startswith('"CoupledClutches_r(19)" (line 192) is not a legal variable name for naming convention "structured".'))
 
 
 if __name__ == '__main__':

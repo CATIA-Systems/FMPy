@@ -293,12 +293,12 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
     import zipfile
     from lxml import etree
     import os
+    from .util import _is_string
 
-    if isinstance(filename, str) and os.path.isdir(filename):  # extracted FMU
-        if os.path.isdir(filename):
-            filename = os.path.join(filename, 'modelDescription.xml')
+    if _is_string(filename) and os.path.isdir(filename):  # extracted FMU
+        filename = os.path.join(filename, 'modelDescription.xml')
         tree = etree.parse(filename)
-    elif isinstance(filename, str) and os.path.isfile(filename) and filename.lower().endswith('.xml'):  # XML file
+    elif _is_string(filename) and os.path.isfile(filename) and filename.lower().endswith('.xml'):  # XML file
         tree = etree.parse(filename)
     else:  # FMU as path or file like object
         with zipfile.ZipFile(filename, 'r') as zf:

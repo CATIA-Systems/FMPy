@@ -943,3 +943,10 @@ def create_cmake_project(filename, project_dir):
 
     with open(os.path.join(project_dir, 'CMakeLists.txt'), 'w') as outfile:
         outfile.write(txt)
+
+
+def _is_string(s):
+    """ Python 2 and 3 compatible type check for strings """
+    
+    import sys
+    return isinstance(s, basestring if sys.version_info[0] == 2 else str)

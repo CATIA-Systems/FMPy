@@ -100,6 +100,12 @@ To learn more about how to use FMPy in you own scripts take a look at the
 [custom_input.py](fmpy/examples/custom_input.py) and
 [parameter_variation.py](fmpy/examples/parameter_variation.py) examples.
 
+## Commercial Support
+
+You're starting a project, need training or professional support?
+Our partners at LTX Simulation are ready to help you.
+Please send an e-mail to support@ltx.de for a quote.
+
 ------------------------------------
 
 &copy; 2018 Dassault Syst&egrave;mes

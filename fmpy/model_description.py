@@ -739,11 +739,11 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
             bname           : nondigit (nondigit|digit)* | qname
             nondigit        : "_" | "a".."z" | "A".."Z"
             digit           : "0".."9"
-            qname           : "’" ( qchar | escape ) ( qchar | escape ) "’"
+            qname           : """ + u'"\u0027"' + r""" ( qchar | escape ) ( qchar | escape ) """ + u'"\u0027"' + r"""
             qchar           : nondigit | digit | "!" | "#" | "$" | "%" | "&" | "(" | ")" 
                               | "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" | ">"
                               | "=" | "?" | "@" | "[" | "]" | "^" | "{" | "}" | "|" | "~" | " "
-            escape          : "\’" | "\"" | "\?" | "\\" | "\a" | "\b" | "\f" | "\n" | "\r" | "\t" | "\v"
+            escape          : """ + u'"\u0027"' + r""" | "\"" | "\?" | "\\" | "\a" | "\b" | "\f" | "\n" | "\r" | "\t" | "\v"
             arrayindices    : "[" unsignedinteger ("," unsignedinteger)* "]"
             unsignedinteger : digit+
             """

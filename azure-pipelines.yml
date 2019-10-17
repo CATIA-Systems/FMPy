@@ -145,6 +145,7 @@ jobs:
     inputs:
       testResultsFiles: '**/test-*.xml'
       testRunTitle: 'Publish test results for Python $(python.version)'
+      failTaskOnFailedTests: true
 
   - task: PublishCodeCoverageResults@1
     inputs:

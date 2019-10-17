@@ -81,6 +81,7 @@ class SimulationThread(QThread):
                                        input=self.input,
                                        output=self.output,
                                        debug_logging=self.debugLogging,
+                                       visible=True,
                                        fmi_call_logger=self.logFMICall if self.fmiLogging else None,
                                        logger=self.logFMUMessage,
                                        step_finished=self.stepFinished)

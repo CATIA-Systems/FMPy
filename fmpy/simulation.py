@@ -41,6 +41,9 @@ class Recorder(object):
         # collect the variables to record
         for sv in modelDescription.modelVariables:
 
+            if sv.name == 'time':
+                continue  # "time" is reserved for the simulation time
+
             # collect the variables to record
             if (variableNames is not None and sv.name in variableNames) or (variableNames is None and sv.causality == 'output'):
                 type = sv.type

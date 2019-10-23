@@ -45,6 +45,7 @@ def main():
     parser.add_argument('--output-file', help="CSV to store the results")
     parser.add_argument('--timeout', type=float, help="max. time to wait for the simulation to finish")
     parser.add_argument('--debug-logging', action='store_true', help="enable the FMU's debug logging")
+    parser.add_argument('--visible', action='store_true', help="enable interactive mode")
     parser.add_argument('--fmi-logging', action='store_true', help="enable FMI logging")
     parser.add_argument('--show-plot', action='store_true', help="plot the results")
 
@@ -111,6 +112,7 @@ def main():
                               output=args.output_variables,
                               timeout=args.timeout,
                               debug_logging=args.debug_logging,
+                              visible=args.visible,
                               fmi_call_logger=fmi_call_logger)
 
         if args.output_file:

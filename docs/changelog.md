@@ -1,4 +1,16 @@
+## v0.2.14 (2019-10-23)
+
+Improved validation & --visible option for CLI
+
+- `FIXED` "Load Start Values" only enabled when FMU can be simulated
+- `NEW` --visible option in CLI
+- `NEW` XML line numbers added to validation messages
+- `NEW` validation of variables names for naming convention "structured"
+- `IMPROVED` visible=fmi2True when simulating in GUI
+
 ## v0.2.13 (2019-09-16)
+
+Extended FMI 3.0 alpha 2 support & improved GUI
 
 - `NEW` check for illegal filenames in FMU archives
 - `NEW` reload button in GUI

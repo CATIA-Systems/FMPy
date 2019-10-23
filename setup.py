@@ -36,7 +36,7 @@ package_data = {
     'fmpy.ssp': ['schema/*.xsd'],
 }
 
-install_requires = ['lxml', 'numpy', 'pathlib', 'pywin32;platform_system=="Windows"']
+install_requires = ['lark-parser', 'lxml', 'numpy', 'pathlib', 'pywin32;platform_system=="Windows"']
 
 extras_require = {
     'examples': ['dask[bag]', 'requests'],
@@ -47,7 +47,7 @@ extras_require = {
 extras_require['complete'] = sorted(set(sum(extras_require.values(), [])))
 
 setup(name='FMPy',
-      version='0.2.13',
+      version='0.2.14',
       description="Simulate Functional Mock-up Units (FMUs) in Python",
       long_description=long_description,
       author="Torsten Sommer",

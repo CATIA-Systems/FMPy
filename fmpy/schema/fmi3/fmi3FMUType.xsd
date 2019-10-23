@@ -37,57 +37,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:include schemaLocation="fmi3Annotation.xsd"/>
 	<xs:complexType name="fmi3FMUType">
 		<xs:sequence minOccurs="0">
-			<xs:element name="BuildConfiguration" minOccurs="0" maxOccurs="unbounded">
-				<xs:complexType>
-					<xs:sequence>
-						<xs:element name="SourceFileSet" minOccurs="0" maxOccurs="unbounded">
-							<xs:complexType>
-								<xs:sequence>
-									<xs:element name="SourceFile" maxOccurs="unbounded">
-										<xs:complexType>
-											<xs:attribute name="name" type="xs:normalizedString" use="required"/>
-										</xs:complexType>
-									</xs:element>
-									<xs:element name="PreprocessorDefinition" minOccurs="0" maxOccurs="unbounded">
-										<xs:complexType>
-											<xs:sequence>
-												<xs:element name="Option" minOccurs="0" maxOccurs="unbounded">
-													<xs:complexType>
-														<xs:attribute name="value" type="xs:normalizedString"/>
-														<xs:attribute name="description" type="xs:string"/>
-													</xs:complexType>
-												</xs:element>
-											</xs:sequence>
-											<xs:attribute name="name" type="xs:normalizedString" use="required"/>
-											<xs:attribute name="optional" type="xs:boolean" default="false"/>
-											<xs:attribute name="value" type="xs:normalizedString"/>
-											<xs:attribute name="description" type="xs:string"/>
-										</xs:complexType>
-									</xs:element>
-									<xs:element name="IncludeDirectory" minOccurs="0" maxOccurs="unbounded">
-										<xs:complexType>
-											<xs:attribute name="name" type="xs:normalizedString" use="required"/>
-										</xs:complexType>
-									</xs:element>
-								</xs:sequence>
-								<xs:attribute name="language" type="xs:normalizedString"/>
-								<xs:attribute name="compiler" type="xs:normalizedString"/>
-								<xs:attribute name="compilerOptions" type="xs:string"/>
-							</xs:complexType>
-						</xs:element>
-						<xs:element name="Library" minOccurs="0" maxOccurs="unbounded">
-							<xs:complexType>
-								<xs:attribute name="name" type="xs:normalizedString" use="required"/>
-								<xs:attribute name="version" type="xs:normalizedString"/>
-								<xs:attribute name="external" type="xs:boolean" default="false"/>
-								<xs:attribute name="description" type="xs:string"/>
-							</xs:complexType>
-						</xs:element>
-					</xs:sequence>
-					<xs:attribute name="platform" type="xs:normalizedString"/>
-					<xs:attribute name="description" type="xs:string"/>
-				</xs:complexType>
-			</xs:element>
 			<xs:element name="VendorAnnotations" type="fmi3Annotation" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="modelIdentifier" type="xs:normalizedString" use="required"/>

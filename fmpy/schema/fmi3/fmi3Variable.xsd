@@ -269,6 +269,14 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
+	<xs:complexType name="fmi3Clock">
+		<xs:complexContent>
+			<xs:extension base="fmi3VariableBase">
+				<xs:attributeGroup ref="fmi3ClockAttributes"/>
+				<xs:attribute name="start" type="xs:boolean"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>	
 	<xs:complexType name="fmi3VariableBase" abstract="true">
 		<xs:sequence>
 			<xs:element name="Dimension" minOccurs="0" maxOccurs="unbounded">
@@ -292,6 +300,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					<xs:enumeration value="local"/>
 					<xs:enumeration value="independent"/>
 					<xs:enumeration value="structuralParameter"/>
+					<xs:enumeration value="inferred"/>
+					<xs:enumeration value="triggered"/>
 				</xs:restriction>
 			</xs:simpleType>
 		</xs:attribute>
@@ -303,6 +313,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					<xs:enumeration value="tunable"/>
 					<xs:enumeration value="discrete"/>
 					<xs:enumeration value="continuous"/>
+					<xs:enumeration value="clock"/>
 				</xs:restriction>
 			</xs:simpleType>
 		</xs:attribute>
@@ -317,6 +328,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		</xs:attribute>
 		<xs:attribute name="canHandleMultipleSetPerTimeInstant" type="xs:boolean"/>
 		<xs:attribute name="declaredType" type="xs:normalizedString"/>
+		<xs:attribute name="clockReference" type="xs:unsignedInt" use="optional"/>
+		<xs:attribute name="intermediateAccess" type="xs:boolean" use="optional"/>
 	</xs:complexType>
 
 	<xs:group name="fmi3Variable">
@@ -335,6 +348,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<xs:element name="String" type="fmi3String"/>
 			<xs:element name="Binary" type="fmi3Binary"/>
 			<xs:element name="Enumeration" type="fmi3Enumeration"/>
+			<xs:element name="Clock" type="fmi3Clock"/>
 		</xs:choice>
 	</xs:group>
 </xs:schema>

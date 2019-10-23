@@ -5,7 +5,7 @@ import os
 from ctypes import *
 import _ctypes
 
-__version__ = '0.2.13'
+__version__ = '0.2.14'
 
 
 # determine the platform
@@ -62,26 +62,27 @@ def supported_platforms(filename):
     """ Get the platforms supported by the FMU without extracting it
 
     Parameters:
-        filename    filename of the FMU or directory with extracted FMU
+        filename    filename of the FMU, directory with extracted FMU or file like object
 
     Returns:
         platforms   a list of supported platforms supported by the FMU
     """
 
-    import zipfile
-
-    platforms = []
+    from .util import _is_string
 
     # get the files within the FMU
-    if os.path.isdir(filename):
+    if _is_string(filename) and os.path.isdir(filename):  # extracted FMU
         names = []
         for dirpath, _, filenames in os.walk(filename):
             for name in filenames:
                 abspath = os.path.join(dirpath, name)
                 names.append(os.path.relpath(abspath, start=filename).replace('\\', '/'))
-    else:
+    else:  # FMU as path or file like object
+        import zipfile
         with zipfile.ZipFile(filename, 'r') as zf:
             names = zf.namelist()
+
+    platforms = []
 
     # check for the C-sources
     for name in names:

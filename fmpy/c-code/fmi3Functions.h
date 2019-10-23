@@ -4,7 +4,7 @@
 /*
 This header file must be utilized when compiling a FMU.
 It defines all functions of the
-     FMI 3.0-wg003.3 Model Exchange and Co-Simulation Interface.
+     FMI 3.0-alpha.1 Model Exchange and Co-Simulation Interface.
 
 In order to have unique function names even if several FMUs
 are compiled together (e.g. for embedded systems), every "real" function name
@@ -84,9 +84,7 @@ it may be set to __declspec(dllimport).
   #endif
 #endif
 
-/*
-Macros to construct the real function name (prepend function name by FMI3_FUNCTION_PREFIX)
-*/
+/* Macros to construct the real function name (prepend function name by FMI3_FUNCTION_PREFIX) */
 #if defined(FMI3_FUNCTION_PREFIX)
   #define fmi3Paste(a,b)     a ## b
   #define fmi3PasteB(a,b)    fmi3Paste(a,b)
@@ -95,18 +93,30 @@ Macros to construct the real function name (prepend function name by FMI3_FUNCTI
   #define fmi3FullName(name) name
 #endif
 
+/* FMI version */
+#define fmi3Version "3.0-alpha.1"
+
 /***************************************************
 Common Functions
 ****************************************************/
+
+/* Inquire version numbers and set debug logging */
 #define fmi3GetVersion               fmi3FullName(fmi3GetVersion)
 #define fmi3SetDebugLogging          fmi3FullName(fmi3SetDebugLogging)
+
+/* Creation and destruction of FMU instances */
 #define fmi3Instantiate              fmi3FullName(fmi3Instantiate)
 #define fmi3FreeInstance             fmi3FullName(fmi3FreeInstance)
+
+/* Enter and exit initialization mode, terminate and reset */
 #define fmi3SetupExperiment          fmi3FullName(fmi3SetupExperiment)
 #define fmi3EnterInitializationMode  fmi3FullName(fmi3EnterInitializationMode)
 #define fmi3ExitInitializationMode   fmi3FullName(fmi3ExitInitializationMode)
+#define fmi3EnterEventMode           fmi3FullName(fmi3EnterEventMode)
 #define fmi3Terminate                fmi3FullName(fmi3Terminate)
 #define fmi3Reset                    fmi3FullName(fmi3Reset)
+
+/* Getting and setting variable values */
 #define fmi3GetFloat32               fmi3FullName(fmi3GetFloat32)
 #define fmi3GetFloat64               fmi3FullName(fmi3GetFloat64)
 #define fmi3GetInt8                  fmi3FullName(fmi3GetInt8)
@@ -133,26 +143,47 @@ Common Functions
 #define fmi3SetBoolean               fmi3FullName(fmi3SetBoolean)
 #define fmi3SetString                fmi3FullName(fmi3SetString)
 #define fmi3SetBinary                fmi3FullName(fmi3SetBinary)
+
+/* Getting Variable Dependency Information */
 #define fmi3GetNumberOfVariableDependencies fmi3FullName(fmi3GetNumberOfVariableDependencies)
 #define fmi3GetVariableDependencies  fmi3FullName(fmi3GetVariableDependencies)
+
+/* Getting and setting the internal FMU state */
 #define fmi3GetFMUState              fmi3FullName(fmi3GetFMUState)
 #define fmi3SetFMUState              fmi3FullName(fmi3SetFMUState)
 #define fmi3FreeFMUState             fmi3FullName(fmi3FreeFMUState)
 #define fmi3SerializedFMUStateSize   fmi3FullName(fmi3SerializedFMUStateSize)
 #define fmi3SerializeFMUState        fmi3FullName(fmi3SerializeFMUState)
 #define fmi3DeSerializeFMUState      fmi3FullName(fmi3DeSerializeFMUState)
+
+/* Getting partial derivatives */
 #define fmi3GetDirectionalDerivative fmi3FullName(fmi3GetDirectionalDerivative)
 
+/* Entering and exiting the Configuration or Reconfiguration Mode */
+#define fmi3EnterConfigurationMode   fmi3FullName(fmi3EnterConfigurationMode)
+#define fmi3ExitConfigurationMode    fmi3FullName(fmi3ExitConfigurationMode)
+
+/* Clock related functions */
+#define fmi3GetClock                 fmi3FullName(fmi3GetClock)
+#define fmi3SetClock                 fmi3FullName(fmi3SetClock)
+#define fmi3GetIntervalDecimal       fmi3FullName(fmi3GetIntervalDecimal)
+#define fmi3GetIntervalFraction      fmi3FullName(fmi3GetIntervalFraction)
+#define fmi3SetIntervalDecimal       fmi3FullName(fmi3SetIntervalDecimal)
+#define fmi3SetIntervalFraction      fmi3FullName(fmi3SetIntervalFraction)
+#define fmi3NewDiscreteStates        fmi3FullName(fmi3NewDiscreteStates)
+
 /***************************************************
-Functions for FMI3 for Model Exchange
+Functions for Model Exchange
 ****************************************************/
 
-#define fmi3EnterEventMode                fmi3FullName(fmi3EnterEventMode)
-#define fmi3NewDiscreteStates             fmi3FullName(fmi3NewDiscreteStates)
 #define fmi3EnterContinuousTimeMode       fmi3FullName(fmi3EnterContinuousTimeMode)
 #define fmi3CompletedIntegratorStep       fmi3FullName(fmi3CompletedIntegratorStep)
+
+/* Providing independent variables and re-initialization of caching */
 #define fmi3SetTime                       fmi3FullName(fmi3SetTime)
 #define fmi3SetContinuousStates           fmi3FullName(fmi3SetContinuousStates)
+
+/* Evaluation of the model equations */
 #define fmi3GetDerivatives                fmi3FullName(fmi3GetDerivatives)
 #define fmi3GetEventIndicators            fmi3FullName(fmi3GetEventIndicators)
 #define fmi3GetContinuousStates           fmi3FullName(fmi3GetContinuousStates)
@@ -161,26 +192,25 @@ Functions for FMI3 for Model Exchange
 #define fmi3GetNumberOfContinuousStates   fmi3FullName(fmi3GetNumberOfContinuousStates)
 
 /***************************************************
-Functions for FMI3 for Co-Simulation
+Functions for Co-Simulation
 ****************************************************/
 
-#define fmi3SetInputDerivatives          fmi3FullName(fmi3SetInputDerivatives)
-#define fmi3GetOutputDerivatives         fmi3FullName(fmi3GetOutputDerivatives)
-#define fmi3DoStep                       fmi3FullName(fmi3DoStep)
-#define fmi3CancelStep                   fmi3FullName(fmi3CancelStep)
-#define fmi3GetDoStepPendingStatus       fmi3FullName(fmi3GetDoStepPendingStatus)
-#define fmi3GetDoStepDiscardedStatus     fmi3FullName(fmi3GetDoStepDiscardedStatus)
-
-/* Version number */
-#define fmi3Version "3.0-wg003.3"
+/* Simulating the slave */
+#define fmi3EnterStepMode            fmi3FullName(fmi3EnterStepMode)
+#define fmi3SetInputDerivatives      fmi3FullName(fmi3SetInputDerivatives)
+#define fmi3GetOutputDerivatives     fmi3FullName(fmi3GetOutputDerivatives)
+#define fmi3DoStep                   fmi3FullName(fmi3DoStep)
+#define fmi3ActivateModelPartition   fmi3FullName(fmi3ActivateModelPartition)
+#define fmi3DoEarlyReturn            fmi3FullName(fmi3DoEarlyReturn)
+#define fmi3GetDoStepDiscardedStatus fmi3FullName(fmi3GetDoStepDiscardedStatus)
 
 /***************************************************
 Common Functions
 ****************************************************/
 
 /* Inquire version numbers and set debug logging */
-FMI3_Export fmi3GetVersionTYPE       fmi3GetVersion;
-FMI3_Export fmi3SetDebugLoggingTYPE  fmi3SetDebugLogging;
+FMI3_Export fmi3GetVersionTYPE      fmi3GetVersion;
+FMI3_Export fmi3SetDebugLoggingTYPE fmi3SetDebugLogging;
 
 /* Creation and destruction of FMU instances */
 FMI3_Export fmi3InstantiateTYPE  fmi3Instantiate;
@@ -190,6 +220,7 @@ FMI3_Export fmi3FreeInstanceTYPE fmi3FreeInstance;
 FMI3_Export fmi3SetupExperimentTYPE         fmi3SetupExperiment;
 FMI3_Export fmi3EnterInitializationModeTYPE fmi3EnterInitializationMode;
 FMI3_Export fmi3ExitInitializationModeTYPE  fmi3ExitInitializationMode;
+FMI3_Export fmi3EnterEventModeTYPE          fmi3EnterEventMode;
 FMI3_Export fmi3TerminateTYPE               fmi3Terminate;
 FMI3_Export fmi3ResetTYPE                   fmi3Reset;
 
@@ -220,8 +251,6 @@ FMI3_Export fmi3SetUInt64TYPE  fmi3SetUInt64;
 FMI3_Export fmi3SetBooleanTYPE fmi3SetBoolean;
 FMI3_Export fmi3SetStringTYPE  fmi3SetString;
 FMI3_Export fmi3SetBinaryTYPE  fmi3SetBinary;
-FMI3_Export fmi3SetStringTYPE  fmi3SetString;
-FMI3_Export fmi3SetBinaryTYPE  fmi3SetBinary;
 
 /* Getting Variable Dependency Information */
 FMI3_Export fmi3GetNumberOfVariableDependenciesTYPE fmi3GetNumberOfVariableDependencies;
@@ -238,15 +267,25 @@ FMI3_Export fmi3DeSerializeFMUStateTYPE    fmi3DeSerializeFMUState;
 /* Getting partial derivatives */
 FMI3_Export fmi3GetDirectionalDerivativeTYPE fmi3GetDirectionalDerivative;
 
+/* Entering and exiting the Configuration or Reconfiguration Mode */
+FMI3_Export fmi3EnterConfigurationModeTYPE fmi3EnterConfigurationMode;
+FMI3_Export fmi3ExitConfigurationModeTYPE  fmi3ExitConfigurationMode;
+
+/* Clock related functions */
+FMI3_Export fmi3GetClockTYPE            fmi3GetClock;
+FMI3_Export fmi3SetClockTYPE            fmi3SetClock;
+FMI3_Export fmi3GetIntervalDecimalTYPE  fmi3GetIntervalDecimal;
+FMI3_Export fmi3GetIntervalFractionTYPE fmi3GetIntervalFraction;
+FMI3_Export fmi3SetIntervalDecimalTYPE  fmi3SetIntervalDecimal;
+FMI3_Export fmi3SetIntervalFractionTYPE fmi3SetIntervalFraction;
+FMI3_Export fmi3NewDiscreteStatesTYPE   fmi3NewDiscreteStates;
+
 /***************************************************
-Functions for FMI3 for Model Exchange
+Functions for Model Exchange
 ****************************************************/
 
-/* Enter and exit the different modes */
-FMI3_Export fmi3EnterEventModeTYPE               fmi3EnterEventMode;
-FMI3_Export fmi3NewDiscreteStatesTYPE            fmi3NewDiscreteStates;
-FMI3_Export fmi3EnterContinuousTimeModeTYPE      fmi3EnterContinuousTimeMode;
-FMI3_Export fmi3CompletedIntegratorStepTYPE      fmi3CompletedIntegratorStep;
+FMI3_Export fmi3EnterContinuousTimeModeTYPE fmi3EnterContinuousTimeMode;
+FMI3_Export fmi3CompletedIntegratorStepTYPE fmi3CompletedIntegratorStep;
 
 /* Providing independent variables and re-initialization of caching */
 FMI3_Export fmi3SetTimeTYPE             fmi3SetTime;
@@ -261,18 +300,18 @@ FMI3_Export fmi3GetNumberOfEventIndicatorsTYPE    fmi3GetNumberOfEventIndicators
 FMI3_Export fmi3GetNumberOfContinuousStatesTYPE   fmi3GetNumberOfContinuousStates;
 
 /***************************************************
-Functions for FMI3 for Co-Simulation
+Functions for Co-Simulation
 ****************************************************/
 
 /* Simulating the slave */
-FMI3_Export fmi3SetInputDerivativesTYPE  fmi3SetInputDerivatives;
-FMI3_Export fmi3GetOutputDerivativesTYPE fmi3GetOutputDerivatives;
-
-FMI3_Export fmi3DoStepTYPE     fmi3DoStep;
-FMI3_Export fmi3CancelStepTYPE fmi3CancelStep;
+FMI3_Export fmi3EnterStepModeTYPE          fmi3EnterStepMode;
+FMI3_Export fmi3SetInputDerivativesTYPE    fmi3SetInputDerivatives;
+FMI3_Export fmi3GetOutputDerivativesTYPE   fmi3GetOutputDerivatives;
+FMI3_Export fmi3ActivateModelPartitionTYPE fmi3ActivateModelPartition;
+FMI3_Export fmi3DoStepTYPE                 fmi3DoStep;
+FMI3_Export fmi3DoEarlyReturnTYPE          fmi3DoEarlyReturn;
 
 /* Inquire slave status */
-FMI3_Export fmi3GetDoStepPendingStatusTYPE   fmi3GetDoStepPendingStatus;
 FMI3_Export fmi3GetDoStepDiscardedStatusTYPE fmi3GetDoStepDiscardedStatus;
 
 #ifdef __cplusplus

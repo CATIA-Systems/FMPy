@@ -5,7 +5,7 @@ the preferred channel for [bug reports](#bug-reports) and [features requests](#f
 but please respect the following restriction:
 
 * Please **do not** use the issue tracker for personal support requests.
-  [Stack Overflow](https://stackoverflow.com/) is a better place to get help.
+  [Stack Overflow](https://stackoverflow.com/) or [commercial support](../README.md#commercial-support) are better places to get help.
 
 
 ## Bug reports

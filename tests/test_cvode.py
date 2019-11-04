@@ -1,5 +1,4 @@
 import unittest
-from fmpy.sundials import *
 from fmpy.sundials.nvector_serial import N_VNew_Serial, N_VDestroy_Serial, NV_DATA_S
 from fmpy.sundials.sunmatrix_dense import SUNDenseMatrix
 from fmpy.sundials.sunlinsol_dense import SUNLinSol_Dense
@@ -76,7 +75,7 @@ class CVodeTest(unittest.TestCase):
 
             if flag == CV_ROOT_RETURN:
 
-                rootsfound = (c_int * 1)()
+                rootsfound = (c_int * nz)()
 
                 flag = CVodeGetRootInfo(cvode_mem, rootsfound)
 
@@ -94,6 +93,7 @@ class CVodeTest(unittest.TestCase):
         #
         # plt.plot(time, value, '.-')
         # plt.show()
+
 
 if __name__ == '__main__':
     unittest.main()

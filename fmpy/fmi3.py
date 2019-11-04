@@ -196,7 +196,14 @@ class _FMU3(_FMU):
 
         self._fmi3Function('fmi3ExitInitializationMode', [(fmi3Instance, 'instance')])
 
-        self._fmi3Function('fmi3EnterEventMode', [(fmi3Instance, 'instance')])
+        self._fmi3Function('fmi3EnterEventMode', [
+            (fmi3Instance,       'instance'),
+            (fmi3Boolean,        'inputEvent'),
+            (fmi3Boolean,        'stepEvent'),
+            (POINTER(fmi3Int32), 'rootsFound'),
+            (c_size_t,           'nEventIndicators'),
+            (fmi3Boolean,        'timeEvent'),
+        ])
 
         self._fmi3Function('fmi3Terminate', [(fmi3Instance, 'instance')])
 
@@ -682,8 +689,18 @@ class FMU3Model(_FMU3):
 
     # Enter and exit the different modes
 
-    def enterEventMode(self):
-        return self.fmi3EnterEventMode(self.component)
+    def enterEventMode(self, inputEvent=False, stepEvent=False, rootsFound=[], timeEvent=False):
+
+        rootsFound = (fmi3Int32 * len(rootsFound))(*rootsFound)
+
+        return self.fmi3EnterEventMode(
+            self.component,
+            fmi3True if inputEvent else fmi3False,
+            fmi3True if stepEvent else fmi3False,
+            rootsFound,
+            len(rootsFound),
+            fmi3True if timeEvent else fmi3False,
+        )
 
     def newDiscreteStates(self):
         return self.fmi3NewDiscreteStates(self.component, byref(self.eventInfo))

@@ -151,9 +151,13 @@ class CVodeSolver(object):
             # set the states
             self.set_x(self.px, self.nx)
 
-        stateEvent = flag > 0
+        roots_found = np.zeros(shape=(self.nz,), dtype=np.int32)
 
-        return stateEvent, tret.value
+        if flag == CV_ROOT_RETURN:
+            p_roots_found = np.ctypeslib.as_ctypes(roots_found)
+            assert CVodeGetRootInfo(self.cvode_mem, p_roots_found) == CV_SUCCESS
+
+        return flag > 0, roots_found, tret.value
 
     def reset(self, time):
 

@@ -411,9 +411,17 @@ class ForwardEuler(object):
         # check for state event
         self.prez[:] = self.z
         self.get_z(self._pz, self.z.size)
-        stateEvent = np.any((self.prez * self.z) < 0)
 
-        return stateEvent, tNext
+        roots = np.zeros_like(self.z, dtype=np.int32)
+
+        # find zero crossings
+        for i, (prez, z) in enumerate(zip(self.prez, self.z)):
+            if prez < 0 and z >= 0:
+                roots[i] = -1
+            elif prez > 0 and z <= 0:
+                roots[i] = 1
+
+        return np.any(roots != 0), roots, tNext
 
     def reset(self, time):
         pass  # nothing to do
@@ -597,12 +605,14 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
     time = start_time
 
     is_fmi1 = model_description.fmiVersion == '1.0'
+    is_fmi2 = model_description.fmiVersion == '2.0'
+    is_fmi3 = model_description.fmiVersion.startswith('3.0')
 
-    if model_description.fmiVersion == '1.0':
+    if is_fmi1:
         fmu = FMU1Model(**fmu_kwargs)
         fmu.instantiate(functions=callbacks, loggingOn=debug_logging)
         fmu.setTime(time)
-    elif model_description.fmiVersion == '2.0':
+    elif is_fmi2:
         fmu = FMU2Model(**fmu_kwargs)
         fmu.instantiate(visible=visible, callbacks=callbacks, loggingOn=debug_logging)
         fmu.setupExperiment(startTime=start_time)
@@ -711,7 +721,7 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
 
         if t_next - time > eps:
             # do one step
-            state_event, time = solver.step(time, t_next)
+            state_event, roots_found, time = solver.step(time, t_next)
         else:
             # skip
             time = t_next
@@ -742,7 +752,10 @@ def simulateME(model_description, fmu_kwargs, start_time, stop_time, solver_name
                     
                 fmu.eventUpdate()
             else:
-                fmu.enterEventMode()
+                if is_fmi3:
+                    fmu.enterEventMode(inputEvent=input_event, stepEvent=step_event, rootsFound=roots_found, timeEvent=time_event)
+                else:
+                    fmu.enterEventMode()
 
                 if input_event:
                     input.apply(time=time, after_event=True)

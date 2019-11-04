@@ -95,7 +95,7 @@ class CVodeSolver(object):
 
         assert CVodeRootInit(self.cvode_mem, self.nz, self.g_) == CV_SUCCESS
 
-        self.A = SUNDenseMatrix(nx, nx)
+        self.A = SUNDenseMatrix(self.nx, self.nx)
 
         self.LS = SUNLinSol_Dense(self.x, self.A)
 

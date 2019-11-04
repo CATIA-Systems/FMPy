@@ -53,6 +53,7 @@ CV_NORMAL = 1
 CV_SUCCESS = 0
 # #define CV_TSTOP_RETURN          1
 # #define CV_ROOT_RETURN           2
+CV_ROOT_RETURN = 2
 #
 # #define CV_WARNING              99
 #
@@ -211,6 +212,9 @@ CVode.restype = c_int
 # SUNDIALS_EXPORT int CVodeGetEstLocalErrors(void *cvode_mem, N_Vector ele);
 # SUNDIALS_EXPORT int CVodeGetNumGEvals(void *cvode_mem, long int *ngevals);
 # SUNDIALS_EXPORT int CVodeGetRootInfo(void *cvode_mem, int *rootsfound);
+CVodeGetRootInfo = getattr(sundials_cvode, 'CVodeGetRootInfo')
+CVodeGetRootInfo.argtypes = [c_void_p, POINTER(c_int)]
+CVodeGetRootInfo.restype = c_int
 # SUNDIALS_EXPORT int CVodeGetIntegratorStats(void *cvode_mem, long int *nsteps,
 #                                             long int *nfevals,
 #                                             long int *nlinsetups,

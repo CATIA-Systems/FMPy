@@ -71,10 +71,18 @@ class CVodeTest(unittest.TestCase):
         tret = realtype(0.0)
 
         while tret.value < 2.0:
+
             flag = CVode(cvode_mem, tNext, y, byref(tret), CV_NORMAL)
-            if flag > 0:
-                if x_[1] < 0:
+
+            if flag == CV_ROOT_RETURN:
+
+                rootsfound = (c_int * 1)()
+
+                flag = CVodeGetRootInfo(cvode_mem, rootsfound)
+
+                if rootsfound[0] == -1:
                     x_[1] = -x_[1] * 0.5
+
                 # reset solver
                 flag = CVodeReInit(cvode_mem, tret, y)
 

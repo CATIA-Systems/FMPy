@@ -113,6 +113,10 @@ def allocateMemory(instanceEnvironment, nobj, size):
 
 
 def freeMemory(instanceEnvironment, obj):
+
+    if obj is None:
+        return  # NULL pointer
+
     if obj in _mem_addr:
         free(obj)
         _mem_addr.remove(obj)

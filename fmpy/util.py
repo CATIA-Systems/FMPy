@@ -916,6 +916,7 @@ def create_cmake_project(filename, project_dir):
         project_dir  existing directory for the CMake project
     """
 
+    from zipfile import ZipFile
     from fmpy import read_model_description, extract
 
     model_description = read_model_description(filename)
@@ -936,6 +937,10 @@ def create_cmake_project(filename, project_dir):
     if model_description.modelExchange is not None:
         definitions.append('MODEL_EXCHANGE')
 
+    with ZipFile(filename, 'r') as archive:
+        # don't add the current directory
+        resources = list(filter(lambda n: not n.startswith('.'), archive.namelist()))
+
     # use the first source file set of the first build configuration
     build_configuration = model_description.buildConfigurations[0]
     source_file_set = build_configuration.sourceFileSets[0]
@@ -948,6 +953,7 @@ def create_cmake_project(filename, project_dir):
     txt = txt.replace('%DEFINITIONS%', ' '.join(definitions))
     txt = txt.replace('%INCLUDE_DIRS%', '"' + source_dir.replace('\\', '/') + '"')
     txt = txt.replace('%SOURCES%', ' '.join(sources))
+    txt = txt.replace('%RESOURCES%', '\n    '.join('"' + r + '"' for r in resources))
 
     with open(os.path.join(project_dir, 'CMakeLists.txt'), 'w') as outfile:
         outfile.write(txt)

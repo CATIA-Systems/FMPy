@@ -729,32 +729,50 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
                 if variable.displayUnit is not None and variable.displayUnit not in unit_definitions[unit]:
                     raise Exception('The display unit "%s" of variable "%s" (line %s) is not defined.' % (variable.displayUnit, variable.name, variable.sourceline))
 
-    if modelDescription.variableNamingConvention == 'structured' and validate_variable_names:
+    if validate_variable_names:
 
-        from lark import Lark
+        if modelDescription.variableNamingConvention == 'flat':
 
-        grammar = r"""
-            name            : identifier | "der(" identifier ("," unsignedinteger)? ")"
-            identifier      : bname arrayindices? ("." bname arrayindices?)*
-            bname           : nondigit (nondigit|digit)* | qname
-            nondigit        : "_" | "a".."z" | "A".."Z"
-            digit           : "0".."9"
-            qname           : """ + u'"\u0027"' + r""" ( qchar | escape ) ( qchar | escape ) """ + u'"\u0027"' + r"""
-            qchar           : nondigit | digit | "!" | "#" | "$" | "%" | "&" | "(" | ")" 
-                              | "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" | ">"
-                              | "=" | "?" | "@" | "[" | "]" | "^" | "{" | "}" | "|" | "~" | " "
-            escape          : """ + u'"\u0027"' + r""" | "\"" | "\?" | "\\" | "\a" | "\b" | "\f" | "\n" | "\r" | "\t" | "\v"
-            arrayindices    : "[" unsignedinteger ("," unsignedinteger)* "]"
-            unsignedinteger : digit+
-            """
-
-        parser = Lark(grammar, start='name')
-
-        try:
             for variable in modelDescription.modelVariables:
-                parser.parse(variable.name)
-        except Exception as e:
-            raise Exception('"%s" (line %s) is not a legal variable name for naming convention "structured". %s'
-                            % (variable.name, variable.sourceline, e))
+
+                if u'\u000D' in variable.name:
+                    raise Exception('Variable "%s" (line %s) contains an illegal carriage return character (U+000D).'
+                                    % (variable.name, variable.sourceline))
+
+                if u'\u000A' in variable.name:
+                    raise Exception('Variable "%s" (line %s) contains an illegal line feed character (U+000A).'
+                                    % (variable.name, variable.sourceline))
+
+                if u'\u0009' in variable.name:
+                    raise Exception('Variable "%s" (line %s) contains an illegal tab character (U+0009).'
+                                    % (variable.name, variable.sourceline))
+
+        else:  # variableNamingConvention == structured
+
+            from lark import Lark
+
+            grammar = r"""
+                name            : identifier | "der(" identifier ("," unsignedinteger)? ")"
+                identifier      : bname arrayindices? ("." bname arrayindices?)*
+                bname           : nondigit (nondigit|digit)* | qname
+                nondigit        : "_" | "a".."z" | "A".."Z"
+                digit           : "0".."9"
+                qname           : """ + u'"\u0027"' + r""" ( qchar | escape ) ( qchar | escape ) """ + u'"\u0027"' + r"""
+                qchar           : nondigit | digit | "!" | "#" | "$" | "%" | "&" | "(" | ")" 
+                                  | "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" | ">"
+                                  | "=" | "?" | "@" | "[" | "]" | "^" | "{" | "}" | "|" | "~" | " "
+                escape          : """ + u'"\u0027"' + r""" | "\"" | "\?" | "\\" | "\a" | "\b" | "\f" | "\n" | "\r" | "\t" | "\v"
+                arrayindices    : "[" unsignedinteger ("," unsignedinteger)* "]"
+                unsignedinteger : digit+
+                """
+
+            parser = Lark(grammar, start='name')
+
+            try:
+                for variable in modelDescription.modelVariables:
+                    parser.parse(variable.name)
+            except Exception as e:
+                raise Exception('"%s" (line %s) is not a legal variable name for naming convention "structured". %s'
+                                % (variable.name, variable.sourceline, e))
 
     return modelDescription

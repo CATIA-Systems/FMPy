@@ -608,7 +608,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
             if sv.initial is None:
                 sv.initial = initial_defaults[sv.variability][sv.causality]
 
-        dimensions = variable.findall('Dimensions/Dimension')
+        dimensions = variable.findall('Dimension')
 
         if dimensions:
             sv.dimensions = []

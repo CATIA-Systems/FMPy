@@ -300,8 +300,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					<xs:enumeration value="local"/>
 					<xs:enumeration value="independent"/>
 					<xs:enumeration value="structuralParameter"/>
-					<xs:enumeration value="inferred"/>
-					<xs:enumeration value="triggered"/>
 				</xs:restriction>
 			</xs:simpleType>
 		</xs:attribute>

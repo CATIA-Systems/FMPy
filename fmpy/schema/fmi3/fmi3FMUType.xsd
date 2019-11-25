@@ -48,4 +48,25 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		<xs:attribute name="providesDirectionalDerivative" type="xs:boolean" default="false"/>
 		<xs:attribute name="providesPerElementDependencies" type="xs:boolean" default="false"/>
 	</xs:complexType>
+	<xs:complexType name="fmi3ModelExchange">
+		<xs:complexContent>
+			<xs:extension base="fmi3FMUType">
+				<xs:attribute name="completedIntegratorStepNotNeeded" type="xs:boolean" default="false"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="fmi3CoSimulation">
+		<xs:complexContent>
+			<xs:extension base="fmi3FMUType">
+				<xs:attribute name="canHandleVariableCommunicationStepSize" type="xs:boolean" default="false"/>
+				<xs:attribute name="canInterpolateInputs" type="xs:boolean" default="false"/>
+				<xs:attribute name="maxOutputDerivativeOrder" type="xs:unsignedInt" default="0"/>
+				<xs:attribute name="providesIntermediateVariableAccess" type="xs:boolean" default="false"/>
+				<xs:attribute name="canReturnEarlyAfterIntermediateUpdate" type="xs:boolean" default="false"/>
+				<xs:attribute name="providesHybridCoSimulation" type="xs:boolean" default="false"/>
+				<xs:attribute name="providesScheduledExecutionSimulation" type="xs:boolean" default="false"/>
+				<xs:attribute name="canNotUseBasicCoSimulation" type="xs:boolean" default="false"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
 </xs:schema>

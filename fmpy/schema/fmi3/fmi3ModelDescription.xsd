@@ -3,6 +3,7 @@
 	<xs:include schemaLocation="fmi3VariableDependency.xsd"/>
 	<xs:include schemaLocation="fmi3Unit.xsd"/>
 	<xs:include schemaLocation="fmi3Variable.xsd"/>
+	<xs:include schemaLocation="fmi3Terminal.xsd"/>
 	<xs:include schemaLocation="fmi3Type.xsd"/>
 	<xs:include schemaLocation="fmi3FMUType.xsd"/>
 	<xs:annotation>
@@ -42,33 +43,15 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:element name="fmiModelDescription">
 		<xs:complexType>
 			<xs:sequence>
-				<xs:sequence maxOccurs="2">
-					<xs:element name="ModelExchange" minOccurs="0">
-						<xs:complexType>
-							<xs:complexContent>
-								<xs:extension base="fmi3FMUType">
-									<xs:attribute name="completedIntegratorStepNotNeeded" type="xs:boolean" default="false"/>
-								</xs:extension>
-							</xs:complexContent>
-						</xs:complexType>
-					</xs:element>
-					<xs:element name="CoSimulation" minOccurs="0">
-						<xs:complexType>
-							<xs:complexContent>
-								<xs:extension base="fmi3FMUType">
-									<xs:attribute name="canHandleVariableCommunicationStepSize" type="xs:boolean" default="false"/>
-									<xs:attribute name="canInterpolateInputs" type="xs:boolean" default="false"/>
-									<xs:attribute name="maxOutputDerivativeOrder" type="xs:unsignedInt" default="0"/>
-									<xs:attribute name="providesIntermediateVariableAccess" type="xs:boolean" default="false"/>
-									<xs:attribute name="canReturnEarlyAfterIntermediateUpdate" type="xs:boolean" default="false"/>
-									<xs:attribute name="providesHybridCoSimulation" type="xs:boolean" default="false"/>
-									<xs:attribute name="providesScheduledExecutionSimulation" type="xs:boolean" default="false"/>
-									<xs:attribute name="canNotUseBasicCoSimulation" type="xs:boolean" default="false"/>
-								</xs:extension>
-							</xs:complexContent>
-						</xs:complexType>
-					</xs:element>
-				</xs:sequence>
+				<xs:choice>
+				  <xs:sequence>
+				    <xs:element name="ModelExchange" type="fmi3ModelExchange" minOccurs="1" maxOccurs="1" />
+				    <xs:element name="CoSimulation" type="fmi3CoSimulation" minOccurs="0" maxOccurs="1" />
+				  </xs:sequence>
+				  <xs:sequence >
+				    <xs:element name="CoSimulation" type="fmi3CoSimulation" minOccurs="1" maxOccurs="1" />
+				  </xs:sequence>
+				</xs:choice>
 				<xs:element name="BuildConfiguration" minOccurs="0" maxOccurs="unbounded">
 					<xs:complexType>
 						<xs:sequence>
@@ -153,8 +136,59 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						<xs:attribute name="stepSize" type="xs:double"/>
 					</xs:complexType>
 				</xs:element>
-				<xs:element name="VendorAnnotations" type="fmi3Annotation" minOccurs="0">
+				<xs:element name="Terminals" minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Terminal" type="fmi3Terminal" maxOccurs="unbounded"/>
+						</xs:sequence>
+					</xs:complexType>
 				</xs:element>
+				<xs:element name="GraphicalRepresentation" minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="CoordinateSystem" minOccurs="0">
+								<xs:complexType>
+									<xs:attribute name="x1" type="xs:double" use="required"/>
+									<xs:attribute name="y1" type="xs:double" use="required"/>
+									<xs:attribute name="x2" type="xs:double" use="required"/>
+									<xs:attribute name="y2" type="xs:double" use="required"/>
+									<xs:attribute name="suggestedScalingFactorTo_mm" type="xs:double" use="required"/>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="Icon" minOccurs="0">
+								<xs:complexType>
+									<xs:attribute name="x1" type="xs:double" use="required"/>
+									<xs:attribute name="y1" type="xs:double" use="required"/>
+									<xs:attribute name="x2" type="xs:double" use="required"/>
+									<xs:attribute name="y2" type="xs:double" use="required"/>
+									<xs:attribute name="iconSource_PNG" type="xs:string" use="required"/>
+									<xs:attribute name="iconSource_SVG" type="xs:string" use="optional"/>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="Terminal" minOccurs="0" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="VendorAnnotations" type="fmi3Annotation" minOccurs="0"/>
+									</xs:sequence>
+									<xs:attribute name="name" type="xs:normalizedString" use="required"/>
+									<xs:attribute name="defaultConnectionColor" use="optional">
+										<xs:simpleType>
+											<xs:list itemType="xs:unsignedByte"/>
+										</xs:simpleType>
+									</xs:attribute>
+									<xs:attribute name="defaultConnectionStrokeSize" type="xs:double" use="optional"/>
+									<xs:attribute name="x1" type="xs:double" use="required"/>
+									<xs:attribute name="y1" type="xs:double" use="required"/>
+									<xs:attribute name="x2" type="xs:double" use="required"/>
+									<xs:attribute name="y2" type="xs:double" use="required"/>
+									<xs:attribute name="iconSource_PNG" type="xs:string" use="required"/>
+									<xs:attribute name="iconSource_SVG" type="xs:string" use="optional"/>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="VendorAnnotations" type="fmi3Annotation" minOccurs="0"/>
 				<xs:element name="ModelVariables">
 					<xs:complexType>
 						<xs:group ref="fmi3Variable" maxOccurs="unbounded"/>

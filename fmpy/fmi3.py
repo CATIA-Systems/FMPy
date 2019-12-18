@@ -3,14 +3,13 @@
 import os
 import pathlib
 from ctypes import *
-from . import free, calloc
+from . import free, calloc, sharedLibraryExtension, platform_tuple
 from .fmi1 import _FMU, printLogMessage
-from . import architecture, system, sharedLibraryExtension
 
 
-fmi3Component            = c_void_p
-fmi3ComponentEnvironment = c_void_p
-fmi3FMUstate             = c_void_p
+fmi3Instance             = c_void_p
+fmi3InstanceEnvironment  = c_void_p
+fmi3FMUState             = c_void_p
 fmi3ValueReference       = c_uint
 fmi3Float32              = c_float
 fmi3Float64              = c_double
@@ -25,48 +24,99 @@ fmi3UInt64               = c_uint64
 fmi3Boolean              = c_int
 fmi3Char                 = c_char
 fmi3String               = c_char_p
-fmi3Binary               = c_char_p
-fmi3Type                 = c_int
 fmi3Byte                 = c_char
+fmi3Binary               = c_char_p
+fmi3Clock                = c_int
 
-fmi3Status = c_int
+# values for fmi3Boolean
+fmi3True  = 1
+fmi3False = 0
 
+# values for fmi3Clock
+fmi3ClockActive   = 1
+fmi3ClockInactive = 0
+
+# enum fmi3Status
+fmi3Status  = c_int
 fmi3OK      = 0
 fmi3Warning = 1
 fmi3Discard = 2
 fmi3Error   = 3
 fmi3Fatal   = 4
-fmi3Pending = 5
 
-fmi3CallbackLoggerTYPE         = CFUNCTYPE(None, fmi3ComponentEnvironment, fmi3String, fmi3Status, fmi3String, fmi3String)
-fmi3CallbackAllocateMemoryTYPE = CFUNCTYPE(c_void_p, fmi3ComponentEnvironment, c_size_t, c_size_t)
-fmi3CallbackFreeMemoryTYPE     = CFUNCTYPE(None, fmi3ComponentEnvironment, c_void_p)
-fmi3StepFinishedTYPE           = CFUNCTYPE(None, fmi3ComponentEnvironment, fmi3Status)
-
+# enum fmi3InterfaceType
+fmi3InterfaceType = c_int
 fmi3ModelExchange = 0
 fmi3CoSimulation  = 1
 
-fmi3True  = 1
-fmi3False = 0
+# enum fmi3CoSimulationMode
+fmi3CoSimulationMode                 = c_int
+fmi3ModeCoSimulation                 = 0
+fmi3ModeHybridCoSimulation           = 1
+fmi3ModeScheduledExecutionSimulation = 2
+
+
+# struct fmi3CoSimulationConfiguration
+class fmi3CoSimulationConfiguration(Structure):
+
+    _fields_ = [('intermediateVariableGetRequired',         fmi3Boolean),
+                ('intermediateInternalVariableGetRequired', fmi3Boolean),
+                ('intermediateVariableSetRequired',         fmi3Boolean),
+                ('coSimulationMode',                        fmi3CoSimulationMode)]
+
+
+# enum fmi3DependencyKind
+fmi3DependencyKind = c_int
+# fmi3Independent = 0, not needed but reserved for future use
+fmi3Constant       = 1
+fmi3Fixed          = 2
+fmi3Tunable        = 3
+fmi3Discrete       = 4
+fmi3Dependent      = 5
+
+
+# struct fmi3IntermediateUpdateInfo
+class fmi3IntermediateUpdateInfo(Structure):
+
+    _fields_ = [('intermediateUpdateTime',         fmi3Float64),
+                ('eventOccurred',                  fmi3Boolean),
+                ('clocksTicked',                   fmi3Boolean),
+                ('intermediateVariableSetAllowed', fmi3Boolean),
+                ('intermediateVariableGetAllowed', fmi3Boolean),
+                ('intermediateStepFinished',       fmi3Boolean),
+                ('canReturnEarly',                 fmi3Boolean)]
+
+
+# callback functions
+fmi3CallbackLogMessageTYPE         = CFUNCTYPE(None,       fmi3InstanceEnvironment, fmi3String, fmi3Status, fmi3String, fmi3String)
+fmi3CallbackAllocateMemoryTYPE     = CFUNCTYPE(c_void_p,   fmi3InstanceEnvironment, c_size_t, c_size_t)
+fmi3CallbackFreeMemoryTYPE         = CFUNCTYPE(None,       fmi3InstanceEnvironment, c_void_p)
+fmi3CallbackIntermediateUpdateTYPE = CFUNCTYPE(fmi3Status, fmi3InstanceEnvironment, POINTER(fmi3IntermediateUpdateInfo))
+fmi3CallbackLockPreemptionTYPE     = CFUNCTYPE(None)
+fmi3CallbackUnlockPreemptionTYPE   = CFUNCTYPE(None)
 
 # allocated memory
 _mem_addr = set()
 
 
-def printLogMessage(componentEnvironment, instanceName, status, category, message):
+def printLogMessage(instanceEnvironment, instanceName, status, category, message):
     """ Print the FMU's log messages to the command line """
 
     label = ['OK', 'WARNING', 'DISCARD', 'ERROR', 'FATAL', 'PENDING'][status]
     print("[%s] %s" % (label, message))
 
 
-def allocateMemory(componentEnvironment, nobj, size):
+def allocateMemory(instanceEnvironment, nobj, size):
     mem = calloc(nobj, size)
     _mem_addr.add(mem)
     return mem
 
 
-def freeMemory(componentEnvironment, obj):
+def freeMemory(instanceEnvironment, obj):
+
+    if obj is None:
+        return  # NULL pointer
+
     if obj in _mem_addr:
         free(obj)
         _mem_addr.remove(obj)
@@ -74,27 +124,31 @@ def freeMemory(componentEnvironment, obj):
         print("freeMemory() was called for a pointer (%s) that was not allocated" % obj)
 
 
-def stepFinished(componentEnvironment, status):
+def stepFinished(instanceEnvironment, status):
     pass
 
 
+# struct fmi3CallbackFunctions
 class fmi3CallbackFunctions(Structure):
 
-    _fields_ = [('logger',               fmi3CallbackLoggerTYPE),
-                ('allocateMemory',       fmi3CallbackAllocateMemoryTYPE),
-                ('freeMemory',           fmi3CallbackFreeMemoryTYPE),
-                ('stepFinished',         fmi3StepFinishedTYPE),
-                ('componentEnvironment', fmi3ComponentEnvironment)]
+    _fields_ = [('instanceEnvironment', fmi3InstanceEnvironment),
+                ('logMessage',          fmi3CallbackLogMessageTYPE),
+                ('allocateMemory',      fmi3CallbackAllocateMemoryTYPE),
+                ('freeMemory',          fmi3CallbackFreeMemoryTYPE),
+                ('intermediateUpdate',  fmi3CallbackIntermediateUpdateTYPE),
+                ('lockPreemption',      fmi3CallbackLockPreemptionTYPE),
+                ('unlockPreemption',    fmi3CallbackUnlockPreemptionTYPE)]
 
 
+# struct fmi3EventInfo
 class fmi3EventInfo(Structure):
 
-    _fields_ = [('newDiscreteStatesNeeded',           fmi3Boolean),
+    _fields_ = [('nextEventTime',                     fmi3Float64),
+                ('newDiscreteStatesNeeded',           fmi3Boolean),
                 ('terminateSimulation',               fmi3Boolean),
                 ('nominalsOfContinuousStatesChanged', fmi3Boolean),
                 ('valuesOfContinuousStatesChanged',   fmi3Boolean),
-                ('nextEventTimeDefined',              fmi3Boolean),
-                ('nextEventTime',                     fmi3Float64)]
+                ('nextEventTimeDefined',              fmi3Boolean)]
 
 
 class _FMU3(_FMU):
@@ -103,40 +157,61 @@ class _FMU3(_FMU):
     def __init__(self, **kwargs):
 
         # build the path to the shared library
-        kwargs['libraryPath'] = os.path.join(kwargs['unzipDirectory'], 'binaries', architecture + '-' + system,
+        kwargs['libraryPath'] = os.path.join(kwargs['unzipDirectory'], 'binaries', platform_tuple,
                                              kwargs['modelIdentifier'] + sharedLibraryExtension)
 
         super(_FMU3, self).__init__(**kwargs)
 
-        # Inquire version numbers of header files and setting logging status
-        self._fmi3Function('fmi3GetTypesPlatform', [], [], fmi3String)
+        # inquire version numbers and setting logging status
+        self._fmi3Function('fmi3GetVersion', [], fmi3String)
 
-        self._fmi3Function('fmi3GetVersion', [], [], fmi3String)
-
-        self._fmi3Function('fmi3SetDebugLogging',
-                           ['component', 'loggingOn', 'nCategories', 'categories'],
-                           [fmi3Component, fmi3Boolean, c_size_t, POINTER(fmi3String)])
+        self._fmi3Function('fmi3SetDebugLogging', [
+            (fmi3Instance,        'instance'),
+            (fmi3Boolean,         'loggingOn'),
+            (c_size_t,            'nCategories'),
+            (POINTER(fmi3String), 'categories')
+        ])
 
         # Creation and destruction of FMU instances and setting debug status
-        self._fmi3Function('fmi3Instantiate',
-                           ['instanceName', 'fmuType', 'guid', 'resourceLocation', 'callbacks', 'visible', 'loggingOn'],
-                           [fmi3String, fmi3Type, fmi3String, fmi3String, POINTER(fmi3CallbackFunctions), fmi3Boolean, fmi3Boolean],
-                           fmi3Component)
+        self._fmi3Function('fmi3Instantiate', [
+            (fmi3String,                             'instanceName'),
+            (fmi3InterfaceType,                      'fmuType'),
+            (fmi3String,                             'fmuInstantiationToken'),
+            (fmi3String,                             'fmuResourceLocation'),
+            (POINTER(fmi3CallbackFunctions),         'callbacks'),
+            (fmi3Boolean,                            'visible'),
+            (fmi3Boolean,                            'loggingOn'),
+            (POINTER(fmi3CoSimulationConfiguration), 'fmuCoSimulationConfiguration')
+        ], fmi3Instance)
 
-        self._fmi3Function('fmi3FreeInstance', ['component'], [fmi3Component], None)
+        self._fmi3Function('fmi3FreeInstance', [(fmi3Instance, 'instance')], None)
 
         # Enter and exit initialization mode, terminate and reset
-        self._fmi3Function('fmi3SetupExperiment',
-                           ['component', 'toleranceDefined', 'tolerance', 'startTime', 'stopTimeDefined', 'stopTime'],
-                           [fmi3Component, fmi3Boolean, fmi3Float64, fmi3Float64, fmi3Boolean, fmi3Float64])
+        self._fmi3Function('fmi3SetupExperiment', [
+            (fmi3Instance, 'instance'),
+            (fmi3Boolean,  'toleranceDefined'),
+            (fmi3Float64,  'tolerance'),
+            (fmi3Float64,  'startTime'),
+            (fmi3Boolean,  'stopTimeDefined'),
+            (fmi3Float64,  'stopTime')
+        ])
 
-        self._fmi3Function('fmi3EnterInitializationMode', ['component'], [fmi3Component], fmi3Status)
+        self._fmi3Function('fmi3EnterInitializationMode', [(fmi3Instance, 'instance')])
 
-        self._fmi3Function('fmi3ExitInitializationMode', ['component'], [fmi3Component], fmi3Status)
+        self._fmi3Function('fmi3ExitInitializationMode', [(fmi3Instance, 'instance')])
 
-        self._fmi3Function('fmi3Terminate', ['component'], [fmi3Component], fmi3Status)
+        self._fmi3Function('fmi3EnterEventMode', [
+            (fmi3Instance,       'instance'),
+            (fmi3Boolean,        'inputEvent'),
+            (fmi3Boolean,        'stepEvent'),
+            (POINTER(fmi3Int32), 'rootsFound'),
+            (c_size_t,           'nEventIndicators'),
+            (fmi3Boolean,        'timeEvent'),
+        ])
 
-        self._fmi3Function('fmi3Reset', ['component'], [fmi3Component], fmi3Status)
+        self._fmi3Function('fmi3Terminate', [(fmi3Instance, 'instance')])
+
+        self._fmi3Function('fmi3Reset', [(fmi3Instance, 'instance')])
 
         # Getting and setting variable values
         types = [
@@ -156,63 +231,164 @@ class _FMU3(_FMU):
 
         for name, _type in types:
 
-            self._fmi3Function('fmi3Get' + name,
-                               ['component', 'vr', 'nvr', 'value', 'nValues'],
-                               [fmi3Component, POINTER(fmi3ValueReference), c_size_t, POINTER(_type), c_size_t])
+            params = [
+                (fmi3Instance, 'instance'),
+                (POINTER(fmi3ValueReference), 'vr'),
+                (c_size_t, 'nvr'),
+                (POINTER(_type), 'value'),
+                (c_size_t, 'nValues')
+            ]
 
-            self._fmi3Function('fmi3Set' + name,
-                               ['component', 'vr', 'nvr', 'value', 'nValues'],
-                               [fmi3Component, POINTER(fmi3ValueReference), c_size_t, POINTER(_type), c_size_t])
+            self._fmi3Function('fmi3Get' + name, params)
+            self._fmi3Function('fmi3Set' + name, params)
 
-        self._fmi3Function('fmi3GetBinary',
-                           ['component', 'vr', 'nvr', 'size', 'value', 'nValues'],
-                           [fmi3Component, POINTER(fmi3ValueReference), c_size_t, POINTER(c_size_t), POINTER(fmi3Binary), c_size_t])
+        self._fmi3Function('fmi3GetBinary', [
+            (fmi3Instance,                'instance'),
+            (POINTER(fmi3ValueReference), 'vr'),
+            (c_size_t,                    'nvr'),
+            (POINTER(c_size_t),           'size'),
+            (POINTER(fmi3Binary),         'value'),
+            (c_size_t,                    'nValues')
+        ])
 
-        self._fmi3Function('fmi3SetBinary',
-                           ['component', 'vr', 'nvr', 'size', 'value', 'nValues'],
-                           [fmi3Component, POINTER(fmi3ValueReference), c_size_t, POINTER(c_size_t), POINTER(fmi3Binary), c_size_t])
+        self._fmi3Function('fmi3SetBinary', [
+            (fmi3Instance,                'instance'),
+            (POINTER(fmi3ValueReference), 'vr'),
+            (c_size_t,                    'nvr'),
+            (POINTER(c_size_t),           'size'),
+            (POINTER(fmi3Binary),         'value'),
+            (c_size_t,                    'nValues')
+        ])
+
+        # Getting Variable Dependency Information
+        self._fmi3Function('fmi3GetNumberOfVariableDependencies', [
+            (fmi3Instance,       'instance'),
+            (fmi3ValueReference, 'valueReference'),
+            (POINTER(c_size_t),  'nDependencies')
+        ])
+
+        self._fmi3Function('fmi3GetVariableDependencies', [
+            (fmi3Instance,                'instance'),
+            (fmi3ValueReference,          'dependent'),
+            (POINTER(c_size_t),           'elementIndicesOfDependent'),
+            (POINTER(fmi3ValueReference), 'independents'),
+            (POINTER(c_size_t),           'elementIndicesOfIndependents'),
+            (POINTER(fmi3DependencyKind), 'dependencyKinds'),
+            (c_size_t,                    'nDependencies')
+        ])
 
         # Getting and setting the internal FMU state
-        self._fmi3Function('fmi3GetFMUstate', ['component', 'FMUstate'],
-                           [fmi3Component, POINTER(fmi3FMUstate)])
+        self._fmi3Function('fmi3GetFMUState', [(fmi3Instance, 'instance'), (POINTER(fmi3FMUState), 'FMUState')])
 
-        self._fmi3Function('fmi3SetFMUstate', ['component', 'FMUstate'],
-                           [fmi3Component, fmi3FMUstate])
+        self._fmi3Function('fmi3SetFMUState', [(fmi3Instance, 'instance'), (fmi3FMUState, 'FMUState')])
 
-        self._fmi3Function('fmi3FreeFMUstate', ['component', 'FMUstate'],
-                           [fmi3Component, POINTER(fmi3FMUstate)])
+        self._fmi3Function('fmi3FreeFMUState', [(fmi3Instance, 'instance'), (POINTER(fmi3FMUState), 'FMUState')])
 
-        self._fmi3Function('fmi3SerializedFMUstateSize',
-                           ['component', 'FMUstate', 'size'],
-                           [fmi3Component, fmi3FMUstate, POINTER(c_size_t)])
+        self._fmi3Function('fmi3SerializedFMUStateSize', [
+            (fmi3Instance,      'instance'),
+            (fmi3FMUState,      'FMUState'),
+            (POINTER(c_size_t), 'size')
+        ])
 
-        self._fmi3Function('fmi3SerializeFMUstate',
-                           ['component', 'FMUstate', 'serializedState', 'size'],
-                           [fmi3Component, fmi3FMUstate, POINTER(fmi3Byte), c_size_t])
+        self._fmi3Function('fmi3SerializeFMUState', [
+            (fmi3Instance,      'instance'),
+            (fmi3FMUState,      'FMUState'),
+            (POINTER(fmi3Byte), 'serializedState'),
+            (c_size_t,          'size')
+        ])
 
-        self._fmi3Function('fmi3DeSerializeFMUstate',
-                           ['component', 'FMUstate', 'serializedState', 'size'],
-                           [fmi3Component, POINTER(fmi3Byte), c_size_t, POINTER(fmi3FMUstate)])
+        self._fmi3Function('fmi3DeSerializeFMUState', [
+            (fmi3Instance,          'instance'),
+            (POINTER(fmi3Byte),     'serializedState'),
+            (c_size_t,              'size'),
+            (POINTER(fmi3FMUState), 'FMUState'),
+        ])
 
         # Getting partial derivatives
-        self._fmi3Function('fmi3GetDirectionalDerivative',
-                           ['component', 'vUnknown_ref', 'nUnknown', 'vKnown_ref', 'nKnown', 'dvKnown', 'dvUnknown'],
-                           [fmi3Component, POINTER(fmi3ValueReference), c_size_t, POINTER(fmi3ValueReference), c_size_t, POINTER(fmi3Float64), POINTER(fmi3Float64)])
+        self._fmi3Function('fmi3GetDirectionalDerivative', [
+            (fmi3Instance,                'instance'),
+            (POINTER(fmi3ValueReference), 'vUnknown_ref'),
+            (c_size_t,                    'nUnknown'),
+            (POINTER(fmi3ValueReference), 'vKnown_ref'),
+            (c_size_t,                    'nKnown'),
+            (POINTER(fmi3Float64),        'dvKnown'),
+            (POINTER(fmi3Float64),        'dvUnknown')
+        ])
 
-    def _fmi3Function(self, fname, argnames, argtypes, restype=fmi3Status):
+        # Entering and exiting the Configuration or Reconfiguration Mode
+        self._fmi3Function('fmi3EnterConfigurationMode', [(fmi3Instance, 'instance')])
+
+        self._fmi3Function('fmi3ExitConfigurationMode', [(fmi3Instance, 'instance')])
+
+        # Clock related functions
+        self._fmi3Function('fmi3GetClock', [
+            (fmi3Instance,                'instance'),
+            (POINTER(fmi3ValueReference), 'valueReferences'),
+            (c_size_t,                    'nValueReferences'),
+            (POINTER(fmi3Clock),          'value')
+        ])
+
+        self._fmi3Function('fmi3SetClock', [
+            (fmi3Instance,                'instance'),
+            (POINTER(fmi3ValueReference), 'valueReferences'),
+            (c_size_t,                    'nValueReferences'),
+            (POINTER(fmi3Clock),          'value'),
+            (POINTER(fmi3Boolean),        'subactive')
+        ])
+
+        self._fmi3Function('fmi3GetIntervalDecimal', [
+            (fmi3Instance,                'instance'),
+            (POINTER(fmi3ValueReference), 'valueReferences'),
+            (c_size_t,                    'nValueReferences'),
+            (POINTER(fmi3Float64),        'interval')
+        ])
+
+        self._fmi3Function('fmi3GetIntervalFraction', [
+            (fmi3Instance,                'instance'),
+            (POINTER(fmi3ValueReference), 'valueReferences'),
+            (c_size_t,                    'nValueReferences'),
+            (POINTER(fmi3UInt64),         'intervalCounter'),
+            (POINTER(fmi3UInt64),         'resolution')
+        ])
+
+        self._fmi3Function('fmi3SetIntervalDecimal', [
+            (fmi3Instance,                'instance'),
+            (POINTER(fmi3ValueReference), 'valueReferences'),
+            (c_size_t,                    'nValueReferences'),
+            (POINTER(fmi3Float64),        'interval')
+        ])
+
+        self._fmi3Function('fmi3SetIntervalFraction', [
+            (fmi3Instance,                'instance'),
+            (POINTER(fmi3ValueReference), 'valueReferences'),
+            (c_size_t,                    'nValueReferences'),
+            (POINTER(fmi3UInt64),         'intervalCounter'),
+            (POINTER(fmi3UInt64),         'resolution')
+        ])
+
+        self._fmi3Function('fmi3NewDiscreteStates', [
+            (fmi3Instance,           'instance'),
+            (POINTER(fmi3EventInfo), 'eventInfo')
+        ])
+
+    def _fmi3Function(self, fname, params, restype=fmi3Status):
         """ Add an FMI 3.0 function to this instance and add a wrapper that allows
         logging and checks the return code if the return type is fmi3Status
 
         Parameters:
             fname     the name of the function
-            argnames  names of the arguments
-            argtypes  types of the arguments
+            params    parameters as (type, name) tuples
             restype   return type
         """
 
         if not hasattr(self.dll, fname):
             setattr(self, fname, None)
             return
+
+        if len(params) > 0:
+            argtypes, argnames = zip(*params)
+        else:
+            argtypes = argnames = []
 
         # get the exported function form the shared library
         f = getattr(self.dll, fname)
@@ -258,7 +434,7 @@ class _FMU3(_FMU):
 
         if callbacks is None:
             callbacks = fmi3CallbackFunctions()
-            callbacks.logger = fmi3CallbackLoggerTYPE(printLogMessage)
+            callbacks.logger = fmi3CallbackLogMessageTYPE(printLogMessage)
             callbacks.allocateMemory = fmi3CallbackAllocateMemoryTYPE(allocateMemory)
             callbacks.freeMemory = fmi3CallbackFreeMemoryTYPE(freeMemory)
 
@@ -270,7 +446,11 @@ class _FMU3(_FMU):
                                               resourceLocation.encode('utf-8'),
                                               byref(self.callbacks),
                                               fmi3True if visible else fmi3False,
-                                              fmi3True if loggingOn else fmi3False)
+                                              fmi3True if loggingOn else fmi3False,
+                                              None)
+
+        if not self.component:
+            raise Exception("Failed to instantiate FMU")
 
     def freeInstance(self):
         self.fmi3FreeInstance(self.component)
@@ -386,18 +566,18 @@ class _FMU3(_FMU):
 
     # Getting and setting the internal FMU state
 
-    def getFMUstate(self):
-        state = fmi3FMUstate()
-        self.fmi3GetFMUstate(self.component, byref(state))
+    def getFMUState(self):
+        state = fmi3FMUState()
+        self.fmi3GetFMUState(self.component, byref(state))
         return state
 
-    def setFMUstate(self, state):
-        self.fmi3SetFMUstate(self.component, state)
+    def setFMUState(self, state):
+        self.fmi3SetFMUState(self.component, state)
 
-    def freeFMUstate(self, state):
-        self.fmi3FreeFMUstate(self.component, byref(state))
+    def freeFMUState(self, state):
+        self.fmi3FreeFMUState(self.component, byref(state))
 
-    def serializeFMUstate(self, state):
+    def serializeFMUState(self, state):
         """ Serialize an FMU state
 
         Parameters:
@@ -408,12 +588,12 @@ class _FMU3(_FMU):
         """
 
         size = c_size_t()
-        self.fmi3SerializedFMUstateSize(self.component, state, byref(size))
+        self.fmi3SerializedFMUStateSize(self.component, state, byref(size))
         serializedState = create_string_buffer(size.value)
-        self.fmi3SerializeFMUstate(self.component, state, serializedState, size)
+        self.fmi3SerializeFMUState(self.component, state, serializedState, size)
         return serializedState.raw
 
-    def deSerializeFMUstate(self, serializedState, state):
+    def deSerializeFMUState(self, serializedState, state):
         """ De-serialize an FMU state
 
         Parameters:
@@ -422,7 +602,7 @@ class _FMU3(_FMU):
         """
 
         buffer = create_string_buffer(serializedState)
-        self.fmi3DeSerializeFMUstate(self.component, buffer, len(buffer), byref(state))
+        self.fmi3DeSerializeFMUState(self.component, buffer, len(buffer), byref(state))
 
     # Getting partial derivatives
 
@@ -457,46 +637,74 @@ class FMU3Model(_FMU3):
 
         self.eventInfo = fmi3EventInfo()
 
-        self._fmi3Function('fmi3NewDiscreteStates',
-                           ['component', 'eventInfo'],
-                           [fmi3Component, POINTER(fmi3EventInfo)])
+        self._fmi3Function('fmi3EnterContinuousTimeMode', [(fmi3Instance, 'instance')])
 
-        self._fmi3Function('fmi3EnterContinuousTimeMode',
-                           ['component'],
-                           [fmi3Component])
+        self._fmi3Function('fmi3CompletedIntegratorStep', [
+            (fmi3Instance,         'instance'),
+            (fmi3Boolean,          'noSetFMUStatePriorToCurrentPoint'),
+            (POINTER(fmi3Boolean), 'enterEventMode'),
+            (POINTER(fmi3Boolean), 'terminateSimulation')
+        ])
 
-        self._fmi3Function('fmi3EnterEventMode',
-                           ['component'],
-                           [fmi3Component])
+        self._fmi3Function('fmi3SetTime', [
+            (fmi3Instance, 'instance'),
+            (fmi3Float64,  'time')
+        ])
 
-        self._fmi3Function('fmi3GetContinuousStates',
-                           ['component', 'x', 'nx'],
-                           [fmi3Component, POINTER(fmi3Float64), c_size_t])
+        self._fmi3Function('fmi3SetContinuousStates', [
+            (fmi3Instance,         'instance'),
+            (POINTER(fmi3Float64), 'x'),
+            (c_size_t,             'nx')
+        ])
 
-        self._fmi3Function('fmi3SetContinuousStates',
-                           ['component', 'x', 'nx'],
-                           [fmi3Component, POINTER(fmi3Float64), c_size_t])
+        self._fmi3Function('fmi3GetDerivatives', [
+            (fmi3Instance,         'instance'),
+            (POINTER(fmi3Float64), 'derivatives'),
+            (c_size_t,             'nx')
+        ])
 
-        self._fmi3Function('fmi3GetDerivatives',
-                           ['component', 'derivatives', 'nx'],
-                           [fmi3Component, POINTER(fmi3Float64), c_size_t])
+        self._fmi3Function('fmi3GetEventIndicators', [
+            (fmi3Instance,         'instance'),
+            (POINTER(fmi3Float64), 'eventIndicators'),
+            (c_size_t,             'ni')
+        ])
 
-        self._fmi3Function('fmi3GetEventIndicators',
-                           ['component', 'eventIndicators', 'ni'],
-                           [fmi3Component, POINTER(fmi3Float64), c_size_t])
+        self._fmi3Function('fmi3GetContinuousStates', [
+            (fmi3Instance,         'instance'),
+            (POINTER(fmi3Float64), 'x'),
+            (c_size_t,             'nx')
+        ])
 
-        self._fmi3Function('fmi3SetTime',
-                           ['component', 'time'],
-                           [fmi3Component, fmi3Float64])
+        self._fmi3Function('fmi3GetNominalsOfContinuousStates', [
+            (fmi3Instance,         'instance'),
+            (POINTER(fmi3Float64), 'nominals'),
+            (c_size_t,             'nx')
+        ])
 
-        self._fmi3Function('fmi3CompletedIntegratorStep',
-                           ['component', 'noSetFMUStatePriorToCurrentPoint', 'enterEventMode', 'terminateSimulation'],
-                           [fmi3Component, fmi3Boolean, POINTER(fmi3Boolean), POINTER(fmi3Boolean)])
+        self._fmi3Function('fmi3GetNumberOfEventIndicators', [
+            (fmi3Instance,      'instance'),
+            (POINTER(c_size_t), 'nz')
+        ])
+
+        self._fmi3Function('fmi3GetNumberOfContinuousStates', [
+            (fmi3Instance,      'instance'),
+            (POINTER(c_size_t), 'nx')
+        ])
 
     # Enter and exit the different modes
 
-    def enterEventMode(self):
-        return self.fmi3EnterEventMode(self.component)
+    def enterEventMode(self, inputEvent=False, stepEvent=False, rootsFound=[], timeEvent=False):
+
+        rootsFound = (fmi3Int32 * len(rootsFound))(*rootsFound)
+
+        return self.fmi3EnterEventMode(
+            self.component,
+            fmi3True if inputEvent else fmi3False,
+            fmi3True if stepEvent else fmi3False,
+            rootsFound,
+            len(rootsFound),
+            fmi3True if timeEvent else fmi3False,
+        )
 
     def newDiscreteStates(self):
         return self.fmi3NewDiscreteStates(self.component, byref(self.eventInfo))
@@ -544,29 +752,50 @@ class FMU3Slave(_FMU3):
 
         # Simulating the slave
 
-        self._fmi3Function('fmi3SetInputDerivatives',
-                           ['component', 'vr', 'nvr', 'order', 'value'],
-                           [fmi3Component, POINTER(fmi3ValueReference), c_size_t, POINTER(fmi3Int32), POINTER(fmi3Float64)])
+        self._fmi3Function('fmi3EnterStepMode', [(fmi3Instance, 'instance')])
 
-        self._fmi3Function('fmi3GetOutputDerivatives',
-                           ['component', 'vr', 'nvr', 'order', 'value'],
-                           [fmi3Component, POINTER(fmi3ValueReference), c_size_t, POINTER(fmi3Int32), POINTER(fmi3Float64)])
+        self._fmi3Function('fmi3SetInputDerivatives', [
+            (fmi3Instance,                'instance'),
+            (POINTER(fmi3ValueReference), 'valueReferences'),
+            (c_size_t,                    'nValueReferences'),
+            (POINTER(fmi3Int32),          'orders'),
+            (POINTER(fmi3Float64),        'values'),
+            (c_size_t,                    'nValues'),
+        ])
+        
+        self._fmi3Function('fmi3GetOutputDerivatives', [
+            (fmi3Instance,                'instance'),
+            (POINTER(fmi3ValueReference), 'valueReferences'),
+            (c_size_t,                    'nValueReferences'),
+            (POINTER(fmi3Int32),          'orders'),
+            (POINTER(fmi3Float64),        'values'),
+            (c_size_t,                    'nValues'),
+        ])
 
-        self._fmi3Function('fmi3DoStep',
-                           ['component', 'currentCommunicationPoint', 'communicationStepSize', 'noSetFMUStatePriorToCurrentPoint'],
-                           [fmi3Component, fmi3Float64, fmi3Float64, fmi3Boolean])
+        self._fmi3Function('fmi3DoStep', [
+            (fmi3Instance,         'instance'),
+            (fmi3Float64,          'currentCommunicationPoint'),
+            (fmi3Float64,          'communicationStepSize'),
+            (fmi3Boolean,          'noSetFMUStatePriorToCurrentPoint'),
+            (POINTER(fmi3Boolean), 'earlyReturn')
+        ])
 
-        self._fmi3Function('fmi3CancelStep', ['component'], [fmi3Component])
+        self._fmi3Function('fmi3ActivateModelPartition', [
+            (fmi3Instance,       'instance'),
+            (fmi3ValueReference, 'clockReference'),
+            (fmi3Float64,        'activationTime')
+        ])
+        
+        self._fmi3Function('fmi3DoEarlyReturn', [
+            (fmi3Instance, 'instance'),
+            (fmi3Float64,  'earlyReturnTime')
+        ])
 
-        # Inquire slave status
-
-        self._fmi3Function('fmi3GetDoStepPendingStatus',
-                           ['component', 'status', 'message'],
-                           [fmi3Component, POINTER(fmi3Status), POINTER(fmi3String)])
-
-        self._fmi3Function('fmi3GetDoStepDiscardedStatus',
-                           ['component', 'terminate', 'lastSuccessfulTime'],
-                           [fmi3Component, POINTER(fmi3Boolean), POINTER(fmi3Float64)])
+        self._fmi3Function('fmi3GetDoStepDiscardedStatus', [
+            (fmi3Instance,         'instance'),
+            (POINTER(fmi3Boolean), 'terminate'),
+            (POINTER(fmi3Float64), 'lastSuccessfulTime')
+        ])
 
     # Simulating the slave
 
@@ -584,7 +813,9 @@ class FMU3Slave(_FMU3):
         return list(value)
 
     def doStep(self, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint=fmi3True):
-        return self.fmi3DoStep(self.component, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint)
+        earlyReturn = fmi3Boolean()
+        status = self.fmi3DoStep(self.component, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint, byref(earlyReturn))
+        return status, earlyReturn.value != fmi3False
 
     def cancelStep(self):
         self.fmi3CancelStep(self.component)

@@ -39,7 +39,7 @@ class CCodeTest(unittest.TestCase):
 
         from subprocess import check_call
         import shutil
-        from fmpy import platform
+        from fmpy.util import visual_c_versions
 
         try:
             # check if CMake is installed
@@ -66,15 +66,24 @@ class CCodeTest(unittest.TestCase):
             if not cmake_available:
                 continue  # skip compilation
 
-            if platform == 'win32':
-                generator = 'Visual Studio 15 2017'
-            elif platform == 'win64':
-                generator = 'Visual Studio 15 2017 Win64'
-            else:
-                generator = 'Unix Makefiles'
-
             # generate the build system
-            check_call(args=['cmake', '-G', generator, '.'], cwd=model_name)
+            cmake_args = ['cmake', '.']
+
+            vc_versions = visual_c_versions()
+
+            if os.name == 'nt':
+                if 160 in vc_versions:
+                    cmake_args += ['-G', 'Visual Studio 16 2019', '-A', 'x64']
+                elif 150 in vc_versions:
+                    cmake_args += ['-G', 'Visual Studio 15 2017 Win64']
+                elif 140 in vc_versions:
+                    cmake_args += ['-G', 'Visual Studio 14 2015 Win64']
+                elif 120 in vc_versions:
+                    cmake_args += ['-G', 'Visual Studio 12 2013 Win64']
+                elif 110 in vc_versions:
+                    cmake_args += ['-G', 'Visual Studio 11 2012 Win64']
+
+            check_call(args=cmake_args, cwd=model_name)
 
             # run the build system
             check_call(args=['cmake', '--build', '.'], cwd=model_name)

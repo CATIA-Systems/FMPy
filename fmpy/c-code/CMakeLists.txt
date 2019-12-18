@@ -58,8 +58,6 @@ endif ()
 
 add_custom_command(TARGET ${MODEL_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E tar cfv "${CMAKE_CURRENT_SOURCE_DIR}/${MODEL_NAME}.fmu" --format=zip
-    modelDescription.xml
-    binaries
-    sources
+    %RESOURCES%
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )

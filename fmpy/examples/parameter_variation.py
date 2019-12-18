@@ -30,11 +30,13 @@ stop_time = 0.1
 
 dll_handle = None
 
+n_chunks = 10  # number of chunks to divide the workload
+
 # create the parameters
 V_AC, I_DC = np.meshgrid(v_ac, i_dc, indexing='ij')
 
 
-def simulate_fmu(args):
+def simulate_fmu(*args):
     """ Worker function that simulates the FMU
 
     Parameters:
@@ -101,12 +103,13 @@ def simulate_fmu(args):
 
     if sync:
         # remember the shared library handle so we can unload it later
+        global dll_handle
         dll_handle = fmu.dll._handle
     else:
         # unload the shared library directly
         fmpy.freeLibrary(fmu.dll._handle)
 
-    return zipped, fmu.dll._handle
+    return zipped
 
 
 def run_experiment(show_plot=True):
@@ -119,7 +122,7 @@ def run_experiment(show_plot=True):
     print("  IDC", i_dc)
 
     if sync:
-        dask.set_options(get=dask.dask.local.get_sync)  # synchronized scheduler
+        dask.config.set(scheduler='synchronous')  # synchronized scheduler
 
     # download the FMU
     download_test_file('2.0', 'CoSimulation', 'Dymola', '2017', 'Rectifier', fmu_filename)
@@ -145,24 +148,17 @@ def run_experiment(show_plot=True):
 
     indices = list(np.ndindex(I_DC.shape))
 
-    chunks = []
-    chunk_size = int(np.ceil(len(indices) / 10))
-
-    # split the indices into 10 chunks
-    for i in range(0, len(indices), chunk_size):
-        chunks.append([indices[i:i + chunk_size], fmu_args, start_vrs, result_vrs])
-
-    print("Running %d simulations (%d chunks)..." % (V_AC.size, len(chunks)))
+    print("Running %d simulations (%d chunks)..." % (V_AC.size, n_chunks))
     with ProgressBar():
         # calculate the losses for every chunk
-        results = bag.from_sequence(chunks).map(simulate_fmu).compute()
+        b = bag.from_sequence(indices, npartitions=n_chunks)
+        results = b.map_partitions(simulate_fmu, fmu_args, start_vrs, result_vrs).compute()
 
     LOSSES = np.zeros_like(V_AC)
 
     # put the results together
-    for zipped, dll_handle in results:
-        for i, res in zipped:
-            LOSSES[i] = res[1]
+    for i, res in results:
+        LOSSES[i] = res[1]
 
     # unload the shared library
     if sync:
@@ -173,7 +169,7 @@ def run_experiment(show_plot=True):
                 break
 
     # clean up
-    shutil.rmtree(unzipdir)
+    shutil.rmtree(unzipdir, ignore_errors=True)
 
     if show_plot:
         print("Plotting results...")

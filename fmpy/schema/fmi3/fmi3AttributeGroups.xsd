@@ -102,6 +102,29 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	</xs:attributeGroup>
 	<xs:attributeGroup name="fmi3RealVariableAttributes">
 		<xs:attribute name="derivative" type="xs:unsignedInt"/>
-		<xs:attribute name="reinit" type="xs:boolean" use="optional" default="false"/>
+		<xs:attribute name="reinit" type="xs:boolean" default="false"/>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="fmi3ClockAttributes">
+		<xs:attribute name="clockType" use="required">
+			<xs:simpleType>
+				<xs:restriction base="xs:normalizedString">
+					<xs:enumeration value="synchronousTime"/>
+					<xs:enumeration value="communicationPoint"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="priority" use="required">
+			<xs:simpleType>
+				<xs:restriction base="xs:unsignedInt">
+					<xs:minInclusive value="0"></xs:minInclusive>
+					<xs:maxInclusive value="99"></xs:maxInclusive>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="periodic" type="xs:boolean"/>
+		<xs:attribute name="strict" type="xs:boolean"/>
+		<xs:attribute name="intervalCounter" type="xs:unsignedLong"/>
+		<xs:attribute name="shiftCounter" type="xs:unsignedLong"/>
+		<xs:attribute name="resolution" type="xs:unsignedLong"/>
 	</xs:attributeGroup>
 </xs:schema>

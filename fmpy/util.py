@@ -461,6 +461,11 @@ def download_file(url, checksum=None):
     with open(filename, 'wb') as f:
         f.write(response.content)
 
+    if checksum is not None:
+        hash = sha256_checksum(filename)
+        if not hash.startswith(checksum):
+            raise Exception("%s has the wrong SHA256 checksum. Expected %s but was %s." % (filename, checksum, hash))
+
 
 def download_test_file(fmi_version, fmi_type, tool_name, tool_version, model_name, filename):
     """ Download a file from the Test FMUs repository to the current directory """
@@ -588,8 +593,11 @@ def visual_c_versions():
     # Visual Studio 2017
     installation_path = visual_studio_installation_path()
 
-    if installation_path is not None and '2017' in installation_path:
-        versions.append(150)
+    if installation_path is not None:
+        if '2017' in installation_path:
+            versions.append(150)
+        if '2019' in installation_path:
+            versions.append(160)
 
     return sorted(versions)
 
@@ -618,22 +626,28 @@ def compile_dll(model_description, sources_dir, compiler=None):
 
     source_files = []
 
-    if model_description.coSimulation is not None:
-        model_identifier = model_description.coSimulation.modelIdentifier
-        preprocessor_definitions.append('CO_SIMULATION')
-        source_files += model_description.coSimulation.sourceFiles
+    if len(model_description.buildConfigurations) == 0:
+        raise Exception("No build configuration found.")
 
-    if model_description.modelExchange is not None:
-        model_identifier = model_description.modelExchange.modelIdentifier
-        preprocessor_definitions.append('MODEL_EXCHANGE')
-        for source_file in model_description.modelExchange.sourceFiles:
-            if source_file not in source_files:
-                source_files.append(source_file)
+    build_configuration = model_description.buildConfigurations[0]
+
+    if len(build_configuration.sourceFileSets) > 1:
+        raise Exception("More than one SourceFileSet is not supported.")
+
+    source_file_set = build_configuration.sourceFileSets[0]
+
+    source_files += source_file_set.sourceFiles
+
+    for definition in source_file_set.preprocessorDefinitions:
+        literal = definition.name
+        if definition.value is not None:
+            literal += '=' + definition.value
+        preprocessor_definitions.append(literal)
 
     if len(source_files) == 0:
         raise Exception("No source files specified in the model description.")
 
-    target = model_identifier + sharedLibraryExtension
+    target = build_configuration.modelIdentifier + sharedLibraryExtension
 
     print('Compiling %s...' % target)
 
@@ -661,7 +675,7 @@ def compile_dll(model_description, sources_dir, compiler=None):
         command += ' && cl /LD /I. /I"%s"' % include_dir
         for definition in preprocessor_definitions:
             command += ' /D' + definition
-        command += ' /Fe' + model_identifier + ' shlwapi.lib ' + ' '.join(source_files)
+        command += ' /Fe' + build_configuration.modelIdentifier + ' shlwapi.lib ' + ' '.join(source_files)
 
     elif compiler == 'gcc':
 
@@ -706,22 +720,19 @@ def compile_platform_binary(filename, output_filename=None):
         output_filename:  filename of the FMU with the compiled binary (None: overwrite existing FMU)
     """
 
-    from . import read_model_description, extract, platform
+    from . import read_model_description, extract, platform, platform_tuple
     import zipfile
     from shutil import copyfile, rmtree
 
     unzipdir = extract(filename)
 
-    md = read_model_description(filename)
+    model_description = read_model_description(filename)
 
-    binary = compile_dll(model_description=md, sources_dir=os.path.join(unzipdir, 'sources'))
+    binary = compile_dll(model_description=model_description, sources_dir=os.path.join(unzipdir, 'sources'))
 
     unzipdir2 = extract(filename)
 
-    platform_dir = os.path.join(unzipdir2, 'binaries', platform)
-
-    # if os.path.exists(platform_dir):
-    #     rmtree(platform_dir)
+    platform_dir = os.path.join(unzipdir2, 'binaries', platform if model_description.fmiVersion in ['1.0', '2.0'] else platform_tuple)
 
     if not os.path.exists(platform_dir):
         os.makedirs(platform_dir)
@@ -744,8 +755,8 @@ def compile_platform_binary(filename, output_filename=None):
                     zf.write(path, os.path.relpath(path, base_path))
 
     # clean up
-    rmtree(unzipdir)
-    rmtree(unzipdir2)
+    rmtree(unzipdir, ignore_errors=True)
+    rmtree(unzipdir2, ignore_errors=True)
 
 
 def auto_interval(t):
@@ -814,7 +825,7 @@ def change_fmu(input_file, output_file=None, start_values={}):
                     zf.write(path, os.path.relpath(path, base_path))
 
     # clean up
-    rmtree(tempdir)
+    rmtree(tempdir, ignore_errors=True)
 
 
 def get_start_values(filename):
@@ -891,7 +902,7 @@ def get_start_values(filename):
     fmu.freeInstance()
 
     # clean up
-    rmtree(unzipdir)
+    rmtree(unzipdir, ignore_errors=True)
 
     return start_values
 
@@ -905,6 +916,7 @@ def create_cmake_project(filename, project_dir):
         project_dir  existing directory for the CMake project
     """
 
+    from zipfile import ZipFile
     from fmpy import read_model_description, extract
 
     model_description = read_model_description(filename)
@@ -920,22 +932,38 @@ def create_cmake_project(filename, project_dir):
     definitions = []
 
     if model_description.coSimulation is not None:
-        implementation = model_description.coSimulation
         definitions.append('CO_SIMULATION')
-    else:
-        implementation = model_description.modelExchange
 
     if model_description.modelExchange is not None:
         definitions.append('MODEL_EXCHANGE')
 
-    sources = ['sources/' + file for file in implementation.sourceFiles]
+    with ZipFile(filename, 'r') as archive:
+        # don't add the current directory
+        resources = list(filter(lambda n: not n.startswith('.'), archive.namelist()))
+
+    # always add the binaries
+    resources.append('binaries')
+
+    # use the first source file set of the first build configuration
+    build_configuration = model_description.buildConfigurations[0]
+    source_file_set = build_configuration.sourceFileSets[0]
+
+    sources = ['sources/' + file for file in source_file_set.sourceFiles]
 
     # substitute the variables
     txt = txt.replace('%MODEL_NAME%', model_description.modelName)
-    txt = txt.replace('%MODEL_IDENTIFIER%', implementation.modelIdentifier)
+    txt = txt.replace('%MODEL_IDENTIFIER%', build_configuration.modelIdentifier)
     txt = txt.replace('%DEFINITIONS%', ' '.join(definitions))
     txt = txt.replace('%INCLUDE_DIRS%', '"' + source_dir.replace('\\', '/') + '"')
     txt = txt.replace('%SOURCES%', ' '.join(sources))
+    txt = txt.replace('%RESOURCES%', '\n    '.join('"' + r + '"' for r in resources))
 
     with open(os.path.join(project_dir, 'CMakeLists.txt'), 'w') as outfile:
         outfile.write(txt)
+
+
+def _is_string(s):
+    """ Python 2 and 3 compatible type check for strings """
+    
+    import sys
+    return isinstance(s, basestring if sys.version_info[0] == 2 else str)

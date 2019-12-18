@@ -1,3 +1,34 @@
+## v0.2.15 (2019-12-18)
+
+- `FIXED` validation of structured variable names with apostrophes
+- `FIXED` dimensions of variables in FMI 3
+- `NEW` validation of "flat" variable names
+- `UPDATED` FMI 3 schema files
+- `UPDATED` CVode 5.0
+- `IMPROVED` optional files added to CMake projects for source FMUs
+- `IMPROVED` NULL pointers are now ignored in freeMemory()
+- `IMPROVED` frequently used utility functions are now imported to fmpy module
+- `IMPROVED` parameter_variation adapted to new Dask versions
+
+## v0.2.14 (2019-10-23)
+
+Improved validation & --visible option for CLI
+
+- `FIXED` "Load Start Values" only enabled when FMU can be simulated
+- `NEW` --visible option in CLI
+- `NEW` XML line numbers added to validation messages
+- `NEW` validation of variables names for naming convention "structured"
+- `IMPROVED` visible=fmi2True when simulating in GUI
+
+## v0.2.13 (2019-09-16)
+
+Extended FMI 3.0 alpha 2 support & improved GUI
+
+- `NEW` check for illegal filenames in FMU archives
+- `NEW` reload button in GUI
+- `IMPROVED` extended FMI 3.0 alpha 2 support
+- `CHANGED` increased max. filesize for Cross-Check FMUs
+
 ## v0.2.12 (2019-07-15)
 
 Support for FMI 3.0 Alpha 1, output interval in GUI
@@ -26,7 +57,7 @@ Experimental FMI 3.0 support, FMI Cross-Check validation scripts
 
 - `FIXED` set start values before entering initialization mode
 - `NEW` experimental FMI 3.0 support
-- `NEW` FMI Cross-Check validation scripts to validate FMUs and results 
+- `NEW` FMI Cross-Check validation scripts to validate FMUs and results
 - `IMPROVED` handling of reference signals with duplicate sample times
 
 ## v0.2.9 (2019-02-07)

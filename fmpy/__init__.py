@@ -5,7 +5,7 @@ import os
 from ctypes import *
 import _ctypes
 
-__version__ = '0.2.12'
+__version__ = '0.2.15'
 
 
 # determine the platform
@@ -55,31 +55,34 @@ else:
     platform += '32'
     architecture = 'i686'
 
+platform_tuple = architecture + '-' + system
+
 
 def supported_platforms(filename):
     """ Get the platforms supported by the FMU without extracting it
 
     Parameters:
-        filename    filename of the FMU or directory with extracted FMU
+        filename    filename of the FMU, directory with extracted FMU or file like object
 
     Returns:
         platforms   a list of supported platforms supported by the FMU
     """
 
-    import zipfile
-
-    platforms = []
+    from .util import _is_string
 
     # get the files within the FMU
-    if os.path.isdir(filename):
+    if _is_string(filename) and os.path.isdir(filename):  # extracted FMU
         names = []
         for dirpath, _, filenames in os.walk(filename):
             for name in filenames:
                 abspath = os.path.join(dirpath, name)
                 names.append(os.path.relpath(abspath, start=filename).replace('\\', '/'))
-    else:
+    else:  # FMU as path or file like object
+        import zipfile
         with zipfile.ZipFile(filename, 'r') as zf:
             names = zf.namelist()
+
+    platforms = []
 
     # check for the C-sources
     for name in names:
@@ -183,8 +186,18 @@ def extract(filename, unzipdir=None):
         import win32file
         unzipdir = win32file.GetLongPathName(unzipdir)
 
-    # extract the archive
     with zipfile.ZipFile(filename, 'r') as zf:
+
+        # check filenames
+        for name in zf.namelist():
+            
+            if '\\' in name:
+                raise Exception("Illegal path %s found in %s. All slashes must be forward slashes." % (name, filename))
+
+            if ':' in name or name.startswith('/'):
+                raise Exception("Illegal path %s found in %s. The path must not contain a drive or device letter, or a leading slash." % (name, filename))
+
+        # extract the archive
         zf.extractall(unzipdir)
 
     return unzipdir
@@ -204,3 +217,4 @@ def dump(filename):
 # make the functions available in the fmpy module
 from .model_description import read_model_description
 from .simulation import simulate_fmu
+from .util import plot_result, read_csv, write_csv

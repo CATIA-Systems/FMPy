@@ -3,7 +3,9 @@
 	<xs:include schemaLocation="fmi3VariableDependency.xsd"/>
 	<xs:include schemaLocation="fmi3Unit.xsd"/>
 	<xs:include schemaLocation="fmi3Variable.xsd"/>
+	<xs:include schemaLocation="fmi3Terminal.xsd"/>
 	<xs:include schemaLocation="fmi3Type.xsd"/>
+	<xs:include schemaLocation="fmi3FMUType.xsd"/>
 	<xs:annotation>
 		<xs:documentation>
 Copyright(c) 2008-2011 MODELISAR consortium,
@@ -41,65 +43,67 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:element name="fmiModelDescription">
 		<xs:complexType>
 			<xs:sequence>
-				<xs:sequence maxOccurs="2">
-					<xs:element name="ModelExchange" minOccurs="0">
-						<xs:complexType>
-							<xs:sequence>
-								<xs:element name="SourceFiles" minOccurs="0">
-									<xs:complexType>
-										<xs:sequence maxOccurs="unbounded">
-											<xs:element name="File">
-												<xs:complexType>
-													<xs:attribute name="name" type="xs:normalizedString" use="required">
-													</xs:attribute>
-												</xs:complexType>
-											</xs:element>
-										</xs:sequence>
-									</xs:complexType>
-								</xs:element>
-							</xs:sequence>
-							<xs:attribute name="modelIdentifier" type="xs:normalizedString" use="required"/>
-							<xs:attribute name="needsExecutionTool" type="xs:boolean" default="false"/>
-							<xs:attribute name="completedIntegratorStepNotNeeded" type="xs:boolean" default="false"/>
-							<xs:attribute name="canBeInstantiatedOnlyOncePerProcess" type="xs:boolean" default="false"/>
-							<xs:attribute name="canNotUseMemoryManagementFunctions" type="xs:boolean" default="false"/>
-							<xs:attribute name="canGetAndSetFMUstate" type="xs:boolean" default="false"/>
-							<xs:attribute name="canSerializeFMUstate" type="xs:boolean" default="false"/>
-							<xs:attribute name="providesDirectionalDerivative" type="xs:boolean" default="false"/>
-							<xs:attribute name="providesPerElementDependencies" type="xs:boolean" default="false"/>
-						</xs:complexType>
-					</xs:element>
-					<xs:element name="CoSimulation" minOccurs="0">
-						<xs:complexType>
-							<xs:sequence>
-								<xs:element name="SourceFiles" minOccurs="0">
-									<xs:complexType>
-										<xs:sequence maxOccurs="unbounded">
-											<xs:element name="File">
-												<xs:complexType>
-													<xs:attribute name="name" type="xs:normalizedString" use="required">
-													</xs:attribute>
-												</xs:complexType>
-											</xs:element>
-										</xs:sequence>
-									</xs:complexType>
-								</xs:element>
-							</xs:sequence>
-							<xs:attribute name="modelIdentifier" type="xs:normalizedString" use="required"/>
-							<xs:attribute name="needsExecutionTool" type="xs:boolean" default="false"/>
-							<xs:attribute name="canHandleVariableCommunicationStepSize" type="xs:boolean" default="false"/>
-							<xs:attribute name="canInterpolateInputs" type="xs:boolean" default="false"/>
-							<xs:attribute name="maxOutputDerivativeOrder" type="xs:unsignedInt" default="0"/>
-							<xs:attribute name="canRunAsynchronuously" type="xs:boolean" default="false"/>
-							<xs:attribute name="canBeInstantiatedOnlyOncePerProcess" type="xs:boolean" default="false"/>
-							<xs:attribute name="canNotUseMemoryManagementFunctions" type="xs:boolean" default="false"/>
-							<xs:attribute name="canGetAndSetFMUstate" type="xs:boolean" default="false"/>
-							<xs:attribute name="canSerializeFMUstate" type="xs:boolean" default="false"/>
-							<xs:attribute name="providesDirectionalDerivative" type="xs:boolean" default="false"/>
-							<xs:attribute name="providesPerElementDependencies" type="xs:boolean" default="false"/>
-						</xs:complexType>
-					</xs:element>
-				</xs:sequence>
+				<xs:choice>
+				  <xs:sequence>
+				    <xs:element name="ModelExchange" type="fmi3ModelExchange" minOccurs="1" maxOccurs="1" />
+				    <xs:element name="CoSimulation" type="fmi3CoSimulation" minOccurs="0" maxOccurs="1" />
+				  </xs:sequence>
+				  <xs:sequence >
+				    <xs:element name="CoSimulation" type="fmi3CoSimulation" minOccurs="1" maxOccurs="1" />
+				  </xs:sequence>
+				</xs:choice>
+				<xs:element name="BuildConfiguration" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="SourceFileSet" minOccurs="0" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="SourceFile" maxOccurs="unbounded">
+											<xs:complexType>
+												<xs:attribute name="name" type="xs:normalizedString" use="required"/>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="PreprocessorDefinition" minOccurs="0" maxOccurs="unbounded">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="Option" minOccurs="0" maxOccurs="unbounded">
+														<xs:complexType>
+															<xs:attribute name="value" type="xs:normalizedString"/>
+															<xs:attribute name="description" type="xs:string"/>
+														</xs:complexType>
+													</xs:element>
+												</xs:sequence>
+												<xs:attribute name="name" type="xs:normalizedString" use="required"/>
+												<xs:attribute name="optional" type="xs:boolean" default="false"/>
+												<xs:attribute name="value" type="xs:normalizedString"/>
+												<xs:attribute name="description" type="xs:string"/>
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="IncludeDirectory" minOccurs="0" maxOccurs="unbounded">
+											<xs:complexType>
+												<xs:attribute name="name" type="xs:normalizedString" use="required"/>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+									<xs:attribute name="language" type="xs:normalizedString"/>
+									<xs:attribute name="compiler" type="xs:normalizedString"/>
+									<xs:attribute name="compilerOptions" type="xs:string"/>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="Library" minOccurs="0" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:attribute name="name" type="xs:normalizedString" use="required"/>
+									<xs:attribute name="version" type="xs:normalizedString"/>
+									<xs:attribute name="external" type="xs:boolean" default="false"/>
+									<xs:attribute name="description" type="xs:string"/>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+						<xs:attribute name="modelIdentifier" type="xs:normalizedString" use="required"/>
+						<xs:attribute name="platform" type="xs:normalizedString"/>
+						<xs:attribute name="description" type="xs:string"/>
+					</xs:complexType>
+				</xs:element>
 				<xs:element name="UnitDefinitions" minOccurs="0">
 					<xs:complexType>
 						<xs:sequence maxOccurs="unbounded">
@@ -109,9 +113,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				</xs:element>
 				<xs:element name="TypeDefinitions" minOccurs="0">
 					<xs:complexType>
-						<xs:sequence maxOccurs="unbounded">
-							<xs:element name="SimpleType" type="fmi3SimpleType"/>
-						</xs:sequence>
+						<xs:group ref="fmi3TypeDefinition" maxOccurs="unbounded"/>
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="LogCategories" minOccurs="0">
@@ -134,8 +136,59 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						<xs:attribute name="stepSize" type="xs:double"/>
 					</xs:complexType>
 				</xs:element>
-				<xs:element name="VendorAnnotations" type="fmi3Annotation" minOccurs="0">
+				<xs:element name="Terminals" minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Terminal" type="fmi3Terminal" maxOccurs="unbounded"/>
+						</xs:sequence>
+					</xs:complexType>
 				</xs:element>
+				<xs:element name="GraphicalRepresentation" minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="CoordinateSystem" minOccurs="0">
+								<xs:complexType>
+									<xs:attribute name="x1" type="xs:double" use="required"/>
+									<xs:attribute name="y1" type="xs:double" use="required"/>
+									<xs:attribute name="x2" type="xs:double" use="required"/>
+									<xs:attribute name="y2" type="xs:double" use="required"/>
+									<xs:attribute name="suggestedScalingFactorTo_mm" type="xs:double" use="required"/>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="Icon" minOccurs="0">
+								<xs:complexType>
+									<xs:attribute name="x1" type="xs:double" use="required"/>
+									<xs:attribute name="y1" type="xs:double" use="required"/>
+									<xs:attribute name="x2" type="xs:double" use="required"/>
+									<xs:attribute name="y2" type="xs:double" use="required"/>
+									<xs:attribute name="iconSource_PNG" type="xs:string" use="required"/>
+									<xs:attribute name="iconSource_SVG" type="xs:string" use="optional"/>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="Terminal" minOccurs="0" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="VendorAnnotations" type="fmi3Annotation" minOccurs="0"/>
+									</xs:sequence>
+									<xs:attribute name="name" type="xs:normalizedString" use="required"/>
+									<xs:attribute name="defaultConnectionColor" use="optional">
+										<xs:simpleType>
+											<xs:list itemType="xs:unsignedByte"/>
+										</xs:simpleType>
+									</xs:attribute>
+									<xs:attribute name="defaultConnectionStrokeSize" type="xs:double" use="optional"/>
+									<xs:attribute name="x1" type="xs:double" use="required"/>
+									<xs:attribute name="y1" type="xs:double" use="required"/>
+									<xs:attribute name="x2" type="xs:double" use="required"/>
+									<xs:attribute name="y2" type="xs:double" use="required"/>
+									<xs:attribute name="iconSource_PNG" type="xs:string" use="required"/>
+									<xs:attribute name="iconSource_SVG" type="xs:string" use="optional"/>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="VendorAnnotations" type="fmi3Annotation" minOccurs="0"/>
 				<xs:element name="ModelVariables">
 					<xs:complexType>
 						<xs:group ref="fmi3Variable" maxOccurs="unbounded"/>
@@ -144,41 +197,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:element name="ModelStructure">
 					<xs:complexType>
 						<xs:sequence>
-							<xs:element name="Outputs" type="fmi3VariableDependency" minOccurs="0">
-							</xs:element>
-							<xs:element name="Derivatives" type="fmi3VariableDependency" minOccurs="0">
-							</xs:element>
-							<xs:element name="InitialUnknowns" minOccurs="0">
-								<xs:complexType>
-									<xs:sequence maxOccurs="unbounded">
-										<xs:element name="Unknown">
-											<xs:complexType>
-												<xs:attribute name="valueReference" type="xs:unsignedInt" use="required"/>
-												<xs:attribute name="dependencies">
-													<xs:simpleType>
-														<xs:list itemType="xs:unsignedInt"/>
-													</xs:simpleType>
-												</xs:attribute>
-												<xs:attribute name="dependenciesKind">
-													<xs:simpleType>
-														<xs:list>
-															<xs:simpleType>
-																<xs:restriction base="xs:normalizedString">
-																	<xs:enumeration value="dependent"/>
-																	<xs:enumeration value="constant"/>
-																	<xs:enumeration value="fixed"/>
-																	<xs:enumeration value="tunable"/>
-																	<xs:enumeration value="discrete"/>
-																</xs:restriction>
-															</xs:simpleType>
-														</xs:list>
-													</xs:simpleType>
-												</xs:attribute>
-											</xs:complexType>
-										</xs:element>
-									</xs:sequence>
-								</xs:complexType>
-							</xs:element>
+							<xs:element name="Output" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element name="Derivative" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element name="InitialUnknown" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
 							<xs:element name="NumberOfEventIndicators" minOccurs="0">
 								<xs:complexType>
 									<xs:attribute name="dependencies" use="required">

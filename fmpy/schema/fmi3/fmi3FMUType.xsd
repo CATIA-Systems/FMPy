@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:annotation>
+		<xs:documentation>
+Copyright(c) 2008-2011 MODELISAR consortium,
+             2012-2019 Modelica Association Project "FMI".
+             All rights reserved.
+
+This file is licensed by the copyright holders under the 2-Clause BSD License
+(https://opensource.org/licenses/BSD-2-Clause):
+
+----------------------------------------------------------------------------
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+- Redistributions of source code must retain the above copyright notice,
+ this list of conditions and the following disclaimer.
+
+- Redistributions in binary form must reproduce the above copyright notice,
+ this list of conditions and the following disclaimer in the documentation
+ and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+----------------------------------------------------------------------------
+		</xs:documentation>
+	</xs:annotation>
+	<xs:include schemaLocation="fmi3Annotation.xsd"/>
+	<xs:complexType name="fmi3FMUType">
+		<xs:sequence minOccurs="0">
+			<xs:element name="VendorAnnotations" type="fmi3Annotation" minOccurs="0"/>
+		</xs:sequence>
+		<xs:attribute name="modelIdentifier" type="xs:normalizedString" use="required"/>
+		<xs:attribute name="needsExecutionTool" type="xs:boolean" default="false"/>
+		<xs:attribute name="canBeInstantiatedOnlyOncePerProcess" type="xs:boolean" default="false"/>
+		<xs:attribute name="canNotUseMemoryManagementFunctions" type="xs:boolean" default="false"/>
+		<xs:attribute name="canGetAndSetFMUState" type="xs:boolean" default="false"/>
+		<xs:attribute name="canSerializeFMUState" type="xs:boolean" default="false"/>
+		<xs:attribute name="providesDirectionalDerivative" type="xs:boolean" default="false"/>
+		<xs:attribute name="providesPerElementDependencies" type="xs:boolean" default="false"/>
+	</xs:complexType>
+	<xs:complexType name="fmi3ModelExchange">
+		<xs:complexContent>
+			<xs:extension base="fmi3FMUType">
+				<xs:attribute name="completedIntegratorStepNotNeeded" type="xs:boolean" default="false"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="fmi3CoSimulation">
+		<xs:complexContent>
+			<xs:extension base="fmi3FMUType">
+				<xs:attribute name="canHandleVariableCommunicationStepSize" type="xs:boolean" default="false"/>
+				<xs:attribute name="canInterpolateInputs" type="xs:boolean" default="false"/>
+				<xs:attribute name="maxOutputDerivativeOrder" type="xs:unsignedInt" default="0"/>
+				<xs:attribute name="providesIntermediateVariableAccess" type="xs:boolean" default="false"/>
+				<xs:attribute name="canReturnEarlyAfterIntermediateUpdate" type="xs:boolean" default="false"/>
+				<xs:attribute name="providesHybridCoSimulation" type="xs:boolean" default="false"/>
+				<xs:attribute name="providesScheduledExecutionSimulation" type="xs:boolean" default="false"/>
+				<xs:attribute name="canNotUseBasicCoSimulation" type="xs:boolean" default="false"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+</xs:schema>

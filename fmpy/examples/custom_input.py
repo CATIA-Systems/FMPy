@@ -80,7 +80,7 @@ def simulate_custom_input(show_plot=True):
     fmu.freeInstance()
 
     # clean up
-    shutil.rmtree(unzipdir)
+    shutil.rmtree(unzipdir, ignore_errors=True)
 
     # convert the results to a structured NumPy array
     result = np.array(rows, dtype=np.dtype([('time', np.float64), ('inputs', np.float64), ('outputs[4]', np.float64)]))

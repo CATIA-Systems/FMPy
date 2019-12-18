@@ -13,11 +13,6 @@
 # compiled files
 *.py[cod]
 
-# shared libraries
-*.dll
-*.dylib
-*.so
-
 # build artifacts
 build/
 cvode-*/

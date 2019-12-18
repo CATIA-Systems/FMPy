@@ -941,6 +941,9 @@ def create_cmake_project(filename, project_dir):
         # don't add the current directory
         resources = list(filter(lambda n: not n.startswith('.'), archive.namelist()))
 
+    # always add the binaries
+    resources.append('binaries')
+
     # use the first source file set of the first build configuration
     build_configuration = model_description.buildConfigurations[0]
     source_file_set = build_configuration.sourceFileSets[0]

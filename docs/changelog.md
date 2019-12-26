@@ -1,3 +1,7 @@
+## v0.2.16 (2019-12-26)
+
+- `FIXED` pre-compiled SUNDIALS libraries re-added
+
 ## v0.2.15 (2019-12-18)
 
 - `FIXED` validation of structured variable names with apostrophes

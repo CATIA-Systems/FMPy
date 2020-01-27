@@ -592,7 +592,12 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
             sv.max = value.get('max')
 
         # resolve the declared type
-        sv.declaredType = type_definitions[value.get('declaredType')]
+        declared_type = value.get('declaredType')
+        if declared_type in type_definitions:
+            sv.declaredType = type_definitions[value.get('declaredType')]
+        else:
+            raise Exception('Variable "%s" (line %s) has declaredType="%s" which has not been defined.'
+                            % (sv.name, sv.sourceline, declared_type))
 
         if fmiVersion == '1.0':
             if sv.causality == 'internal':
@@ -606,7 +611,11 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
                 sv.variability = 'continuous' if sv.type in {'Float32', 'Float64', 'Real'} else 'discrete'
 
             if sv.initial is None:
-                sv.initial = initial_defaults[sv.variability][sv.causality]
+                try:
+                    sv.initial = initial_defaults[sv.variability][sv.causality]
+                except KeyError:
+                    raise Exception('Variable "%s" (line %s) has an illegal combination of causality="%s"'
+                                    ' and variability="%s".' % (sv.name, sv.sourceline, sv.causality, sv.variability))
 
         dimensions = variable.findall('Dimension')
 

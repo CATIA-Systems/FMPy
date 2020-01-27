@@ -828,6 +828,8 @@ def simulateCS(model_description, fmu_kwargs, start_time, stop_time, relative_to
 
     recorder = Recorder(fmu=fmu, modelDescription=model_description, variableNames=output, interval=output_interval)
 
+    n_steps = 0
+
     # simulation loop
     while time < stop_time:
 
@@ -843,7 +845,8 @@ def simulateCS(model_description, fmu_kwargs, start_time, stop_time, relative_to
         if step_finished is not None and not step_finished(time, recorder):
             break
 
-        time += output_interval
+        n_steps += 1
+        time = n_steps * output_interval
 
     recorder.sample(time, force=True)
 

@@ -130,11 +130,18 @@ class _FMU(object):
         else:
             library_dir = os.path.dirname(libraryPath)
 
+        # check if shared library exists
+        if not os.path.isfile(libraryPath):
+            raise Exception("Cannot find shared library %s." % libraryPath)
+
         # change to the library directory as some DLLs expect this to resolve dependencies
         os.chdir(library_dir)
 
         # load the shared library
-        self.dll = cdll.LoadLibrary(libraryPath)
+        try:
+            self.dll = cdll.LoadLibrary(libraryPath)
+        except Exception as e:
+            raise Exception("Failed to load shared library %s. %s" % (libraryPath, e))
 
         # change back to the working directory
         os.chdir(work_dir)

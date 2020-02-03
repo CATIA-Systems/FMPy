@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1447</width>
-    <height>1469</height>
+    <width>1125</width>
+    <height>807</height>
    </rect>
   </property>
   <property name="palette">
@@ -88,7 +88,7 @@
    <bool>true</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_5">
+   <layout class="QGridLayout" name="gridLayout_2">
     <property name="leftMargin">
      <number>0</number>
     </property>
@@ -101,7 +101,7 @@
     <property name="bottomMargin">
      <number>0</number>
     </property>
-    <item>
+    <item row="0" column="0">
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
        <number>0</number>
@@ -992,99 +992,34 @@
          </widget>
         </item>
         <item>
-         <widget class="QTabWidget" name="tabWidget">
-          <property name="currentIndex">
-           <number>0</number>
+         <widget class="QGroupBox" name="portsGroupBox">
+          <property name="title">
+           <string>Ports</string>
           </property>
-          <widget class="QWidget" name="portsTab">
-           <attribute name="title">
-            <string>Ports</string>
-           </attribute>
-           <layout class="QVBoxLayout" name="verticalLayout_7">
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QGraphicsView" name="graphicsView">
-              <property name="frameShape">
-               <enum>QFrame::NoFrame</enum>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-          <widget class="QWidget" name="modelImageTab">
-           <attribute name="title">
-            <string>Model</string>
-           </attribute>
-           <layout class="QVBoxLayout" name="verticalLayout_4">
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QScrollArea" name="scrollArea">
-              <property name="frameShape">
-               <enum>QFrame::NoFrame</enum>
-              </property>
-              <property name="widgetResizable">
-               <bool>true</bool>
-              </property>
-              <widget class="QWidget" name="scrollAreaWidgetContents">
-               <property name="geometry">
-                <rect>
-                 <x>0</x>
-                 <y>0</y>
-                 <width>1146</width>
-                 <height>395</height>
-                </rect>
-               </property>
-               <layout class="QVBoxLayout" name="verticalLayout_6">
-                <property name="leftMargin">
-                 <number>0</number>
-                </property>
-                <property name="topMargin">
-                 <number>0</number>
-                </property>
-                <property name="rightMargin">
-                 <number>0</number>
-                </property>
-                <property name="bottomMargin">
-                 <number>0</number>
-                </property>
-                <item>
-                 <widget class="QLabel" name="modelImageLabel">
-                  <property name="text">
-                   <string>no image available</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </widget>
-            </item>
-           </layout>
-          </widget>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>5</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QGraphicsView" name="graphicsView">
+             <property name="frameShape">
+              <enum>QFrame::NoFrame</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </item>
        </layout>
@@ -1356,8 +1291,8 @@ QToolButton:checked, QToolButton:hover:pressed {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1447</width>
-     <height>38</height>
+     <width>1125</width>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">

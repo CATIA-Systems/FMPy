@@ -1,8 +1,9 @@
 import unittest
 import numpy as np
 import sys
+import os
 from fmpy import simulate_fmu
-from fmpy.util import download_test_file
+from fmpy.util import download_test_file, download_file
 
 
 class OutputGridTest(unittest.TestCase):
@@ -11,7 +12,24 @@ class OutputGridTest(unittest.TestCase):
     def setUpClass(cls):
         print("Python:", sys.version)
 
-    def test_step_size(self):
+    def test_step_size_cs(self):
+
+        url = 'https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/win64/Test-FMUs/0.0.2/Dahlquist/Dahlquist.fmu'
+        sha256 = '6df6ab64705615dfa1217123a103c23384a081763a6f71726ba7943503da8fc0'
+
+        download_file(url, checksum=sha256)
+
+        h = 0.02
+
+        result = simulate_fmu(os.path.basename(url), output_interval=h, stop_time=10)
+
+        time = result['time']
+
+        grid = np.array(range(501)) * h
+
+        self.assertTrue(np.all(time == grid))
+
+    def test_step_size_me(self):
 
         # download the FMU and input file
         for filename in ['CoupledClutches.fmu', 'CoupledClutches_in.csv']:

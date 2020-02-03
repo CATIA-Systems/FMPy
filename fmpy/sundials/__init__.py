@@ -56,6 +56,7 @@ class CVodeSolver(object):
         self.get_dx = get_dx
         self.get_z = get_z
         self.set_time = set_time
+        self.error_info = None
 
         self.discrete = nx == 0
 
@@ -88,6 +89,7 @@ class CVodeSolver(object):
         # add function pointers as members to save them from GC
         self.f_ = CVRhsFn(self.f)
         self.g_ = CVRootFn(self.g)
+        self.ehfun_ = CVErrHandlerFn(self.ehfun)
 
         assert CVodeInit(self.cvode_mem, self.f_, startTime, self.x) == CV_SUCCESS
 
@@ -107,9 +109,11 @@ class CVodeSolver(object):
 
         assert CVodeSetNoInactiveRootWarn(self.cvode_mem) == CV_SUCCESS
 
+        assert CVodeSetErrHandlerFn(self.cvode_mem, self.ehfun_, None) == CV_SUCCESS
+
     def ehfun(self, error_code, module, function, msg,  user_data):
         """ Error handler function """
-        print("[%s] %s" % (module.decode("utf-8"), msg.decode("utf-8")))
+        self.error_info = (error_code, module.decode("utf-8"), function.decode("utf-8"), msg.decode("utf-8"))
 
     def f(self, t, y, ydot, user_data):
         """ Right-hand-side function """
@@ -156,6 +160,8 @@ class CVodeSolver(object):
         if flag == CV_ROOT_RETURN:
             p_roots_found = np.ctypeslib.as_ctypes(roots_found)
             assert CVodeGetRootInfo(self.cvode_mem, p_roots_found) == CV_SUCCESS
+        elif flag < 0:
+            raise RuntimeError("CVode error (code %s) in module %s, function %s: %s" % self.error_info)
 
         return flag > 0, roots_found, tret.value
 

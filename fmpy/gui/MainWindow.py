@@ -241,6 +241,8 @@ class MainWindow(QMainWindow):
             action = self.columnsMenu.addAction(column)
             action.setCheckable(True)
             action.toggled.connect(lambda show, col=column: self.showColumn(col, show))
+        self.contextMenu.addSeparator()
+        self.actionClearPlots = self.contextMenu.addAction("Clear Plots", self.clearPlots)
 
         # file menu
         self.ui.actionExit.triggered.connect(QApplication.closeAllWindows)
@@ -933,6 +935,11 @@ class MainWindow(QMainWindow):
                 variables.append(variable)
 
         return variables
+
+    def clearPlots(self):
+        """ Clear all plots """
+        self.selectedVariables.clear()
+        self.updatePlotLayout()
 
     def createGraphics(self):
         """ Create the graphical representation of the FMU's inputs and outputs """

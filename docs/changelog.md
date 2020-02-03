@@ -1,3 +1,15 @@
+## v0.2.17 (2020-02-04)
+
+- `NEW` "Clear Plots" action has been added to the context menu
+- `IMPROVED` single quotes are now removed from name segments in the tree view
+- `IMPROVED` a RuntimeError is raised when an errors occurs in CVode
+- `IMPROVED` exceptions are raised for undefined declaredType, illegal combinations of causality and variability, and missing shared libraries
+- `IMPROVED` communicationPoint is now calculated as n_steps * step_size to avoid accumulation of numerical errors
+
+## v0.2.16 (2019-12-26)
+
+- `FIXED` pre-compiled SUNDIALS libraries re-added
+
 ## v0.2.15 (2019-12-18)
 
 - `FIXED` validation of structured variable names with apostrophes

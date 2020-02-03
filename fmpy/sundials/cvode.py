@@ -105,6 +105,7 @@ CVRootFn = CFUNCTYPE(c_int, realtype, N_Vector, POINTER(realtype), c_void_p)
 # typedef void (*CVErrHandlerFn)(int error_code,
 #                                const char *module, const char *function,
 #                                char *msg, void *user_data);
+CVErrHandlerFn = CFUNCTYPE(None, c_int, c_char_p, c_char_p, c_char_p, c_void_p)
 #
 # /* -------------------
 #  * Exported Functions
@@ -139,6 +140,9 @@ CVodeSVtolerances.restype = c_int
 # /* Optional input functions */
 # SUNDIALS_EXPORT int CVodeSetErrHandlerFn(void *cvode_mem, CVErrHandlerFn ehfun,
 #                                          void *eh_data);
+CVodeSetErrHandlerFn = getattr(sundials_cvode, 'CVodeSetErrHandlerFn')
+CVodeSetErrHandlerFn.argtypes = [c_void_p, CVErrHandlerFn, c_void_p]
+CVodeSetErrHandlerFn.restype = c_int
 # SUNDIALS_EXPORT int CVodeSetErrFile(void *cvode_mem, FILE *errfp);
 # SUNDIALS_EXPORT int CVodeSetUserData(void *cvode_mem, void *user_data);
 # SUNDIALS_EXPORT int CVodeSetMaxOrd(void *cvode_mem, int maxord);

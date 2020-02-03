@@ -369,6 +369,8 @@ class MainWindow(QMainWindow):
 
     def load(self, filename):
 
+        import zipfile
+
         if not self.isVisible():
             self.show()
 
@@ -377,6 +379,15 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.warning(self, "Failed to load FMU", "Failed to load %s. %s" % (filename, e))
             return
+
+        # show model.png
+        try:
+            pixmap = QPixmap()
+            with zipfile.ZipFile(filename, 'r') as zf:
+                pixmap.loadFromData(zf.read('model.png'), format='PNG')
+            self.ui.modelImageLabel.setPixmap(pixmap)
+        except:
+            self.ui.modelImageLabel.setText("no image available")
 
         self.filename = filename
         platforms = supported_platforms(self.filename)

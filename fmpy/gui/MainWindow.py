@@ -9,7 +9,8 @@ except Exception as e:
 import os
 import sys
 
-from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QStandardPaths, QPointF
+from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QStandardPaths, \
+    QPointF, QBuffer, QIODevice
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, QMenu, QMessageBox, QProgressDialog, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, QGraphicsTextItem, QGraphicsPathItem
 from PyQt5.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, QPolygonF, QPainterPath
 
@@ -369,6 +370,8 @@ class MainWindow(QMainWindow):
 
     def load(self, filename):
 
+        import zipfile
+
         if not self.isVisible():
             self.show()
 
@@ -377,6 +380,29 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.warning(self, "Failed to load FMU", "Failed to load %s. %s" % (filename, e))
             return
+
+        # show model.png
+        try:
+            pixmap = QPixmap()
+
+            # load the model.png
+            with zipfile.ZipFile(filename, 'r') as zf:
+                pixmap.loadFromData(zf.read('model.png'), format='PNG')
+
+            # show the unscaled version in tooltip
+            buffer = QBuffer()
+            buffer.open(QIODevice.WriteOnly)
+            pixmap.save(buffer, "PNG", quality=100)
+            image = bytes(buffer.data().toBase64()).decode()
+            html = '<img src="data:image/png;base64,{}">'.format(image)
+            self.ui.modelImageLabel.setToolTip(html)
+
+            # show a scaled preview in "Model Info"
+            pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.ui.modelImageLabel.setPixmap(pixmap)
+        except:
+            self.ui.modelImageLabel.setPixmap(QPixmap())
+            self.ui.modelImageLabel.setToolTip(None)
 
         self.filename = filename
         platforms = supported_platforms(self.filename)

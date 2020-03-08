@@ -5,7 +5,7 @@
 	<xs:include schemaLocation="fmi3Variable.xsd"/>
 	<xs:include schemaLocation="fmi3Terminal.xsd"/>
 	<xs:include schemaLocation="fmi3Type.xsd"/>
-	<xs:include schemaLocation="fmi3FMUType.xsd"/>
+	<xs:include schemaLocation="fmi3InterfaceType.xsd"/>
 	<xs:annotation>
 		<xs:documentation>
 Copyright(c) 2008-2011 MODELISAR consortium,
@@ -43,15 +43,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:element name="fmiModelDescription">
 		<xs:complexType>
 			<xs:sequence>
-				<xs:choice>
-				  <xs:sequence>
-				    <xs:element name="ModelExchange" type="fmi3ModelExchange" minOccurs="1" maxOccurs="1" />
-				    <xs:element name="CoSimulation" type="fmi3CoSimulation" minOccurs="0" maxOccurs="1" />
-				  </xs:sequence>
-				  <xs:sequence >
-				    <xs:element name="CoSimulation" type="fmi3CoSimulation" minOccurs="1" maxOccurs="1" />
-				  </xs:sequence>
-				</xs:choice>
+				<xs:element name="ModelExchange" type="fmi3ModelExchange" minOccurs="0" maxOccurs="1" />
+				<xs:element name="BasicCoSimulation" type="fmi3CoSimulation" minOccurs="0" maxOccurs="1" />
+				<xs:element name="HybridCoSimulation" type="fmi3CoSimulation" minOccurs="0" maxOccurs="1" />
+				<xs:element name="ScheduledCoSimulation" type="fmi3CoSimulation" minOccurs="0" maxOccurs="1" />
 				<xs:element name="BuildConfiguration" minOccurs="0" maxOccurs="unbounded">
 					<xs:complexType>
 						<xs:sequence>
@@ -200,14 +195,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 							<xs:element name="Output" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
 							<xs:element name="Derivative" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
 							<xs:element name="InitialUnknown" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
-							<xs:element name="NumberOfEventIndicators" minOccurs="0">
-								<xs:complexType>
-									<xs:attribute name="dependencies" use="required">
-										<xs:simpleType>
-											<xs:list itemType="xs:unsignedInt"/>
-										</xs:simpleType>
-									</xs:attribute>
-								</xs:complexType>
+							<xs:element name="EventIndicator" minOccurs="0" maxOccurs="unbounded">
+	                                                        <xs:complexType>
+		                                                        <xs:attribute name="valueReference" type="xs:unsignedInt" use="required"/>
+	                                                        </xs:complexType>
 							</xs:element>
 						</xs:sequence>
 					</xs:complexType>
@@ -237,7 +228,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:attribute>
-			<xs:attribute name="numberOfEventIndicators" type="xs:unsignedInt"/>
 		</xs:complexType>
 	</xs:element>
 </xs:schema>

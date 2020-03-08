@@ -367,7 +367,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
             modelDescription.modelExchange = ModelExchange()
             modelDescription.modelExchange.modelIdentifier = modelIdentifier
 
-    else:
+    elif fmiVersion == "2.0":
 
         for me in root.findall('ModelExchange'):
             modelDescription.modelExchange = ModelExchange()
@@ -396,6 +396,34 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
                               'canSerializeFMUstate',
                               'providesDirectionalDerivative'])
 
+    else:
+
+        for me in root.findall('ModelExchange'):
+            modelDescription.modelExchange = ModelExchange()
+            _copy_attributes(me, modelDescription.modelExchange,
+                             ['modelIdentifier',
+                              'needsExecutionTool',
+                              'completedIntegratorStepNotNeeded',
+                              'canBeInstantiatedOnlyOncePerProcess',
+                              'canNotUseMemoryManagementFunctions',
+                              'canGetAndSetFMUstate',
+                              'canSerializeFMUstate',
+                              'providesDirectionalDerivative'])
+
+        for cs in root.findall('BasicCoSimulation'):
+            modelDescription.coSimulation = CoSimulation()
+            _copy_attributes(cs, modelDescription.coSimulation,
+                             ['modelIdentifier',
+                              'needsExecutionTool',
+                              'canHandleVariableCommunicationStepSize',
+                              'canInterpolateInputs',
+                              'maxOutputDerivativeOrder',
+                              'canRunAsynchronuously',
+                              'canBeInstantiatedOnlyOncePerProcess',
+                              'canNotUseMemoryManagementFunctions',
+                              'canGetAndSetFMUstate',
+                              'canSerializeFMUstate',
+                              'providesDirectionalDerivative'])
     # build configurations
     if fmiVersion == '2.0':
 
@@ -660,6 +688,9 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
                     unknown.dependenciesKind = dependenciesKind.strip().split(' ')
 
                 attr.append(unknown)
+
+    if fmiVersion.startswith('3.0'):
+        modelDescription.numberOfEventIndicators = len(root.findall('ModelStructure/EventIndicator'))
 
     if validate:
 

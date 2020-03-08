@@ -73,7 +73,7 @@ typedef        uint64_t fmi3UInt64;   /* 64-bit unsigned integer */
 typedef             int fmi3Boolean;  /* Data type to be used with fmi3True and fmi3False */
 typedef            char fmi3Char;     /* Data type for one character */
 typedef const fmi3Char* fmi3String;   /* Data type for character strings
-                                         ('\0' terminated, UTF8 encoded) */
+                                         ('\0' terminated, UTF-8 encoded) */
 typedef            char fmi3Byte;     /* Smallest addressable unit of the machine
                                          (typically one byte) */
 typedef const fmi3Byte* fmi3Binary;   /* Data type for binary data

@@ -6,6 +6,31 @@ from . import free, calloc
 from .fmi1 import _FMU, printLogMessage
 
 
+from ctypes import cdll
+import os
+from fmpy import sharedLibraryExtension
+
+library_dir, _ = os.path.split(__file__)
+
+logging = cdll.LoadLibrary(os.path.join(library_dir, 'logging' + sharedLibraryExtension))
+
+# callbackLoggerTYPE = CFUNCTYPE(None, c_void_p, c_char_p, c_int, c_char_p, c_char_p)
+#
+# setLogger = getattr(logging, 'setLogger')
+# setLogger.argtypes = [callbackLoggerTYPE]
+# setLogger.restype = None
+
+# def myLogMessage(component, instanceName, status, category, message):
+#     label = ['OK', 'WARNING', 'DISCARD', 'ERROR', 'FATAL', 'PENDING'][status]
+#     print("[%s] %s" % (label, message.decode("utf-8")))
+#
+# setLogger(callbackLoggerTYPE(myLogMessage))
+#
+#
+# cbLogMessage = getattr(logging, 'logMessage')
+#
+# p_logMessage = callbackLoggerTYPE.in_dll(logging, 'logMessage')
+
 fmi2Component            = c_void_p
 fmi2ComponentEnvironment = c_void_p
 fmi2FMUstate             = c_void_p
@@ -65,6 +90,11 @@ class fmi2CallbackFunctions(Structure):
                 ('freeMemory',           fmi2CallbackFreeMemoryTYPE),
                 ('stepFinished',         fmi2StepFinishedTYPE),
                 ('componentEnvironment', fmi2ComponentEnvironment)]
+
+
+addLoggerProxy = getattr(logging, 'addLoggerProxy')
+addLoggerProxy.argtypes = [POINTER(fmi2CallbackFunctions)]
+addLoggerProxy.restype = None
 
 
 class fmi2EventInfo(Structure):

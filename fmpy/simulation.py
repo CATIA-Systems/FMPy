@@ -558,6 +558,7 @@ def simulate_fmu(filename,
         callbacks.logger         = fmi2CallbackLoggerTYPE(logger)
         callbacks.allocateMemory = fmi2CallbackAllocateMemoryTYPE(allocateMemory)
         callbacks.freeMemory     = fmi2CallbackFreeMemoryTYPE(freeMemory)
+        addLoggerProxy(byref(callbacks))
     else:
         callbacks = fmi3.fmi3CallbackFunctions()
         callbacks.logMessage     = fmi3.fmi3CallbackLogMessageTYPE(logger)

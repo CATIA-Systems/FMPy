@@ -23,6 +23,11 @@ jobs:
     displayName: Install Anaconda packages
 
   - bash: |
+      cmake -Sfmpy/logging -Bfmpy/logging/build
+      cmake --build fmpy/logging/build --config Release
+    displayName: Build logging library
+
+  - bash: |
       source activate myEnvironment
       python setup.py bdist_wheel --universal
       for f in dist/FMPy-*.whl; do
@@ -80,6 +85,11 @@ jobs:
     displayName: Install Anaconda packages
 
   - bash: |
+      cmake -Sfmpy/logging -Bfmpy/logging/build
+      cmake --build fmpy/logging/build --config Release
+    displayName: Build logging library
+
+  - bash: |
       source activate myEnvironment
       python setup.py bdist_wheel --universal
       for f in dist/FMPy-*.whl; do
@@ -135,6 +145,11 @@ jobs:
       call activate myEnvironment
       python setup.py bdist_wheel --universal
     displayName: Build wheel
+
+  - bash: |
+      cmake -Sfmpy/logging -Bfmpy/logging/build
+      cmake --build fmpy/logging/build --config Release
+    displayName: Build logging library
 
   - task: PublishPipelineArtifact@1
     inputs:

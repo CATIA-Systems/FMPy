@@ -552,7 +552,7 @@ def simulate_fmu(filename,
         callbacks.logger         = fmi1CallbackLoggerTYPE(logger)
         callbacks.allocateMemory = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
         callbacks.freeMemory     = fmi1CallbackFreeMemoryTYPE(freeMemory)
-        callbacks.stepFinished = None
+        callbacks.stepFinished   = None
     elif model_description.fmiVersion == '2.0':
         callbacks = fmi2CallbackFunctions()
         callbacks.logger         = fmi2CallbackLoggerTYPE(logger)
@@ -563,6 +563,14 @@ def simulate_fmu(filename,
         callbacks.logMessage     = fmi3.fmi3CallbackLogMessageTYPE(logger)
         callbacks.allocateMemory = fmi3.fmi3CallbackAllocateMemoryTYPE(fmi3.allocateMemory)
         callbacks.freeMemory     = fmi3.fmi3CallbackFreeMemoryTYPE(fmi3.freeMemory)
+
+    if model_description.fmiVersion in ['1.0', '2.0']:
+        # add native proxy function that processes variadic arguments
+        try:
+            from .logging import addLoggerProxy
+            addLoggerProxy(byref(callbacks))
+        except Exception as e:
+            print("Failed to add logger proxy function. %s" % e)
 
     # simulate_fmu the FMU
     if fmi_type == 'ModelExchange' and model_description.modelExchange is not None:

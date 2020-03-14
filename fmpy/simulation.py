@@ -552,14 +552,17 @@ def simulate_fmu(filename,
         callbacks.logger         = fmi1CallbackLoggerTYPE(logger)
         callbacks.allocateMemory = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
         callbacks.freeMemory     = fmi1CallbackFreeMemoryTYPE(freeMemory)
-        callbacks.stepFinished = None
+        callbacks.stepFinished   = None
     elif model_description.fmiVersion == '2.0':
         callbacks = fmi2CallbackFunctions()
         callbacks.logger         = fmi2CallbackLoggerTYPE(logger)
         callbacks.allocateMemory = fmi2CallbackAllocateMemoryTYPE(allocateMemory)
         callbacks.freeMemory     = fmi2CallbackFreeMemoryTYPE(freeMemory)
-        from .logging import addLoggerProxy
-        addLoggerProxy(byref(callbacks))
+        try:
+            from .logging import addLoggerProxy
+            addLoggerProxy(byref(callbacks))
+        except:
+            pass
     else:
         callbacks = fmi3.fmi3CallbackFunctions()
         callbacks.logMessage     = fmi3.fmi3CallbackLogMessageTYPE(logger)

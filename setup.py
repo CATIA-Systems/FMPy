@@ -36,17 +36,15 @@ package_data = {
     'fmpy': [
         'c-code/*.h',
         'c-code/CMakeLists.txt',
+        'logging/darwin64/logging.dylib',
+        'logging/linux64/logging.dylib',
+        'logging/win64/logging.dll',
         'schema/fmi1/*.xsd',
         'schema/fmi2/*.xsd',
         'schema/fmi3/*.xsd',
         'sundials/x86_64-darwin/sundials_*.dylib',
         'sundials/x86_64-linux/sundials_*.so',
         'sundials/x86_64-windows/sundials_*.dll'
-    ],
-    'fmpy.logging': [
-        'darwin64/logging.dylib',
-        'linux64/logging.so',
-        'win64/logging.dll'
     ],
     'fmpy.gui': ['icons/app_icon.ico'],
     'fmpy.ssp': ['schema/*.xsd'],

@@ -26,9 +26,11 @@ add_library(logging SHARED logging.c)
 
 target_include_directories(logging PUBLIC ../c-code)
 
-set_target_properties(logging PROPERTIES
-    PREFIX ""
-    LIBRARY_OUTPUT_DIRECTORY         "${CMAKE_CURRENT_SOURCE_DIR}/${FMI_PLATFORM}"
-    LIBRARY_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_CURRENT_SOURCE_DIR}/${FMI_PLATFORM}"
-    LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/${FMI_PLATFORM}"
+set_target_properties(logging PROPERTIES PREFIX "")
+
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${FMI_PLATFORM}")
+
+add_custom_command(TARGET logging POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+  "$<TARGET_FILE:logging>"
+  "${CMAKE_CURRENT_SOURCE_DIR}/${FMI_PLATFORM}"
 )

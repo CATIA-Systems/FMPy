@@ -111,8 +111,9 @@ jobs:
   displayName: 'Windows 2016'
   strategy:
     matrix:
-      python27:
-        python.version: '2.7'
+#      lxml broken for Python 2.7
+#      python27:
+#        python.version: '2.7'
       python36:
         python.version: '3.6'
   pool:

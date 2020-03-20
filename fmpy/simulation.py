@@ -828,7 +828,7 @@ def simulateCS(model_description, fmu_kwargs, start_time, stop_time, relative_to
     # initialize the model
     if model_description.fmiVersion == '1.0':
         input.apply(time)
-        fmu.initialize()
+        fmu.initialize(tStart=time, stopTime=stop_time)
     else:
         fmu.enterInitializationMode()
         input.apply(time)

@@ -29,7 +29,7 @@ jobs:
         pip install $f --no-deps -vv
       done
       cd tests
-      pytest --junitxml=junit/test-results.xml --cov=fmpy --cov-report=xml --cov-report=html
+      pytest --junitxml=junit/test-results.xml --cov=fmpy --cov-report=xml
       cd ..
     displayName: Build, install and run tests
 
@@ -86,7 +86,7 @@ jobs:
         pip install $f --no-deps -vv
       done
       cd tests
-      pytest --junitxml=junit/test-results.xml --cov=fmpy --cov-report=xml --cov-report=html
+      pytest --junitxml=junit/test-results.xml --cov=fmpy --cov-report=xml
       cd ..
     displayName: Build, install and run tests
 
@@ -146,7 +146,7 @@ jobs:
       call activate myEnvironment
       for %%f in (dist\FMPy-*.whl) do pip install %%f --no-deps
       cd tests
-      pytest --junitxml=junit/test-results.xml --cov=fmpy --cov-report=xml --cov-report=html
+      pytest --junitxml=junit/test-results.xml --cov=fmpy --cov-report=xml
       cd ..
     displayName: Install wheel and run tests
 

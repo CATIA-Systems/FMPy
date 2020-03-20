@@ -37,7 +37,7 @@ package_data = {
         'c-code/*.h',
         'c-code/CMakeLists.txt',
         'logging/darwin64/logging.dylib',
-        'logging/linux64/logging.dylib',
+        'logging/linux64/logging.so',
         'logging/win64/logging.dll',
         'schema/fmi1/*.xsd',
         'schema/fmi2/*.xsd',

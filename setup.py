@@ -1,7 +1,4 @@
 from setuptools import setup
-import os
-import shutil
-import distutils
 
 # compile Qt UI and resources
 try:
@@ -40,6 +37,8 @@ package_data = {
         'logging/linux64/logging.so',
         'logging/win32/logging.dll',
         'logging/win64/logging.dll',
+        'remoting/client.dll',
+        'remoting/server.exe',
         'schema/fmi1/*.xsd',
         'schema/fmi2/*.xsd',
         'schema/fmi3/*.xsd',

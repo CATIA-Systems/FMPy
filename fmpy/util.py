@@ -759,6 +759,54 @@ def compile_platform_binary(filename, output_filename=None):
     rmtree(unzipdir2, ignore_errors=True)
 
 
+def add_remoting(filename):
+
+    from . import extract, read_model_description, supported_platforms
+    from shutil import copyfile, rmtree
+    import zipfile
+    import os
+
+    platforms = supported_platforms(filename)
+
+    if 'win32' not in platforms:
+        raise Exception("The FMU does not support the platform \"win32\".")
+
+    if 'win64' in platforms:
+        raise Exception("The FMU already supports \"win64\".")
+
+    model_description = read_model_description(filename)
+
+    current_dir = os.path.dirname(__file__)
+    client = os.path.join(current_dir, 'remoting', 'client.dll')
+    server = os.path.join(current_dir, 'remoting', 'server.exe')
+
+    tempdir = extract(filename)
+
+    if model_description.coSimulation is not None:
+        model_identifier = model_description.coSimulation.modelIdentifier
+    else:
+        model_identifier = model_description.modelExchange.modelIdentifier
+
+    os.mkdir(os.path.join(tempdir, 'binaries', 'win64'))
+    copyfile(client, os.path.join(tempdir, 'binaries', 'win64', model_identifier + '.dll'))
+    copyfile(server, os.path.join(tempdir, 'binaries', 'win64', 'server.exe'))
+
+    # create a new archive from the existing files + remoting binaries
+    with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED) as zf:
+        base_path = os.path.normpath(tempdir)
+        for dirpath, dirnames, filenames in os.walk(tempdir):
+            for name in sorted(dirnames):
+                path = os.path.normpath(os.path.join(dirpath, name))
+                zf.write(path, os.path.relpath(path, base_path))
+            for name in filenames:
+                path = os.path.normpath(os.path.join(dirpath, name))
+                if os.path.isfile(path):
+                    zf.write(path, os.path.relpath(path, base_path))
+
+    # clean up
+    rmtree(tempdir, ignore_errors=True)
+
+
 def auto_interval(t):
     """ Find a nice interval that divides t into 500 - 1000 steps """
 

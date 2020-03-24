@@ -482,7 +482,12 @@ def simulate_fmu(filename,
     from fmpy import supported_platforms
     from fmpy.model_description import read_model_description
 
-    if fmu_instance is None and platform not in supported_platforms(filename):
+    platforms = supported_platforms(filename)
+
+    # use 32-bit DLL remoting
+    use_remoting = platform == 'win64' and 'win64' not in platforms and 'win32' in platforms
+
+    if fmu_instance is None and platform not in platforms and not use_remoting:
         raise Exception("The current platform (%s) is not supported by the FMU." % platform)
 
     if model_description is None:
@@ -534,8 +539,22 @@ def simulate_fmu(filename,
         tempdir = extract(filename)
         unzipdir = tempdir
 
+    if use_remoting:
+        # start 32-bit server
+        from subprocess import Popen
+        server_path = os.path.dirname(__file__)
+        server_path = os.path.join(server_path, 'remoting', 'server.exe')
+        if fmi_type == 'ModelExchange':
+            model_identifier = model_description.modelExchange.modelIdentifier
+        else:
+            model_identifier = model_description.coSimulation.modelIdentifier
+        dll_path = os.path.join(unzipdir, 'binaries', 'win32', model_identifier + '.dll')
+        server = Popen([server_path, dll_path])
+    else:
+        server = None
+
     if fmu_instance is None:
-        fmu = instantiate_fmu(unzipdir, model_description, fmi_type, visible, debug_logging, logger, fmi_call_logger)
+        fmu = instantiate_fmu(unzipdir, model_description, fmi_type, visible, debug_logging, logger, fmi_call_logger, use_remoting)
     else:
         fmu = fmu_instance
 
@@ -548,6 +567,9 @@ def simulate_fmu(filename,
     if fmu_instance is None:
         fmu.freeInstance()
 
+    if server is not None:
+        server.kill()
+
     # clean up
     if tempdir is not None:
         shutil.rmtree(tempdir, ignore_errors=True)
@@ -555,7 +577,7 @@ def simulate_fmu(filename,
     return result
 
 
-def instantiate_fmu(unzipdir, model_description, fmi_type, visible=False, debug_logging=False, logger=None, fmi_call_logger=None):
+def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, debug_logging=False, logger=None, fmi_call_logger=None, use_remoting=False):
 
     # common constructor arguments
     fmu_args = {
@@ -564,6 +586,9 @@ def instantiate_fmu(unzipdir, model_description, fmi_type, visible=False, debug_
         'instanceName': None,
         'fmiCallLogger': fmi_call_logger
     }
+
+    if use_remoting:
+        fmu_args['libraryPath'] = os.path.join(os.path.dirname(__file__), 'remoting', 'client.dll')
 
     if logger is None:
         logger = printLogMessage

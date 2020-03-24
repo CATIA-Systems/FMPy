@@ -474,7 +474,7 @@ class MainWindow(QMainWindow):
         self.ui.actionShowLog.setEnabled(True)
         self.ui.actionShowResults.setEnabled(False)
 
-        can_simulate = platform in platforms
+        can_simulate = platform in platforms or platform == 'win64' and 'win32' in platforms
 
         self.ui.actionLoadStartValues.setEnabled(can_simulate)
         self.ui.actionSimulate.setEnabled(can_simulate)

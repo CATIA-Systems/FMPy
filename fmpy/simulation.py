@@ -777,7 +777,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
             time_event = nextEventTimeDefined and nextEventTime <= t_next
 
         if time_event and not fixed_step:
-            t_next = fmu.eventInfo.nextEventTime
+            t_next = nextEventTime if is_fmi3 else fmu.eventInfo.nextEventTime
 
         if t_next - time > eps:
             # do one step

@@ -201,7 +201,7 @@ class Input(object):
                 buf.append((
                     (c_uint32 * len(vrs))(*vrs),
                     (value_type * len(vrs))(),
-                    np.asarray(np.stack(map(lambda n: signals[n], names)), dtype=value_type),
+                    np.asarray(np.stack(list(map(lambda n: signals[n], names))), dtype=value_type),
                     setter
                 ))
 

@@ -1,3 +1,18 @@
+## v0.2.18 (2020-04-06)
+
+- `FIXED` A list is now passed to np.stack() instead of an iterable and Iterable is now imported from collections.abc to avoid FutureWarnings.
+- `FIXED` Argument checksum of function fmpy.util.download_file() can now be upper case.
+- `FIXED` Start and stop time are now passed to initialize() in FMI 1.0.
+- `FIXED` Variadic arguments in log messages are now processed.
+- `NEW` The model.png is now displayed on the "Model Info" page of the GUI.
+- `NEW` 32-bit FMUs can now be simulated in a 64-bit Python environment on Windows.
+   Existing 32-bit FMUs can also be retro-fitted using the function fmpy.util.add_remoting(),
+   the CLI (fmpy add-remoting ...) and the GUI (Help > Add 32-bit Remoting).
+- `NEW` The FMI headers and schema have been updated to version 2.0.1 and 3.0-alpha.3 respectively.
+- `NEW` The function instantiate_fmu() allows the instantiation and re-use of an FMU independent of the FMI version and type to reduce CPU time.
+   See `examples/efficient_loops.py` for an example.
+- `REMOVED` The parameter `use_source_code` has been removed form `simulate_fmu()` (use `fmpy.util.compile_platform_binary()` instead)
+
 ## v0.2.17 (2020-02-04)
 
 - `NEW` "Clear Plots" action has been added to the context menu

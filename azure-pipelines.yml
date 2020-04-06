@@ -29,7 +29,7 @@ jobs:
         pip install $f --no-deps -vv
       done
       cd tests
-      pytest --junitxml=junit/test-results.xml --cov=fmpy --cov-report=xml --cov-report=html
+      pytest --junitxml=junit/test-results.xml --cov=fmpy --cov-report=xml
       cd ..
     displayName: Build, install and run tests
 
@@ -51,7 +51,7 @@ jobs:
       artifact: 'linux-python-$(python.version)'
 
 - job:
-  displayName: 'macOS 10.13'
+  displayName: 'macOS 10.15'
   strategy:
     matrix:
       python27:
@@ -59,7 +59,7 @@ jobs:
       python36:
         python.version: '3.6'
   pool:
-    vmImage: 'macos-10.13'
+    vmImage: 'macos-10.15'
 
   steps:
 
@@ -86,7 +86,7 @@ jobs:
         pip install $f --no-deps -vv
       done
       cd tests
-      pytest --junitxml=junit/test-results.xml --cov=fmpy --cov-report=xml --cov-report=html
+      pytest --junitxml=junit/test-results.xml --cov=fmpy --cov-report=xml
       cd ..
     displayName: Build, install and run tests
 
@@ -111,8 +111,9 @@ jobs:
   displayName: 'Windows 2016'
   strategy:
     matrix:
-      python27:
-        python.version: '2.7'
+#      lxml broken for Python 2.7
+#      python27:
+#        python.version: '2.7'
       python36:
         python.version: '3.6'
   pool:
@@ -145,7 +146,7 @@ jobs:
       call activate myEnvironment
       for %%f in (dist\FMPy-*.whl) do pip install %%f --no-deps
       cd tests
-      pytest --junitxml=junit/test-results.xml --cov=fmpy --cov-report=xml --cov-report=html
+      pytest --junitxml=junit/test-results.xml --cov=fmpy --cov-report=xml
       cd ..
     displayName: Install wheel and run tests
 

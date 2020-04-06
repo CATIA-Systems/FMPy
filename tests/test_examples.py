@@ -2,6 +2,7 @@ import unittest
 from unittest import skipIf
 from fmpy.examples.coupled_clutches import simulate_coupled_clutches
 from fmpy.examples.custom_input import simulate_custom_input
+from fmpy.examples.efficient_loops import run_efficient_loop
 from fmpy.examples.parameter_variation import run_experiment
 from fmpy.ssp.examples.controlled_drivetrain import simulate_controlled_drivetrain
 from fmpy import platform
@@ -55,6 +56,9 @@ class ExamplesTest(unittest.TestCase):
     def test_custom_input_example(self):
         end_time = simulate_custom_input(show_plot=False)
         self.assertAlmostEqual(end_time, 1.1)
+
+    def test_efficient_loops(self):
+        run_efficient_loop()
 
     @skipIf(platform not in ['win32', 'win64'], "FMU only available for Windows")
     def test_parameter_variation(self):

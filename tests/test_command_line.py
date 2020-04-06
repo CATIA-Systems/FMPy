@@ -1,5 +1,5 @@
 import unittest
-from subprocess import call
+from subprocess import call, check_output
 from fmpy.util import download_test_file
 
 
@@ -22,7 +22,7 @@ class CommandLineTest(unittest.TestCase):
 
     def test_simulate(self):
 
-        status = call([
+        output = check_output([
             'fmpy', 'simulate', 'CoupledClutches.fmu',
             '--validate',
             '--start-time', '0',
@@ -42,7 +42,8 @@ class CommandLineTest(unittest.TestCase):
             # '--show-plot',
         ])
 
-        self.assertEqual(0, status)
+        self.assertTrue(output.startswith(b'[OK] [ModelExchange]: GUID = {'),
+                        "Placeholders have not been substituted w/ variadic arguments.")
 
 
 if __name__ == '__main__':

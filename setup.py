@@ -1,7 +1,4 @@
 from setuptools import setup
-import os
-import shutil
-import distutils
 
 # compile Qt UI and resources
 try:
@@ -22,18 +19,33 @@ FMPy is a free Python library to simulate `Functional Mock-up Units (FMUs) <http
 - compiles C code FMUs and generates CMake projects for debugging 
 """
 
-packages = ['fmpy', 'fmpy.cross_check', 'fmpy.examples', 'fmpy.gui', 'fmpy.gui.generated', 'fmpy.ssp',
-            'fmpy.ssp.examples', 'fmpy.sundials']
+packages = ['fmpy',
+            'fmpy.cross_check',
+            'fmpy.examples',
+            'fmpy.logging',
+            'fmpy.gui',
+            'fmpy.gui.generated',
+            'fmpy.ssp',
+            'fmpy.ssp.examples',
+            'fmpy.sundials']
 
 package_data = {
-    'fmpy': ['c-code/*.h',
-             'c-code/CMakeLists.txt',
-             'schema/fmi1/*.xsd',
-             'schema/fmi2/*.xsd',
-             'schema/fmi3/*.xsd',
-             'sundials/x86_64-darwin/sundials_*.dylib',
-             'sundials/x86_64-linux/sundials_*.so',
-             'sundials/x86_64-windows/sundials_*.dll'],
+    'fmpy': [
+        'c-code/*.h',
+        'c-code/CMakeLists.txt',
+        'logging/darwin64/logging.dylib',
+        'logging/linux64/logging.so',
+        'logging/win32/logging.dll',
+        'logging/win64/logging.dll',
+        'remoting/client.dll',
+        'remoting/server.exe',
+        'schema/fmi1/*.xsd',
+        'schema/fmi2/*.xsd',
+        'schema/fmi3/*.xsd',
+        'sundials/x86_64-darwin/sundials_*.dylib',
+        'sundials/x86_64-linux/sundials_*.so',
+        'sundials/x86_64-windows/sundials_*.dll'
+    ],
     'fmpy.gui': ['icons/app_icon.ico'],
     'fmpy.ssp': ['schema/*.xsd'],
 }
@@ -49,7 +61,7 @@ extras_require = {
 extras_require['complete'] = sorted(set(sum(extras_require.values(), [])))
 
 setup(name='FMPy',
-      version='0.2.17',
+      version='0.2.18',
       description="Simulate Functional Mock-up Units (FMUs) in Python",
       long_description=long_description,
       author="Torsten Sommer",

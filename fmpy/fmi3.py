@@ -44,27 +44,6 @@ fmi3Discard = 2
 fmi3Error   = 3
 fmi3Fatal   = 4
 
-# enum fmi3InterfaceType
-fmi3InterfaceType = c_int
-fmi3ModelExchange = 0
-fmi3CoSimulation  = 1
-
-# enum fmi3CoSimulationMode
-fmi3CoSimulationMode                 = c_int
-fmi3ModeCoSimulation                 = 0
-fmi3ModeHybridCoSimulation           = 1
-fmi3ModeScheduledExecutionSimulation = 2
-
-
-# struct fmi3CoSimulationConfiguration
-class fmi3CoSimulationConfiguration(Structure):
-
-    _fields_ = [('intermediateVariableGetRequired',         fmi3Boolean),
-                ('intermediateInternalVariableGetRequired', fmi3Boolean),
-                ('intermediateVariableSetRequired',         fmi3Boolean),
-                ('coSimulationMode',                        fmi3CoSimulationMode)]
-
-
 # enum fmi3DependencyKind
 fmi3DependencyKind = c_int
 # fmi3Independent = 0, not needed but reserved for future use
@@ -74,29 +53,20 @@ fmi3Tunable        = 3
 fmi3Discrete       = 4
 fmi3Dependent      = 5
 
-
-# struct fmi3IntermediateUpdateInfo
-class fmi3IntermediateUpdateInfo(Structure):
-
-    _fields_ = [('intermediateUpdateTime',         fmi3Float64),
-                ('eventOccurred',                  fmi3Boolean),
-                ('clocksTicked',                   fmi3Boolean),
-                ('intermediateVariableSetAllowed', fmi3Boolean),
-                ('intermediateVariableGetAllowed', fmi3Boolean),
-                ('intermediateStepFinished',       fmi3Boolean),
-                ('canReturnEarly',                 fmi3Boolean)]
-
-
 # callback functions
 fmi3CallbackLogMessageTYPE         = CFUNCTYPE(None,       fmi3InstanceEnvironment, fmi3String, fmi3Status, fmi3String, fmi3String)
 fmi3CallbackAllocateMemoryTYPE     = CFUNCTYPE(c_void_p,   fmi3InstanceEnvironment, c_size_t, c_size_t)
 fmi3CallbackFreeMemoryTYPE         = CFUNCTYPE(None,       fmi3InstanceEnvironment, c_void_p)
-fmi3CallbackIntermediateUpdateTYPE = CFUNCTYPE(fmi3Status, fmi3InstanceEnvironment, POINTER(fmi3IntermediateUpdateInfo))
+fmi3CallbackIntermediateUpdateTYPE = CFUNCTYPE(fmi3Status, fmi3InstanceEnvironment, fmi3Float64, fmi3Boolean, fmi3Boolean, fmi3Boolean, fmi3Boolean, fmi3Boolean, fmi3Boolean)
 fmi3CallbackLockPreemptionTYPE     = CFUNCTYPE(None)
 fmi3CallbackUnlockPreemptionTYPE   = CFUNCTYPE(None)
 
 # allocated memory
 _mem_addr = set()
+
+
+def intermediateUpdate(*args):
+    return fmi3OK
 
 
 def printLogMessage(instanceEnvironment, instanceName, status, category, message):
@@ -128,29 +98,6 @@ def stepFinished(instanceEnvironment, status):
     pass
 
 
-# struct fmi3CallbackFunctions
-class fmi3CallbackFunctions(Structure):
-
-    _fields_ = [('instanceEnvironment', fmi3InstanceEnvironment),
-                ('logMessage',          fmi3CallbackLogMessageTYPE),
-                ('allocateMemory',      fmi3CallbackAllocateMemoryTYPE),
-                ('freeMemory',          fmi3CallbackFreeMemoryTYPE),
-                ('intermediateUpdate',  fmi3CallbackIntermediateUpdateTYPE),
-                ('lockPreemption',      fmi3CallbackLockPreemptionTYPE),
-                ('unlockPreemption',    fmi3CallbackUnlockPreemptionTYPE)]
-
-
-# struct fmi3EventInfo
-class fmi3EventInfo(Structure):
-
-    _fields_ = [('nextEventTime',                     fmi3Float64),
-                ('newDiscreteStatesNeeded',           fmi3Boolean),
-                ('terminateSimulation',               fmi3Boolean),
-                ('nominalsOfContinuousStatesChanged', fmi3Boolean),
-                ('valuesOfContinuousStatesChanged',   fmi3Boolean),
-                ('nextEventTimeDefined',              fmi3Boolean)]
-
-
 class _FMU3(_FMU):
     """ Base class for FMI 3.0 FMUs """
 
@@ -171,18 +118,6 @@ class _FMU3(_FMU):
             (c_size_t,            'nCategories'),
             (POINTER(fmi3String), 'categories')
         ])
-
-        # Creation and destruction of FMU instances and setting debug status
-        self._fmi3Function('fmi3Instantiate', [
-            (fmi3String,                             'instanceName'),
-            (fmi3InterfaceType,                      'fmuType'),
-            (fmi3String,                             'fmuInstantiationToken'),
-            (fmi3String,                             'fmuResourceLocation'),
-            (POINTER(fmi3CallbackFunctions),         'callbacks'),
-            (fmi3Boolean,                            'visible'),
-            (fmi3Boolean,                            'loggingOn'),
-            (POINTER(fmi3CoSimulationConfiguration), 'fmuCoSimulationConfiguration')
-        ], fmi3Instance)
 
         self._fmi3Function('fmi3FreeInstance', [(fmi3Instance, 'instance')], None)
 
@@ -367,8 +302,13 @@ class _FMU3(_FMU):
         ])
 
         self._fmi3Function('fmi3NewDiscreteStates', [
-            (fmi3Instance,           'instance'),
-            (POINTER(fmi3EventInfo), 'eventInfo')
+            (fmi3Instance,         'instance'),
+            (POINTER(fmi3Boolean), 'newDiscreteStatesNeeded'),
+            (POINTER(fmi3Boolean), 'terminateSimulation'),
+            (POINTER(fmi3Boolean), 'nominalsOfContinuousStatesChanged'),
+            (POINTER(fmi3Boolean), 'valuesOfContinuousStatesChanged'),
+            (POINTER(fmi3Boolean), 'nextEventTimeDefined'),
+            (POINTER(fmi3Float64), 'nextEventTime')
         ])
 
     def _fmi3Function(self, fname, params, restype=fmi3Status):
@@ -426,31 +366,6 @@ class _FMU3(_FMU):
         self.fmi3SetDebugLogging(self.component, fmi3True if loggingOn else fmi3False, len(categories), categories_)
 
     # Creation and destruction of FMU instances and setting debug status
-
-    def instantiate(self, visible=False, callbacks=None, loggingOn=False):
-
-        kind = fmi3ModelExchange if isinstance(self, FMU3Model) else fmi3CoSimulation
-        resourceLocation = pathlib.Path(self.unzipDirectory, 'resources').as_uri()
-
-        if callbacks is None:
-            callbacks = fmi3CallbackFunctions()
-            callbacks.logger = fmi3CallbackLogMessageTYPE(printLogMessage)
-            callbacks.allocateMemory = fmi3CallbackAllocateMemoryTYPE(allocateMemory)
-            callbacks.freeMemory = fmi3CallbackFreeMemoryTYPE(freeMemory)
-
-        self.callbacks = callbacks
-
-        self.component = self.fmi3Instantiate(self.instanceName.encode('utf-8'),
-                                              kind,
-                                              self.guid.encode('utf-8'),
-                                              resourceLocation.encode('utf-8'),
-                                              byref(self.callbacks),
-                                              fmi3True if visible else fmi3False,
-                                              fmi3True if loggingOn else fmi3False,
-                                              None)
-
-        if not self.component:
-            raise Exception("Failed to instantiate FMU")
 
     def freeInstance(self):
         self.fmi3FreeInstance(self.component)
@@ -635,7 +550,17 @@ class FMU3Model(_FMU3):
 
         super(FMU3Model, self).__init__(**kwargs)
 
-        self.eventInfo = fmi3EventInfo()
+        self._fmi3Function('fmi3InstantiateModelExchange', [
+            (fmi3String,                         'instanceName'),
+            (fmi3String,                         'instantiationToken'),
+            (fmi3String,                         'resourceLocation'),
+            (fmi3Boolean,                        'visible'),
+            (fmi3Boolean,                        'loggingOn'),
+            (fmi3InstanceEnvironment,            'instanceEnvironment'),
+            (fmi3CallbackLogMessageTYPE,         'logMessage'),
+            (fmi3CallbackAllocateMemoryTYPE,     'allocateMemory'),
+            (fmi3CallbackFreeMemoryTYPE,         'freeMemory')
+        ], fmi3Instance)
 
         self._fmi3Function('fmi3EnterContinuousTimeMode', [(fmi3Instance, 'instance')])
 
@@ -691,6 +616,29 @@ class FMU3Model(_FMU3):
             (POINTER(c_size_t), 'nx')
         ])
 
+    def instantiate(self, visible=False, loggingOn=False):
+
+        resourceLocation = pathlib.Path(self.unzipDirectory, 'resources').as_uri()
+
+        # save callbacks from GC
+        self.printLogMessage = fmi3CallbackLogMessageTYPE(printLogMessage)
+        self.allocateMemory = fmi3CallbackAllocateMemoryTYPE(allocateMemory)
+        self.freeMemory = fmi3CallbackFreeMemoryTYPE(freeMemory)
+
+        self.component = self.fmi3InstantiateModelExchange(
+            self.instanceName.encode('utf-8'),
+            self.guid.encode('utf-8'),
+            resourceLocation.encode('utf-8'),
+            fmi3True if visible else fmi3False,
+            fmi3True if loggingOn else fmi3False,
+            fmi3InstanceEnvironment(),
+            self.printLogMessage,
+            self.allocateMemory,
+            self.freeMemory)
+
+        if not self.component:
+            raise Exception("Failed to instantiate FMU")
+
     # Enter and exit the different modes
 
     def enterEventMode(self, inputEvent=False, stepEvent=False, rootsFound=[], timeEvent=False):
@@ -707,7 +655,28 @@ class FMU3Model(_FMU3):
         )
 
     def newDiscreteStates(self):
-        return self.fmi3NewDiscreteStates(self.component, byref(self.eventInfo))
+
+        newDiscreteStatesNeeded           = fmi3Boolean()
+        terminateSimulation               = fmi3Boolean()
+        nominalsOfContinuousStatesChanged = fmi3Boolean()
+        valuesOfContinuousStatesChanged   = fmi3Boolean()
+        nextEventTimeDefined              = fmi3Boolean()
+        nextEventTime                     = fmi3Float64()
+
+        self.fmi3NewDiscreteStates(self.component,
+                                   byref(newDiscreteStatesNeeded),
+                                   byref(terminateSimulation),
+                                   byref(nominalsOfContinuousStatesChanged),
+                                   byref(valuesOfContinuousStatesChanged),
+                                   byref(nextEventTimeDefined),
+                                   byref(nextEventTime))
+
+        return (newDiscreteStatesNeeded.value           != fmi3False,
+                terminateSimulation.value               != fmi3False,
+                nominalsOfContinuousStatesChanged.value != fmi3False,
+                valuesOfContinuousStatesChanged.value   != fmi3False,
+                nextEventTimeDefined.value              != fmi3False,
+                nextEventTime.value)
 
     def enterContinuousTimeMode(self):
         return self.fmi3EnterContinuousTimeMode(self.component)
@@ -749,6 +718,22 @@ class FMU3Slave(_FMU3):
         kwargs['instanceName'] = instanceName
 
         super(FMU3Slave, self).__init__(**kwargs)
+
+        self._fmi3Function('fmi3InstantiateBasicCoSimulation', [
+            (fmi3String,                         'instanceName'),
+            (fmi3String,                         'instantiationToken'),
+            (fmi3String,                         'resourceLocation'),
+            (fmi3Boolean,                        'visible'),
+            (fmi3Boolean,                        'loggingOn'),
+            (fmi3Boolean,                        'intermediateVariableGetRequired'),
+            (fmi3Boolean,                        'intermediateInternalVariableGetRequired'),
+            (fmi3Boolean,                        'intermediateVariableSetRequired'),
+            (fmi3InstanceEnvironment,            'instanceEnvironment'),
+            (fmi3CallbackLogMessageTYPE,         'logMessage'),
+            (fmi3CallbackAllocateMemoryTYPE,     'allocateMemory'),
+            (fmi3CallbackFreeMemoryTYPE,         'freeMemory'),
+            (fmi3CallbackIntermediateUpdateTYPE, 'intermediateUpdate')
+        ], fmi3Instance)
 
         # Simulating the slave
 
@@ -796,6 +781,34 @@ class FMU3Slave(_FMU3):
             (POINTER(fmi3Boolean), 'terminate'),
             (POINTER(fmi3Float64), 'lastSuccessfulTime')
         ])
+
+    def instantiate(self, visible=False, loggingOn=False):
+
+        resourceLocation = pathlib.Path(self.unzipDirectory, 'resources').as_uri()
+
+        # save callbacks from GC
+        self.printLogMessage = fmi3CallbackLogMessageTYPE(printLogMessage)
+        self.allocateMemory = fmi3CallbackAllocateMemoryTYPE(allocateMemory)
+        self.freeMemory = fmi3CallbackFreeMemoryTYPE(freeMemory)
+        self.intermediateUpdate = fmi3CallbackIntermediateUpdateTYPE(intermediateUpdate)
+
+        self.component = self.fmi3InstantiateBasicCoSimulation(
+            self.instanceName.encode('utf-8'),
+            self.guid.encode('utf-8'),
+            resourceLocation.encode('utf-8'),
+            fmi3True if visible else fmi3False,
+            fmi3True if loggingOn else fmi3False,
+            fmi3False,
+            fmi3False,
+            fmi3False,
+            fmi3InstanceEnvironment(),
+            self.printLogMessage,
+            self.allocateMemory,
+            self.freeMemory,
+            self.intermediateUpdate)
+
+        if not self.component:
+            raise Exception("Failed to instantiate FMU")
 
     # Simulating the slave
 

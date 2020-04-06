@@ -105,8 +105,11 @@ Common Functions
 #define fmi3SetDebugLogging          fmi3FullName(fmi3SetDebugLogging)
 
 /* Creation and destruction of FMU instances */
-#define fmi3Instantiate              fmi3FullName(fmi3Instantiate)
-#define fmi3FreeInstance             fmi3FullName(fmi3FreeInstance)
+#define fmi3InstantiateModelExchange         fmi3FullName(fmi3InstantiateModelExchange)
+#define fmi3InstantiateBasicCoSimulation     fmi3FullName(fmi3InstantiateBasicCoSimulation)
+#define fmi3InstantiateHybridCoSimulation    fmi3FullName(fmi3InstantiateHybridCoSimulation)
+#define fmi3InstantiateScheduledCoSimulation fmi3FullName(fmi3InstantiateScheduledCoSimulation)
+#define fmi3FreeInstance                     fmi3FullName(fmi3FreeInstance)
 
 /* Enter and exit initialization mode, terminate and reset */
 #define fmi3SetupExperiment          fmi3FullName(fmi3SetupExperiment)
@@ -158,6 +161,7 @@ Common Functions
 
 /* Getting partial derivatives */
 #define fmi3GetDirectionalDerivative fmi3FullName(fmi3GetDirectionalDerivative)
+#define fmi3GetAdjointDerivative     fmi3FullName(fmi3GetAdjointDerivative)
 
 /* Entering and exiting the Configuration or Reconfiguration Mode */
 #define fmi3EnterConfigurationMode   fmi3FullName(fmi3EnterConfigurationMode)
@@ -213,8 +217,11 @@ FMI3_Export fmi3GetVersionTYPE      fmi3GetVersion;
 FMI3_Export fmi3SetDebugLoggingTYPE fmi3SetDebugLogging;
 
 /* Creation and destruction of FMU instances */
-FMI3_Export fmi3InstantiateTYPE  fmi3Instantiate;
-FMI3_Export fmi3FreeInstanceTYPE fmi3FreeInstance;
+FMI3_Export fmi3InstantiateModelExchangeTYPE         fmi3InstantiateModelExchange;
+FMI3_Export fmi3InstantiateBasicCoSimulationTYPE     fmi3InstantiateBasicCoSimulation;
+FMI3_Export fmi3InstantiateHybridCoSimulationTYPE    fmi3InstantiateHybridCoSimulation;
+FMI3_Export fmi3InstantiateScheduledCoSimulationTYPE fmi3InstantiateScheduledCoSimulation;
+FMI3_Export fmi3FreeInstanceTYPE                     fmi3FreeInstance;
 
 /* Enter and exit initialization mode, terminate and reset */
 FMI3_Export fmi3SetupExperimentTYPE         fmi3SetupExperiment;
@@ -266,6 +273,7 @@ FMI3_Export fmi3DeSerializeFMUStateTYPE    fmi3DeSerializeFMUState;
 
 /* Getting partial derivatives */
 FMI3_Export fmi3GetDirectionalDerivativeTYPE fmi3GetDirectionalDerivative;
+FMI3_Export fmi3GetAdjointDerivativeTYPE     fmi3GetAdjointDerivative;
 
 /* Entering and exiting the Configuration or Reconfiguration Mode */
 FMI3_Export fmi3EnterConfigurationModeTYPE fmi3EnterConfigurationMode;

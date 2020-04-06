@@ -64,6 +64,12 @@ To install or update FMPy without changing the dependencies of your python envir
 python -m pip install --upgrade --no-deps .
 ```
 
+To use the sources directly, install FMPy in [develop mode](https://pip.pypa.io/en/stable/reference/pip_install/#cmdoption-e) using the `--editable` option
+
+```bash
+python -m pip install --no-deps --editable .
+```
+
 ## Create a PyCharm project
 
 Download and install [PyCharm Community Edition](https://www.jetbrains.com/pycharm/download/). On the welcome screen click `Create New Project` or select `File > New Project...`.

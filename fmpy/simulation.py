@@ -578,6 +578,9 @@ def simulate_fmu(filename,
 
 
 def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, debug_logging=False, logger=None, fmi_call_logger=None, use_remoting=False):
+    """
+    Create an instance of fmpy.fmi1._FMU (see simulate_fmu() for documentation of the parameters).
+    """
 
     # common constructor arguments
     fmu_args = {

@@ -264,7 +264,7 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
     import matplotlib.pyplot as plt
     import matplotlib.transforms as mtransforms
     from matplotlib.ticker import MaxNLocator
-    from collections import Iterable
+    from collections.abc import Iterable
 
     params = {
         'legend.fontsize': 8,

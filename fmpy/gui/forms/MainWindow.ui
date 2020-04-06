@@ -1343,6 +1343,7 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="separator"/>
     <addaction name="actionCompilePlatformBinary"/>
     <addaction name="actionCreateCMakeProject"/>
+    <addaction name="actionAddRemoting"/>
     <addaction name="separator"/>
     <addaction name="actionOpenWebsite"/>
     <addaction name="actionShowReleaseNotes"/>
@@ -1886,6 +1887,11 @@ QToolButton::menu-button {
    </property>
    <property name="text">
     <string>Compile Platform Binary</string>
+   </property>
+  </action>
+  <action name="actionAddRemoting">
+   <property name="text">
+    <string>Add 32-bit Remoting</string>
    </property>
   </action>
  </widget>

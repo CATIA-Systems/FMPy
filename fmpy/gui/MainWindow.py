@@ -260,6 +260,7 @@ class MainWindow(QMainWindow):
         self.ui.actionShowReleaseNotes.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://fmpy.readthedocs.io/en/latest/changelog/')))
         self.ui.actionCompilePlatformBinary.triggered.connect(self.compilePlatformBinary)
         self.ui.actionCreateCMakeProject.triggered.connect(self.createCMakeProject)
+        self.ui.actionAddRemoting.triggered.connect(self.addRemoting)
 
         # filter menu
         self.filterMenu = QMenu()
@@ -431,6 +432,9 @@ class MainWindow(QMainWindow):
         can_compile = md.fmiVersion == '2.0' and 'c-code' in platforms
         self.ui.actionCompilePlatformBinary.setEnabled(can_compile)
         self.ui.actionCreateCMakeProject.setEnabled(can_compile)
+
+        can_add_remoting = md.fmiVersion == '2.0' and 'win32' in platforms and 'win64' not in platforms
+        self.ui.actionAddRemoting.setEnabled(can_add_remoting)
 
         # variables view
         self.treeModel.setModelDescription(md)
@@ -1136,3 +1140,17 @@ class MainWindow(QMainWindow):
 
         if project_dir:
             create_cmake_project(self.filename, project_dir)
+
+    def addRemoting(self):
+        """ Add 32-bit remoting binaries to the FMU """
+
+        from ..util import add_remoting
+
+        try:
+            add_remoting(self.filename)
+        except Exception as e:
+            QMessageBox.warning(self, "Failed to add 32-bit Remoting",
+                                "Failed to add 32-bit remoting binaries to %s. %s" % (self.filename, e))
+
+        self.load(self.filename)
+

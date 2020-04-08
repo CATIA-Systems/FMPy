@@ -34,7 +34,7 @@ def set_value(component, name, value):
     if variable.type == 'Real':
         component.fmu.setReal(vr, [float(value)])
     elif variable.type in ['Integer', 'Enumeration']:
-        component.fmu.setInteger(vr, [int(value)])[0]
+        component.fmu.setInteger(vr, [int(value)])
     elif variable.type == 'Boolean':
         # TODO: convert literals
         component.fmu.setBoolean(vr, [value != 0.0])

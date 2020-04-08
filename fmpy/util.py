@@ -779,6 +779,7 @@ def add_remoting(filename):
     current_dir = os.path.dirname(__file__)
     client = os.path.join(current_dir, 'remoting', 'client.dll')
     server = os.path.join(current_dir, 'remoting', 'server.exe')
+    license = os.path.join(current_dir, 'remoting', 'license.txt')
 
     tempdir = extract(filename)
 
@@ -787,9 +788,12 @@ def add_remoting(filename):
     else:
         model_identifier = model_description.modelExchange.modelIdentifier
 
+    # copy the binaries & license
     os.mkdir(os.path.join(tempdir, 'binaries', 'win64'))
     copyfile(client, os.path.join(tempdir, 'binaries', 'win64', model_identifier + '.dll'))
     copyfile(server, os.path.join(tempdir, 'binaries', 'win64', 'server.exe'))
+    os.mkdir(os.path.join(tempdir, 'documentation', 'licenses'))
+    copyfile(license, os.path.join(tempdir, 'documentation', 'licenses', 'fmpy-remoting-binaries.txt'))
 
     # create a new archive from the existing files + remoting binaries
     with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED) as zf:

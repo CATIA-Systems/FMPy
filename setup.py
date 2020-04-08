@@ -38,6 +38,7 @@ package_data = {
         'logging/win32/logging.dll',
         'logging/win64/logging.dll',
         'remoting/client.dll',
+        'remoting/license.txt',
         'remoting/server.exe',
         'schema/fmi1/*.xsd',
         'schema/fmi2/*.xsd',

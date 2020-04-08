@@ -562,7 +562,7 @@ def simulate_fmu(filename,
     if fmi_type == 'ModelExchange':
         result = simulateME(model_description, fmu, start_time, stop_time, solver, step_size, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, record_events, timeout, step_finished)
     elif fmi_type == 'CoSimulation':
-        result = simulateCS(model_description, fmu, start_time, stop_time, start_values, apply_default_start_values, input, output, output_interval, timeout, step_finished)
+        result = simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, timeout, step_finished)
 
     if fmu_instance is None:
         fmu.freeInstance()
@@ -898,12 +898,17 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
     return recorder.result()
 
 
-def simulateCS(model_description, fmu, start_time, stop_time, start_values, apply_default_start_values, input_signals, output, output_interval, timeout, step_finished):
+def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, timeout, step_finished):
 
     if output_interval is None:
         output_interval = auto_interval(stop_time - start_time)
 
     sim_start = current_time()
+
+    is_fmi1 = model_description.fmiVersion == '1.0'
+
+    if not is_fmi1:
+        fmu.setupExperiment(tolerance=relative_tolerance, startTime=start_time)
 
     input = Input(fmu=fmu, modelDescription=model_description, signals=input_signals)
 
@@ -912,7 +917,7 @@ def simulateCS(model_description, fmu, start_time, stop_time, start_values, appl
     apply_start_values(fmu, model_description, start_values, apply_default_start_values)
 
     # initialize the model
-    if model_description.fmiVersion == '1.0':
+    if is_fmi1:
         input.apply(time)
         fmu.initialize(tStart=time, stopTime=stop_time)
     else:

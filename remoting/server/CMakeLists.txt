@@ -29,6 +29,7 @@ target_include_directories(server PUBLIC
 )
 
 target_link_libraries(server
+  shlwapi.lib
   "${RPCLIB}/lib/rpc.lib"
 )
 

@@ -1,3 +1,12 @@
+## v0.2.19 (2020-04-15)
+
+- `FIXED` fmi2SetupExperiment() is now called again in FMI 2.0 for Co-Simulation
+- `FIXED` The working directory for the remoting server is now set to binaries/win32
+- `FIXED` ssp.simulation.set_value() has been fixed for Integer and Enumeration variables
+- `NEW` A license file is now added to documentation/licenses when adding the remoting binaries to an FMU
+- `NEW` A stop_time parameter has been added to ssp.instantiate_fmu()
+- `CHANGED` The license has been changed to 2-clause BSD
+
 ## v0.2.18 (2020-04-06)
 
 - `FIXED` A list is now passed to np.stack() instead of an iterable and Iterable is now imported from collections.abc to avoid FutureWarnings.

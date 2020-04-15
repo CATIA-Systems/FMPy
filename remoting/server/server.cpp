@@ -1,5 +1,6 @@
 #include "rpc/server.h"
 #include <Windows.h>
+#include "Shlwapi.h"
 #include <time.h>
 #include <list>
 #include <iostream>
@@ -113,6 +114,12 @@ public:
 	fmi2Component         m_instance;
 
 	FMU(const string &libraryPath) : srv(rpc::constants::DEFAULT_PORT) {
+
+		/* set the current directory to binaries/win32 */
+		char libraryDir[MAX_PATH];
+		strcpy(libraryDir, libraryPath.c_str());
+		PathRemoveFileSpec(libraryDir);
+		SetCurrentDirectory(libraryDir);
 
 		libraryHandle = LoadLibraryA(libraryPath.c_str());
 

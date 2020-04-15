@@ -34,7 +34,7 @@ def set_value(component, name, value):
     if variable.type == 'Real':
         component.fmu.setReal(vr, [float(value)])
     elif variable.type in ['Integer', 'Enumeration']:
-        component.fmu.setInteger(vr, [int(value)])[0]
+        component.fmu.setInteger(vr, [int(value)])
     elif variable.type == 'Boolean':
         # TODO: convert literals
         component.fmu.setBoolean(vr, [value != 0.0])
@@ -69,7 +69,7 @@ def set_parameters(component, parameter_set):
             set_value(component, variable_name, parameter.value)
 
 
-def instantiate_fmu(component, ssp_unzipdir, start_time, parameter_set=None):
+def instantiate_fmu(component, ssp_unzipdir, start_time, stop_time=None, parameter_set=None):
     """ Instantiate an FMU """
 
     fmu_filename = os.path.join(ssp_unzipdir, component.source)
@@ -98,7 +98,7 @@ def instantiate_fmu(component, ssp_unzipdir, start_time, parameter_set=None):
         component.fmu.instantiate()
         if parameter_set is not None:
             set_parameters(component, parameter_set)
-        component.fmu.initialize()
+        component.fmu.initialize(stopTime=stop_time)
     else:
         component.fmu = FMU2Slave(**fmu_kwargs)
         component.fmu.instantiate()
@@ -181,7 +181,7 @@ def simulate_ssp(ssp_filename, start_time=0.0, stop_time=None, step_size=None, p
 
     # instantiate the FMUs
     for component in components:
-        instantiate_fmu(component, ssp_unzipdir, start_time, parameter_set)
+        instantiate_fmu(component, ssp_unzipdir, start_time, stop_time, parameter_set)
 
     time = start_time
 

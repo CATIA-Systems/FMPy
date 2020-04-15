@@ -38,6 +38,7 @@ package_data = {
         'logging/win32/logging.dll',
         'logging/win64/logging.dll',
         'remoting/client.dll',
+        'remoting/license.txt',
         'remoting/server.exe',
         'schema/fmi1/*.xsd',
         'schema/fmi2/*.xsd',
@@ -61,7 +62,7 @@ extras_require = {
 extras_require['complete'] = sorted(set(sum(extras_require.values(), [])))
 
 setup(name='FMPy',
-      version='0.2.18',
+      version='0.2.19',
       description="Simulate Functional Mock-up Units (FMUs) in Python",
       long_description=long_description,
       author="Torsten Sommer",

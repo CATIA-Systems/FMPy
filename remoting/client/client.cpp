@@ -188,7 +188,7 @@ fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 
 fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Integer value[]) {
 	vector<unsigned int> v_vr(vr, vr + nvr);
-	auto r = client->call("fmi2Integer", v_vr).as<IntegerReturnValue>();
+	auto r = client->call("fmi2GetInteger", v_vr).as<IntegerReturnValue>();
 	copy(r.value.begin(), r.value.end(), value);
 	forwardLogMessages(r.logMessages);
 	return fmi2Status(r.status);
@@ -196,7 +196,7 @@ fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Boolean value[]) {
 	vector<unsigned int> v_vr(vr, vr + nvr);
-	auto r = client->call("fmi2Integer", v_vr).as<IntegerReturnValue>();
+	auto r = client->call("fmi2GetBoolean", v_vr).as<IntegerReturnValue>();
 	copy(r.value.begin(), r.value.end(), value);
 	forwardLogMessages(r.logMessages);
 	return fmi2Status(r.status);
@@ -218,7 +218,7 @@ fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 	auto vr_ = static_cast<const unsigned int*>(vr);
 	vector<unsigned int> v_vr(vr_, vr_ + nvr);
 	vector<int> v_value(value, value + nvr);
-	auto r = client->call("fmi2Integer", v_vr, v_value).as<ReturnValue>();
+	auto r = client->call("fmi2SetInteger", v_vr, v_value).as<ReturnValue>();
 	return handleReturnValue(r);
 }
 

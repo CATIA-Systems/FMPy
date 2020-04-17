@@ -792,7 +792,9 @@ def add_remoting(filename):
     os.mkdir(os.path.join(tempdir, 'binaries', 'win64'))
     copyfile(client, os.path.join(tempdir, 'binaries', 'win64', model_identifier + '.dll'))
     copyfile(server, os.path.join(tempdir, 'binaries', 'win64', 'server.exe'))
-    os.mkdir(os.path.join(tempdir, 'documentation', 'licenses'))
+    licenses_dir = os.path.join(tempdir, 'documentation', 'licenses')
+    if not os.path.isdir(licenses_dir):
+        os.mkdir(licenses_dir)
     copyfile(license, os.path.join(tempdir, 'documentation', 'licenses', 'fmpy-remoting-binaries.txt'))
 
     # create a new archive from the existing files + remoting binaries

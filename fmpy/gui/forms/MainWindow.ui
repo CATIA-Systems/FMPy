@@ -1895,6 +1895,9 @@ QToolButton::menu-button {
    </property>
   </action>
   <action name="actionAddRemoting">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Add 32-bit Remoting</string>
    </property>

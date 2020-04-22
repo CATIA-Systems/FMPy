@@ -55,14 +55,9 @@ fmi3Dependent      = 5
 
 # callback functions
 fmi3CallbackLogMessageTYPE         = CFUNCTYPE(None,       fmi3InstanceEnvironment, fmi3String, fmi3Status, fmi3String, fmi3String)
-fmi3CallbackAllocateMemoryTYPE     = CFUNCTYPE(c_void_p,   fmi3InstanceEnvironment, c_size_t, c_size_t)
-fmi3CallbackFreeMemoryTYPE         = CFUNCTYPE(None,       fmi3InstanceEnvironment, c_void_p)
 fmi3CallbackIntermediateUpdateTYPE = CFUNCTYPE(fmi3Status, fmi3InstanceEnvironment, fmi3Float64, fmi3Boolean, fmi3Boolean, fmi3Boolean, fmi3Boolean, fmi3Boolean, fmi3Boolean)
 fmi3CallbackLockPreemptionTYPE     = CFUNCTYPE(None)
 fmi3CallbackUnlockPreemptionTYPE   = CFUNCTYPE(None)
-
-# allocated memory
-_mem_addr = set()
 
 
 def intermediateUpdate(*args):
@@ -74,24 +69,6 @@ def printLogMessage(instanceEnvironment, instanceName, status, category, message
 
     label = ['OK', 'WARNING', 'DISCARD', 'ERROR', 'FATAL', 'PENDING'][status]
     print("[%s] %s" % (label, message))
-
-
-def allocateMemory(instanceEnvironment, nobj, size):
-    mem = calloc(nobj, size)
-    _mem_addr.add(mem)
-    return mem
-
-
-def freeMemory(instanceEnvironment, obj):
-
-    if obj is None:
-        return  # NULL pointer
-
-    if obj in _mem_addr:
-        free(obj)
-        _mem_addr.remove(obj)
-    else:
-        print("freeMemory() was called for a pointer (%s) that was not allocated" % obj)
 
 
 def stepFinished(instanceEnvironment, status):
@@ -122,7 +99,7 @@ class _FMU3(_FMU):
         self._fmi3Function('fmi3FreeInstance', [(fmi3Instance, 'instance')], None)
 
         # Enter and exit initialization mode, terminate and reset
-        self._fmi3Function('fmi3SetupExperiment', [
+        self._fmi3Function('fmi3EnterInitializationMode', [
             (fmi3Instance, 'instance'),
             (fmi3Boolean,  'toleranceDefined'),
             (fmi3Float64,  'tolerance'),
@@ -130,8 +107,6 @@ class _FMU3(_FMU):
             (fmi3Boolean,  'stopTimeDefined'),
             (fmi3Float64,  'stopTime')
         ])
-
-        self._fmi3Function('fmi3EnterInitializationMode', [(fmi3Instance, 'instance')])
 
         self._fmi3Function('fmi3ExitInitializationMode', [(fmi3Instance, 'instance')])
 
@@ -373,7 +348,7 @@ class _FMU3(_FMU):
 
     # Enter and exit initialization mode, terminate and reset
 
-    def setupExperiment(self, tolerance=None, startTime=0.0, stopTime=None):
+    def enterInitializationMode(self, tolerance=None, startTime=0.0, stopTime=None):
 
         toleranceDefined = fmi3True if tolerance is not None else fmi3False
 
@@ -385,10 +360,7 @@ class _FMU3(_FMU):
         if stopTime is None:
             stopTime = 0.0
 
-        return self.fmi3SetupExperiment(self.component, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime)
-
-    def enterInitializationMode(self):
-        return self.fmi3EnterInitializationMode(self.component)
+        return self.fmi3EnterInitializationMode(self.component, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime)
 
     def exitInitializationMode(self):
         return self.fmi3ExitInitializationMode(self.component)
@@ -557,9 +529,7 @@ class FMU3Model(_FMU3):
             (fmi3Boolean,                        'visible'),
             (fmi3Boolean,                        'loggingOn'),
             (fmi3InstanceEnvironment,            'instanceEnvironment'),
-            (fmi3CallbackLogMessageTYPE,         'logMessage'),
-            (fmi3CallbackAllocateMemoryTYPE,     'allocateMemory'),
-            (fmi3CallbackFreeMemoryTYPE,         'freeMemory')
+            (fmi3CallbackLogMessageTYPE,         'logMessage')
         ], fmi3Instance)
 
         self._fmi3Function('fmi3EnterContinuousTimeMode', [(fmi3Instance, 'instance')])
@@ -622,8 +592,6 @@ class FMU3Model(_FMU3):
 
         # save callbacks from GC
         self.printLogMessage = fmi3CallbackLogMessageTYPE(printLogMessage)
-        self.allocateMemory = fmi3CallbackAllocateMemoryTYPE(allocateMemory)
-        self.freeMemory = fmi3CallbackFreeMemoryTYPE(freeMemory)
 
         self.component = self.fmi3InstantiateModelExchange(
             self.instanceName.encode('utf-8'),
@@ -632,9 +600,7 @@ class FMU3Model(_FMU3):
             fmi3True if visible else fmi3False,
             fmi3True if loggingOn else fmi3False,
             fmi3InstanceEnvironment(),
-            self.printLogMessage,
-            self.allocateMemory,
-            self.freeMemory)
+            self.printLogMessage)
 
         if not self.component:
             raise Exception("Failed to instantiate FMU")
@@ -730,8 +696,6 @@ class FMU3Slave(_FMU3):
             (fmi3Boolean,                        'intermediateVariableSetRequired'),
             (fmi3InstanceEnvironment,            'instanceEnvironment'),
             (fmi3CallbackLogMessageTYPE,         'logMessage'),
-            (fmi3CallbackAllocateMemoryTYPE,     'allocateMemory'),
-            (fmi3CallbackFreeMemoryTYPE,         'freeMemory'),
             (fmi3CallbackIntermediateUpdateTYPE, 'intermediateUpdate')
         ], fmi3Instance)
 
@@ -788,8 +752,6 @@ class FMU3Slave(_FMU3):
 
         # save callbacks from GC
         self.printLogMessage = fmi3CallbackLogMessageTYPE(printLogMessage)
-        self.allocateMemory = fmi3CallbackAllocateMemoryTYPE(allocateMemory)
-        self.freeMemory = fmi3CallbackFreeMemoryTYPE(freeMemory)
         self.intermediateUpdate = fmi3CallbackIntermediateUpdateTYPE(intermediateUpdate)
 
         self.component = self.fmi3InstantiateBasicCoSimulation(
@@ -803,8 +765,6 @@ class FMU3Slave(_FMU3):
             fmi3False,
             fmi3InstanceEnvironment(),
             self.printLogMessage,
-            self.allocateMemory,
-            self.freeMemory,
             self.intermediateUpdate)
 
         if not self.component:

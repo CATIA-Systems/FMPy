@@ -278,6 +278,80 @@ def _copy_attributes(element, object, attributes):
         setattr(object, attribute, value)
 
 
+def read_build_description(filename, validate=True):
+
+    import zipfile
+    from lxml import etree
+    import os
+    from .util import _is_string
+
+    if _is_string(filename) and os.path.isdir(filename):  # extracted FMU
+        filename = os.path.join(filename, 'sources/buildDescription.xml')
+        if not os.path.isfile(filename):
+            return []
+        tree = etree.parse(filename)
+    elif _is_string(filename) and os.path.isfile(filename) and filename.lower().endswith('.xml'):  # XML file
+        if not os.path.isfile(filename):
+            return []
+        tree = etree.parse(filename)
+    else:  # FMU as path or file like object
+        with zipfile.ZipFile(filename, 'r') as zf:
+            if 'sources/buildDescription.xml' not in zf.namelist():
+                return []
+            xml = zf.open('sources/buildDescription.xml')
+            tree = etree.parse(xml)
+
+    root = tree.getroot()
+
+    fmi_version = root.get('fmiVersion')
+
+    if fmi_version is None or not fmi_version.startswith('3.0'):
+        raise Exception("Unsupported fmiBuildDescription version: %s" % fmi_version)
+
+    if validate:
+
+        module_dir, _ = os.path.split(__file__)
+        schema = etree.XMLSchema(file=os.path.join(module_dir, 'schema', 'fmi3', 'fmi3BuildDescription.xsd'))
+
+        if not schema.validate(root):
+            message = "Failed to validate buildDescription.xml:"
+            for entry in schema.error_log:
+                message += "\n%s (line %d, column %d): %s" % (entry.level_name, entry.line, entry.column, entry.message)
+            raise Exception(message)
+
+    build_configurations = []
+
+    for bc in root.findall('BuildConfiguration'):
+
+        buildConfiguration = BuildConfiguration()
+        buildConfiguration.modelIdentifier = bc.get('modelIdentifier')
+
+        build_configurations.append(buildConfiguration)
+
+        for sf in bc.findall('SourceFileSet'):
+
+            sourceFileSet = SourceFileSet()
+            sourceFileSet.language = sf.get('language')
+
+            for pd in sf.findall('PreprocessorDefinition'):
+                definition = PreProcessorDefinition()
+                definition.name = pd.get('name')
+                definition.value = pd.get('value')
+                definition.optional = pd.get('optional') == 'true'
+                definition.description = pd.get('description')
+                sourceFileSet.preprocessorDefinitions.append(definition)
+
+            for f in sf.findall('SourceFile'):
+                sourceFileSet.sourceFiles.append(f.get('name'))
+
+            for d in sf.findall('IncludeDirectory'):
+                sourceFileSet.includeDirectories.append(d.get('name'))
+
+            buildConfiguration.sourceFileSets.append(sourceFileSet)
+
+    return build_configurations
+
+
 def read_model_description(filename, validate=True, validate_variable_names=False):
     """ Read the model description from an FMU without extracting it
 
@@ -446,33 +520,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
 
     elif fmiVersion.startswith('3.0'):
 
-        for bc in root.findall('BuildConfiguration'):
-
-            buildConfiguration = BuildConfiguration()
-            buildConfiguration.modelIdentifier = bc.get('modelIdentifier')
-
-            modelDescription.buildConfigurations.append(buildConfiguration)
-
-            for sf in bc.findall('SourceFileSet'):
-
-                sourceFileSet = SourceFileSet()
-                sourceFileSet.language = sf.get('language')
-
-                for pd in sf.findall('PreprocessorDefinition'):
-                    definition = PreProcessorDefinition()
-                    definition.name = pd.get('name')
-                    definition.value = pd.get('value')
-                    definition.optional = pd.get('optional') == 'true'
-                    definition.description = pd.get('description')
-                    sourceFileSet.preprocessorDefinitions.append(definition)
-
-                for f in sf.findall('SourceFile'):
-                    sourceFileSet.sourceFiles.append(f.get('name'))
-
-                for d in sf.findall('IncludeDirectory'):
-                    sourceFileSet.includeDirectories.append(d.get('name'))
-
-                buildConfiguration.sourceFileSets.append(sourceFileSet)
+        modelDescription.buildConfigurations = read_build_description(filename, validate=validate)
 
     # unit definitions
     if fmiVersion == '1.0':

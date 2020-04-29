@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:include schemaLocation="fmi3Terminal.xsd"/>
+	<xs:include schemaLocation="fmi3Annotation.xsd"/>
 	<xs:annotation>
 		<xs:documentation>
 Copyright(c) 2008-2011 MODELISAR consortium,
@@ -34,37 +36,49 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ----------------------------------------------------------------------------
 		</xs:documentation>
 	</xs:annotation>
-	<xs:include schemaLocation="fmi3Annotation.xsd"/>
-	<xs:complexType name="fmi3InterfaceType" abstract="true">
-		<xs:sequence minOccurs="0">
-			<xs:element ref="VendorAnnotations" minOccurs="0"/>
-		</xs:sequence>
-		<xs:attribute name="modelIdentifier" type="xs:normalizedString" use="required"/>
-		<xs:attribute name="needsExecutionTool" type="xs:boolean" default="false"/>
-		<xs:attribute name="canBeInstantiatedOnlyOncePerProcess" type="xs:boolean" default="false"/>
-		<xs:attribute name="canGetAndSetFMUState" type="xs:boolean" default="false"/>
-		<xs:attribute name="canSerializeFMUState" type="xs:boolean" default="false"/>
-		<xs:attribute name="providesDirectionalDerivative" type="xs:boolean" default="false"/>
-		<xs:attribute name="providesAdjointDerivative" type="xs:boolean" default="false"/>
-		<xs:attribute name="providesPerElementDependencies" type="xs:boolean" default="false"/>
-	</xs:complexType>
-	<xs:complexType name="fmi3ModelExchange">
-		<xs:complexContent>
-			<xs:extension base="fmi3InterfaceType">
-				<xs:attribute name="completedIntegratorStepNotNeeded" type="xs:boolean" default="false"/>
-			</xs:extension>
-		</xs:complexContent>
-	</xs:complexType>
-	<xs:complexType name="fmi3CoSimulation">
-		<xs:complexContent>
-			<xs:extension base="fmi3InterfaceType">
-				<xs:attribute name="canHandleVariableCommunicationStepSize" type="xs:boolean" default="false"/>
-				<xs:attribute name="canInterpolateInputs" type="xs:boolean" default="false"/>
-				<xs:attribute name="maxOutputDerivativeOrder" type="xs:unsignedInt" default="0"/>
-				<xs:attribute name="providesIntermediateVariableAccess" type="xs:boolean" default="false"/>
-				<xs:attribute name="canReturnEarlyAfterIntermediateUpdate" type="xs:boolean" default="false"/>
-				<xs:attribute name="fixedInternalStepSize" type="xs:double"/>
-			</xs:extension>
-		</xs:complexContent>
-	</xs:complexType>
+	<xs:element name="fmiTerminalsAndIcons">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="GraphicalRepresentation" minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="CoordinateSystem" minOccurs="0">
+								<xs:complexType>
+									<xs:attribute name="x1" type="xs:double" use="required"/>
+									<xs:attribute name="y1" type="xs:double" use="required"/>
+									<xs:attribute name="x2" type="xs:double" use="required"/>
+									<xs:attribute name="y2" type="xs:double" use="required"/>
+									<xs:attribute name="suggestedScalingFactorTo_mm" type="xs:double" use="required"/>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="Icon" minOccurs="0">
+								<xs:complexType>
+									<xs:attribute name="x1" type="xs:double" use="required"/>
+									<xs:attribute name="y1" type="xs:double" use="required"/>
+									<xs:attribute name="x2" type="xs:double" use="required"/>
+									<xs:attribute name="y2" type="xs:double" use="required"/>
+								</xs:complexType>
+							</xs:element>
+							<xs:element ref="VendorAnnotations" minOccurs="0"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Terminals" minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Terminal" type="fmi3Terminal" maxOccurs="unbounded"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element ref="VendorAnnotations" minOccurs="0"/>
+			</xs:sequence>
+			<xs:attribute name="fmiVersion" use="required">
+				<xs:simpleType>
+					<xs:restriction base="xs:normalizedString">
+						<xs:pattern value="3[.](0-.*)"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
 </xs:schema>

@@ -133,8 +133,20 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					</xs:complexContent>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="Boolean" type="fmi3TypeDefinitionBase"/>
-			<xs:element name="String" type="fmi3TypeDefinitionBase"/>
+			<xs:element name="Boolean">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="fmi3TypeDefinitionBase"/>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="String">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="fmi3TypeDefinitionBase"/>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
 			<xs:element name="Binary">
 				<xs:complexType>
 					<xs:complexContent>

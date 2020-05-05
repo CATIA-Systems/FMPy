@@ -51,7 +51,13 @@ package_data = {
     'fmpy.ssp': ['schema/*.xsd'],
 }
 
-install_requires = ['lark-parser', 'lxml', 'numpy', 'pathlib', 'pywin32;platform_system=="Windows"']
+install_requires = [
+    'lark-parser',
+    'lxml',
+    'numpy',
+    'pathlib;python_version<"3.4"',
+    'pywin32;platform_system=="Windows"'
+]
 
 extras_require = {
     'examples': ['dask[bag]', 'requests'],

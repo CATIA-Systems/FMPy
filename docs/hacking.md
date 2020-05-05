@@ -13,7 +13,7 @@ and Python.
 To create a new conda environment named "py36_64" enter
 
 ```bash
-conda create -q -n py36_64 -c anaconda python=3.6 dask lxml matplotlib numpy pathlib pyqt pyqtgraph pywin32 requests
+conda create -q -n py36_64 -c anaconda python=3.6 dask lxml matplotlib numpy pyqt pyqtgraph pywin32 requests
 ```
 
 on Linux and macOS the `pywin32` package is not required but you might need to prepend `sudo` to
@@ -28,13 +28,13 @@ only supports `win64`. To activate the environment run `activate py36_64` on Win
 If you want to use an existing Python you can install the necessary dependencies with conda
 
 ```bash
-conda install dask lxml matplotlib numpy pathlib pyqt pyqtgraph pywin32 requests
+conda install dask lxml matplotlib numpy pyqt pyqtgraph pywin32 requests
 ```
 
 or pip
 
 ```bash
-python -m pip install dask lxml matplotlib numpy pathlib pyqt pyqtgraph pywin32 requests
+python -m pip install dask lxml matplotlib numpy pyqt pyqtgraph pywin32 requests
 ```
 
 The package `pywin32` is only required on Windows.

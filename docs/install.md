@@ -8,15 +8,14 @@ to install your packages individually you can use [Miniconda](https://conda.io/m
 
 Depending on what you intent to use FMPy for you might only need certain packages.
 
-| Function                  | Required packages                         |
-|---------------------------|-------------------------------------------|
-| Read modelDescription.xml | lxml                                      |
-| Simulate FMUs             | numpy, pathlib, pywin32 (only on Windows) |
-| Plot results              | matplotlib                                |
-| Parallelization example   | dask                                      |
-| Download example FMUs     | requests                                  |
-| Graphical user interface  | pyqt, pyqtgraph                           |
-
+| Function                  | Required packages                |
+|---------------------------|----------------------------------|
+| Read modelDescription.xml | lxml                             |
+| Simulate FMUs             | numpy, pywin32 (only on Windows) |
+| Plot results              | matplotlib                       |
+| Parallelization example   | dask                             |
+| Download example FMUs     | requests                         |
+| Graphical user interface  | pyqt, pyqtgraph                  |
 
 ## Install with Conda
 
@@ -38,7 +37,6 @@ and install the dependencies with
 conda install <packages>
 ```
 
-
 ## Install with PIP
 
 To install FMPy from [PyPI](https://pypi.python.org/pypi) including all dependencies type
@@ -59,7 +57,6 @@ and install the dependencies with
 python -m pip install <packages>
 ```
 
-
 ## Install from Source
 
 To install the latest development version directly from GitHub type
@@ -67,7 +64,6 @@ To install the latest development version directly from GitHub type
 ```bash
 python -m pip install https://github.com/CATIA-Systems/FMPy/archive/develop.zip
 ```
-
 
 ## Installation without an Internet Connection
 

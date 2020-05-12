@@ -83,19 +83,19 @@ def write_csv(filename, result, columns=None):
     cols = []
     data = []
 
-    for descr in result.dtype.descr:
-        if len(descr) > 2:
-            name, type_, shape = descr
+    for name in result.dtype.names:
+        dtype = result.dtype[name]
+        if len(dtype.shape) > 0:
+            subtype = dtype.subdtype[0].type
             y = result[name]
-            for i in np.ndindex(shape):
+            for i in np.ndindex(dtype.shape):
                 # convert index to 1-based subscripts
                 subs = ','.join(map(lambda sub: str(sub + 1), i))
-                cols.append(('%s[%s]' % (name, subs), type_))
+                cols.append(('%s[%s]' % (name, subs), subtype))
                 sl = [slice(0, None)] + [slice(s, s + 1) for s in i]
                 data.append(y[sl].flatten())
         else:
-            name, _ = descr
-            cols.append(descr)
+            cols.append((name, dtype.type))
             data.append(result[name])
 
     result = np.array(list(zip(*data)), dtype=np.dtype(cols))

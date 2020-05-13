@@ -63,35 +63,24 @@ extern "C" {
 
 /*
 Export FMI3 API functions on Windows and under GCC.
-If custom linking is desired then the FMI3_Export must be
-defined before including this file. For instance,
-it may be set to __declspec(dllimport).
+This definition has been changed to always export the symbols.
 */
-#if !defined(FMI3_Export)
-  #if !defined(FMI3_FUNCTION_PREFIX)
-    #if defined _WIN32 || defined __CYGWIN__
-     /* Note: both gcc & MSVC on Windows support this syntax. */
-        #define FMI3_Export __declspec(dllexport)
-    #else
-      #if __GNUC__ >= 4
-        #define FMI3_Export __attribute__ ((visibility ("default")))
-      #else
-        #define FMI3_Export
-      #endif
-    #endif
+#if defined _WIN32 || defined __CYGWIN__
+ /* Note: both gcc & MSVC on Windows support this syntax. */
+    #define FMI3_Export __declspec(dllexport)
+#else
+  #if __GNUC__ >= 4
+    #define FMI3_Export __attribute__ ((visibility ("default")))
   #else
     #define FMI3_Export
   #endif
 #endif
 
-/* Macros to construct the real function name (prepend function name by FMI3_FUNCTION_PREFIX) */
-#if defined(FMI3_FUNCTION_PREFIX)
-  #define fmi3Paste(a,b)     a ## b
-  #define fmi3PasteB(a,b)    fmi3Paste(a,b)
-  #define fmi3FullName(name) fmi3PasteB(FMI3_FUNCTION_PREFIX, name)
-#else
-  #define fmi3FullName(name) name
-#endif
+/*
+Macro to construct the real function name.
+This definition has been changed to add no prefix.
+*/
+#define fmi3FullName(name) name
 
 /* FMI version */
 #define fmi3Version "3.0-alpha.3"

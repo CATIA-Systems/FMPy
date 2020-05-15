@@ -521,8 +521,8 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
                 buildConfiguration.sourceFileSets.append(source_file_set)
                 source_file_set.sourceFiles = source_files
 
-    elif fmiVersion.startswith('3.0') and not (_is_string(_filename) and os.path.isfile(_filename)):
-
+    elif fmiVersion.startswith('3.0') and not (_is_string(_filename) and _filename.endswith('.xml')):
+        # read buildDescription.xml if _filename is a folder or ZIP file
         modelDescription.buildConfigurations = read_build_description(_filename, validate=validate)
 
     # unit definitions

@@ -369,6 +369,9 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
     import os
     from .util import _is_string
 
+    # remember the original filename
+    _filename = filename
+
     if _is_string(filename) and os.path.isdir(filename):  # extracted FMU
         filename = os.path.join(filename, 'modelDescription.xml')
         tree = etree.parse(filename)
@@ -518,9 +521,9 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
                 buildConfiguration.sourceFileSets.append(source_file_set)
                 source_file_set.sourceFiles = source_files
 
-    elif fmiVersion.startswith('3.0'):
+    elif fmiVersion.startswith('3.0') and not (_is_string(_filename) and os.path.isfile(_filename)):
 
-        modelDescription.buildConfigurations = read_build_description(filename, validate=validate)
+        modelDescription.buildConfigurations = read_build_description(_filename, validate=validate)
 
     # unit definitions
     if fmiVersion == '1.0':

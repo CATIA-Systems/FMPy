@@ -5,10 +5,10 @@
 
 /*
 This header file must be utilized when compiling an FMU or an FMI master.
-It declares data and function types for FMI 3.0-alpha.1.
+It declares data and function types for FMI 3.0-alpha.3.
 
 Copyright (C) 2011 MODELISAR consortium,
-              2012-2019 Modelica Association Project "FMI"
+              2012-2020 Modelica Association Project "FMI"
               All rights reserved.
 
 This file is licensed by the copyright holders under the 2-Clause BSD License
@@ -43,11 +43,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern "C" {
 #endif
 
-/* make sure all compiler use the same alignment policies for structures */
-#if defined _MSC_VER || defined __GNUC__
-#pragma pack(push,8)
-#endif
-
 /* Include stddef.h, in order that size_t etc. is defined */
 #include <stddef.h>
 
@@ -64,30 +59,6 @@ typedef enum {
 } fmi3Status;
 /* end::Status[] */
 
-/* tag::InterfaceType[] */
-typedef enum {
-    fmi3ModelExchange,
-    fmi3CoSimulation
-} fmi3InterfaceType;
-/* end::InterfaceType[] */
-
-/* tag::CoSimulationMode[] */
-typedef enum {
-    fmi3ModeCoSimulation,
-    fmi3ModeHybridCoSimulation,
-    fmi3ModeScheduledExecutionSimulation
-} fmi3CoSimulationMode;
-/* end::CoSimulationMode[] */
-
-/* tag::CoSimulationConfiguration[] */
-typedef struct {
-    fmi3Boolean intermediateVariableGetRequired;
-    fmi3Boolean intermediateInternalVariableGetRequired;
-    fmi3Boolean intermediateVariableSetRequired;
-    fmi3CoSimulationMode coSimulationMode;
-} fmi3CoSimulationConfiguration;
-/* end::CoSimulationConfiguration[] */
-
 /* tag::DependencyKind[] */
 typedef enum {
     /* fmi3Independent = 0, not needed but reserved for future use */
@@ -99,66 +70,32 @@ typedef enum {
 } fmi3DependencyKind;
 /* end::DependencyKind[] */
 
-/* tag::IntermediateUpdateInfo[] */
-typedef struct{
-    fmi3Float64 intermediateUpdateTime;
-    fmi3Boolean eventOccurred;
-    fmi3Boolean clocksTicked;
-    fmi3Boolean intermediateVariableSetAllowed;
-    fmi3Boolean intermediateVariableGetAllowed;
-    fmi3Boolean intermediateStepFinished;
-    fmi3Boolean canReturnEarly;
-} fmi3IntermediateUpdateInfo;
-/* end::IntermediateUpdateInfo[] */
-
-/* tag::CallbackFunctions[] */
+/* tag::CallbackLogMessage[] */
 typedef void  (*fmi3CallbackLogMessage)     (fmi3InstanceEnvironment instanceEnvironment,
                                              fmi3String instanceName,
                                              fmi3Status status,
                                              fmi3String category,
                                              fmi3String message);
-typedef void* (*fmi3CallbackAllocateMemory) (fmi3InstanceEnvironment instanceEnvironment,
-                                             size_t nobj,
-                                             size_t size);
-typedef void  (*fmi3CallbackFreeMemory)     (fmi3InstanceEnvironment instanceEnvironment,
-                                             void* obj);
-/* end::CallbackFunctions[] */
+/* end::CallbackLogMessage[] */
 
 /* tag::CallbackIntermediateUpdate[] */
-typedef fmi3Status (*fmi3CallbackIntermediateUpdate) (fmi3InstanceEnvironment instanceEnvironment,
-                                                      fmi3IntermediateUpdateInfo* intermediateUpdateInfo);
+typedef void (*fmi3CallbackIntermediateUpdate) (
+    fmi3InstanceEnvironment instanceEnvironment,
+    fmi3Float64 intermediateUpdateTime,
+    fmi3Boolean eventOccurred,
+    fmi3Boolean clocksTicked,
+    fmi3Boolean intermediateVariableSetAllowed,
+    fmi3Boolean intermediateVariableGetAllowed,
+    fmi3Boolean intermediateStepFinished,
+    fmi3Boolean canReturnEarly,
+    fmi3Boolean *earlyReturnRequested,
+    fmi3Float64 *earlyReturnTime);
 /* end::CallbackIntermediateUpdate[] */
 
-/* tag::PreemptionLock[] */
+/* tag::CallbackPreemptionLock[] */
 typedef void       (*fmi3CallbackLockPreemption)   ();
 typedef void       (*fmi3CallbackUnlockPreemption) ();
-/* end::PreemptionLock[] */
-
-typedef struct {
-    fmi3InstanceEnvironment         instanceEnvironment;
-    fmi3CallbackLogMessage          logMessage;
-    fmi3CallbackAllocateMemory      allocateMemory;
-    fmi3CallbackFreeMemory          freeMemory;
-    fmi3CallbackIntermediateUpdate  intermediateUpdate;
-    fmi3CallbackLockPreemption      lockPreemption;
-    fmi3CallbackUnlockPreemption    unlockPreemption;
-} fmi3CallbackFunctions;
-
-/* tag::EventInfo[] */
-typedef struct {
-    fmi3Float64 nextEventTime;  /* next event if nextEventTimeDefined=fmi3True */
-    fmi3Boolean newDiscreteStatesNeeded;
-    fmi3Boolean terminateSimulation;
-    fmi3Boolean nominalsOfContinuousStatesChanged;
-    fmi3Boolean valuesOfContinuousStatesChanged;
-    fmi3Boolean nextEventTimeDefined;
-} fmi3EventInfo;
-/* end::EventInfo[] */
-
-/* reset alignment policy to the one set before reading this file */
-#if defined _MSC_VER || defined __GNUC__
-#pragma pack(pop)
-#endif
+/* end::CallbackPreemptionLock[] */
 
 /* Define fmi3 function pointer types to simplify dynamic loading */
 
@@ -180,14 +117,55 @@ typedef fmi3Status  fmi3SetDebugLoggingTYPE(fmi3Instance instance,
 
 /* Creation and destruction of FMU instances and setting debug status */
 /* tag::Instantiate[] */
-typedef fmi3Instance fmi3InstantiateTYPE(fmi3String        instanceName,
-                                         fmi3InterfaceType fmuType,
-                                         fmi3String        fmuInstantiationToken,
-                                         fmi3String        fmuResourceLocation,
-                                         const fmi3CallbackFunctions* functions,
-                                         fmi3Boolean       visible,
-                                         fmi3Boolean       loggingOn,
-                                         const fmi3CoSimulationConfiguration* fmuCoSimulationConfiguration);
+typedef fmi3Instance fmi3InstantiateModelExchangeTYPE(
+    fmi3String                 instanceName,
+    fmi3String                 instantiationToken,
+    fmi3String                 resourceLocation,
+    fmi3Boolean                visible,
+    fmi3Boolean                loggingOn,
+    fmi3InstanceEnvironment    instanceEnvironment,
+    fmi3CallbackLogMessage     logMessage);
+
+typedef fmi3Instance fmi3InstantiateBasicCoSimulationTYPE(
+    fmi3String                     instanceName,
+    fmi3String                     instantiationToken,
+    fmi3String                     resourceLocation,
+    fmi3Boolean                    visible,
+    fmi3Boolean                    loggingOn,
+    fmi3Boolean                    intermediateVariableGetRequired,
+    fmi3Boolean                    intermediateInternalVariableGetRequired,
+    fmi3Boolean                    intermediateVariableSetRequired,
+    fmi3InstanceEnvironment        instanceEnvironment,
+    fmi3CallbackLogMessage         logMessage,
+    fmi3CallbackIntermediateUpdate intermediateUpdate);
+
+typedef fmi3Instance fmi3InstantiateHybridCoSimulationTYPE(
+    fmi3String                     instanceName,
+    fmi3String                     instantiationToken,
+    fmi3String                     resourceLocation,
+    fmi3Boolean                    visible,
+    fmi3Boolean                    loggingOn,
+    fmi3Boolean                    intermediateVariableGetRequired,
+    fmi3Boolean                    intermediateInternalVariableGetRequired,
+    fmi3Boolean                    intermediateVariableSetRequired,
+    fmi3InstanceEnvironment        instanceEnvironment,
+    fmi3CallbackLogMessage         logMessage,
+    fmi3CallbackIntermediateUpdate intermediateUpdate);
+
+typedef fmi3Instance fmi3InstantiateScheduledCoSimulationTYPE(
+    fmi3String                     instanceName,
+    fmi3String                     instantiationToken,
+    fmi3String                     resourceLocation,
+    fmi3Boolean                    visible,
+    fmi3Boolean                    loggingOn,
+    fmi3Boolean                    intermediateVariableGetRequired,
+    fmi3Boolean                    intermediateInternalVariableGetRequired,
+    fmi3Boolean                    intermediateVariableSetRequired,
+    fmi3InstanceEnvironment        instanceEnvironment,
+    fmi3CallbackLogMessage         logMessage,
+    fmi3CallbackIntermediateUpdate intermediateUpdate,
+    fmi3CallbackLockPreemption     lockPreemption,
+    fmi3CallbackUnlockPreemption   unlockPreemption);
 /* end::Instantiate[] */
 
 /* tag::FreeInstance[] */
@@ -195,17 +173,13 @@ typedef void fmi3FreeInstanceTYPE(fmi3Instance instance);
 /* end::FreeInstance[] */
 
 /* Enter and exit initialization mode, enter event mode, terminate and reset */
-/* tag::SetupExperiment[] */
-typedef fmi3Status fmi3SetupExperimentTYPE(fmi3Instance instance,
-                                           fmi3Boolean toleranceDefined,
-                                           fmi3Float64 tolerance,
-                                           fmi3Float64 startTime,
-                                           fmi3Boolean stopTimeDefined,
-                                           fmi3Float64 stopTime);
-/* end::SetupExperiment[] */
-
 /* tag::EnterInitializationMode[] */
-typedef fmi3Status fmi3EnterInitializationModeTYPE(fmi3Instance instance);
+typedef fmi3Status fmi3EnterInitializationModeTYPE(fmi3Instance instance,
+                                                   fmi3Boolean toleranceDefined,
+                                                   fmi3Float64 tolerance,
+                                                   fmi3Float64 startTime,
+                                                   fmi3Boolean stopTimeDefined,
+                                                   fmi3Float64 stopTime);
 /* end::EnterInitializationMode[] */
 
 /* tag::ExitInitializationMode[] */
@@ -232,110 +206,164 @@ typedef fmi3Status fmi3ResetTYPE(fmi3Instance instance);
 /* Getting and setting variable values */
 /* tag::Getters[] */
 typedef fmi3Status fmi3GetFloat32TYPE(fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      fmi3Float32 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      fmi3Float32 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3GetFloat64TYPE(fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      fmi3Float64 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      fmi3Float64 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3GetInt8TYPE   (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      fmi3Int8 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      fmi3Int8 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3GetUInt8TYPE  (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      fmi3UInt8 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      fmi3UInt8 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3GetInt16TYPE  (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      fmi3Int16 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      fmi3Int16 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3GetUInt16TYPE (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      fmi3UInt16 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      fmi3UInt16 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3GetInt32TYPE  (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      fmi3Int32 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      fmi3Int32 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3GetUInt32TYPE (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      fmi3UInt32 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      fmi3UInt32 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3GetInt64TYPE  (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      fmi3Int64 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      fmi3Int64 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3GetUInt64TYPE (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      fmi3UInt64 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      fmi3UInt64 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3GetBooleanTYPE(fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      fmi3Boolean values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      fmi3Boolean values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3GetStringTYPE (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      fmi3String values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      fmi3String values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3GetBinaryTYPE (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      size_t sizes[], fmi3Binary values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      size_t sizes[],
+                                      fmi3Binary values[],
+                                      size_t nValues);
 /* end::Getters[] */
 
 /* tag::Setters[] */
 typedef fmi3Status fmi3SetFloat32TYPE(fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      const fmi3Float32 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      const fmi3Float32 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3SetFloat64TYPE(fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      const fmi3Float64 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      const fmi3Float64 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3SetInt8TYPE   (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      const fmi3Int8 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      const fmi3Int8 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3SetUInt8TYPE  (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      const fmi3UInt8 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      const fmi3UInt8 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3SetInt16TYPE  (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      const fmi3Int16 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      const fmi3Int16 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3SetUInt16TYPE (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      const fmi3UInt16 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      const fmi3UInt16 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3SetInt32TYPE  (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      const fmi3Int32 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      const fmi3Int32 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3SetUInt32TYPE (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      const fmi3UInt32 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      const fmi3UInt32 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3SetInt64TYPE  (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      const fmi3Int64 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      const fmi3Int64 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3SetUInt64TYPE (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      const fmi3UInt64 values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      const fmi3UInt64 values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3SetBooleanTYPE(fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      const fmi3Boolean values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      const fmi3Boolean values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3SetStringTYPE (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      const fmi3String values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      const fmi3String values[],
+                                      size_t nValues);
 
 typedef fmi3Status fmi3SetBinaryTYPE (fmi3Instance instance,
-                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                      const size_t sizes[], const fmi3Binary values[], size_t nValues);
+                                      const fmi3ValueReference valueReferences[],
+                                      size_t nValueReferences,
+                                      const size_t sizes[],
+                                      const fmi3Binary values[],
+                                      size_t nValues);
 /* end::Setters[] */
 
 /* Getting Variable Dependency Information */
@@ -356,11 +384,17 @@ typedef fmi3Status fmi3GetVariableDependenciesTYPE(fmi3Instance instance,
 /* end::GetVariableDependencies[] */
 
 /* Getting and setting the internal FMU state */
-/* tag::GetSetFreeFMUState[] */
+/* tag::GetFMUState[] */
 typedef fmi3Status fmi3GetFMUStateTYPE (fmi3Instance instance, fmi3FMUState* FMUState);
+/* end::GetFMUState[] */
+
+/* tag::SetFMUState[] */
 typedef fmi3Status fmi3SetFMUStateTYPE (fmi3Instance instance, fmi3FMUState  FMUState);
+/* end::SetFMUState[] */
+
+/* tag::FreeFMUState[] */
 typedef fmi3Status fmi3FreeFMUStateTYPE(fmi3Instance instance, fmi3FMUState* FMUState);
-/* end::GetSetFreeFMUState[] */
+/* end::FreeFMUState[] */
 
 /* tag::SerializedFMUState[] */
 typedef fmi3Status fmi3SerializedFMUStateSizeTYPE(fmi3Instance instance,
@@ -385,11 +419,25 @@ typedef fmi3Status fmi3GetDirectionalDerivativeTYPE(fmi3Instance instance,
                                                     size_t nUnknowns,
                                                     const fmi3ValueReference knowns[],
                                                     size_t nKnowns,
-                                                    const fmi3Float64 deltaKnowns[],
-                                                    size_t nDeltaKnowns,
-                                                    fmi3Float64 deltaUnknowns[],
-                                                    size_t nDeltaOfUnknowns);
+                                                    const fmi3Float64 seed[],
+                                                    size_t nSeed,
+                                                    fmi3Float64 sensitivity[],
+                                                    size_t nSensitivity);
 /* end::GetDirectionalDerivative[] */
+
+/* tag::GetAdjointDerivative[] */
+typedef fmi3Status fmi3GetAdjointDerivativeTYPE(fmi3Instance instance,
+                                                const fmi3ValueReference unknowns[],
+                                                size_t nUnknowns,
+                                                const fmi3ValueReference knowns[],
+                                                size_t nKnowns,
+                                                const fmi3Float64 seed[],
+                                                size_t nSeed,
+                                                fmi3Float64 sensitivity[],
+                                                size_t nSensitivity);
+/* end::GetAdjointDerivative[] */
+
+
 
 /* Entering and exiting the Configuration or Reconfiguration Mode */
 /* tag::EnterConfigurationMode[] */
@@ -403,39 +451,63 @@ typedef fmi3Status fmi3ExitConfigurationModeTYPE(fmi3Instance instance);
 /* Clock related functions */
 /* tag::GetClock[] */
 typedef fmi3Status fmi3GetClockTYPE(fmi3Instance instance,
-                                    const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                    fmi3Clock values[]);
+                                    const fmi3ValueReference valueReferences[],
+                                    size_t nValueReferences,
+                                    fmi3Clock values[],
+                                    size_t nValues);
 /* end::GetClock[] */
 
 /* tag::SetClock[] */
 typedef fmi3Status fmi3SetClockTYPE(fmi3Instance instance,
-                                    const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                    const fmi3Clock values[], const fmi3Boolean *subactive);
+                                    const fmi3ValueReference valueReferences[],
+                                    size_t nValueReferences,
+                                    const fmi3Clock values[],
+                                    const fmi3Boolean subactive[],
+                                    size_t nValues);
 /* end::SetClock[] */
 
-/* tag::GetInterval[] */
+/* tag::GetIntervalDecimal[] */
 typedef fmi3Status fmi3GetIntervalDecimalTYPE(fmi3Instance instance,
-                                              const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                              fmi3Float64 interval[]);
+                                              const fmi3ValueReference valueReferences[],
+                                              size_t nValueReferences,
+                                              fmi3Float64 interval[],
+                                              size_t nValues);
+/* end::GetIntervalDecimal[] */
 
+/* tag::GetIntervalFraction[] */
 typedef fmi3Status fmi3GetIntervalFractionTYPE(fmi3Instance instance,
-                                               const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                               fmi3UInt64 intervalCounter[], fmi3UInt64 resolution[]);
-/* end::GetInterval[] */
+                                               const fmi3ValueReference valueReferences[],
+                                               size_t nValueReferences,
+                                               fmi3UInt64 intervalCounter[],
+                                               fmi3UInt64 resolution[],
+                                               size_t nValues);
+/* end::GetIntervalFraction[] */
 
-/* tag::SetInterval[] */
+/* tag::SetIntervalDecimal[] */
 typedef fmi3Status fmi3SetIntervalDecimalTYPE(fmi3Instance instance,
-                                              const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                              fmi3Float64 interval[]);
+                                              const fmi3ValueReference valueReferences[],
+                                              size_t nValueReferences,
+                                              const fmi3Float64 interval[],
+                                              size_t nValues);
+/* end::SetIntervalDecimal[] */
 
+/* tag::SetIntervalFraction[] */
 typedef fmi3Status fmi3SetIntervalFractionTYPE(fmi3Instance instance,
-                                               const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                                               fmi3UInt64 intervalCounter[], fmi3UInt64 resolution[]);
-/* end::SetInterval[] */
+                                               const fmi3ValueReference valueReferences[],
+                                               size_t nValueReferences,
+                                               const fmi3UInt64 intervalCounter[],
+                                               const fmi3UInt64 resolution[],
+                                               size_t nValues);
+/* end::SetIntervalFraction[] */
 
 /* tag::NewDiscreteStates[] */
 typedef fmi3Status fmi3NewDiscreteStatesTYPE(fmi3Instance instance,
-                                             fmi3EventInfo* eventInfo);
+                                             fmi3Boolean *newDiscreteStatesNeeded,
+                                             fmi3Boolean *terminateSimulation,
+                                             fmi3Boolean *nominalsOfContinuousStatesChanged,
+                                             fmi3Boolean *valuesOfContinuousStatesChanged,
+                                             fmi3Boolean *nextEventTimeDefined,
+                                             fmi3Float64 *nextEventTime);
 /* end::NewDiscreteStates[] */
 
 /***************************************************
@@ -505,15 +577,6 @@ Types for Functions for Co-Simulation
 typedef fmi3Status fmi3EnterStepModeTYPE(fmi3Instance instance);
 /* end::EnterStepMode[] */
 
-/* tag::SetInputDerivatives[] */
-typedef fmi3Status fmi3SetInputDerivativesTYPE(fmi3Instance instance,
-                                               const fmi3ValueReference valueReferences[],
-                                               size_t nValueReferences,
-                                               const fmi3Int32 orders[],
-                                               const fmi3Float64 values[],
-                                               size_t nValues);
-/* end::SetInputDerivatives[] */
-
 /* tag::GetOutputDerivatives[] */
 typedef fmi3Status fmi3GetOutputDerivativesTYPE(fmi3Instance instance,
                                                 const fmi3ValueReference valueReferences[],
@@ -528,24 +591,17 @@ typedef fmi3Status fmi3DoStepTYPE(fmi3Instance instance,
                                   fmi3Float64 currentCommunicationPoint,
                                   fmi3Float64 communicationStepSize,
                                   fmi3Boolean noSetFMUStatePriorToCurrentPoint,
-                                  fmi3Boolean* earlyReturn);
+                                  fmi3Boolean* terminate,
+                                  fmi3Boolean* earlyReturn,
+                                  fmi3Float64* lastSuccessfulTime);
 /* end::DoStep[] */
 
 /* tag::ActivateModelPartition[] */
 typedef fmi3Status fmi3ActivateModelPartitionTYPE(fmi3Instance instance,
                                                   fmi3ValueReference clockReference,
+                                                  size_t clockElementIndex,
                                                   fmi3Float64 activationTime);
 /* end::ActivateModelPartition[] */
-
-/* tag::DoEarlyReturn[] */
-typedef fmi3Status fmi3DoEarlyReturnTYPE(fmi3Instance instance, fmi3Float64 earlyReturnTime);
-/* end::DoEarlyReturn[] */
-
-/* tag::GetDoStepDiscardedStatus[] */
-typedef fmi3Status fmi3GetDoStepDiscardedStatusTYPE(fmi3Instance instance,
-                                                    fmi3Boolean* terminate,
-                                                    fmi3Float64* lastSuccessfulTime);
-/* end::GetDoStepDiscardedStatus[] */
 
 #ifdef __cplusplus
 }  /* end of extern "C" { */

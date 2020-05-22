@@ -83,19 +83,19 @@ def write_csv(filename, result, columns=None):
     cols = []
     data = []
 
-    for descr in result.dtype.descr:
-        if len(descr) > 2:
-            name, type_, shape = descr
+    for name in result.dtype.names:
+        dtype = result.dtype[name]
+        if len(dtype.shape) > 0:
+            subtype = dtype.subdtype[0].type
             y = result[name]
-            for i in np.ndindex(shape):
+            for i in np.ndindex(dtype.shape):
                 # convert index to 1-based subscripts
                 subs = ','.join(map(lambda sub: str(sub + 1), i))
-                cols.append(('%s[%s]' % (name, subs), type_))
+                cols.append(('%s[%s]' % (name, subs), subtype))
                 sl = [slice(0, None)] + [slice(s, s + 1) for s in i]
                 data.append(y[sl].flatten())
         else:
-            name, _ = descr
-            cols.append(descr)
+            cols.append((name, dtype.type))
             data.append(result[name])
 
     result = np.array(list(zip(*data)), dtype=np.dtype(cols))
@@ -264,7 +264,7 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
     import matplotlib.pyplot as plt
     import matplotlib.transforms as mtransforms
     from matplotlib.ticker import MaxNLocator
-    from collections import Iterable
+    from collections.abc import Iterable
 
     params = {
         'legend.fontsize': 8,
@@ -436,7 +436,7 @@ def download_file(url, checksum=None):
 
     if checksum is not None and os.path.isfile(filename):
         hash = sha256_checksum(filename)
-        if hash.startswith(checksum):
+        if hash.startswith(checksum.lower()):
             return  # file already exists
 
     import requests
@@ -757,6 +757,60 @@ def compile_platform_binary(filename, output_filename=None):
     # clean up
     rmtree(unzipdir, ignore_errors=True)
     rmtree(unzipdir2, ignore_errors=True)
+
+
+def add_remoting(filename):
+
+    from . import extract, read_model_description, supported_platforms
+    from shutil import copyfile, rmtree
+    import zipfile
+    import os
+
+    platforms = supported_platforms(filename)
+
+    if 'win32' not in platforms:
+        raise Exception("The FMU does not support the platform \"win32\".")
+
+    if 'win64' in platforms:
+        raise Exception("The FMU already supports \"win64\".")
+
+    model_description = read_model_description(filename)
+
+    current_dir = os.path.dirname(__file__)
+    client = os.path.join(current_dir, 'remoting', 'client.dll')
+    server = os.path.join(current_dir, 'remoting', 'server.exe')
+    license = os.path.join(current_dir, 'remoting', 'license.txt')
+
+    tempdir = extract(filename)
+
+    if model_description.coSimulation is not None:
+        model_identifier = model_description.coSimulation.modelIdentifier
+    else:
+        model_identifier = model_description.modelExchange.modelIdentifier
+
+    # copy the binaries & license
+    os.mkdir(os.path.join(tempdir, 'binaries', 'win64'))
+    copyfile(client, os.path.join(tempdir, 'binaries', 'win64', model_identifier + '.dll'))
+    copyfile(server, os.path.join(tempdir, 'binaries', 'win64', 'server.exe'))
+    licenses_dir = os.path.join(tempdir, 'documentation', 'licenses')
+    if not os.path.isdir(licenses_dir):
+        os.mkdir(licenses_dir)
+    copyfile(license, os.path.join(tempdir, 'documentation', 'licenses', 'fmpy-remoting-binaries.txt'))
+
+    # create a new archive from the existing files + remoting binaries
+    with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED) as zf:
+        base_path = os.path.normpath(tempdir)
+        for dirpath, dirnames, filenames in os.walk(tempdir):
+            for name in sorted(dirnames):
+                path = os.path.normpath(os.path.join(dirpath, name))
+                zf.write(path, os.path.relpath(path, base_path))
+            for name in filenames:
+                path = os.path.normpath(os.path.join(dirpath, name))
+                if os.path.isfile(path):
+                    zf.write(path, os.path.relpath(path, base_path))
+
+    # clean up
+    rmtree(tempdir, ignore_errors=True)
 
 
 def auto_interval(t):

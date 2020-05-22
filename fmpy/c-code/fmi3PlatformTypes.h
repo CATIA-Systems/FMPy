@@ -3,12 +3,12 @@
 
 /*
 Standard header file to define the argument types of the
-functions of the Functional Mock-up Interface 3.0-alpha.1.
+functions of the Functional Mock-up Interface 3.0-alpha.3.
 This header file must be utilized both by the model and
 by the simulation engine.
 
 Copyright (C) 2008-2011 MODELISAR consortium,
-              2012-2019 Modelica Association Project "FMI"
+              2012-2020 Modelica Association Project "FMI"
               All rights reserved.
 
 This file is licensed by the copyright holders under the 2-Clause BSD License
@@ -73,7 +73,7 @@ typedef        uint64_t fmi3UInt64;   /* 64-bit unsigned integer */
 typedef             int fmi3Boolean;  /* Data type to be used with fmi3True and fmi3False */
 typedef            char fmi3Char;     /* Data type for one character */
 typedef const fmi3Char* fmi3String;   /* Data type for character strings
-                                         ('\0' terminated, UTF8 encoded) */
+                                         ('\0' terminated, UTF-8 encoded) */
 typedef            char fmi3Byte;     /* Smallest addressable unit of the machine
                                          (typically one byte) */
 typedef const fmi3Byte* fmi3Binary;   /* Data type for binary data

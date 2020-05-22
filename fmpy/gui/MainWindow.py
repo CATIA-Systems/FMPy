@@ -9,7 +9,8 @@ except Exception as e:
 import os
 import sys
 
-from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QStandardPaths, QPointF
+from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QStandardPaths, \
+    QPointF, QBuffer, QIODevice
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, QMenu, QMessageBox, QProgressDialog, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, QGraphicsTextItem, QGraphicsPathItem
 from PyQt5.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, QPolygonF, QPainterPath
 
@@ -259,6 +260,7 @@ class MainWindow(QMainWindow):
         self.ui.actionShowReleaseNotes.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://fmpy.readthedocs.io/en/latest/changelog/')))
         self.ui.actionCompilePlatformBinary.triggered.connect(self.compilePlatformBinary)
         self.ui.actionCreateCMakeProject.triggered.connect(self.createCMakeProject)
+        self.ui.actionAddRemoting.triggered.connect(self.addRemoting)
 
         # filter menu
         self.filterMenu = QMenu()
@@ -369,6 +371,8 @@ class MainWindow(QMainWindow):
 
     def load(self, filename):
 
+        import zipfile
+
         if not self.isVisible():
             self.show()
 
@@ -377,6 +381,29 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.warning(self, "Failed to load FMU", "Failed to load %s. %s" % (filename, e))
             return
+
+        # show model.png
+        try:
+            pixmap = QPixmap()
+
+            # load the model.png
+            with zipfile.ZipFile(filename, 'r') as zf:
+                pixmap.loadFromData(zf.read('model.png'), format='PNG')
+
+            # show the unscaled version in tooltip
+            buffer = QBuffer()
+            buffer.open(QIODevice.WriteOnly)
+            pixmap.save(buffer, "PNG", quality=100)
+            image = bytes(buffer.data().toBase64()).decode()
+            html = '<img src="data:image/png;base64,{}">'.format(image)
+            self.ui.modelImageLabel.setToolTip(html)
+
+            # show a scaled preview in "Model Info"
+            pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.ui.modelImageLabel.setPixmap(pixmap)
+        except:
+            self.ui.modelImageLabel.setPixmap(QPixmap())
+            self.ui.modelImageLabel.setToolTip(None)
 
         self.filename = filename
         platforms = supported_platforms(self.filename)
@@ -396,15 +423,19 @@ class MainWindow(QMainWindow):
         if md.modelExchange:
             fmi_types.append('Model Exchange')
 
+        experiment = md.defaultExperiment
+
         # toolbar
-        if md.defaultExperiment is not None:
-            if md.defaultExperiment.stopTime is not None:
-                self.stopTimeLineEdit.setText(str(md.defaultExperiment.stopTime))
+        if experiment is not None and experiment.stopTime is not None:
+            self.stopTimeLineEdit.setText(str(experiment.stopTime))
 
         # actions
         can_compile = md.fmiVersion == '2.0' and 'c-code' in platforms
         self.ui.actionCompilePlatformBinary.setEnabled(can_compile)
         self.ui.actionCreateCMakeProject.setEnabled(can_compile)
+
+        can_add_remoting = md.fmiVersion == '2.0' and 'win32' in platforms and 'win64' not in platforms
+        self.ui.actionAddRemoting.setEnabled(can_add_remoting)
 
         # variables view
         self.treeModel.setModelDescription(md)
@@ -426,12 +457,22 @@ class MainWindow(QMainWindow):
         self.ui.generationToolLabel.setText(md.generationTool)
         self.ui.generationDateAndTimeLabel.setText(md.generationDateAndTime)
 
-        if md.defaultExperiment is not None and md.defaultExperiment.stepSize is not None:
-            output_interval = float(md.defaultExperiment.stepSize)
+        # relative tolerance
+        if experiment is not None and experiment.tolerance is not None:
+            relative_tolerance = experiment.tolerance
+        else:
+            relative_tolerance = 1e-6
+
+        self.ui.relativeToleranceLineEdit.setText(str(relative_tolerance))
+
+        # output interval
+        if experiment is not None and experiment.stepSize is not None:
+            output_interval = float(experiment.stepSize)
             while output_interval > 1000:
                 output_interval *= 0.5
         else:
             output_interval = float(self.stopTimeLineEdit.text()) / 500
+
         self.ui.outputIntervalLineEdit.setText(str(output_interval))
 
         self.fmiTypeComboBox.clear()
@@ -448,7 +489,7 @@ class MainWindow(QMainWindow):
         self.ui.actionShowLog.setEnabled(True)
         self.ui.actionShowResults.setEnabled(False)
 
-        can_simulate = platform in platforms
+        can_simulate = platform in platforms or platform == 'win64' and 'win32' in platforms
 
         self.ui.actionLoadStartValues.setEnabled(can_simulate)
         self.ui.actionSimulate.setEnabled(can_simulate)
@@ -1110,3 +1151,17 @@ class MainWindow(QMainWindow):
 
         if project_dir:
             create_cmake_project(self.filename, project_dir)
+
+    def addRemoting(self):
+        """ Add 32-bit remoting binaries to the FMU """
+
+        from ..util import add_remoting
+
+        try:
+            add_remoting(self.filename)
+        except Exception as e:
+            QMessageBox.warning(self, "Failed to add 32-bit Remoting",
+                                "Failed to add 32-bit remoting binaries to %s. %s" % (self.filename, e))
+
+        self.load(self.filename)
+

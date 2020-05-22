@@ -40,7 +40,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<xs:element name="TerminalMemberVariable" minOccurs="0" maxOccurs="unbounded">
 				<xs:complexType>
 					<xs:attribute name="variableKind" type="xs:normalizedString" use="required"/>
-					<xs:attribute name="memberName" type="xs:normalizedString" use="required"/>
+					<xs:attribute name="memberName" type="xs:normalizedString" use="optional"/>
 					<xs:attribute name="variableName" type="xs:normalizedString" use="required"/>
 				</xs:complexType>
 			</xs:element>
@@ -53,6 +53,25 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				</xs:complexType>
 			</xs:element>
 			<xs:element name="Terminal" type="fmi3Terminal" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="GraphicalRepresentation" minOccurs="0">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element ref="VendorAnnotations" minOccurs="0"/>
+					</xs:sequence>
+					<xs:attribute name="defaultConnectionColor" use="optional">
+						<xs:simpleType>
+							<xs:list itemType="xs:unsignedByte"/>
+						</xs:simpleType>
+					</xs:attribute>
+					<xs:attribute name="defaultConnectionStrokeSize" type="xs:double" use="optional"/>
+					<xs:attribute name="x1" type="xs:double" use="required"/>
+					<xs:attribute name="y1" type="xs:double" use="required"/>
+					<xs:attribute name="x2" type="xs:double" use="required"/>
+					<xs:attribute name="y2" type="xs:double" use="required"/>
+					<xs:attribute name="iconBaseName" type="xs:string" use="required"/>
+				</xs:complexType>
+			</xs:element>
+			<xs:element ref="VendorAnnotations" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="name" type="xs:normalizedString" use="required"/>
 		<xs:attribute name="matchingRule" type="xs:normalizedString" use="required"/>

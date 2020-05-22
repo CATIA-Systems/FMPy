@@ -17,18 +17,13 @@ class CCodeTest(unittest.TestCase):
     ]
 
     def test_compile(self):
-        """ Compile directly """
+        """ Compile the platform binary """
 
         for fmu in self.fmus:
             download_file(self.url + fmu)
 
             filename = os.path.basename(fmu)
 
-            # compile in-place
-            result = simulate_fmu(filename=filename, use_source_code=True)
-            self.assertIsNotNone(result)
-
-            # add binary to FMU
             compile_platform_binary(filename)
 
             result = simulate_fmu(filename=filename)

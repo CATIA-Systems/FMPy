@@ -4,7 +4,7 @@
 /*
 This header file must be utilized when compiling a FMU.
 It defines all functions of the
-     FMI 3.0-alpha.1 Model Exchange and Co-Simulation Interface.
+     FMI 3.0-alpha.3 Model Exchange and Co-Simulation Interface.
 
 In order to have unique function names even if several FMUs
 are compiled together (e.g. for embedded systems), every "real" function name
@@ -22,7 +22,7 @@ static link library. For FMUs compiled in a DLL/sharedObject, the "actual" funct
 names are used and "FMI3_FUNCTION_PREFIX" must not be defined.
 
 Copyright (C) 2008-2011 MODELISAR consortium,
-              2012-2019 Modelica Association Project "FMI"
+              2012-2020 Modelica Association Project "FMI"
               All rights reserved.
 
 This file is licensed by the copyright holders under the 2-Clause BSD License
@@ -63,38 +63,27 @@ extern "C" {
 
 /*
 Export FMI3 API functions on Windows and under GCC.
-If custom linking is desired then the FMI3_Export must be
-defined before including this file. For instance,
-it may be set to __declspec(dllimport).
+This definition has been changed to always export the symbols.
 */
-#if !defined(FMI3_Export)
-  #if !defined(FMI3_FUNCTION_PREFIX)
-    #if defined _WIN32 || defined __CYGWIN__
-     /* Note: both gcc & MSVC on Windows support this syntax. */
-        #define FMI3_Export __declspec(dllexport)
-    #else
-      #if __GNUC__ >= 4
-        #define FMI3_Export __attribute__ ((visibility ("default")))
-      #else
-        #define FMI3_Export
-      #endif
-    #endif
+#if defined _WIN32 || defined __CYGWIN__
+ /* Note: both gcc & MSVC on Windows support this syntax. */
+    #define FMI3_Export __declspec(dllexport)
+#else
+  #if __GNUC__ >= 4
+    #define FMI3_Export __attribute__ ((visibility ("default")))
   #else
     #define FMI3_Export
   #endif
 #endif
 
-/* Macros to construct the real function name (prepend function name by FMI3_FUNCTION_PREFIX) */
-#if defined(FMI3_FUNCTION_PREFIX)
-  #define fmi3Paste(a,b)     a ## b
-  #define fmi3PasteB(a,b)    fmi3Paste(a,b)
-  #define fmi3FullName(name) fmi3PasteB(FMI3_FUNCTION_PREFIX, name)
-#else
-  #define fmi3FullName(name) name
-#endif
+/*
+Macro to construct the real function name.
+This definition has been changed to add no prefix.
+*/
+#define fmi3FullName(name) name
 
 /* FMI version */
-#define fmi3Version "3.0-alpha.1"
+#define fmi3Version "3.0-alpha.3"
 
 /***************************************************
 Common Functions
@@ -105,11 +94,13 @@ Common Functions
 #define fmi3SetDebugLogging          fmi3FullName(fmi3SetDebugLogging)
 
 /* Creation and destruction of FMU instances */
-#define fmi3Instantiate              fmi3FullName(fmi3Instantiate)
-#define fmi3FreeInstance             fmi3FullName(fmi3FreeInstance)
+#define fmi3InstantiateModelExchange         fmi3FullName(fmi3InstantiateModelExchange)
+#define fmi3InstantiateBasicCoSimulation     fmi3FullName(fmi3InstantiateBasicCoSimulation)
+#define fmi3InstantiateHybridCoSimulation    fmi3FullName(fmi3InstantiateHybridCoSimulation)
+#define fmi3InstantiateScheduledCoSimulation fmi3FullName(fmi3InstantiateScheduledCoSimulation)
+#define fmi3FreeInstance                     fmi3FullName(fmi3FreeInstance)
 
 /* Enter and exit initialization mode, terminate and reset */
-#define fmi3SetupExperiment          fmi3FullName(fmi3SetupExperiment)
 #define fmi3EnterInitializationMode  fmi3FullName(fmi3EnterInitializationMode)
 #define fmi3ExitInitializationMode   fmi3FullName(fmi3ExitInitializationMode)
 #define fmi3EnterEventMode           fmi3FullName(fmi3EnterEventMode)
@@ -158,6 +149,7 @@ Common Functions
 
 /* Getting partial derivatives */
 #define fmi3GetDirectionalDerivative fmi3FullName(fmi3GetDirectionalDerivative)
+#define fmi3GetAdjointDerivative     fmi3FullName(fmi3GetAdjointDerivative)
 
 /* Entering and exiting the Configuration or Reconfiguration Mode */
 #define fmi3EnterConfigurationMode   fmi3FullName(fmi3EnterConfigurationMode)
@@ -197,12 +189,9 @@ Functions for Co-Simulation
 
 /* Simulating the slave */
 #define fmi3EnterStepMode            fmi3FullName(fmi3EnterStepMode)
-#define fmi3SetInputDerivatives      fmi3FullName(fmi3SetInputDerivatives)
 #define fmi3GetOutputDerivatives     fmi3FullName(fmi3GetOutputDerivatives)
 #define fmi3DoStep                   fmi3FullName(fmi3DoStep)
 #define fmi3ActivateModelPartition   fmi3FullName(fmi3ActivateModelPartition)
-#define fmi3DoEarlyReturn            fmi3FullName(fmi3DoEarlyReturn)
-#define fmi3GetDoStepDiscardedStatus fmi3FullName(fmi3GetDoStepDiscardedStatus)
 
 /***************************************************
 Common Functions
@@ -213,11 +202,13 @@ FMI3_Export fmi3GetVersionTYPE      fmi3GetVersion;
 FMI3_Export fmi3SetDebugLoggingTYPE fmi3SetDebugLogging;
 
 /* Creation and destruction of FMU instances */
-FMI3_Export fmi3InstantiateTYPE  fmi3Instantiate;
-FMI3_Export fmi3FreeInstanceTYPE fmi3FreeInstance;
+FMI3_Export fmi3InstantiateModelExchangeTYPE         fmi3InstantiateModelExchange;
+FMI3_Export fmi3InstantiateBasicCoSimulationTYPE     fmi3InstantiateBasicCoSimulation;
+FMI3_Export fmi3InstantiateHybridCoSimulationTYPE    fmi3InstantiateHybridCoSimulation;
+FMI3_Export fmi3InstantiateScheduledCoSimulationTYPE fmi3InstantiateScheduledCoSimulation;
+FMI3_Export fmi3FreeInstanceTYPE                     fmi3FreeInstance;
 
 /* Enter and exit initialization mode, terminate and reset */
-FMI3_Export fmi3SetupExperimentTYPE         fmi3SetupExperiment;
 FMI3_Export fmi3EnterInitializationModeTYPE fmi3EnterInitializationMode;
 FMI3_Export fmi3ExitInitializationModeTYPE  fmi3ExitInitializationMode;
 FMI3_Export fmi3EnterEventModeTYPE          fmi3EnterEventMode;
@@ -266,6 +257,7 @@ FMI3_Export fmi3DeSerializeFMUStateTYPE    fmi3DeSerializeFMUState;
 
 /* Getting partial derivatives */
 FMI3_Export fmi3GetDirectionalDerivativeTYPE fmi3GetDirectionalDerivative;
+FMI3_Export fmi3GetAdjointDerivativeTYPE     fmi3GetAdjointDerivative;
 
 /* Entering and exiting the Configuration or Reconfiguration Mode */
 FMI3_Export fmi3EnterConfigurationModeTYPE fmi3EnterConfigurationMode;
@@ -305,14 +297,9 @@ Functions for Co-Simulation
 
 /* Simulating the slave */
 FMI3_Export fmi3EnterStepModeTYPE          fmi3EnterStepMode;
-FMI3_Export fmi3SetInputDerivativesTYPE    fmi3SetInputDerivatives;
 FMI3_Export fmi3GetOutputDerivativesTYPE   fmi3GetOutputDerivatives;
 FMI3_Export fmi3ActivateModelPartitionTYPE fmi3ActivateModelPartition;
 FMI3_Export fmi3DoStepTYPE                 fmi3DoStep;
-FMI3_Export fmi3DoEarlyReturnTYPE          fmi3DoEarlyReturn;
-
-/* Inquire slave status */
-FMI3_Export fmi3GetDoStepDiscardedStatusTYPE fmi3GetDoStepDiscardedStatus;
 
 #ifdef __cplusplus
 }  /* end of extern "C" { */

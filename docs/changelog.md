@@ -1,3 +1,39 @@
+## v0.2.20 (2020-05-23)
+
+- `FIXED` Fix fmi3Functions.h for compile_platform_binary()
+- `FIXED` Fix serialization in write_csv() (#138)
+- `FIXED` Check for existing documentation/licenses in add_remoting() (#126)
+- `FIXED` Fix function names in RPC calls (#125)
+- `CHANGED` Require pathlib only for Python version < 3.4
+- `NEW` Update FMI 3 API to a51b173
+- `NEW` Use defaultExperiment.tolerance as default in GUI (#133)
+- `NEW` Add "Tools" menu to GUI (#124)
+- `NEW` Make build configuration adjustable in build_remoting.py
+
+## v0.2.19 (2020-04-15)
+
+- `FIXED` fmi2SetupExperiment() is now called again in FMI 2.0 for Co-Simulation
+- `FIXED` The working directory for the remoting server is now set to binaries/win32
+- `FIXED` ssp.simulation.set_value() has been fixed for Integer and Enumeration variables
+- `NEW` A license file is now added to documentation/licenses when adding the remoting binaries to an FMU
+- `NEW` A stop_time parameter has been added to ssp.instantiate_fmu()
+- `CHANGED` The license has been changed to 2-clause BSD
+
+## v0.2.18 (2020-04-06)
+
+- `FIXED` A list is now passed to np.stack() instead of an iterable and Iterable is now imported from collections.abc to avoid FutureWarnings.
+- `FIXED` Argument checksum of function fmpy.util.download_file() can now be upper case.
+- `FIXED` Start and stop time are now passed to initialize() in FMI 1.0.
+- `FIXED` Variadic arguments in log messages are now processed.
+- `NEW` The model.png is now displayed on the "Model Info" page of the GUI.
+- `NEW` 32-bit FMUs can now be simulated in a 64-bit Python environment on Windows.
+   Existing 32-bit FMUs can also be retro-fitted using the function fmpy.util.add_remoting(),
+   the CLI (fmpy add-remoting ...) and the GUI (Help > Add 32-bit Remoting).
+- `NEW` The FMI headers and schema have been updated to version 2.0.1 and 3.0-alpha.3 respectively.
+- `NEW` The function instantiate_fmu() allows the instantiation and re-use of an FMU independent of the FMI version and type to reduce CPU time.
+   See `examples/efficient_loops.py` for an example.
+- `REMOVED` The parameter `use_source_code` has been removed form `simulate_fmu()` (use `fmpy.util.compile_platform_binary()` instead)
+
 ## v0.2.17 (2020-02-04)
 
 - `NEW` "Clear Plots" action has been added to the context menu

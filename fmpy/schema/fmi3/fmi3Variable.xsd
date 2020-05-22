@@ -39,6 +39,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:complexType name="fmi3Float64">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableBase">
+				<xs:sequence>
+					<xs:element name="Alias" type="fmi3FloatVariableAlias" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
 				<xs:attributeGroup ref="fmi3Float64Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -56,6 +59,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:complexType name="fmi3Float32">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableBase">
+				<xs:sequence>
+					<xs:element name="Alias" type="fmi3FloatVariableAlias" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
 				<xs:attributeGroup ref="fmi3Float32Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -73,6 +79,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:complexType name="fmi3Int8">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableBase">
+				<xs:sequence>
+					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
 				<xs:attributeGroup ref="fmi3Int8Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -89,6 +98,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:complexType name="fmi3UInt8">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableBase">
+				<xs:sequence>
+					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
 				<xs:attributeGroup ref="fmi3UInt8Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -105,6 +117,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:complexType name="fmi3Int16">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableBase">
+				<xs:sequence>
+					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
 				<xs:attributeGroup ref="fmi3Int16Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -121,6 +136,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:complexType name="fmi3UInt16">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableBase">
+				<xs:sequence>
+					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
 				<xs:attributeGroup ref="fmi3UInt16Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -137,6 +155,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:complexType name="fmi3Int32">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableBase">
+				<xs:sequence>
+					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
 				<xs:attributeGroup ref="fmi3Int32Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -153,6 +174,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:complexType name="fmi3UInt32">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableBase">
+				<xs:sequence>
+					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
 				<xs:attributeGroup ref="fmi3UInt32Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -169,6 +193,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:complexType name="fmi3Int64">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableBase">
+				<xs:sequence>
+					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
 				<xs:attributeGroup ref="fmi3Int64Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -185,6 +212,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:complexType name="fmi3UInt64">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableBase">
+				<xs:sequence>
+					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
 				<xs:attributeGroup ref="fmi3UInt64Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -201,6 +231,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:complexType name="fmi3Boolean">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableBase">
+				<xs:sequence>
+					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
 				<xs:attribute name="start">
 					<xs:simpleType>
 						<xs:list>
@@ -223,6 +256,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 							</xs:attribute>
 						</xs:complexType>
 					</xs:element>
+					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
 				</xs:sequence>
 			</xs:extension>
 		</xs:complexContent>
@@ -230,6 +264,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:complexType name="fmi3Binary">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableBase">
+				<xs:sequence>
+					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
 				<xs:attribute name="mimeType" type="xs:normalizedString" use="optional" default="application/octet-stream">
 				</xs:attribute>
 				<xs:attribute name="maxSize" type="xs:nonNegativeInteger" use="optional">
@@ -252,6 +289,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:complexType name="fmi3Enumeration">
 		<xs:complexContent>
 			<xs:extension base="fmi3EnumerationBase">
+				<xs:sequence>
+					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
 				<xs:attribute name="declaredType" type="xs:normalizedString" use="required">
 				</xs:attribute>
 				<xs:attribute name="quantity" type="xs:normalizedString"/>
@@ -272,16 +312,38 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:complexType name="fmi3Clock">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableBase">
+				<xs:sequence>
+					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
 				<xs:attributeGroup ref="fmi3ClockAttributes"/>
-				<xs:attribute name="start" type="xs:boolean"/>
+				<xs:attribute name="start">
+					<xs:simpleType>
+						<xs:list>
+							<xs:simpleType>
+								<xs:restriction base="xs:boolean"/>
+							</xs:simpleType>
+						</xs:list>
+					</xs:simpleType>
+				</xs:attribute>
 			</xs:extension>
 		</xs:complexContent>
-	</xs:complexType>	
+	</xs:complexType>
+	<xs:complexType name="fmi3VariableAlias">
+		<xs:attribute name="name" type="xs:normalizedString" use="required"/>
+		<xs:attribute name="description" type="xs:string"/>
+	</xs:complexType>
+	<xs:complexType name="fmi3FloatVariableAlias">
+		<xs:complexContent>
+			<xs:extension base="fmi3VariableAlias">
+				<xs:attribute name="displayUnit" type="xs:normalizedString"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
 	<xs:complexType name="fmi3VariableBase" abstract="true">
 		<xs:sequence>
 			<xs:element name="Dimension" minOccurs="0" maxOccurs="unbounded">
 				<xs:complexType>
-					<xs:attribute name="start" type="xs:unsignedInt"/>
+					<xs:attribute name="start" type="xs:unsignedLong"/>
 					<xs:attribute name="valueReference" type="xs:unsignedInt"/>
 				</xs:complexType>
 			</xs:element>
@@ -327,6 +389,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		<xs:attribute name="canHandleMultipleSetPerTimeInstant" type="xs:boolean"/>
 		<xs:attribute name="declaredType" type="xs:normalizedString"/>
 		<xs:attribute name="clockReference" type="xs:unsignedInt" use="optional"/>
+		<xs:attribute name="clockElementIndex" type="xs:unsignedLong" use="optional"/>
 		<xs:attribute name="intermediateAccess" type="xs:boolean" use="optional"/>
 	</xs:complexType>
 

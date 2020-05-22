@@ -35,37 +35,35 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		</xs:documentation>
 	</xs:annotation>
 	<xs:include schemaLocation="fmi3Annotation.xsd"/>
-	<xs:complexType name="fmi3FMUType">
+	<xs:complexType name="fmi3InterfaceType" abstract="true">
 		<xs:sequence minOccurs="0">
-			<xs:element name="VendorAnnotations" type="fmi3Annotation" minOccurs="0"/>
+			<xs:element ref="VendorAnnotations" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="modelIdentifier" type="xs:normalizedString" use="required"/>
 		<xs:attribute name="needsExecutionTool" type="xs:boolean" default="false"/>
 		<xs:attribute name="canBeInstantiatedOnlyOncePerProcess" type="xs:boolean" default="false"/>
-		<xs:attribute name="canNotUseMemoryManagementFunctions" type="xs:boolean" default="false"/>
 		<xs:attribute name="canGetAndSetFMUState" type="xs:boolean" default="false"/>
 		<xs:attribute name="canSerializeFMUState" type="xs:boolean" default="false"/>
 		<xs:attribute name="providesDirectionalDerivative" type="xs:boolean" default="false"/>
+		<xs:attribute name="providesAdjointDerivative" type="xs:boolean" default="false"/>
 		<xs:attribute name="providesPerElementDependencies" type="xs:boolean" default="false"/>
 	</xs:complexType>
 	<xs:complexType name="fmi3ModelExchange">
 		<xs:complexContent>
-			<xs:extension base="fmi3FMUType">
+			<xs:extension base="fmi3InterfaceType">
 				<xs:attribute name="completedIntegratorStepNotNeeded" type="xs:boolean" default="false"/>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
 	<xs:complexType name="fmi3CoSimulation">
 		<xs:complexContent>
-			<xs:extension base="fmi3FMUType">
+			<xs:extension base="fmi3InterfaceType">
 				<xs:attribute name="canHandleVariableCommunicationStepSize" type="xs:boolean" default="false"/>
 				<xs:attribute name="canInterpolateInputs" type="xs:boolean" default="false"/>
 				<xs:attribute name="maxOutputDerivativeOrder" type="xs:unsignedInt" default="0"/>
 				<xs:attribute name="providesIntermediateVariableAccess" type="xs:boolean" default="false"/>
 				<xs:attribute name="canReturnEarlyAfterIntermediateUpdate" type="xs:boolean" default="false"/>
-				<xs:attribute name="providesHybridCoSimulation" type="xs:boolean" default="false"/>
-				<xs:attribute name="providesScheduledExecutionSimulation" type="xs:boolean" default="false"/>
-				<xs:attribute name="canNotUseBasicCoSimulation" type="xs:boolean" default="false"/>
+				<xs:attribute name="fixedInternalStepSize" type="xs:double"/>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>

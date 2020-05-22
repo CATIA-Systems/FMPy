@@ -13,7 +13,7 @@ and Python.
 To create a new conda environment named "py36_64" enter
 
 ```bash
-conda create -q -n py36_64 -c anaconda python=3.6 dask lxml matplotlib numpy pathlib pyqt pyqtgraph pywin32 requests
+conda create -q -n py36_64 -c anaconda python=3.6 dask lxml matplotlib numpy pyqt pyqtgraph pywin32 requests
 ```
 
 on Linux and macOS the `pywin32` package is not required but you might need to prepend `sudo` to
@@ -28,13 +28,13 @@ only supports `win64`. To activate the environment run `activate py36_64` on Win
 If you want to use an existing Python you can install the necessary dependencies with conda
 
 ```bash
-conda install dask lxml matplotlib numpy pathlib pyqt pyqtgraph pywin32 requests
+conda install dask lxml matplotlib numpy pyqt pyqtgraph pywin32 requests
 ```
 
 or pip
 
 ```bash
-python -m pip install dask lxml matplotlib numpy pathlib pyqt pyqtgraph pywin32 requests
+python -m pip install dask lxml matplotlib numpy pyqt pyqtgraph pywin32 requests
 ```
 
 The package `pywin32` is only required on Windows.
@@ -62,6 +62,12 @@ To install or update FMPy without changing the dependencies of your python envir
 
 ```bash
 python -m pip install --upgrade --no-deps .
+```
+
+To use the sources directly, install FMPy in [develop mode](https://pip.pypa.io/en/stable/reference/pip_install/#cmdoption-e) using the `--editable` option
+
+```bash
+python -m pip install --no-deps --editable .
 ```
 
 ## Create a PyCharm project

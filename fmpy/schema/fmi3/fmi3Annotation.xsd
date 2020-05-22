@@ -47,4 +47,5 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			</xs:element>
 		</xs:sequence>
 	</xs:complexType>
+	<xs:element name="VendorAnnotations" type="fmi3Annotation"/>
 </xs:schema>

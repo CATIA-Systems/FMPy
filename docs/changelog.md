@@ -1,3 +1,15 @@
+## v0.2.20 (2020-05-23)
+
+- `FIXED` Fix fmi3Functions.h for compile_platform_binary()
+- `FIXED` Fix serialization in write_csv() (#138)
+- `FIXED` Check for existing documentation/licenses in add_remoting() (#126)
+- `FIXED` Fix function names in RPC calls (#125)
+- `CHANGED` Require pathlib only for Python version < 3.4
+- `NEW` Update FMI 3 API to a51b173
+- `NEW` Use defaultExperiment.tolerance as default in GUI (#133)
+- `NEW` Add "Tools" menu to GUI (#124)
+- `NEW` Make build configuration adjustable in build_remoting.py
+
 ## v0.2.19 (2020-04-15)
 
 - `FIXED` fmi2SetupExperiment() is now called again in FMI 2.0 for Co-Simulation

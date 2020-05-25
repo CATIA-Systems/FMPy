@@ -261,6 +261,7 @@ class MainWindow(QMainWindow):
         self.ui.actionCompilePlatformBinary.triggered.connect(self.compilePlatformBinary)
         self.ui.actionCreateCMakeProject.triggered.connect(self.createCMakeProject)
         self.ui.actionAddRemoting.triggered.connect(self.addRemoting)
+        self.ui.actionAddCoSimulationWrapper.triggered.connect(self.addCoSimulationWrapper)
 
         # filter menu
         self.filterMenu = QMenu()
@@ -436,6 +437,9 @@ class MainWindow(QMainWindow):
 
         can_add_remoting = md.fmiVersion == '2.0' and 'win32' in platforms and 'win64' not in platforms
         self.ui.actionAddRemoting.setEnabled(can_add_remoting)
+
+        can_add_cswrapper = md.fmiVersion == '2.0' and md.coSimulation is None and md.modelExchange is not None
+        self.ui.actionAddCoSimulationWrapper.setEnabled(can_add_cswrapper)
 
         # variables view
         self.treeModel.setModelDescription(md)
@@ -1165,3 +1169,16 @@ class MainWindow(QMainWindow):
 
         self.load(self.filename)
 
+
+    def addCoSimulationWrapper(self):
+        """ Add the Co-Simulation Wrapper to the FMU """
+
+        from ..cswrapper import add_cswrapper
+
+        try:
+            add_cswrapper(self.filename)
+        except Exception as e:
+            QMessageBox.warning(self, "Failed to add Co-Simulation Wrapper",
+                                "Failed to add Co-Simulation Wrapper %s. %s" % (self.filename, e))
+
+        self.load(self.filename)

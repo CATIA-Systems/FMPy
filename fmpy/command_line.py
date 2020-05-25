@@ -27,7 +27,7 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
                                      description=textwrap.dedent(description))
 
-    parser.add_argument('command', choices=['info', 'validate', 'simulate', 'compile', 'add-remoting'], help="Command to execute")
+    parser.add_argument('command', choices=['info', 'validate', 'simulate', 'compile', 'add-cswrapper', 'add-remoting'], help="Command to execute")
     parser.add_argument('fmu_filename', help="filename of the FMU")
 
     parser.add_argument('--validate', action='store_true', help="validate the FMU")
@@ -76,6 +76,11 @@ def main():
 
         from fmpy.util import compile_platform_binary
         compile_platform_binary(args.fmu_filename)
+
+    elif args.command == 'add-cswrapper':
+
+        from fmpy.cswrapper import add_cswrapper
+        add_cswrapper(args.fmu_filename)
 
     elif args.command == 'add-remoting':
 

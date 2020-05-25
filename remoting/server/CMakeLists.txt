@@ -24,7 +24,6 @@ add_executable(server
 target_include_directories(server PUBLIC
   ..
   ../../fmpy/c-code
-  ../rpclib-2.2.1/include
   "${RPCLIB}/include"
 )
 

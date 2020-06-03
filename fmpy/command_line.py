@@ -27,7 +27,8 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
                                      description=textwrap.dedent(description))
 
-    parser.add_argument('command', choices=['info', 'validate', 'simulate', 'compile', 'add-cswrapper', 'add-remoting'], help="Command to execute")
+    parser.add_argument('command', choices=['info', 'validate', 'simulate', 'compile', 'add-cswrapper', 'add-remoting', 'create-cmake-project'],
+                        help="Command to execute")
     parser.add_argument('fmu_filename', help="filename of the FMU")
 
     parser.add_argument('--validate', action='store_true', help="validate the FMU")
@@ -48,6 +49,7 @@ def main():
     parser.add_argument('--visible', action='store_true', help="enable interactive mode")
     parser.add_argument('--fmi-logging', action='store_true', help="enable FMI logging")
     parser.add_argument('--show-plot', action='store_true', help="plot the results")
+    parser.add_argument('--cmake-project-dir', help="Directory for the CMake project")
 
     args = parser.parse_args()
 
@@ -86,6 +88,20 @@ def main():
 
         from fmpy.util import add_remoting
         add_remoting(args.fmu_filename)
+
+    elif args.command == 'create-cmake-project':
+
+        import os
+        from fmpy.util import create_cmake_project
+
+        project_dir = args.cmake_project_dir
+
+        if project_dir is None:
+            project_dir = os.path.basename(args.fmu_filename)
+            project_dir, _ = os.path.splitext(project_dir)
+            print("Creating CMake project in %s" % os.path.abspath(project_dir))
+
+        create_cmake_project(args.fmu_filename, project_dir)
 
     elif args.command == 'simulate':
 

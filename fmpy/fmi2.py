@@ -186,7 +186,12 @@ class _FMU2(_FMU):
         """
 
         if not hasattr(self.dll, fname):
-            setattr(self, fname, None)
+
+            def raise_exception(*args):
+                raise Exception("Function %s is missing in shared library." % fname)
+
+            setattr(self, fname, raise_exception)
+
             return
 
         # get the exported function form the shared library

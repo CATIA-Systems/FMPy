@@ -221,7 +221,7 @@ jobs:
       unzip -o macosx/*.whl -d merged
       unzip -o windows/*.whl -d merged
       cd merged
-      zip -r FMPy.whl .
+      zip -r FMPy-x.x.x-py2.py3-none-any.whl .
     displayName: Merge FMUs
 
   - task: PublishBuildArtifacts@1

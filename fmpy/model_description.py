@@ -112,7 +112,7 @@ class ScalarVariable(object):
         self.type = None
         "One of 'Real', 'Integer', 'Enumeration', 'Boolean', 'String'"
 
-        self.dimensions = None
+        self.dimensions = []
         "List of fixed dimensions"
 
         self.dimensionValueReferences = []
@@ -167,6 +167,13 @@ class ScalarVariable(object):
 
     def __repr__(self):
         return '%s "%s"' % (self.type, self.name)
+
+
+class Dimension(object):
+
+    def __init__(self, **kwargs):
+        self.start = kwargs.get('start')
+        self.valueReference = kwargs.get('valueReference')
 
 
 class SimpleType(object):
@@ -699,21 +706,33 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
         dimensions = variable.findall('Dimension')
 
         if dimensions:
-            sv.dimensions = []
             for dimension in dimensions:
                 start = dimension.get('start')
-                sv.dimensions.append(int(start) if start is not None else None)
                 vr = dimension.get('valueReference')
-                sv.dimensionValueReferences.append(int(vr) if vr is not None else None)
+                d = Dimension(
+                    start=int(start) if start is not None else None,
+                    valueReference=int(vr) if vr is not None else None
+                )
+                sv.dimensions.append(d)
 
         modelDescription.modelVariables.append(sv)
 
-    # variables = dict((v.valueReference, v) for v in modelDescription.modelVariables)
-    #
-    # resolve dimensions and calculate extent
-    # for variable in modelDescription.modelVariables:
-    #     variable.dimensions = list(map(lambda vr: variables[vr], variable.dimensions))
-    #     variable.extent = tuple(map(lambda d: int(d.start), variable.dimensions))
+    variables = dict((v.valueReference, v) for v in modelDescription.modelVariables)
+
+    # calculate initial shape
+    for variable in modelDescription.modelVariables:
+
+        shape = []
+
+        for d in variable.dimensions:
+
+            if d.start is not None:
+                shape.append(int(d.start))
+            else:
+                v = variables[d.valueReference]
+                shape.append(int(v.start))
+
+        variable.shape = tuple(shape)
 
     if fmiVersion == '2.0':
 

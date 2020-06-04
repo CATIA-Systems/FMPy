@@ -7,7 +7,7 @@ from .fmi2 import *
 from .fmi2 import _FMU2
 from . import fmi3
 from . import extract
-from .util import auto_interval
+from .util import auto_interval, _is_string
 import numpy as np
 from time import time as current_time
 
@@ -52,8 +52,8 @@ class Recorder(object):
                 names, vrs, shapes, n_values, getter = self.info.get(type, ([], [], [], 0, getattr(self.fmu, 'get' + type)))
                 names.append(sv.name)
                 vrs.append(sv.valueReference)
-                shapes.append(sv.dimensions)
-                n_values += np.prod(sv.dimensions) if sv.dimensions else 1
+                shapes.append(sv.shape)
+                n_values += np.prod(sv.shape) if sv.shape else 1
                 self.info[type] = names, vrs, shapes, n_values, getter
 
         # create the columns for the NumPy array
@@ -70,7 +70,7 @@ class Recorder(object):
                 self.cols += zip(names, [dt] * len(names), shapes)
 
         # strip the shape for scalars
-        self.cols = [(n, t) if s is None else (n, t, s) for n, t, s in self.cols]
+        self.cols = [(n, t) if not s else (n, t, s) for n, t, s in self.cols]
 
     @staticmethod
     def _append_reshaped(row, values, shapes):
@@ -364,9 +364,17 @@ def apply_start_values(fmu, model_description, start_values, apply_default_start
                     value = value.lower() == 'true'
 
         # convert the type
-        value = variable._python_type(value)
+        if variable.shape:
+            if _is_string(value):
+                value = value.split()
+            value = list(map(lambda e: variable._python_type(e), value))
+            if len(value) != np.prod(variable.shape):
+                raise ArgumentError('The start value for variable "%s" must have %d elements but has %d.' %
+                                    (variable.name, np.prod(variable.shape), len(value)))
+        else:
+            value = [variable._python_type(value)]
 
-        setter([vr], [value])
+        setter([vr], value)
 
     if len(start_values) > 0:
         raise Exception("The start values for the following variables could not be set because they don't exist: " +

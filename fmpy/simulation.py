@@ -702,28 +702,48 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
     # initialize
     if is_fmi1:
+
         input.apply(time)
-        fmu.initialize()
+
+        (iterationConverged,
+         stateValueReferencesChanged,
+         stateValuesChanged,
+         terminateSimulation,
+         nextEventTimeDefined,
+         nextEventTime) = fmu.initialize()
+
+        if terminateSimulation:
+            raise Exception('Model requested termination during initial event update.')
+
     elif is_fmi2:
+
         fmu.enterInitializationMode()
         input.apply(time)
         fmu.exitInitializationMode()
 
-        # event iteration
-        fmu.eventInfo.newDiscreteStatesNeeded = fmi2True
-        fmu.eventInfo.terminateSimulation = fmi2False
+        newDiscreteStatesNeeded = True
+        terminateSimulation = False
 
-        while fmu.eventInfo.newDiscreteStatesNeeded == fmi2True and fmu.eventInfo.terminateSimulation == fmi2False:
+        while newDiscreteStatesNeeded and not terminateSimulation:
             # update discrete states
-            fmu.newDiscreteStates()
+            (newDiscreteStatesNeeded,
+             terminateSimulation,
+             nominalsOfContinuousStatesChanged,
+             valuesOfContinuousStatesChanged,
+             nextEventTimeDefined,
+             nextEventTime) = fmu.newDiscreteStates()
+
+        if terminateSimulation:
+            raise Exception('Model requested termination during initial event update.')
 
         fmu.enterContinuousTimeMode()
-    else:
+
+    elif is_fmi3:
+
         fmu.enterInitializationMode(startTime=start_time)
         input.apply(time)
         fmu.exitInitializationMode()
 
-        # event iteration
         newDiscreteStatesNeeded = True
         terminateSimulation = False
 
@@ -805,15 +825,10 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
         if input_event:
             t_next = t_input_event
 
-        if is_fmi1:
-            time_event = fmu.eventInfo.upcomingTimeEvent != fmi1False and fmu.eventInfo.nextEventTime <= t_next
-        elif is_fmi2:
-            time_event = fmu.eventInfo.nextEventTimeDefined != fmi2False and fmu.eventInfo.nextEventTime <= t_next
-        else:
-            time_event = nextEventTimeDefined and nextEventTime <= t_next
+        time_event = nextEventTimeDefined and nextEventTime <= t_next
 
         if time_event and not fixed_step:
-            t_next = nextEventTime if is_fmi3 else fmu.eventInfo.nextEventTime
+            t_next = nextEventTime
 
         if t_next - time > eps:
             # do one step
@@ -846,8 +861,20 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
                 if input_event:
                     input.apply(time=time, after_event=True)
-                    
-                fmu.eventUpdate()
+
+                iterationConverged = False
+
+                # update discrete states
+                while not iterationConverged and not terminateSimulation:
+                    (iterationConverged,
+                     stateValueReferencesChanged,
+                     stateValuesChanged,
+                     terminateSimulation,
+                     nextEventTimeDefined,
+                     nextEventTime) = fmu.eventUpdate()
+
+                if terminateSimulation:
+                    break
 
             elif is_fmi2:
 
@@ -856,12 +883,19 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                 if input_event:
                     input.apply(time=time, after_event=True)
 
-                fmu.eventInfo.newDiscreteStatesNeeded = fmi2True
-                fmu.eventInfo.terminateSimulation = fmi2False
+                newDiscreteStatesNeeded = True
 
                 # update discrete states
-                while fmu.eventInfo.newDiscreteStatesNeeded != fmi2False and fmu.eventInfo.terminateSimulation == fmi2False:
-                    fmu.newDiscreteStates()
+                while newDiscreteStatesNeeded and not terminateSimulation:
+                    (newDiscreteStatesNeeded,
+                     terminateSimulation,
+                     nominalsOfContinuousStatesChanged,
+                     valuesOfContinuousStatesChanged,
+                     nextEventTimeDefined,
+                     nextEventTime) = fmu.newDiscreteStates()
+
+                if terminateSimulation:
+                    break
 
                 fmu.enterContinuousTimeMode()
 
@@ -873,7 +907,6 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                     input.apply(time=time, after_event=True)
 
                 newDiscreteStatesNeeded = True
-                terminateSimulation = False
 
                 # update discrete states
                 while newDiscreteStatesNeeded and not terminateSimulation:
@@ -883,6 +916,9 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                      valuesOfContinuousStatesChanged,
                      nextEventTimeDefined,
                      nextEventTime) = fmu.newDiscreteStates()
+
+                if terminateSimulation:
+                    break
 
                 fmu.enterContinuousTimeMode()
 

@@ -527,8 +527,6 @@ class FMU1Model(_FMU1):
 
         super(FMU1Model, self).__init__(**kwargs)
 
-        self.eventInfo = fmi1EventInfo()
-
         # Inquire version numbers of header files
         self._fmi1Function('GetModelTypesPlatform', [], [], fmi1String)
 
@@ -629,7 +627,14 @@ class FMU1Model(_FMU1):
     # Evaluation of the model equations
 
     def initialize(self, toleranceControlled=fmi1False, relativeTolerance=0.0):
-        return self.fmi1Initialize(self.component, toleranceControlled, relativeTolerance, byref(self.eventInfo))
+        eventInfo = fmi1EventInfo()
+        self.fmi1Initialize(self.component, toleranceControlled, relativeTolerance, byref(eventInfo))
+        return (eventInfo.iterationConverged != fmi1False,
+                eventInfo.stateValueReferencesChanged != fmi1False,
+                eventInfo.stateValuesChanged != fmi1False,
+                eventInfo.terminateSimulation != fmi1False,
+                eventInfo.upcomingTimeEvent != fmi1False,
+                eventInfo.nextEventTime)
 
     def getDerivatives(self, derivatives, size):
         return self.fmi1GetDerivatives(self.component, derivatives, size)
@@ -638,7 +643,14 @@ class FMU1Model(_FMU1):
         return self.fmi1GetEventIndicators(self.component, eventIndicators, size)
 
     def eventUpdate(self, intermediateResults=fmi1False):
-        return self.fmi1EventUpdate(self.component, intermediateResults, byref(self.eventInfo))
+        eventInfo = fmi1EventInfo()
+        self.fmi1EventUpdate(self.component, intermediateResults, byref(eventInfo))
+        return (eventInfo.iterationConverged          != fmi1False,
+                eventInfo.stateValueReferencesChanged != fmi1False,
+                eventInfo.stateValuesChanged          != fmi1False,
+                eventInfo.terminateSimulation         != fmi1False,
+                eventInfo.upcomingTimeEvent           != fmi1False,
+                eventInfo.nextEventTime)
 
     def getContinuousStates(self, states, size):
         return self.fmi1GetContinuousStates(self.component, states, size)

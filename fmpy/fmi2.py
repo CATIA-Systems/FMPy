@@ -413,8 +413,6 @@ class FMU2Model(_FMU2):
 
         super(FMU2Model, self).__init__(**kwargs)
 
-        self.eventInfo = fmi2EventInfo()
-
         self._fmi2Function('fmi2NewDiscreteStates',
                            ['component', 'eventInfo'],
                            [fmi2Component, POINTER(fmi2EventInfo)])
@@ -457,7 +455,17 @@ class FMU2Model(_FMU2):
         return self.fmi2EnterEventMode(self.component)
 
     def newDiscreteStates(self):
-        return self.fmi2NewDiscreteStates(self.component, byref(self.eventInfo))
+
+        eventInfo = fmi2EventInfo()
+
+        self.fmi2NewDiscreteStates(self.component, byref(eventInfo))
+
+        return (eventInfo.newDiscreteStatesNeeded           != fmi2False,
+                eventInfo.terminateSimulation               != fmi2False,
+                eventInfo.nominalsOfContinuousStatesChanged != fmi2False,
+                eventInfo.valuesOfContinuousStatesChanged   != fmi2False,
+                eventInfo.nextEventTimeDefined              != fmi2False,
+                eventInfo.nextEventTime)
 
     def enterContinuousTimeMode(self):
         return self.fmi2EnterContinuousTimeMode(self.component)

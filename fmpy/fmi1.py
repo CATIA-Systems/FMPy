@@ -624,7 +624,7 @@ class FMU1Model(_FMU1):
     def completedIntegratorStep(self):
         stepEvent = fmi1Boolean()
         self.fmi1CompletedIntegratorStep(self.component, byref(stepEvent))
-        return stepEvent != fmi1False
+        return stepEvent.value != fmi1False
 
     # Evaluation of the model equations
 

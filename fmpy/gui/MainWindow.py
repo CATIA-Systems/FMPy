@@ -886,12 +886,12 @@ class MainWindow(QMainWindow):
             arguments = '-m fmpy.gui'
         else:
             for path in os.environ["PATH"].split(os.pathsep):
-                activate = os.path.join(path, 'activate')
+                activate = os.path.join(path, 'activate.bat')
                 if os.path.isfile(activate):
                     break
 
             target_path = '%windir%\System32\cmd.exe'
-            arguments = '/C "%s %s && python -m fmpy.gui"' % (activate, env)
+            arguments = '/C ""%s" %s && python -m fmpy.gui"' % (activate, env)
 
         file_path = os.path.dirname(__file__)
         icon = os.path.join(file_path, 'icons', 'app_icon.ico')
@@ -938,14 +938,14 @@ class MainWindow(QMainWindow):
             else:
                 # activate the conda environment
                 for path in os.environ["PATH"].split(os.pathsep):
-                    activate = os.path.join(path, 'activate')
+                    activate = os.path.join(path, 'activate.bat')
                     if os.path.isfile(activate):
                         break
 
                 windir = os.environ['WINDIR']
                 cmd = os.path.join(windir, 'System32', 'cmd.exe')
 
-                target = r'%s /C "%s %s && python -m fmpy.gui %%1"' % (cmd, activate, env)
+                target = r'%s /C ""%s" %s && python -m fmpy.gui %%1"' % (cmd, activate, env)
 
             key_path = r'Software\Classes\fmpy.gui\shell\open\command'
 

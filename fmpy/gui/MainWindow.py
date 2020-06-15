@@ -924,22 +924,34 @@ class MainWindow(QMainWindow):
         try:
             from winreg import HKEY_CURRENT_USER, KEY_WRITE, REG_SZ, OpenKey, CreateKey, SetValueEx, CloseKey
 
-            python = sys.executable
+            env = os.environ['CONDA_DEFAULT_ENV']
 
-            root, ext = os.path.splitext(python)
+            if env is None:
+                python = sys.executable
+                root, ext = os.path.splitext(python)
+                pythonw = root + 'w' + ext
 
-            pythonw = root + 'w' + ext
+                if os.path.isfile(pythonw):
+                    python = pythonw
 
-            if os.path.isfile(pythonw):
-                target = pythonw
+                target = '"%s" -m fmpy.gui "%%1"' % python
             else:
-                target = python
+                # activate the conda environment
+                for path in os.environ["PATH"].split(os.pathsep):
+                    activate = os.path.join(path, 'activate')
+                    if os.path.isfile(activate):
+                        break
+
+                windir = os.environ['WINDIR']
+                cmd = os.path.join(windir, 'System32', 'cmd.exe')
+
+                target = r'%s /C "%s %s && python -m fmpy.gui %%1"' % (cmd, activate, env)
 
             key_path = r'Software\Classes\fmpy.gui\shell\open\command'
 
             CreateKey(HKEY_CURRENT_USER, key_path)
             key = OpenKey(HKEY_CURRENT_USER, key_path, 0, KEY_WRITE)
-            SetValueEx(key, '', 0, REG_SZ, '"%s" -m fmpy.gui "%%1"' % target)
+            SetValueEx(key, '', 0, REG_SZ, target)
             CloseKey(key)
 
             key_path = r'SOFTWARE\Classes\.fmu'

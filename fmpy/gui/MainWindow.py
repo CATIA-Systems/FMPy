@@ -879,27 +879,30 @@ class MainWindow(QMainWindow):
         from win32com.client import Dispatch
         import sys
 
-        desktop_locations = QStandardPaths.standardLocations(QStandardPaths.DesktopLocation)
-        path = os.path.join(desktop_locations[0], "FMPy GUI.lnk")
+        env = os.environ['CONDA_DEFAULT_ENV']
 
-        python = sys.executable
-
-        root, ext = os.path.splitext(python)
-
-        pythonw = root + 'w' + ext
-
-        if os.path.isfile(pythonw):
-            target = pythonw
+        if env is None:
+            target_path = sys.executable
+            arguments = '-m fmpy.gui'
         else:
-            target = python
+            for path in os.environ["PATH"].split(os.pathsep):
+                activate = os.path.join(path, 'activate')
+                if os.path.isfile(activate):
+                    break
+
+            target_path = '%windir%\System32\cmd.exe'
+            arguments = '/C "%s %s && python -m fmpy.gui"' % (activate, env)
 
         file_path = os.path.dirname(__file__)
         icon = os.path.join(file_path, 'icons', 'app_icon.ico')
 
+        desktop_locations = QStandardPaths.standardLocations(QStandardPaths.DesktopLocation)
+        shortcut_path = os.path.join(desktop_locations[0], "FMPy GUI.lnk")
+
         shell = Dispatch('WScript.Shell')
-        shortcut = shell.CreateShortCut(path)
-        shortcut.Targetpath = target
-        shortcut.Arguments = '-m fmpy.gui'
+        shortcut = shell.CreateShortCut(shortcut_path)
+        shortcut.Targetpath = target_path
+        shortcut.Arguments = arguments
         # shortcut.WorkingDirectory = ...
         shortcut.IconLocation = icon
         shortcut.save()

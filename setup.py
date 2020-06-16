@@ -66,7 +66,7 @@ install_requires = [
 
 extras_require = {
     'examples': ['dask[bag]', 'requests'],
-    'plot': ['matplotlib'],
+    'plot': ['matplotlib', 'scipy'],
     'gui': ['PyQt5', 'pyqtgraph']
 }
 

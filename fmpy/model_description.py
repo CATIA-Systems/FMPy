@@ -359,13 +359,14 @@ def read_build_description(filename, validate=True):
     return build_configurations
 
 
-def read_model_description(filename, validate=True, validate_variable_names=False):
+def read_model_description(filename, validate=True, validate_variable_names=False, validate_model_structure=False):
     """ Read the model description from an FMU without extracting it
 
     Parameters:
-        filename                 filename of the FMU or XML file, directory with extracted FMU or file like object
-        validate                 whether the model description should be validated
-        validate_variable_names  validate the variable names against the EBNF
+        filename                  filename of the FMU or XML file, directory with extracted FMU or file like object
+        validate                  whether the model description should be validated
+        validate_variable_names   validate the variable names against the EBNF
+        validate_model_structure  validate the model structure
 
     returns:
         model_description   a ModelDescription object
@@ -759,6 +760,12 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
 
                 attr.append(unknown)
 
+        # resolve derivatives
+        for variable in modelDescription.modelVariables:
+            if variable.derivative is not None:
+                index = int(variable.derivative) - 1
+                variable.derivative = modelDescription.modelVariables[index]
+
     if fmiVersion.startswith('3.0'):
         modelDescription.numberOfEventIndicators = len(root.findall('ModelStructure/EventIndicator'))
 
@@ -818,13 +825,6 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
                 if (variable.initial in {'exact', 'approx'} or variable.causality == 'input') and variable.start is None:
                     raise Exception('Variable "%s" (line %s) has no start value.' % (variable.sourceline, variable.name))
 
-            # validate outputs
-            outputs = set([v for v in modelDescription.modelVariables if v.causality == 'output'])
-            unknowns = set([u.variable for u in modelDescription.outputs])
-
-            if outputs != unknowns:
-                raise Exception('ModelStructure/Outputs must have exactly one entry for each variable with causality="output".')
-
             # validate units
             for variable in modelDescription.modelVariables:
 
@@ -838,6 +838,40 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
 
                 if variable.displayUnit is not None and variable.displayUnit not in unit_definitions[unit]:
                     raise Exception('The display unit "%s" of variable "%s" (line %s) is not defined.' % (variable.displayUnit, variable.name, variable.sourceline))
+
+            if validate_model_structure:
+
+                # validate outputs
+                expected_outputs = set(v for v in modelDescription.modelVariables if v.causality == 'output')
+                outputs = set(u.variable for u in modelDescription.outputs)
+
+                if expected_outputs != outputs:
+                    raise Exception('ModelStructure/Outputs must have exactly one entry for each variable with causality="output".')
+
+                # TODO: validate derivatives
+
+                # validate initial unknowns
+                expected_initial_unknowns = set()
+
+                for variable in modelDescription.modelVariables:
+
+                    if variable.causality == 'output' and variable.initial in {'approx', 'calculated'}:
+                        expected_initial_unknowns.add(variable)
+
+                    if variable.causality == 'calculatedParameter':
+                        expected_initial_unknowns.add(variable)
+
+                for unknown in modelDescription.derivatives:
+                    derivative = unknown.variable
+                    state = derivative.derivative
+                    for variable in [state, derivative]:
+                        if variable.initial in {'approx', 'calculated'}:
+                            expected_initial_unknowns.add(variable)
+
+                initial_unknowns = set(v.variable for v in modelDescription.initialUnknowns)
+
+                if initial_unknowns != expected_initial_unknowns:
+                    raise Exception('ModelStructure/InitialUnkowns does not contain the expected set of variables.')
 
     if validate_variable_names:
 

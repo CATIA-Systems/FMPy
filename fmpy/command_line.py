@@ -66,9 +66,9 @@ def main():
         messages = validate_fmu(args.fmu_filename)
 
         if len(messages) == 0:
-            print('The validation passed')
+            print('No problems found.')
         else:
-            print('The following errors were found:')
+            print('The following problems were found:')
             for message in messages:
                 print()
                 print(message)

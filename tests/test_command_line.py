@@ -1,6 +1,6 @@
 import unittest
 from subprocess import call, check_output
-from fmpy.util import download_test_file
+from fmpy.util import download_test_file, download_file
 
 
 class CommandLineTest(unittest.TestCase):
@@ -11,13 +11,14 @@ class CommandLineTest(unittest.TestCase):
         # download the FMU and input file
         download_test_file('2.0', 'ModelExchange', 'MapleSim', '2016.2', 'CoupledClutches', 'CoupledClutches.fmu')
         download_test_file('2.0', 'ModelExchange', 'MapleSim', '2016.2', 'CoupledClutches', 'CoupledClutches_in.csv')
+        download_file('https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/me/win64/Dymola/2019FD01/Rectifier/Rectifier.fmu')
 
     def test_info(self):
         status = call(['fmpy', 'info', 'CoupledClutches.fmu'])
         self.assertEqual(0, status)
 
     def test_validate(self):
-        status = call(['fmpy', 'validate', 'CoupledClutches.fmu'])
+        status = call(['fmpy', 'validate', 'Rectifier.fmu'])
         self.assertEqual(0, status)
 
     def test_simulate(self):

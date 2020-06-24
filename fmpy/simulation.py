@@ -383,7 +383,7 @@ def apply_start_values(fmu, model_description, start_values, apply_default_start
 
 class ForwardEuler(object):
 
-    def __init__(self, nx, nz, get_x, set_x, get_dx, get_z):
+    def __init__(self, nx, nz, get_x, set_x, get_dx, get_z, input):
 
         self.get_x = get_x
         self.set_x = set_x
@@ -765,7 +765,8 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
         'get_x': fmu.getContinuousStates,
         'set_x': fmu.setContinuousStates,
         'get_dx': fmu.getDerivatives,
-        'get_z': fmu.getEventIndicators
+        'get_z': fmu.getEventIndicators,
+        'input': input
     }
 
     # select the solver

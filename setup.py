@@ -51,7 +51,13 @@ package_data = {
     'fmpy.ssp': ['schema/*.xsd'],
 }
 
-install_requires = ['lark-parser', 'lxml', 'numpy', 'pathlib', 'pywin32;platform_system=="Windows"']
+install_requires = [
+    'lark-parser',
+    'lxml',
+    'numpy',
+    'pathlib;python_version<"3.4"',
+    'pywin32;platform_system=="Windows"'
+]
 
 extras_require = {
     'examples': ['dask[bag]', 'requests'],
@@ -62,13 +68,13 @@ extras_require = {
 extras_require['complete'] = sorted(set(sum(extras_require.values(), [])))
 
 setup(name='FMPy',
-      version='0.2.19',
+      version='0.2.20',
       description="Simulate Functional Mock-up Units (FMUs) in Python",
       long_description=long_description,
       author="Torsten Sommer",
       author_email="torsten.sommer@3ds.com",
       url="https://github.com/CATIA-Systems/FMPy",
-      license="Standard 3-clause BSD",
+      license="Standard 2-clause BSD",
       packages=packages,
       package_data=package_data,
       install_requires=install_requires,

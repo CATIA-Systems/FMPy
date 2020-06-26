@@ -423,10 +423,11 @@ class MainWindow(QMainWindow):
         if md.modelExchange:
             fmi_types.append('Model Exchange')
 
+        experiment = md.defaultExperiment
+
         # toolbar
-        if md.defaultExperiment is not None:
-            if md.defaultExperiment.stopTime is not None:
-                self.stopTimeLineEdit.setText(str(md.defaultExperiment.stopTime))
+        if experiment is not None and experiment.stopTime is not None:
+            self.stopTimeLineEdit.setText(str(experiment.stopTime))
 
         # actions
         can_compile = md.fmiVersion == '2.0' and 'c-code' in platforms
@@ -456,12 +457,22 @@ class MainWindow(QMainWindow):
         self.ui.generationToolLabel.setText(md.generationTool)
         self.ui.generationDateAndTimeLabel.setText(md.generationDateAndTime)
 
-        if md.defaultExperiment is not None and md.defaultExperiment.stepSize is not None:
-            output_interval = float(md.defaultExperiment.stepSize)
+        # relative tolerance
+        if experiment is not None and experiment.tolerance is not None:
+            relative_tolerance = experiment.tolerance
+        else:
+            relative_tolerance = 1e-6
+
+        self.ui.relativeToleranceLineEdit.setText(str(relative_tolerance))
+
+        # output interval
+        if experiment is not None and experiment.stepSize is not None:
+            output_interval = float(experiment.stepSize)
             while output_interval > 1000:
                 output_interval *= 0.5
         else:
             output_interval = float(self.stopTimeLineEdit.text()) / 500
+
         self.ui.outputIntervalLineEdit.setText(str(output_interval))
 
         self.fmiTypeComboBox.clear()

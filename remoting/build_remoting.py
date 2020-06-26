@@ -8,6 +8,9 @@ from fmpy.util import download_file
 url = 'https://github.com/rpclib/rpclib/archive/v2.2.1.tar.gz'
 checksum = 'ceef2c521a1712035bc64d1bd5e3b2c7de16a1d856cbbeadd000ae318c96463f'
 
+# build configuration
+config = 'Release'
+
 download_file(url, checksum)
 
 filename = os.path.basename(url)
@@ -39,12 +42,12 @@ for bitness, generator in [('win32', 'Visual Studio 15 2017'), ('win64', 'Visual
     ]
 
     check_call(args=cmake_args)
-    check_call(args=['cmake', '--build', source_dir + '/' + bitness, '--target', 'install', '--config', 'Release'])
+    check_call(args=['cmake', '--build', source_dir + '/' + bitness, '--target', 'install', '--config', config])
 
 print("Building server.exe...")
 check_call(['cmake', '-G', 'Visual Studio 15 2017', '-D', 'RPCLIB=' + rpclib_dir + '/win32/rpc', '-B', 'server/build', 'server'])
-check_call(['cmake', '--build', 'server/build', '--config', 'Release'])
+check_call(['cmake', '--build', 'server/build', '--config', config])
 
 print("Building client.dll...")
 check_call(['cmake', '-G', 'Visual Studio 15 2017 Win64', '-D', 'RPCLIB=' + rpclib_dir + '/win64/rpc', '-B', 'client/build', 'client'])
-check_call(['cmake', '--build', 'client/build', '--config', 'Release'])
+check_call(['cmake', '--build', 'client/build', '--config', config])

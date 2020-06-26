@@ -316,7 +316,15 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
 				</xs:sequence>
 				<xs:attributeGroup ref="fmi3ClockAttributes"/>
-				<xs:attribute name="start" type="xs:boolean"/>
+				<xs:attribute name="start">
+					<xs:simpleType>
+						<xs:list>
+							<xs:simpleType>
+								<xs:restriction base="xs:boolean"/>
+							</xs:simpleType>
+						</xs:list>
+					</xs:simpleType>
+				</xs:attribute>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
@@ -381,6 +389,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		<xs:attribute name="canHandleMultipleSetPerTimeInstant" type="xs:boolean"/>
 		<xs:attribute name="declaredType" type="xs:normalizedString"/>
 		<xs:attribute name="clockReference" type="xs:unsignedInt" use="optional"/>
+		<xs:attribute name="clockElementIndex" type="xs:unsignedLong" use="optional"/>
 		<xs:attribute name="intermediateAccess" type="xs:boolean" use="optional"/>
 	</xs:complexType>
 

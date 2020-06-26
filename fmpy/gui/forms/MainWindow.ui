@@ -1341,16 +1341,21 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="actionCreateDesktopShortcut"/>
     <addaction name="actionAddFileAssociation"/>
     <addaction name="separator"/>
-    <addaction name="actionCompilePlatformBinary"/>
-    <addaction name="actionCreateCMakeProject"/>
-    <addaction name="actionAddRemoting"/>
-    <addaction name="separator"/>
     <addaction name="actionOpenWebsite"/>
     <addaction name="actionShowReleaseNotes"/>
     <addaction name="separator"/>
     <addaction name="actionShowAboutDialog"/>
    </widget>
+   <widget class="QMenu" name="menu_Tools">
+    <property name="title">
+     <string>&amp;Tools</string>
+    </property>
+    <addaction name="actionCompilePlatformBinary"/>
+    <addaction name="actionCreateCMakeProject"/>
+    <addaction name="actionAddRemoting"/>
+   </widget>
    <addaction name="menu_File"/>
+   <addaction name="menu_Tools"/>
    <addaction name="menu_Help"/>
   </widget>
   <widget class="QStatusBar" name="statusBar">
@@ -1890,6 +1895,9 @@ QToolButton::menu-button {
    </property>
   </action>
   <action name="actionAddRemoting">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Add 32-bit Remoting</string>
    </property>

@@ -37,15 +37,15 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:include schemaLocation="fmi3Annotation.xsd"/>
 	<xs:complexType name="fmi3InterfaceType" abstract="true">
 		<xs:sequence minOccurs="0">
-			<xs:element ref="VendorAnnotations" minOccurs="0"/>
+			<xs:element ref="Annotations" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="modelIdentifier" type="xs:normalizedString" use="required"/>
 		<xs:attribute name="needsExecutionTool" type="xs:boolean" default="false"/>
 		<xs:attribute name="canBeInstantiatedOnlyOncePerProcess" type="xs:boolean" default="false"/>
 		<xs:attribute name="canGetAndSetFMUState" type="xs:boolean" default="false"/>
 		<xs:attribute name="canSerializeFMUState" type="xs:boolean" default="false"/>
-		<xs:attribute name="providesDirectionalDerivative" type="xs:boolean" default="false"/>
-		<xs:attribute name="providesAdjointDerivative" type="xs:boolean" default="false"/>
+		<xs:attribute name="providesDirectionalDerivatives" type="xs:boolean" default="false"/>
+		<xs:attribute name="providesAdjointDerivatives" type="xs:boolean" default="false"/>
 		<xs:attribute name="providesPerElementDependencies" type="xs:boolean" default="false"/>
 	</xs:complexType>
 	<xs:complexType name="fmi3ModelExchange">
@@ -59,7 +59,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		<xs:complexContent>
 			<xs:extension base="fmi3InterfaceType">
 				<xs:attribute name="canHandleVariableCommunicationStepSize" type="xs:boolean" default="false"/>
-				<xs:attribute name="canInterpolateInputs" type="xs:boolean" default="false"/>
 				<xs:attribute name="maxOutputDerivativeOrder" type="xs:unsignedInt" default="0"/>
 				<xs:attribute name="providesIntermediateVariableAccess" type="xs:boolean" default="false"/>
 				<xs:attribute name="canReturnEarlyAfterIntermediateUpdate" type="xs:boolean" default="false"/>

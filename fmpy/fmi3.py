@@ -112,7 +112,6 @@ class _FMU3(_FMU):
 
         self._fmi3Function('fmi3EnterEventMode', [
             (fmi3Instance,       'instance'),
-            (fmi3Boolean,        'inputEvent'),
             (fmi3Boolean,        'stepEvent'),
             (POINTER(fmi3Int32), 'rootsFound'),
             (c_size_t,           'nEventIndicators'),
@@ -142,11 +141,11 @@ class _FMU3(_FMU):
         for name, _type in types:
 
             params = [
-                (fmi3Instance, 'instance'),
+                (fmi3Instance,                'instance'),
                 (POINTER(fmi3ValueReference), 'vr'),
-                (c_size_t, 'nvr'),
-                (POINTER(_type), 'value'),
-                (c_size_t, 'nValues')
+                (c_size_t,                    'nvr'),
+                (POINTER(_type),              'value'),
+                (c_size_t,                    'nValues')
             ]
 
             self._fmi3Function('fmi3Get' + name, params)
@@ -217,12 +216,14 @@ class _FMU3(_FMU):
         # Getting partial derivatives
         self._fmi3Function('fmi3GetDirectionalDerivative', [
             (fmi3Instance,                'instance'),
-            (POINTER(fmi3ValueReference), 'vUnknown_ref'),
-            (c_size_t,                    'nUnknown'),
-            (POINTER(fmi3ValueReference), 'vKnown_ref'),
-            (c_size_t,                    'nKnown'),
-            (POINTER(fmi3Float64),        'dvKnown'),
-            (POINTER(fmi3Float64),        'dvUnknown')
+            (POINTER(fmi3ValueReference), 'unknowns'),
+            (c_size_t,                    'nUnknowns'),
+            (POINTER(fmi3ValueReference), 'knowns'),
+            (c_size_t,                    'nKnowns'),
+            (POINTER(fmi3Float64),        'seed'),
+            (c_size_t,                    'nSeed'),
+            (POINTER(fmi3Float64),        'sensitivity'),
+            (c_size_t,                    'nSensitivity')
         ])
 
         # Entering and exiting the Configuration or Reconfiguration Mode
@@ -558,14 +559,14 @@ class FMU3Model(_FMU3):
 
         self._fmi3Function('fmi3SetContinuousStates', [
             (fmi3Instance,         'instance'),
-            (POINTER(fmi3Float64), 'x'),
-            (c_size_t,             'nx')
+            (POINTER(fmi3Float64), 'continuousStates'),
+            (c_size_t,             'nContinuousStates')
         ])
 
         self._fmi3Function('fmi3GetDerivatives', [
             (fmi3Instance,         'instance'),
             (POINTER(fmi3Float64), 'derivatives'),
-            (c_size_t,             'nx')
+            (c_size_t,             'nContinuousStates')
         ])
 
         self._fmi3Function('fmi3GetEventIndicators', [
@@ -576,24 +577,24 @@ class FMU3Model(_FMU3):
 
         self._fmi3Function('fmi3GetContinuousStates', [
             (fmi3Instance,         'instance'),
-            (POINTER(fmi3Float64), 'x'),
-            (c_size_t,             'nx')
+            (POINTER(fmi3Float64), 'continuousStates'),
+            (c_size_t,             'nContinuousStates')
         ])
 
         self._fmi3Function('fmi3GetNominalsOfContinuousStates', [
             (fmi3Instance,         'instance'),
             (POINTER(fmi3Float64), 'nominals'),
-            (c_size_t,             'nx')
+            (c_size_t,             'nContinuousStates')
         ])
 
         self._fmi3Function('fmi3GetNumberOfEventIndicators', [
             (fmi3Instance,      'instance'),
-            (POINTER(c_size_t), 'nz')
+            (POINTER(c_size_t), 'nEventIndicators')
         ])
 
         self._fmi3Function('fmi3GetNumberOfContinuousStates', [
             (fmi3Instance,      'instance'),
-            (POINTER(c_size_t), 'nx')
+            (POINTER(c_size_t), 'nContinuousStates')
         ])
 
     def instantiate(self, visible=False, loggingOn=False):
@@ -617,13 +618,12 @@ class FMU3Model(_FMU3):
 
     # Enter and exit the different modes
 
-    def enterEventMode(self, inputEvent=False, stepEvent=False, rootsFound=[], timeEvent=False):
+    def enterEventMode(self, stepEvent=False, rootsFound=[], timeEvent=False):
 
         rootsFound = (fmi3Int32 * len(rootsFound))(*rootsFound)
 
         return self.fmi3EnterEventMode(
             self.component,
-            fmi3True if inputEvent else fmi3False,
             fmi3True if stepEvent else fmi3False,
             rootsFound,
             len(rootsFound),
@@ -668,21 +668,21 @@ class FMU3Model(_FMU3):
     def setTime(self, time):
         return self.fmi3SetTime(self.component, time)
 
-    def setContinuousStates(self, x, nx):
-        return self.fmi3SetContinuousStates(self.component, x, nx)
+    def setContinuousStates(self, continuousStates, nContinuousStates):
+        return self.fmi3SetContinuousStates(self.component, continuousStates, nContinuousStates)
 
     # Evaluation of the model equations
 
-    def getDerivatives(self, dx, nx):
-        return self.fmi3GetDerivatives(self.component, dx, nx)
+    def getDerivatives(self, derivatives, nContinuousStates):
+        return self.fmi3GetDerivatives(self.component, derivatives, nContinuousStates)
 
-    def getEventIndicators(self, z, nz):
-        return self.fmi3GetEventIndicators(self.component, z, nz)
+    def getEventIndicators(self, eventIndicators, nEventIndicators):
+        return self.fmi3GetEventIndicators(self.component, eventIndicators, nEventIndicators)
 
-    def getContinuousStates(self, x, nx):
-        return self.fmi3GetContinuousStates(self.component, x, nx)
+    def getContinuousStates(self, continuousStates, nContinuousStates):
+        return self.fmi3GetContinuousStates(self.component, continuousStates, nContinuousStates)
 
-    def getNominalsOfContinuousStatesTYPE(self):
+    def getNominalsOfContinuousState(self):
         pass
 
 

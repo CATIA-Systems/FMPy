@@ -592,11 +592,12 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
     # FMI 3
     for t in root.findall('TypeDefinitions/*'):
 
-        if t.tag not in {'Float32', 'Float64', 'Int8', 'UInt8', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Int64', 'UInt64',
-                         'Boolean', 'String', 'Binary', 'Enumeration'}:
+        if t.tag not in {'Float32Type', 'Float64Type', 'Int8Type', 'UInt8Type', 'Int16Type', 'UInt16Type', 'Int32Type',
+                         'UInt32Type', 'Int64Type', 'UInt64Type', 'BooleanType', 'StringType', 'BinaryType',
+                         'EnumerationType'}:
             continue
 
-        simple_type = SimpleType(type=t.tag, **t.attrib)
+        simple_type = SimpleType(type=t.tag[:-4], **t.attrib)
 
         # add enumeration items
         for item in t.findall('Item'):

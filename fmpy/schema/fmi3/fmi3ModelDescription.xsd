@@ -43,10 +43,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:element name="fmiModelDescription">
 		<xs:complexType>
 			<xs:sequence>
-				<xs:element name="ModelExchange" type="fmi3ModelExchange" minOccurs="0" maxOccurs="1" />
-				<xs:element name="BasicCoSimulation" type="fmi3CoSimulation" minOccurs="0" maxOccurs="1" />
-				<xs:element name="HybridCoSimulation" type="fmi3CoSimulation" minOccurs="0" maxOccurs="1" />
-				<xs:element name="ScheduledCoSimulation" type="fmi3CoSimulation" minOccurs="0" maxOccurs="1" />
+				<xs:element name="ModelExchange" type="fmi3ModelExchange" minOccurs="0"/>
+				<xs:element name="BasicCoSimulation" type="fmi3CoSimulation" minOccurs="0"/>
+				<xs:element name="HybridCoSimulation" type="fmi3CoSimulation" minOccurs="0"/>
+				<xs:element name="ScheduledCoSimulation" type="fmi3CoSimulation" minOccurs="0"/>
 				<xs:element name="UnitDefinitions" minOccurs="0">
 					<xs:complexType>
 						<xs:sequence maxOccurs="unbounded">
@@ -64,6 +64,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						<xs:sequence maxOccurs="unbounded">
 							<xs:element name="Category">
 								<xs:complexType>
+									<xs:sequence>
+										<xs:element ref="Annotations" minOccurs="0"/>
+									</xs:sequence>
 									<xs:attribute name="name" type="xs:normalizedString" use="required"/>
 									<xs:attribute name="description" type="xs:string"/>
 								</xs:complexType>
@@ -73,13 +76,15 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				</xs:element>
 				<xs:element name="DefaultExperiment" minOccurs="0">
 					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="Annotations" minOccurs="0"/>
+						</xs:sequence>
 						<xs:attribute name="startTime" type="xs:double"/>
 						<xs:attribute name="stopTime" type="xs:double"/>
 						<xs:attribute name="tolerance" type="xs:double"/>
 						<xs:attribute name="stepSize" type="xs:double"/>
 					</xs:complexType>
 				</xs:element>
-				<xs:element ref="VendorAnnotations" minOccurs="0"/>
 				<xs:element name="ModelVariables">
 					<xs:complexType>
 						<xs:group ref="fmi3Variable" maxOccurs="unbounded"/>
@@ -99,6 +104,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
+				<xs:element ref="Annotations" minOccurs="0"/>
 			</xs:sequence>
 			<xs:attribute name="fmiVersion" use="required">
 				<xs:simpleType>
@@ -116,7 +122,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<xs:attribute name="license" type="xs:string"/>
 			<xs:attribute name="generationTool" type="xs:normalizedString"/>
 			<xs:attribute name="generationDateAndTime" type="xs:dateTime"/>
-			<xs:attribute name="variableNamingConvention" use="optional" default="flat">
+			<xs:attribute name="variableNamingConvention" default="flat">
 				<xs:simpleType>
 					<xs:restriction base="xs:normalizedString">
 						<xs:enumeration value="flat"/>

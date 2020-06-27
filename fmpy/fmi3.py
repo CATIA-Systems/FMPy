@@ -384,6 +384,14 @@ class _FMU3(_FMU):
 
     # Getting and setting variable values
 
+    def getFloat32(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3Float32 * nValues)()
+        self.fmi3GetFloat32(self.component, vr, len(vr), values, nValues)
+        return list(values)
+
     def getFloat64(self, vr, nValues=None):
         if nValues is None:
             nValues = len(vr)
@@ -392,12 +400,60 @@ class _FMU3(_FMU):
         self.fmi3GetFloat64(self.component, vr, len(vr), values, nValues)
         return list(values)
 
+    def getInt8(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        value = (fmi3Int8 * nValues)()
+        self.fmi3GetInt8(self.component, vr, len(vr), value, nValues)
+        return list(value)
+
+    def getUInt8(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        value = (fmi3UInt8 * nValues)()
+        self.fmi3GetUInt8(self.component, vr, len(vr), value, nValues)
+        return list(value)
+
+    def getInt16(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        value = (fmi3Int16 * nValues)()
+        self.fmi3GetInt16(self.component, vr, len(vr), value, nValues)
+        return list(value)
+
+    def getUInt16(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        value = (fmi3UInt16 * nValues)()
+        self.fmi3GetUInt16(self.component, vr, len(vr), value, nValues)
+        return list(value)
+
     def getInt32(self, vr, nValues=None):
         if nValues is None:
             nValues = len(vr)
         vr = (fmi3ValueReference * len(vr))(*vr)
         value = (fmi3Int32 * nValues)()
         self.fmi3GetInt32(self.component, vr, len(vr), value, nValues)
+        return list(value)
+
+    def getUInt32(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        value = (fmi3UInt32 * nValues)()
+        self.fmi3GetUInt32(self.component, vr, len(vr), value, nValues)
+        return list(value)
+
+    def getInt64(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        value = (fmi3Int64 * nValues)()
+        self.fmi3GetInt64(self.component, vr, len(vr), value, nValues)
         return list(value)
 
     def getUInt64(self, vr, nValues=None):
@@ -422,12 +478,6 @@ class _FMU3(_FMU):
         self.fmi3GetString(self.component, vr, len(vr), value)
         return list(value)
 
-    def getString(self, vr):
-        vr = (fmi3ValueReference * len(vr))(*vr)
-        value = (fmi3String * len(vr))()
-        self.fmi3GetString(self.component, vr, len(vr), value)
-        return list(value)
-
     def getBinary(self, vr):
         vr = (fmi3ValueReference * len(vr))(*vr)
         value = (fmi3Binary * len(vr))()
@@ -435,15 +485,55 @@ class _FMU3(_FMU):
         self.fmi3GetBinary(self.component, vr, len(vr), size, value, len(value))
         return list(value)
 
+    def setFloat32(self, vr, values):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3Float32 * len(values))(*values)
+        self.fmi3SetFloat32(self.component, vr, len(vr), values, len(values))
+
     def setFloat64(self, vr, values):
         vr = (fmi3ValueReference * len(vr))(*vr)
         values = (fmi3Float64 * len(values))(*values)
         self.fmi3SetFloat64(self.component, vr, len(vr), values, len(values))
 
+    def setInt8(self, vr, values):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3Int8 * len(values))(*values)
+        self.fmi3SetInt8(self.component, vr, len(vr), values, len(values))
+
+    def setUInt8(self, vr, values):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3UInt8 * len(values))(*values)
+        self.fmi3SetUInt8(self.component, vr, len(vr), values, len(values))
+
+    def setInt16(self, vr, values):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3Int16 * len(values))(*values)
+        self.fmi3SetInt16(self.component, vr, len(vr), values, len(values))
+
+    def setUInt16(self, vr, values):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3UInt16 * len(values))(*values)
+        self.fmi3SetUInt16(self.component, vr, len(vr), values, len(values))
+
     def setInt32(self, vr, values):
         vr = (fmi3ValueReference * len(vr))(*vr)
         values = (fmi3Int32 * len(values))(*values)
         self.fmi3SetInt32(self.component, vr, len(vr), values, len(values))
+
+    def setUInt32(self, vr, values):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3UInt32 * len(values))(*values)
+        self.fmi3SetUInt32(self.component, vr, len(vr), values, len(values))
+
+    def setInt64(self, vr, values):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3Int64 * len(values))(*values)
+        self.fmi3SetInt64(self.component, vr, len(vr), values, len(values))
+
+    def setUInt64(self, vr, values):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3UInt64 * len(values))(*values)
+        self.fmi3SetUInt64(self.component, vr, len(vr), values, len(values))
 
     def setBoolean(self, vr, values):
         vr = (fmi3ValueReference * len(vr))(*vr)

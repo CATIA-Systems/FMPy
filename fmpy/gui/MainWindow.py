@@ -261,6 +261,7 @@ class MainWindow(QMainWindow):
         self.ui.actionCompilePlatformBinary.triggered.connect(self.compilePlatformBinary)
         self.ui.actionCreateCMakeProject.triggered.connect(self.createCMakeProject)
         self.ui.actionAddRemoting.triggered.connect(self.addRemoting)
+        self.ui.actionAddCoSimulationWrapper.triggered.connect(self.addCoSimulationWrapper)
 
         # filter menu
         self.filterMenu = QMenu()
@@ -436,6 +437,9 @@ class MainWindow(QMainWindow):
 
         can_add_remoting = md.fmiVersion == '2.0' and 'win32' in platforms and 'win64' not in platforms
         self.ui.actionAddRemoting.setEnabled(can_add_remoting)
+
+        can_add_cswrapper = md.fmiVersion == '2.0' and md.coSimulation is None and md.modelExchange is not None
+        self.ui.actionAddCoSimulationWrapper.setEnabled(can_add_cswrapper)
 
         # variables view
         self.treeModel.setModelDescription(md)
@@ -875,27 +879,30 @@ class MainWindow(QMainWindow):
         from win32com.client import Dispatch
         import sys
 
-        desktop_locations = QStandardPaths.standardLocations(QStandardPaths.DesktopLocation)
-        path = os.path.join(desktop_locations[0], "FMPy GUI.lnk")
+        env = os.environ['CONDA_DEFAULT_ENV']
 
-        python = sys.executable
-
-        root, ext = os.path.splitext(python)
-
-        pythonw = root + 'w' + ext
-
-        if os.path.isfile(pythonw):
-            target = pythonw
+        if env is None:
+            target_path = sys.executable
+            arguments = '-m fmpy.gui'
         else:
-            target = python
+            for path in os.environ["PATH"].split(os.pathsep):
+                activate = os.path.join(path, 'activate.bat')
+                if os.path.isfile(activate):
+                    break
+
+            target_path = '%windir%\System32\cmd.exe'
+            arguments = '/C ""%s" %s && python -m fmpy.gui"' % (activate, env)
 
         file_path = os.path.dirname(__file__)
         icon = os.path.join(file_path, 'icons', 'app_icon.ico')
 
+        desktop_locations = QStandardPaths.standardLocations(QStandardPaths.DesktopLocation)
+        shortcut_path = os.path.join(desktop_locations[0], "FMPy GUI.lnk")
+
         shell = Dispatch('WScript.Shell')
-        shortcut = shell.CreateShortCut(path)
-        shortcut.Targetpath = target
-        shortcut.Arguments = '-m fmpy.gui'
+        shortcut = shell.CreateShortCut(shortcut_path)
+        shortcut.Targetpath = target_path
+        shortcut.Arguments = arguments
         # shortcut.WorkingDirectory = ...
         shortcut.IconLocation = icon
         shortcut.save()
@@ -917,22 +924,34 @@ class MainWindow(QMainWindow):
         try:
             from winreg import HKEY_CURRENT_USER, KEY_WRITE, REG_SZ, OpenKey, CreateKey, SetValueEx, CloseKey
 
-            python = sys.executable
+            env = os.environ['CONDA_DEFAULT_ENV']
 
-            root, ext = os.path.splitext(python)
+            if env is None:
+                python = sys.executable
+                root, ext = os.path.splitext(python)
+                pythonw = root + 'w' + ext
 
-            pythonw = root + 'w' + ext
+                if os.path.isfile(pythonw):
+                    python = pythonw
 
-            if os.path.isfile(pythonw):
-                target = pythonw
+                target = '"%s" -m fmpy.gui "%%1"' % python
             else:
-                target = python
+                # activate the conda environment
+                for path in os.environ["PATH"].split(os.pathsep):
+                    activate = os.path.join(path, 'activate.bat')
+                    if os.path.isfile(activate):
+                        break
+
+                windir = os.environ['WINDIR']
+                cmd = os.path.join(windir, 'System32', 'cmd.exe')
+
+                target = r'%s /C ""%s" %s && python -m fmpy.gui %%1"' % (cmd, activate, env)
 
             key_path = r'Software\Classes\fmpy.gui\shell\open\command'
 
             CreateKey(HKEY_CURRENT_USER, key_path)
             key = OpenKey(HKEY_CURRENT_USER, key_path, 0, KEY_WRITE)
-            SetValueEx(key, '', 0, REG_SZ, '"%s" -m fmpy.gui "%%1"' % target)
+            SetValueEx(key, '', 0, REG_SZ, target)
             CloseKey(key)
 
             key_path = r'SOFTWARE\Classes\.fmu'
@@ -1165,3 +1184,16 @@ class MainWindow(QMainWindow):
 
         self.load(self.filename)
 
+
+    def addCoSimulationWrapper(self):
+        """ Add the Co-Simulation Wrapper to the FMU """
+
+        from ..cswrapper import add_cswrapper
+
+        try:
+            add_cswrapper(self.filename)
+        except Exception as e:
+            QMessageBox.warning(self, "Failed to add Co-Simulation Wrapper",
+                                "Failed to add Co-Simulation Wrapper %s. %s" % (self.filename, e))
+
+        self.load(self.filename)

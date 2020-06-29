@@ -112,7 +112,6 @@ class _FMU3(_FMU):
 
         self._fmi3Function('fmi3EnterEventMode', [
             (fmi3Instance,       'instance'),
-            (fmi3Boolean,        'inputEvent'),
             (fmi3Boolean,        'stepEvent'),
             (POINTER(fmi3Int32), 'rootsFound'),
             (c_size_t,           'nEventIndicators'),
@@ -142,11 +141,11 @@ class _FMU3(_FMU):
         for name, _type in types:
 
             params = [
-                (fmi3Instance, 'instance'),
+                (fmi3Instance,                'instance'),
                 (POINTER(fmi3ValueReference), 'vr'),
-                (c_size_t, 'nvr'),
-                (POINTER(_type), 'value'),
-                (c_size_t, 'nValues')
+                (c_size_t,                    'nvr'),
+                (POINTER(_type),              'value'),
+                (c_size_t,                    'nValues')
             ]
 
             self._fmi3Function('fmi3Get' + name, params)
@@ -217,12 +216,14 @@ class _FMU3(_FMU):
         # Getting partial derivatives
         self._fmi3Function('fmi3GetDirectionalDerivative', [
             (fmi3Instance,                'instance'),
-            (POINTER(fmi3ValueReference), 'vUnknown_ref'),
-            (c_size_t,                    'nUnknown'),
-            (POINTER(fmi3ValueReference), 'vKnown_ref'),
-            (c_size_t,                    'nKnown'),
-            (POINTER(fmi3Float64),        'dvKnown'),
-            (POINTER(fmi3Float64),        'dvUnknown')
+            (POINTER(fmi3ValueReference), 'unknowns'),
+            (c_size_t,                    'nUnknowns'),
+            (POINTER(fmi3ValueReference), 'knowns'),
+            (c_size_t,                    'nKnowns'),
+            (POINTER(fmi3Float64),        'seed'),
+            (c_size_t,                    'nSeed'),
+            (POINTER(fmi3Float64),        'sensitivity'),
+            (c_size_t,                    'nSensitivity')
         ])
 
         # Entering and exiting the Configuration or Reconfiguration Mode
@@ -302,7 +303,12 @@ class _FMU3(_FMU):
         """
 
         if not hasattr(self.dll, fname):
-            setattr(self, fname, None)
+
+            def raise_exception(*args):
+                raise Exception("Function %s is missing in shared library." % fname)
+
+            setattr(self, fname, raise_exception)
+
             return
 
         if len(params) > 0:
@@ -378,6 +384,14 @@ class _FMU3(_FMU):
 
     # Getting and setting variable values
 
+    def getFloat32(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3Float32 * nValues)()
+        self.fmi3GetFloat32(self.component, vr, len(vr), values, nValues)
+        return list(values)
+
     def getFloat64(self, vr, nValues=None):
         if nValues is None:
             nValues = len(vr)
@@ -386,12 +400,60 @@ class _FMU3(_FMU):
         self.fmi3GetFloat64(self.component, vr, len(vr), values, nValues)
         return list(values)
 
+    def getInt8(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        value = (fmi3Int8 * nValues)()
+        self.fmi3GetInt8(self.component, vr, len(vr), value, nValues)
+        return list(value)
+
+    def getUInt8(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        value = (fmi3UInt8 * nValues)()
+        self.fmi3GetUInt8(self.component, vr, len(vr), value, nValues)
+        return list(value)
+
+    def getInt16(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        value = (fmi3Int16 * nValues)()
+        self.fmi3GetInt16(self.component, vr, len(vr), value, nValues)
+        return list(value)
+
+    def getUInt16(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        value = (fmi3UInt16 * nValues)()
+        self.fmi3GetUInt16(self.component, vr, len(vr), value, nValues)
+        return list(value)
+
     def getInt32(self, vr, nValues=None):
         if nValues is None:
             nValues = len(vr)
         vr = (fmi3ValueReference * len(vr))(*vr)
         value = (fmi3Int32 * nValues)()
         self.fmi3GetInt32(self.component, vr, len(vr), value, nValues)
+        return list(value)
+
+    def getUInt32(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        value = (fmi3UInt32 * nValues)()
+        self.fmi3GetUInt32(self.component, vr, len(vr), value, nValues)
+        return list(value)
+
+    def getInt64(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        value = (fmi3Int64 * nValues)()
+        self.fmi3GetInt64(self.component, vr, len(vr), value, nValues)
         return list(value)
 
     def getUInt64(self, vr, nValues=None):
@@ -416,12 +478,6 @@ class _FMU3(_FMU):
         self.fmi3GetString(self.component, vr, len(vr), value)
         return list(value)
 
-    def getString(self, vr):
-        vr = (fmi3ValueReference * len(vr))(*vr)
-        value = (fmi3String * len(vr))()
-        self.fmi3GetString(self.component, vr, len(vr), value)
-        return list(value)
-
     def getBinary(self, vr):
         vr = (fmi3ValueReference * len(vr))(*vr)
         value = (fmi3Binary * len(vr))()
@@ -429,15 +485,55 @@ class _FMU3(_FMU):
         self.fmi3GetBinary(self.component, vr, len(vr), size, value, len(value))
         return list(value)
 
+    def setFloat32(self, vr, values):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3Float32 * len(values))(*values)
+        self.fmi3SetFloat32(self.component, vr, len(vr), values, len(values))
+
     def setFloat64(self, vr, values):
         vr = (fmi3ValueReference * len(vr))(*vr)
         values = (fmi3Float64 * len(values))(*values)
         self.fmi3SetFloat64(self.component, vr, len(vr), values, len(values))
 
+    def setInt8(self, vr, values):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3Int8 * len(values))(*values)
+        self.fmi3SetInt8(self.component, vr, len(vr), values, len(values))
+
+    def setUInt8(self, vr, values):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3UInt8 * len(values))(*values)
+        self.fmi3SetUInt8(self.component, vr, len(vr), values, len(values))
+
+    def setInt16(self, vr, values):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3Int16 * len(values))(*values)
+        self.fmi3SetInt16(self.component, vr, len(vr), values, len(values))
+
+    def setUInt16(self, vr, values):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3UInt16 * len(values))(*values)
+        self.fmi3SetUInt16(self.component, vr, len(vr), values, len(values))
+
     def setInt32(self, vr, values):
         vr = (fmi3ValueReference * len(vr))(*vr)
         values = (fmi3Int32 * len(values))(*values)
         self.fmi3SetInt32(self.component, vr, len(vr), values, len(values))
+
+    def setUInt32(self, vr, values):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3UInt32 * len(values))(*values)
+        self.fmi3SetUInt32(self.component, vr, len(vr), values, len(values))
+
+    def setInt64(self, vr, values):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3Int64 * len(values))(*values)
+        self.fmi3SetInt64(self.component, vr, len(vr), values, len(values))
+
+    def setUInt64(self, vr, values):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3UInt64 * len(values))(*values)
+        self.fmi3SetUInt64(self.component, vr, len(vr), values, len(values))
 
     def setBoolean(self, vr, values):
         vr = (fmi3ValueReference * len(vr))(*vr)
@@ -553,14 +649,14 @@ class FMU3Model(_FMU3):
 
         self._fmi3Function('fmi3SetContinuousStates', [
             (fmi3Instance,         'instance'),
-            (POINTER(fmi3Float64), 'x'),
-            (c_size_t,             'nx')
+            (POINTER(fmi3Float64), 'continuousStates'),
+            (c_size_t,             'nContinuousStates')
         ])
 
         self._fmi3Function('fmi3GetDerivatives', [
             (fmi3Instance,         'instance'),
             (POINTER(fmi3Float64), 'derivatives'),
-            (c_size_t,             'nx')
+            (c_size_t,             'nContinuousStates')
         ])
 
         self._fmi3Function('fmi3GetEventIndicators', [
@@ -571,24 +667,24 @@ class FMU3Model(_FMU3):
 
         self._fmi3Function('fmi3GetContinuousStates', [
             (fmi3Instance,         'instance'),
-            (POINTER(fmi3Float64), 'x'),
-            (c_size_t,             'nx')
+            (POINTER(fmi3Float64), 'continuousStates'),
+            (c_size_t,             'nContinuousStates')
         ])
 
         self._fmi3Function('fmi3GetNominalsOfContinuousStates', [
             (fmi3Instance,         'instance'),
             (POINTER(fmi3Float64), 'nominals'),
-            (c_size_t,             'nx')
+            (c_size_t,             'nContinuousStates')
         ])
 
         self._fmi3Function('fmi3GetNumberOfEventIndicators', [
             (fmi3Instance,      'instance'),
-            (POINTER(c_size_t), 'nz')
+            (POINTER(c_size_t), 'nEventIndicators')
         ])
 
         self._fmi3Function('fmi3GetNumberOfContinuousStates', [
             (fmi3Instance,      'instance'),
-            (POINTER(c_size_t), 'nx')
+            (POINTER(c_size_t), 'nContinuousStates')
         ])
 
     def instantiate(self, visible=False, loggingOn=False):
@@ -612,13 +708,12 @@ class FMU3Model(_FMU3):
 
     # Enter and exit the different modes
 
-    def enterEventMode(self, inputEvent=False, stepEvent=False, rootsFound=[], timeEvent=False):
+    def enterEventMode(self, stepEvent=False, rootsFound=[], timeEvent=False):
 
         rootsFound = (fmi3Int32 * len(rootsFound))(*rootsFound)
 
         return self.fmi3EnterEventMode(
             self.component,
-            fmi3True if inputEvent else fmi3False,
             fmi3True if stepEvent else fmi3False,
             rootsFound,
             len(rootsFound),
@@ -663,21 +758,21 @@ class FMU3Model(_FMU3):
     def setTime(self, time):
         return self.fmi3SetTime(self.component, time)
 
-    def setContinuousStates(self, x, nx):
-        return self.fmi3SetContinuousStates(self.component, x, nx)
+    def setContinuousStates(self, continuousStates, nContinuousStates):
+        return self.fmi3SetContinuousStates(self.component, continuousStates, nContinuousStates)
 
     # Evaluation of the model equations
 
-    def getDerivatives(self, dx, nx):
-        return self.fmi3GetDerivatives(self.component, dx, nx)
+    def getDerivatives(self, derivatives, nContinuousStates):
+        return self.fmi3GetDerivatives(self.component, derivatives, nContinuousStates)
 
-    def getEventIndicators(self, z, nz):
-        return self.fmi3GetEventIndicators(self.component, z, nz)
+    def getEventIndicators(self, eventIndicators, nEventIndicators):
+        return self.fmi3GetEventIndicators(self.component, eventIndicators, nEventIndicators)
 
-    def getContinuousStates(self, x, nx):
-        return self.fmi3GetContinuousStates(self.component, x, nx)
+    def getContinuousStates(self, continuousStates, nContinuousStates):
+        return self.fmi3GetContinuousStates(self.component, continuousStates, nContinuousStates)
 
-    def getNominalsOfContinuousStatesTYPE(self):
+    def getNominalsOfContinuousState(self):
         pass
 
 

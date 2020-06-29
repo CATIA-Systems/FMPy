@@ -112,7 +112,7 @@ class ScalarVariable(object):
         self.type = None
         "One of 'Real', 'Integer', 'Enumeration', 'Boolean', 'String'"
 
-        self.dimensions = None
+        self.dimensions = []
         "List of fixed dimensions"
 
         self.dimensionValueReferences = []
@@ -167,6 +167,13 @@ class ScalarVariable(object):
 
     def __repr__(self):
         return '%s "%s"' % (self.type, self.name)
+
+
+class Dimension(object):
+
+    def __init__(self, **kwargs):
+        self.start = kwargs.get('start')
+        self.valueReference = kwargs.get('valueReference')
 
 
 class SimpleType(object):
@@ -352,13 +359,14 @@ def read_build_description(filename, validate=True):
     return build_configurations
 
 
-def read_model_description(filename, validate=True, validate_variable_names=False):
+def read_model_description(filename, validate=True, validate_variable_names=False, validate_model_structure=False):
     """ Read the model description from an FMU without extracting it
 
     Parameters:
-        filename                 filename of the FMU or XML file, directory with extracted FMU or file like object
-        validate                 whether the model description should be validated
-        validate_variable_names  validate the variable names against the EBNF
+        filename                  filename of the FMU or XML file, directory with extracted FMU or file like object
+        validate                  whether the model description should be validated
+        validate_variable_names   validate the variable names against the EBNF
+        validate_model_structure  validate the model structure
 
     returns:
         model_description   a ModelDescription object
@@ -584,11 +592,12 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
     # FMI 3
     for t in root.findall('TypeDefinitions/*'):
 
-        if t.tag not in {'Float32', 'Float64', 'Int8', 'UInt8', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Int64', 'UInt64',
-                         'Boolean', 'String', 'Binary', 'Enumeration'}:
+        if t.tag not in {'Float32Type', 'Float64Type', 'Int8Type', 'UInt8Type', 'Int16Type', 'UInt16Type', 'Int32Type',
+                         'UInt32Type', 'Int64Type', 'UInt64Type', 'BooleanType', 'StringType', 'BinaryType',
+                         'EnumerationType'}:
             continue
 
-        simple_type = SimpleType(type=t.tag, **t.attrib)
+        simple_type = SimpleType(type=t.tag[:-4], **t.attrib)
 
         # add enumeration items
         for item in t.findall('Item'):
@@ -699,21 +708,33 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
         dimensions = variable.findall('Dimension')
 
         if dimensions:
-            sv.dimensions = []
             for dimension in dimensions:
                 start = dimension.get('start')
-                sv.dimensions.append(int(start) if start is not None else None)
                 vr = dimension.get('valueReference')
-                sv.dimensionValueReferences.append(int(vr) if vr is not None else None)
+                d = Dimension(
+                    start=int(start) if start is not None else None,
+                    valueReference=int(vr) if vr is not None else None
+                )
+                sv.dimensions.append(d)
 
         modelDescription.modelVariables.append(sv)
 
-    # variables = dict((v.valueReference, v) for v in modelDescription.modelVariables)
-    #
-    # resolve dimensions and calculate extent
-    # for variable in modelDescription.modelVariables:
-    #     variable.dimensions = list(map(lambda vr: variables[vr], variable.dimensions))
-    #     variable.extent = tuple(map(lambda d: int(d.start), variable.dimensions))
+    variables = dict((v.valueReference, v) for v in modelDescription.modelVariables)
+
+    # calculate initial shape
+    for variable in modelDescription.modelVariables:
+
+        shape = []
+
+        for d in variable.dimensions:
+
+            if d.start is not None:
+                shape.append(int(d.start))
+            else:
+                v = variables[d.valueReference]
+                shape.append(int(v.start))
+
+        variable.shape = tuple(shape)
 
     if fmiVersion == '2.0':
 
@@ -739,6 +760,12 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
                     unknown.dependenciesKind = dependenciesKind.strip().split(' ')
 
                 attr.append(unknown)
+
+        # resolve derivatives
+        for variable in modelDescription.modelVariables:
+            if variable.derivative is not None:
+                index = int(variable.derivative) - 1
+                variable.derivative = modelDescription.modelVariables[index]
 
     if fmiVersion.startswith('3.0'):
         modelDescription.numberOfEventIndicators = len(root.findall('ModelStructure/EventIndicator'))
@@ -799,13 +826,6 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
                 if (variable.initial in {'exact', 'approx'} or variable.causality == 'input') and variable.start is None:
                     raise Exception('Variable "%s" (line %s) has no start value.' % (variable.sourceline, variable.name))
 
-            # validate outputs
-            outputs = set([v for v in modelDescription.modelVariables if v.causality == 'output'])
-            unknowns = set([u.variable for u in modelDescription.outputs])
-
-            if outputs != unknowns:
-                raise Exception('ModelStructure/Outputs must have exactly one entry for each variable with causality="output".')
-
             # validate units
             for variable in modelDescription.modelVariables:
 
@@ -819,6 +839,40 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
 
                 if variable.displayUnit is not None and variable.displayUnit not in unit_definitions[unit]:
                     raise Exception('The display unit "%s" of variable "%s" (line %s) is not defined.' % (variable.displayUnit, variable.name, variable.sourceline))
+
+            if validate_model_structure:
+
+                # validate outputs
+                expected_outputs = set(v for v in modelDescription.modelVariables if v.causality == 'output')
+                outputs = set(u.variable for u in modelDescription.outputs)
+
+                if expected_outputs != outputs:
+                    raise Exception('ModelStructure/Outputs must have exactly one entry for each variable with causality="output".')
+
+                # TODO: validate derivatives
+
+                # validate initial unknowns
+                expected_initial_unknowns = set()
+
+                for variable in modelDescription.modelVariables:
+
+                    if variable.causality == 'output' and variable.initial in {'approx', 'calculated'}:
+                        expected_initial_unknowns.add(variable)
+
+                    if variable.causality == 'calculatedParameter':
+                        expected_initial_unknowns.add(variable)
+
+                for unknown in modelDescription.derivatives:
+                    derivative = unknown.variable
+                    state = derivative.derivative
+                    for variable in [state, derivative]:
+                        if variable.initial in {'approx', 'calculated'}:
+                            expected_initial_unknowns.add(variable)
+
+                initial_unknowns = set(v.variable for v in modelDescription.initialUnknowns)
+
+                if initial_unknowns != expected_initial_unknowns:
+                    raise Exception('ModelStructure/InitialUnkowns does not contain the expected set of variables.')
 
     if validate_variable_names:
 

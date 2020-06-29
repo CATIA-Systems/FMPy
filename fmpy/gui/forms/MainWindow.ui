@@ -1353,6 +1353,7 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="actionCompilePlatformBinary"/>
     <addaction name="actionCreateCMakeProject"/>
     <addaction name="actionAddRemoting"/>
+    <addaction name="actionAddCoSimulationWrapper"/>
    </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_Tools"/>
@@ -1891,7 +1892,7 @@ QToolButton::menu-button {
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Compile Platform Binary</string>
+    <string>Compile Platform &amp;Binary</string>
    </property>
   </action>
   <action name="actionAddRemoting">
@@ -1899,7 +1900,15 @@ QToolButton::menu-button {
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Add 32-bit Remoting</string>
+    <string>Add 32-bit &amp;Remoting</string>
+   </property>
+  </action>
+  <action name="actionAddCoSimulationWrapper">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Add Co-Simulation &amp;Wrapper</string>
    </property>
   </action>
  </widget>

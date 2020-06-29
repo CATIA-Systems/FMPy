@@ -203,7 +203,7 @@ def validate_fmu(filename):
     from . import read_model_description
 
     try:
-        read_model_description(filename, validate=True)
+        read_model_description(filename, validate=True, validate_variable_names=True, validate_model_structure=True)
     except Exception as e:
         return [str(e)]
 

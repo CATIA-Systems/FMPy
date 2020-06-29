@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:include schemaLocation="fmi3Annotation.xsd"/>
 	<xs:include schemaLocation="fmi3AttributeGroups.xsd"/>
 	<xs:annotation>
 		<xs:documentation>
@@ -37,13 +38,16 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	</xs:annotation>
 
 	<xs:complexType name="fmi3TypeDefinitionBase" abstract="true">
+		<xs:sequence>
+			<xs:element ref="Annotations" minOccurs="0"/>
+		</xs:sequence>
 		<xs:attribute name="name" type="xs:normalizedString" use="required"/>
 		<xs:attribute name="description" type="xs:string"/>
 	</xs:complexType>
 
 	<xs:group name="fmi3TypeDefinition">
 		<xs:choice>
-			<xs:element name="Float32">
+			<xs:element name="Float32Type">
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
@@ -52,7 +56,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					</xs:complexContent>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="Float64">
+			<xs:element name="Float64Type">
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
@@ -61,7 +65,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					</xs:complexContent>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="Int8">
+			<xs:element name="Int8Type">
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
@@ -70,7 +74,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					</xs:complexContent>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="UInt8">
+			<xs:element name="UInt8Type">
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
@@ -79,7 +83,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					</xs:complexContent>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="Int16">
+			<xs:element name="Int16Type">
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
@@ -88,7 +92,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					</xs:complexContent>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="UInt16">
+			<xs:element name="UInt16Type">
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
@@ -97,7 +101,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					</xs:complexContent>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="Int32">
+			<xs:element name="Int32Type">
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
@@ -106,7 +110,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					</xs:complexContent>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="UInt32">
+			<xs:element name="UInt32Type">
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
@@ -115,7 +119,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					</xs:complexContent>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="Int64">
+			<xs:element name="Int64Type">
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
@@ -124,7 +128,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					</xs:complexContent>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="UInt64">
+			<xs:element name="UInt64Type">
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
@@ -133,37 +137,40 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					</xs:complexContent>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="Boolean">
+			<xs:element name="BooleanType">
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase"/>
 					</xs:complexContent>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="String">
+			<xs:element name="StringType">
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase"/>
 					</xs:complexContent>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="Binary">
+			<xs:element name="BinaryType">
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
-							<xs:attribute name="mimeType" type="xs:normalizedString" use="optional" default="application/octet-stream"/>
-							<xs:attribute name="maxSize" type="xs:nonNegativeInteger" use="optional"/>
+							<xs:attribute name="mimeType" type="xs:normalizedString" default="application/octet-stream"/>
+							<xs:attribute name="maxSize" type="xs:nonNegativeInteger"/>
 						</xs:extension>
 					</xs:complexContent>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="Enumeration">
+			<xs:element name="EnumerationType">
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
 							<xs:sequence maxOccurs="unbounded">
 								<xs:element name="Item">
 									<xs:complexType>
+										<xs:sequence>
+											<xs:element ref="Annotations" minOccurs="0"/>
+										</xs:sequence>										
 										<xs:attribute name="name" type="xs:normalizedString" use="required"/>
 										<xs:attribute name="value" type="xs:int" use="required"/>
 										<xs:attribute name="description" type="xs:string"/>
@@ -175,7 +182,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					</xs:complexContent>
 				</xs:complexType>
 			</xs:element>
-			<xs:element name="Clock">
+			<xs:element name="ClockType">
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">

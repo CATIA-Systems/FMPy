@@ -7,7 +7,7 @@ from .fmi2 import *
 from .fmi2 import _FMU2
 from . import fmi3
 from . import extract
-from .util import auto_interval
+from .util import auto_interval, _is_string
 import numpy as np
 from time import time as current_time
 
@@ -52,8 +52,8 @@ class Recorder(object):
                 names, vrs, shapes, n_values, getter = self.info.get(type, ([], [], [], 0, getattr(self.fmu, 'get' + type)))
                 names.append(sv.name)
                 vrs.append(sv.valueReference)
-                shapes.append(sv.dimensions)
-                n_values += np.prod(sv.dimensions) if sv.dimensions else 1
+                shapes.append(sv.shape)
+                n_values += np.prod(sv.shape) if sv.shape else 1
                 self.info[type] = names, vrs, shapes, n_values, getter
 
         # create the columns for the NumPy array
@@ -70,7 +70,7 @@ class Recorder(object):
                 self.cols += zip(names, [dt] * len(names), shapes)
 
         # strip the shape for scalars
-        self.cols = [(n, t) if s is None else (n, t, s) for n, t, s in self.cols]
+        self.cols = [(n, t) if not s else (n, t, s) for n, t, s in self.cols]
 
     @staticmethod
     def _append_reshaped(row, values, shapes):
@@ -364,9 +364,17 @@ def apply_start_values(fmu, model_description, start_values, apply_default_start
                     value = value.lower() == 'true'
 
         # convert the type
-        value = variable._python_type(value)
+        if variable.shape:
+            if _is_string(value):
+                value = value.split()
+            value = list(map(lambda e: variable._python_type(e), value))
+            if len(value) != np.prod(variable.shape):
+                raise ArgumentError('The start value for variable "%s" must have %d elements but has %d.' %
+                                    (variable.name, np.prod(variable.shape), len(value)))
+        else:
+            value = [variable._python_type(value)]
 
-        setter([vr], [value])
+        setter([vr], value)
 
     if len(start_values) > 0:
         raise Exception("The start values for the following variables could not be set because they don't exist: " +
@@ -375,7 +383,7 @@ def apply_start_values(fmu, model_description, start_values, apply_default_start
 
 class ForwardEuler(object):
 
-    def __init__(self, nx, nz, get_x, set_x, get_dx, get_z):
+    def __init__(self, nx, nz, get_x, set_x, get_dx, get_z, input):
 
         self.get_x = get_x
         self.set_x = set_x
@@ -694,28 +702,48 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
     # initialize
     if is_fmi1:
+
         input.apply(time)
-        fmu.initialize()
+
+        (iterationConverged,
+         stateValueReferencesChanged,
+         stateValuesChanged,
+         terminateSimulation,
+         nextEventTimeDefined,
+         nextEventTime) = fmu.initialize()
+
+        if terminateSimulation:
+            raise Exception('Model requested termination during initial event update.')
+
     elif is_fmi2:
+
         fmu.enterInitializationMode()
         input.apply(time)
         fmu.exitInitializationMode()
 
-        # event iteration
-        fmu.eventInfo.newDiscreteStatesNeeded = fmi2True
-        fmu.eventInfo.terminateSimulation = fmi2False
+        newDiscreteStatesNeeded = True
+        terminateSimulation = False
 
-        while fmu.eventInfo.newDiscreteStatesNeeded == fmi2True and fmu.eventInfo.terminateSimulation == fmi2False:
+        while newDiscreteStatesNeeded and not terminateSimulation:
             # update discrete states
-            fmu.newDiscreteStates()
+            (newDiscreteStatesNeeded,
+             terminateSimulation,
+             nominalsOfContinuousStatesChanged,
+             valuesOfContinuousStatesChanged,
+             nextEventTimeDefined,
+             nextEventTime) = fmu.newDiscreteStates()
+
+        if terminateSimulation:
+            raise Exception('Model requested termination during initial event update.')
 
         fmu.enterContinuousTimeMode()
-    else:
+
+    elif is_fmi3:
+
         fmu.enterInitializationMode(startTime=start_time)
         input.apply(time)
         fmu.exitInitializationMode()
 
-        # event iteration
         newDiscreteStatesNeeded = True
         terminateSimulation = False
 
@@ -737,7 +765,8 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
         'get_x': fmu.getContinuousStates,
         'set_x': fmu.setContinuousStates,
         'get_dx': fmu.getDerivatives,
-        'get_z': fmu.getEventIndicators
+        'get_z': fmu.getEventIndicators,
+        'input': input
     }
 
     # select the solver
@@ -797,15 +826,10 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
         if input_event:
             t_next = t_input_event
 
-        if is_fmi1:
-            time_event = fmu.eventInfo.upcomingTimeEvent != fmi1False and fmu.eventInfo.nextEventTime <= t_next
-        elif is_fmi2:
-            time_event = fmu.eventInfo.nextEventTimeDefined != fmi2False and fmu.eventInfo.nextEventTime <= t_next
-        else:
-            time_event = nextEventTimeDefined and nextEventTime <= t_next
+        time_event = nextEventTimeDefined and nextEventTime <= t_next
 
         if time_event and not fixed_step:
-            t_next = nextEventTime if is_fmi3 else fmu.eventInfo.nextEventTime
+            t_next = nextEventTime
 
         if t_next - time > eps:
             # do one step
@@ -838,8 +862,20 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
                 if input_event:
                     input.apply(time=time, after_event=True)
-                    
-                fmu.eventUpdate()
+
+                iterationConverged = False
+
+                # update discrete states
+                while not iterationConverged and not terminateSimulation:
+                    (iterationConverged,
+                     stateValueReferencesChanged,
+                     stateValuesChanged,
+                     terminateSimulation,
+                     nextEventTimeDefined,
+                     nextEventTime) = fmu.eventUpdate()
+
+                if terminateSimulation:
+                    break
 
             elif is_fmi2:
 
@@ -848,24 +884,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                 if input_event:
                     input.apply(time=time, after_event=True)
 
-                fmu.eventInfo.newDiscreteStatesNeeded = fmi2True
-                fmu.eventInfo.terminateSimulation = fmi2False
-
-                # update discrete states
-                while fmu.eventInfo.newDiscreteStatesNeeded != fmi2False and fmu.eventInfo.terminateSimulation == fmi2False:
-                    fmu.newDiscreteStates()
-
-                fmu.enterContinuousTimeMode()
-
-            else:
-
-                fmu.enterEventMode(inputEvent=input_event, stepEvent=step_event, rootsFound=roots_found, timeEvent=time_event)
-
-                if input_event:
-                    input.apply(time=time, after_event=True)
-
                 newDiscreteStatesNeeded = True
-                terminateSimulation = False
 
                 # update discrete states
                 while newDiscreteStatesNeeded and not terminateSimulation:
@@ -875,6 +894,32 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                      valuesOfContinuousStatesChanged,
                      nextEventTimeDefined,
                      nextEventTime) = fmu.newDiscreteStates()
+
+                if terminateSimulation:
+                    break
+
+                fmu.enterContinuousTimeMode()
+
+            else:
+
+                fmu.enterEventMode(stepEvent=step_event, rootsFound=roots_found, timeEvent=time_event)
+
+                if input_event:
+                    input.apply(time=time, after_event=True)
+
+                newDiscreteStatesNeeded = True
+
+                # update discrete states
+                while newDiscreteStatesNeeded and not terminateSimulation:
+                    (newDiscreteStatesNeeded,
+                     terminateSimulation,
+                     nominalsOfContinuousStatesChanged,
+                     valuesOfContinuousStatesChanged,
+                     nextEventTimeDefined,
+                     nextEventTime) = fmu.newDiscreteStates()
+
+                if terminateSimulation:
+                    break
 
                 fmu.enterContinuousTimeMode()
 

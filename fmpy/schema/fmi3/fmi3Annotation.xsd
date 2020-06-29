@@ -34,18 +34,18 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ----------------------------------------------------------------------------
 		</xs:documentation>
 	</xs:annotation>
-	<xs:complexType name="fmi3Annotation">
+	<xs:complexType name="fmi3Annotations">
 		<xs:sequence maxOccurs="unbounded">
-			<xs:element name="Tool">
-				<xs:complexType>
+			<xs:element name="Annotation">
+				<xs:complexType mixed="true">
 					<xs:sequence>
-						<xs:any namespace="##any" processContents="lax" minOccurs="0"/>
+						<xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
 					</xs:sequence>
-					<xs:attribute name="name" type="xs:normalizedString" use="required">
+					<xs:attribute name="type" type="xs:normalizedString" use="required">
 					</xs:attribute>
 				</xs:complexType>
 			</xs:element>
 		</xs:sequence>
 	</xs:complexType>
-	<xs:element name="VendorAnnotations" type="fmi3Annotation"/>
+	<xs:element name="Annotations" type="fmi3Annotations"/>
 </xs:schema>

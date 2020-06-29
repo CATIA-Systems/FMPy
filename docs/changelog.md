@@ -1,3 +1,17 @@
+## v0.2.21 (2020-06-29)
+
+- `FIXED` Set inputs in CVode root function before getting event indicators (#150)
+- `FIXED` Add scipy to required packages for fmpy[plot] (#146)
+- `FIXED` Activate conda environment in file open command and desktop shortcut (#131)
+- `FIXED` Evaluate terminateSimulation in simulation loop (#145)
+- `FIXED` Fix return value of FMU1Model.completedIntegratorStep()
+- `FIXED` Add Dimension class and calculate initial shape of FMI 3 model variables
+- `FIXED` Raise an exception when a missing FMI function is called (#139)
+- `NEW` Update FMI 3 API to v3.0-alpha.4
+- `NEW` Validate model structure in read_model_description()
+- `NEW` Add "create-cmake-project" command to CLI (#129)
+- `NEW` Add Co-Simulation wrapper and build binaries in CI (#127)
+
 ## v0.2.20 (2020-05-23)
 
 - `FIXED` Fix fmi3Functions.h for compile_platform_binary()

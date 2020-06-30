@@ -879,10 +879,14 @@ class MainWindow(QMainWindow):
         from win32com.client import Dispatch
         import sys
 
-        env = os.environ['CONDA_DEFAULT_ENV']
+        env = os.environ.get('CONDA_DEFAULT_ENV')
 
         if env is None:
             target_path = sys.executable
+            root, ext = os.path.splitext(target_path)
+            pythonw = root + 'w' + ext
+            if os.path.isfile(pythonw):
+                target_path = pythonw
             arguments = '-m fmpy.gui'
         else:
             for path in os.environ["PATH"].split(os.pathsep):
@@ -890,7 +894,7 @@ class MainWindow(QMainWindow):
                 if os.path.isfile(activate):
                     break
 
-            target_path = '%windir%\System32\cmd.exe'
+            target_path = r'%windir%\System32\cmd.exe'
             arguments = '/C ""%s" %s && python -m fmpy.gui"' % (activate, env)
 
         file_path = os.path.dirname(__file__)
@@ -924,7 +928,7 @@ class MainWindow(QMainWindow):
         try:
             from winreg import HKEY_CURRENT_USER, KEY_WRITE, REG_SZ, OpenKey, CreateKey, SetValueEx, CloseKey
 
-            env = os.environ['CONDA_DEFAULT_ENV']
+            env = os.environ.get('CONDA_DEFAULT_ENV_')
 
             if env is None:
                 python = sys.executable

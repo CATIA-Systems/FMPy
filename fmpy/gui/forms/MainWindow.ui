@@ -1338,9 +1338,6 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="menuFMI_Specifications"/>
     <addaction name="actionOpenTestFMUs"/>
     <addaction name="separator"/>
-    <addaction name="actionCreateDesktopShortcut"/>
-    <addaction name="actionAddFileAssociation"/>
-    <addaction name="separator"/>
     <addaction name="actionOpenWebsite"/>
     <addaction name="actionShowReleaseNotes"/>
     <addaction name="separator"/>
@@ -1350,6 +1347,9 @@ QToolButton:checked, QToolButton:hover:pressed {
     <property name="title">
      <string>&amp;Tools</string>
     </property>
+    <addaction name="actionCreateDesktopShortcut"/>
+    <addaction name="actionAddFileAssociation"/>
+    <addaction name="separator"/>
     <addaction name="actionCompilePlatformBinary"/>
     <addaction name="actionCreateCMakeProject"/>
     <addaction name="actionAddRemoting"/>

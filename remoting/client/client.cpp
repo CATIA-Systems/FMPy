@@ -275,21 +275,15 @@ fmi2Status fmi2EnterEventMode(fmi2Component c) {
 }
 
 fmi2Status fmi2NewDiscreteStates(fmi2Component c, fmi2EventInfo* eventInfo) {
-	//auto r = client->call("fmi2NewDiscreteStates").as<EventInfoReturnValue>();
-	//eventInfo->newDiscreteStatesNeeded           = r.newDiscreteStatesNeeded;
-	//eventInfo->terminateSimulation               = r.terminateSimulation;
-	//eventInfo->nominalsOfContinuousStatesChanged = r.nominalsOfContinuousStatesChanged;
-	//eventInfo->valuesOfContinuousStatesChanged   = r.valuesOfContinuousStatesChanged;
-	//eventInfo->nextEventTimeDefined              = r.nextEventTimeDefined;
-	//eventInfo->nextEventTime                     = r.nextEventTime;
-	eventInfo->newDiscreteStatesNeeded = 0;
-	eventInfo->terminateSimulation = 0;
-	eventInfo->nominalsOfContinuousStatesChanged = 0;
-	eventInfo->valuesOfContinuousStatesChanged = 0;
-	eventInfo->nextEventTimeDefined = 0;
-	eventInfo->nextEventTime = 0;
-	//forwardLogMessages(r.logMessages);
-	return fmi2Status(fmi2OK);
+	auto r = client->call("fmi2NewDiscreteStates").as<EventInfoReturnValue>();
+	eventInfo->newDiscreteStatesNeeded           = r.newDiscreteStatesNeeded;
+	eventInfo->terminateSimulation               = r.terminateSimulation;
+	eventInfo->nominalsOfContinuousStatesChanged = r.nominalsOfContinuousStatesChanged;
+	eventInfo->valuesOfContinuousStatesChanged   = r.valuesOfContinuousStatesChanged;
+	eventInfo->nextEventTimeDefined              = r.nextEventTimeDefined;
+	eventInfo->nextEventTime                     = r.nextEventTime;
+	forwardLogMessages(r.logMessages);
+	return fmi2Status(r.status);
 }
 
 fmi2Status fmi2EnterContinuousTimeMode(fmi2Component c) {

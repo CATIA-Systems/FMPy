@@ -42,6 +42,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:sequence>
 					<xs:element name="Alias" type="fmi3FloatVariableAlias" minOccurs="0" maxOccurs="unbounded"/>
 				</xs:sequence>
+				<xs:attributeGroup ref="fmi3RealBaseAttributes"/>
 				<xs:attributeGroup ref="fmi3Float64Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -58,6 +59,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:sequence>
 					<xs:element name="Alias" type="fmi3FloatVariableAlias" minOccurs="0" maxOccurs="unbounded"/>
 				</xs:sequence>
+				<xs:attributeGroup ref="fmi3RealBaseAttributes"/>
 				<xs:attributeGroup ref="fmi3Float32Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -74,6 +76,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:sequence>
 					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
 				</xs:sequence>
+				<xs:attributeGroup ref="fmi3IntegerBaseAttributes"/>
 				<xs:attributeGroup ref="fmi3Int8Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -89,6 +92,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:sequence>
 					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
 				</xs:sequence>
+				<xs:attributeGroup ref="fmi3IntegerBaseAttributes"/>
 				<xs:attributeGroup ref="fmi3UInt8Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -104,6 +108,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:sequence>
 					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
 				</xs:sequence>
+				<xs:attributeGroup ref="fmi3IntegerBaseAttributes"/>
 				<xs:attributeGroup ref="fmi3Int16Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -119,6 +124,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:sequence>
 					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
 				</xs:sequence>
+				<xs:attributeGroup ref="fmi3IntegerBaseAttributes"/>
 				<xs:attributeGroup ref="fmi3UInt16Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -134,6 +140,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:sequence>
 					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
 				</xs:sequence>
+				<xs:attributeGroup ref="fmi3IntegerBaseAttributes"/>
 				<xs:attributeGroup ref="fmi3Int32Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -149,6 +156,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:sequence>
 					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
 				</xs:sequence>
+				<xs:attributeGroup ref="fmi3IntegerBaseAttributes"/>
 				<xs:attributeGroup ref="fmi3UInt32Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -164,6 +172,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:sequence>
 					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
 				</xs:sequence>
+				<xs:attributeGroup ref="fmi3IntegerBaseAttributes"/>
 				<xs:attributeGroup ref="fmi3Int64Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
@@ -179,6 +188,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:sequence>
 					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
 				</xs:sequence>
+				<xs:attributeGroup ref="fmi3IntegerBaseAttributes"/>
 				<xs:attributeGroup ref="fmi3UInt64Attributes"/>
 				<xs:attribute name="start">
 					<xs:simpleType>

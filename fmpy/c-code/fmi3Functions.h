@@ -2,9 +2,8 @@
 #define fmi3Functions_h
 
 /*
-This header file must be utilized when compiling a FMU.
-It defines all functions of the
-     FMI 3.0-alpha.3 Model Exchange and Co-Simulation Interface.
+This header file declares the functions of FMI 3.0-alpha.5.
+It must be used when compiling an FMU.
 
 In order to have unique function names even if several FMUs
 are compiled together (e.g. for embedded systems), every "real" function name
@@ -83,7 +82,7 @@ This definition has been changed to add no prefix.
 #define fmi3FullName(name) name
 
 /* FMI version */
-#define fmi3Version "3.0-alpha.3"
+#define fmi3Version "3.0-alpha.5"
 
 /***************************************************
 Common Functions

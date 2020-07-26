@@ -44,9 +44,16 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element name="ModelExchange" type="fmi3ModelExchange" minOccurs="0"/>
-				<xs:element name="BasicCoSimulation" type="fmi3CoSimulation" minOccurs="0"/>
-				<xs:element name="HybridCoSimulation" type="fmi3CoSimulation" minOccurs="0"/>
-				<xs:element name="ScheduledCoSimulation" type="fmi3CoSimulation" minOccurs="0"/>
+				<xs:element name="CoSimulation" minOccurs="0">
+					<xs:complexType>
+						<xs:complexContent>
+							<xs:extension base="fmi3CoSimulation">
+								<xs:attribute name="hasEventMode" type="xs:boolean" default="false"/>
+							</xs:extension>
+						</xs:complexContent>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="ScheduledExecution" type="fmi3CoSimulation" minOccurs="0"/>
 				<xs:element name="UnitDefinitions" minOccurs="0">
 					<xs:complexType>
 						<xs:sequence maxOccurs="unbounded">

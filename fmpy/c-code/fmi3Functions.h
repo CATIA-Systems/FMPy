@@ -76,14 +76,11 @@ This definition has been changed to always export the symbols.
   #endif
 #endif
 
-/* Macros to construct the real function name (prepend function name by FMI3_FUNCTION_PREFIX) */
-#if defined(FMI3_FUNCTION_PREFIX)
-  #define fmi3Paste(a,b)     a ## b
-  #define fmi3PasteB(a,b)    fmi3Paste(a,b)
-  #define fmi3FullName(name) fmi3PasteB(FMI3_FUNCTION_PREFIX, name)
-#else
-  #define fmi3FullName(name) name
-#endif
+/*
+Macro to construct the real function name.
+This definition has been changed to add no prefix.
+*/
+#define fmi3FullName(name) name
 
 /* FMI version */
 #define fmi3Version "3.0-alpha.3"

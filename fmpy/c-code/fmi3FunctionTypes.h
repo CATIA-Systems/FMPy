@@ -4,8 +4,8 @@
 #include "fmi3PlatformTypes.h"
 
 /*
-This header file defines the data and function types of FMI 3.0-alpha.5.
-It must be used when compiling an FMU or an FMI master.
+This header file must be utilized when compiling an FMU or an FMI master.
+It declares data and function types for FMI 3.0-alpha.3.
 
 Copyright (C) 2011 MODELISAR consortium,
               2012-2020 Modelica Association Project "FMI"
@@ -126,44 +126,27 @@ typedef fmi3Instance fmi3InstantiateModelExchangeTYPE(
     fmi3InstanceEnvironment    instanceEnvironment,
     fmi3CallbackLogMessage     logMessage);
 
-typedef fmi3Instance fmi3InstantiateBasicCoSimulationTYPE(
+typedef fmi3Instance fmi3InstantiateCoSimulationTYPE(
     fmi3String                     instanceName,
     fmi3String                     instantiationToken,
     fmi3String                     resourceLocation,
     fmi3Boolean                    visible,
     fmi3Boolean                    loggingOn,
-    const fmi3ValueReference       intermediateVariablesGetRequired[],
-    size_t                         nIntermediateVariablesGetRequired,
-    const fmi3ValueReference       intermediateVariablesSetRequired[],
-    size_t                         nIntermediateVariablesSetRequired,
+    fmi3Boolean                    eventModeRequired,
+    const fmi3ValueReference       requiredIntermediateVariables[],
+    size_t                         nRequiredIntermediateVariables,
     fmi3InstanceEnvironment        instanceEnvironment,
     fmi3CallbackLogMessage         logMessage,
     fmi3CallbackIntermediateUpdate intermediateUpdate);
 
-typedef fmi3Instance fmi3InstantiateHybridCoSimulationTYPE(
+typedef fmi3Instance fmi3InstantiateScheduledExecutionTYPE(
     fmi3String                     instanceName,
     fmi3String                     instantiationToken,
     fmi3String                     resourceLocation,
     fmi3Boolean                    visible,
     fmi3Boolean                    loggingOn,
-    const fmi3ValueReference       intermediateVariablesGetRequired[],
-    size_t                         nIntermediateVariablesGetRequired,
-    const fmi3ValueReference       intermediateVariablesSetRequired[],
-    size_t                         nIntermediateVariablesSetRequired,
-    fmi3InstanceEnvironment        instanceEnvironment,
-    fmi3CallbackLogMessage         logMessage,
-    fmi3CallbackIntermediateUpdate intermediateUpdate);
-
-typedef fmi3Instance fmi3InstantiateScheduledCoSimulationTYPE(
-    fmi3String                     instanceName,
-    fmi3String                     instantiationToken,
-    fmi3String                     resourceLocation,
-    fmi3Boolean                    visible,
-    fmi3Boolean                    loggingOn,
-    const fmi3ValueReference       intermediateVariablesGetRequired[],
-    size_t                         nIntermediateVariablesGetRequired,
-    const fmi3ValueReference       intermediateVariablesSetRequired[],
-    size_t                         nIntermediateVariablesSetRequired,
+    const fmi3ValueReference       requiredIntermediateVariables[],
+    size_t                         nRequiredIntermediateVariables,
     fmi3InstanceEnvironment        instanceEnvironment,
     fmi3CallbackLogMessage         logMessage,
     fmi3CallbackIntermediateUpdate intermediateUpdate,

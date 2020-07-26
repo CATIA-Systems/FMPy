@@ -2,8 +2,9 @@
 #define fmi3Functions_h
 
 /*
-This header file declares the functions of FMI 3.0-alpha.5.
-It must be used when compiling an FMU.
+This header file must be utilized when compiling a FMU.
+It defines all functions of the
+     FMI 3.0-alpha.3 Model Exchange and Co-Simulation Interface.
 
 In order to have unique function names even if several FMUs
 are compiled together (e.g. for embedded systems), every "real" function name
@@ -75,14 +76,17 @@ This definition has been changed to always export the symbols.
   #endif
 #endif
 
-/*
-Macro to construct the real function name.
-This definition has been changed to add no prefix.
-*/
-#define fmi3FullName(name) name
+/* Macros to construct the real function name (prepend function name by FMI3_FUNCTION_PREFIX) */
+#if defined(FMI3_FUNCTION_PREFIX)
+  #define fmi3Paste(a,b)     a ## b
+  #define fmi3PasteB(a,b)    fmi3Paste(a,b)
+  #define fmi3FullName(name) fmi3PasteB(FMI3_FUNCTION_PREFIX, name)
+#else
+  #define fmi3FullName(name) name
+#endif
 
 /* FMI version */
-#define fmi3Version "3.0-alpha.5"
+#define fmi3Version "3.0-alpha.3"
 
 /***************************************************
 Common Functions
@@ -94,9 +98,8 @@ Common Functions
 
 /* Creation and destruction of FMU instances */
 #define fmi3InstantiateModelExchange         fmi3FullName(fmi3InstantiateModelExchange)
-#define fmi3InstantiateBasicCoSimulation     fmi3FullName(fmi3InstantiateBasicCoSimulation)
-#define fmi3InstantiateHybridCoSimulation    fmi3FullName(fmi3InstantiateHybridCoSimulation)
-#define fmi3InstantiateScheduledCoSimulation fmi3FullName(fmi3InstantiateScheduledCoSimulation)
+#define fmi3InstantiateCoSimulation          fmi3FullName(fmi3InstantiateCoSimulation)
+#define fmi3InstantiateScheduledExecution    fmi3FullName(fmi3InstantiateScheduledExecution)
 #define fmi3FreeInstance                     fmi3FullName(fmi3FreeInstance)
 
 /* Enter and exit initialization mode, terminate and reset */
@@ -202,9 +205,8 @@ FMI3_Export fmi3SetDebugLoggingTYPE fmi3SetDebugLogging;
 
 /* Creation and destruction of FMU instances */
 FMI3_Export fmi3InstantiateModelExchangeTYPE         fmi3InstantiateModelExchange;
-FMI3_Export fmi3InstantiateBasicCoSimulationTYPE     fmi3InstantiateBasicCoSimulation;
-FMI3_Export fmi3InstantiateHybridCoSimulationTYPE    fmi3InstantiateHybridCoSimulation;
-FMI3_Export fmi3InstantiateScheduledCoSimulationTYPE fmi3InstantiateScheduledCoSimulation;
+FMI3_Export fmi3InstantiateCoSimulationTYPE          fmi3InstantiateCoSimulation;
+FMI3_Export fmi3InstantiateScheduledExecutionTYPE    fmi3InstantiateScheduledExecution;
 FMI3_Export fmi3FreeInstanceTYPE                     fmi3FreeInstance;
 
 /* Enter and exit initialization mode, terminate and reset */

@@ -4,8 +4,8 @@
 #include "fmi3PlatformTypes.h"
 
 /*
-This header file must be utilized when compiling an FMU or an FMI master.
-It declares data and function types for FMI 3.0-alpha.3.
+This header file defines the data and function types of FMI 3.0-alpha.5.
+It must be used when compiling an FMU or an FMI master.
 
 Copyright (C) 2011 MODELISAR consortium,
               2012-2020 Modelica Association Project "FMI"

@@ -61,6 +61,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:attribute name="canHandleVariableCommunicationStepSize" type="xs:boolean" default="false"/>
 				<xs:attribute name="maxOutputDerivativeOrder" type="xs:unsignedInt" default="0"/>
 				<xs:attribute name="providesIntermediateVariableAccess" type="xs:boolean" default="false"/>
+				<xs:attribute name="recommendedIntermediateInputSmoothness" type="xs:int" default="0"/>
 				<xs:attribute name="canReturnEarlyAfterIntermediateUpdate" type="xs:boolean" default="false"/>
 				<xs:attribute name="fixedInternalStepSize" type="xs:double"/>
 			</xs:extension>

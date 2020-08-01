@@ -785,15 +785,15 @@ class FMU3Slave(_FMU3):
 
         super(FMU3Slave, self).__init__(**kwargs)
 
-        self._fmi3Function('fmi3InstantiateBasicCoSimulation', [
+        self._fmi3Function('fmi3InstantiateCoSimulation', [
             (fmi3String,                         'instanceName'),
             (fmi3String,                         'instantiationToken'),
             (fmi3String,                         'resourceLocation'),
             (fmi3Boolean,                        'visible'),
             (fmi3Boolean,                        'loggingOn'),
-            (fmi3Boolean,                        'intermediateVariableGetRequired'),
-            (fmi3Boolean,                        'intermediateInternalVariableGetRequired'),
-            (fmi3Boolean,                        'intermediateVariableSetRequired'),
+            (fmi3Boolean,                        'eventModeRequired'),
+            (POINTER(fmi3ValueReference),        'requiredIntermediateVariables'),
+            (c_size_t,                           'nRequiredIntermediateVariables'),
             (fmi3InstanceEnvironment,            'instanceEnvironment'),
             (fmi3CallbackLogMessageTYPE,         'logMessage'),
             (fmi3CallbackIntermediateUpdateTYPE, 'intermediateUpdate')
@@ -829,7 +829,7 @@ class FMU3Slave(_FMU3):
             (fmi3Float64,        'activationTime')
         ])
 
-    def instantiate(self, visible=False, loggingOn=False):
+    def instantiate(self, visible=False, loggingOn=False, eventModeRequired=False):
 
         resourceLocation = pathlib.Path(self.unzipDirectory, 'resources').as_uri()
 
@@ -837,15 +837,14 @@ class FMU3Slave(_FMU3):
         self.printLogMessage = fmi3CallbackLogMessageTYPE(printLogMessage)
         self.intermediateUpdate = fmi3CallbackIntermediateUpdateTYPE(intermediateUpdate)
 
-        self.component = self.fmi3InstantiateBasicCoSimulation(
+        self.component = self.fmi3InstantiateCoSimulation(
             self.instanceName.encode('utf-8'),
             self.guid.encode('utf-8'),
             resourceLocation.encode('utf-8'),
             fmi3True if visible else fmi3False,
             fmi3True if loggingOn else fmi3False,
-            fmi3False,
-            fmi3False,
-            fmi3False,
+            fmi3True if eventModeRequired else fmi3False,
+            None, 0,
             fmi3InstanceEnvironment(),
             self.printLogMessage,
             self.intermediateUpdate)

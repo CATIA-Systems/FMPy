@@ -2,10 +2,8 @@
 #define fmi3PlatformTypes_h
 
 /*
-Standard header file to define the argument types of the
-functions of the Functional Mock-up Interface 3.0-alpha.3.
-This header file must be utilized both by the model and
-by the simulation engine.
+This header file defines the data types of FMI 3.0-alpha.5.
+It must be used by both FMU and FMI master.
 
 Copyright (C) 2008-2011 MODELISAR consortium,
               2012-2020 Modelica Association Project "FMI"

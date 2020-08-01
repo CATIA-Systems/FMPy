@@ -495,7 +495,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
                               'canSerializeFMUstate',
                               'providesDirectionalDerivative'])
 
-        for cs in root.findall('BasicCoSimulation'):
+        for cs in root.findall('CoSimulation'):
             modelDescription.coSimulation = CoSimulation()
             _copy_attributes(cs, modelDescription.coSimulation,
                              ['modelIdentifier',

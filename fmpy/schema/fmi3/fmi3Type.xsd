@@ -51,6 +51,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
+							<xs:attributeGroup ref="fmi3RealBaseAttributes"/>
 							<xs:attributeGroup ref="fmi3Float32Attributes"/>
 						</xs:extension>
 					</xs:complexContent>
@@ -60,6 +61,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
+							<xs:attributeGroup ref="fmi3RealBaseAttributes"/>
 							<xs:attributeGroup ref="fmi3Float64Attributes"/>
 						</xs:extension>
 					</xs:complexContent>
@@ -69,6 +71,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
+							<xs:attributeGroup ref="fmi3IntegerBaseAttributes"/>
 							<xs:attributeGroup ref="fmi3Int8Attributes"/>
 						</xs:extension>
 					</xs:complexContent>
@@ -78,6 +81,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
+							<xs:attributeGroup ref="fmi3IntegerBaseAttributes"/>
 							<xs:attributeGroup ref="fmi3UInt8Attributes"/>
 						</xs:extension>
 					</xs:complexContent>
@@ -87,6 +91,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
+							<xs:attributeGroup ref="fmi3IntegerBaseAttributes"/>
 							<xs:attributeGroup ref="fmi3Int16Attributes"/>
 						</xs:extension>
 					</xs:complexContent>
@@ -96,6 +101,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
+							<xs:attributeGroup ref="fmi3IntegerBaseAttributes"/>
 							<xs:attributeGroup ref="fmi3UInt16Attributes"/>
 						</xs:extension>
 					</xs:complexContent>
@@ -105,6 +111,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
+							<xs:attributeGroup ref="fmi3IntegerBaseAttributes"/>
 							<xs:attributeGroup ref="fmi3Int32Attributes"/>
 						</xs:extension>
 					</xs:complexContent>
@@ -114,6 +121,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
+							<xs:attributeGroup ref="fmi3IntegerBaseAttributes"/>
 							<xs:attributeGroup ref="fmi3UInt32Attributes"/>
 						</xs:extension>
 					</xs:complexContent>
@@ -123,6 +131,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
+							<xs:attributeGroup ref="fmi3IntegerBaseAttributes"/>
 							<xs:attributeGroup ref="fmi3Int64Attributes"/>
 						</xs:extension>
 					</xs:complexContent>
@@ -132,6 +141,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				<xs:complexType>
 					<xs:complexContent>
 						<xs:extension base="fmi3TypeDefinitionBase">
+							<xs:attributeGroup ref="fmi3IntegerBaseAttributes"/>
 							<xs:attributeGroup ref="fmi3UInt64Attributes"/>
 						</xs:extension>
 					</xs:complexContent>

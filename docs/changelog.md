@@ -1,3 +1,9 @@
+## v0.2.22 (2020-08-01)
+
+- `FIXED' Forward fmi2NewDiscreteStates() in remoting client (#154)
+- `FIXED` Fix createDesktopShortcut() and addFileAssociation() (#153)
+- `NEW` Update FMI 3 API to 3.0-alpha.5
+
 ## v0.2.21 (2020-06-29)
 
 - `FIXED` Set inputs in CVode root function before getting event indicators (#150)

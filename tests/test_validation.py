@@ -2,6 +2,7 @@ from fmpy import read_model_description
 
 import unittest
 from fmpy.util import download_file
+from fmpy.validation import *
 
 
 class ValidationTest(unittest.TestCase):
@@ -20,18 +21,18 @@ class ValidationTest(unittest.TestCase):
         except Exception as e:
             message = str(e)
 
-        self.assertEqual(message, 'The unit "" of variable "inputs" (line 183) is not defined.')
+        self.assertEquals('Failed to validate model description. 1 problems were found:\n\n- The unit "" of variable "inputs" (line 183) is not defined.', message)
 
-    def test_validate_variable_name(self):
+    def test_validate_variable_names(self):
 
-        message = None
+        message = ""
 
         try:
-            read_model_description('CoupledClutches.fmu', validate=False, validate_variable_names=True)
+            read_model_description('CoupledClutches.fmu', validate=True, validate_variable_names=True)
         except Exception as e:
             message = str(e)
 
-        self.assertTrue(message.startswith('"CoupledClutches_r(19)" (line 192) is not a legal variable name for naming convention "structured".'))
+        self.assertTrue(message.startswith('Failed to validate model description. 124 problems were found:'))
 
 
 if __name__ == '__main__':

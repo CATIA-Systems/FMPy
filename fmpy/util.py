@@ -193,23 +193,6 @@ def validate_signal(t, y, t_ref, y_ref, num=1000, dx=20, dy=0.1):
     return t_band, y_min, y_max, i_out
 
 
-def validate_fmu(filename):
-    """ Validate an FMU
-
-    Returns:
-        a list of the problems found
-    """
-
-    from . import read_model_description
-
-    try:
-        read_model_description(filename, validate=True, validate_variable_names=True, validate_model_structure=True)
-    except Exception as e:
-        return [str(e)]
-
-    return []
-
-
 def validate_result(result, reference, stop_time=None):
     """ Validate a simulation result against a reference result
 

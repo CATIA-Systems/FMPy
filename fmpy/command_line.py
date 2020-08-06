@@ -65,18 +65,19 @@ def main():
     elif args.command == 'validate':
 
         import sys
-        from fmpy.util import validate_fmu
+        from fmpy.validation import validate_fmu
 
-        messages = validate_fmu(args.fmu_filename)
+        problems = validate_fmu(args.fmu_filename)
 
-        if len(messages) == 0:
+        if len(problems) == 0:
             print('No problems found.')
         else:
-            print('The following problems were found:')
-            for message in messages:
+            print('%d problems were found:' % len(problems))
+            for message in problems:
                 print()
                 print(message)
-            sys.exit(1)
+
+        sys.exit(len(problems))
 
     elif args.command == 'compile':
 

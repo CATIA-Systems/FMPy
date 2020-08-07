@@ -41,5 +41,5 @@ struct EventInfoReturnValue {
 	int valuesOfContinuousStatesChanged;
 	int nextEventTimeDefined;
 	double nextEventTime;
-	MSGPACK_DEFINE_ARRAY(newDiscreteStatesNeeded, terminateSimulation, nominalsOfContinuousStatesChanged, valuesOfContinuousStatesChanged, nextEventTimeDefined, nextEventTime)
+	MSGPACK_DEFINE_ARRAY(status, logMessages, newDiscreteStatesNeeded, terminateSimulation, nominalsOfContinuousStatesChanged, valuesOfContinuousStatesChanged, nextEventTimeDefined, nextEventTime)
 };

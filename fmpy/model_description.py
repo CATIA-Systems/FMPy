@@ -614,7 +614,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
         'tunable':    {'parameter': 'exact', 'calculatedParameter': 'calculated', 'structuralParameter': 'exact', 'local': 'calculated'},
         'discrete':   {'input': None, 'output': 'calculated', 'local': 'calculated'},
         'continuous': {'input': None, 'output': 'calculated', 'local': 'calculated', 'independent': None},
-        'clock':      {'inferred': None, 'triggered': None},
+        'clock':      {'input': None, 'output': None},
     }
 
     # model variables

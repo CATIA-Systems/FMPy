@@ -1,3 +1,20 @@
+## v0.2.23 (2020-09-02)
+
+### Enhancements
+
+- Add getAdjointDerivative() and fix getDirectionalDerivative()
+- Validate results for FMI 3 Reference FMUs
+- Add getClock() and setClock() to _FMU3
+- Add FMU2Model.getNominalsOfContinuousStates()
+
+### Bug fixes
+
+- Fix logging for FMI 3 (#159)
+- Read start value of String variables in FMI 3
+- Add missing fields to EventInfoReturnValue message (#160)
+- Move enterEventMode() and newDiscreteStates() to _FMU3
+- Fix variabilities for variable type "Clock"
+
 ## v0.2.22 (2020-08-01)
 
 - `FIXED' Forward fmi2NewDiscreteStates() in remoting client (#154)

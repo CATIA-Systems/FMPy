@@ -172,15 +172,24 @@ class _FMU(object):
                 a += hex(0 if v is None else v)
             elif t == POINTER(c_uint):
                 # value references
-                a += '[' + ', '.join(map(str, v)) + ']'
+                if v is None:
+                    a += 'NULL'
+                else:
+                    a += '[' + ', '.join(map(str, v)) + ']'
             elif t == POINTER(c_double):
                 if hasattr(v, '__len__'):
                     # c_double_Array_N
                     a += '[' + ', '.join(map(str, v)) + ']'
                 else:
-                    # double pointers are always flowed by the size of the array
-                    arr = np.ctypeslib.as_array(v, (args[i+1],))
-                    a += '[' + ', '.join(map(str, arr)) + ']'
+                    if len(args) > i + 1:
+                        # double pointers are always flowed by the size of the array
+                        arr = np.ctypeslib.as_array(v, (args[i + 1],))
+                        a += '[' + ', '.join(map(str, arr)) + ']'
+                    else:
+                        # except for fmi3DoStep
+                        v_ = cast(v, POINTER(c_double))
+                        a += str(str(v_.contents.value))
+
             elif hasattr(v, '_obj'):
                 # byref object
                 if hasattr(v._obj, 'value'):

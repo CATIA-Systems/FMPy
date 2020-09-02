@@ -614,7 +614,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
         'tunable':    {'parameter': 'exact', 'calculatedParameter': 'calculated', 'structuralParameter': 'exact', 'local': 'calculated'},
         'discrete':   {'input': None, 'output': 'calculated', 'local': 'calculated'},
         'continuous': {'input': None, 'output': 'calculated', 'local': 'calculated', 'independent': None},
-        'clock':      {'inferred': None, 'triggered': None},
+        'clock':      {'input': None, 'output': None},
     }
 
     # model variables
@@ -625,14 +625,13 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
 
         sv = ScalarVariable(name=variable.get('name'), valueReference=int(variable.get('valueReference')))
         sv.description = variable.get('description')
-        sv.start = variable.get('start')
         sv.causality = variable.get('causality', default='local')
         sv.variability = variable.get('variability')
         sv.initial = variable.get('initial')
         sv.sourceline = variable.sourceline
 
         if fmiVersion in ['1.0', '2.0']:
-            # get the "value" element
+            # get the nested "value" element
             for child in variable.iterchildren():
                 if child.tag in {'Real', 'Integer', 'Boolean', 'String', 'Enumeration'}:
                     value = child
@@ -641,7 +640,12 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
             value = variable
 
         sv.type = value.tag
-        sv.start = value.get('start')
+
+        if variable.tag == 'String':
+            # handle <Start> element of String variables in FMI 3
+            sv.start = variable.find('Start').get('value')
+        else:
+            sv.start = value.get('start')
 
         type_map = {
             'Real':        float,

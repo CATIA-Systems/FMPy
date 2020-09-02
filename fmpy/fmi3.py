@@ -388,6 +388,42 @@ class _FMU3(_FMU):
     def exitInitializationMode(self):
         return self.fmi3ExitInitializationMode(self.component)
 
+    def enterEventMode(self, stepEvent=False, rootsFound=[], timeEvent=False):
+
+        rootsFound = (fmi3Int32 * len(rootsFound))(*rootsFound)
+
+        return self.fmi3EnterEventMode(
+            self.component,
+            fmi3True if stepEvent else fmi3False,
+            rootsFound,
+            len(rootsFound),
+            fmi3True if timeEvent else fmi3False,
+        )
+
+    def newDiscreteStates(self):
+
+        newDiscreteStatesNeeded           = fmi3Boolean()
+        terminateSimulation               = fmi3Boolean()
+        nominalsOfContinuousStatesChanged = fmi3Boolean()
+        valuesOfContinuousStatesChanged   = fmi3Boolean()
+        nextEventTimeDefined              = fmi3Boolean()
+        nextEventTime                     = fmi3Float64()
+
+        self.fmi3NewDiscreteStates(self.component,
+                                   byref(newDiscreteStatesNeeded),
+                                   byref(terminateSimulation),
+                                   byref(nominalsOfContinuousStatesChanged),
+                                   byref(valuesOfContinuousStatesChanged),
+                                   byref(nextEventTimeDefined),
+                                   byref(nextEventTime))
+
+        return (newDiscreteStatesNeeded.value           != fmi3False,
+                terminateSimulation.value               != fmi3False,
+                nominalsOfContinuousStatesChanged.value != fmi3False,
+                valuesOfContinuousStatesChanged.value   != fmi3False,
+                nextEventTimeDefined.value              != fmi3False,
+                nextEventTime.value)
+
     def terminate(self):
         return self.fmi3Terminate(self.component)
 
@@ -754,42 +790,6 @@ class FMU3Model(_FMU3):
 
     # Enter and exit the different modes
 
-    def enterEventMode(self, stepEvent=False, rootsFound=[], timeEvent=False):
-
-        rootsFound = (fmi3Int32 * len(rootsFound))(*rootsFound)
-
-        return self.fmi3EnterEventMode(
-            self.component,
-            fmi3True if stepEvent else fmi3False,
-            rootsFound,
-            len(rootsFound),
-            fmi3True if timeEvent else fmi3False,
-        )
-
-    def newDiscreteStates(self):
-
-        newDiscreteStatesNeeded           = fmi3Boolean()
-        terminateSimulation               = fmi3Boolean()
-        nominalsOfContinuousStatesChanged = fmi3Boolean()
-        valuesOfContinuousStatesChanged   = fmi3Boolean()
-        nextEventTimeDefined              = fmi3Boolean()
-        nextEventTime                     = fmi3Float64()
-
-        self.fmi3NewDiscreteStates(self.component,
-                                   byref(newDiscreteStatesNeeded),
-                                   byref(terminateSimulation),
-                                   byref(nominalsOfContinuousStatesChanged),
-                                   byref(valuesOfContinuousStatesChanged),
-                                   byref(nextEventTimeDefined),
-                                   byref(nextEventTime))
-
-        return (newDiscreteStatesNeeded.value           != fmi3False,
-                terminateSimulation.value               != fmi3False,
-                nominalsOfContinuousStatesChanged.value != fmi3False,
-                valuesOfContinuousStatesChanged.value   != fmi3False,
-                nextEventTimeDefined.value              != fmi3False,
-                nextEventTime.value)
-
     def enterContinuousTimeMode(self):
         return self.fmi3EnterContinuousTimeMode(self.component)
 
@@ -897,6 +897,9 @@ class FMU3Slave(_FMU3):
 
         if not self.component:
             raise Exception("Failed to instantiate FMU")
+
+    def enterStepMode(self):
+        return self.fmi3EnterStepMode(self.component)
 
     # Simulating the slave
 

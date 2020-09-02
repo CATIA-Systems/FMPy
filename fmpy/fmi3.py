@@ -497,6 +497,14 @@ class _FMU3(_FMU):
         self.fmi3GetBinary(self.component, vr, len(vr), size, value, len(value))
         return list(value)
 
+    def getClock(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        value = (fmi3Clock * nValues)()
+        self.fmi3GetClock(self.component, vr, len(vr), value, nValues)
+        return list(value)
+
     def setFloat32(self, vr, values):
         vr = (fmi3ValueReference * len(vr))(*vr)
         values = (fmi3Float32 * len(values))(*values)
@@ -563,6 +571,11 @@ class _FMU3(_FMU):
         values_ = (fmi3Binary * len(values))(*values)
         size = (c_size_t * len(vr))(*[len(v) for v in values])
         self.fmi3SetBinary(self.component, vr, len(vr), size, values_, len(values))
+
+    def setClock(self, vr, values, subactive=None):
+        vr = (fmi3ValueReference * len(vr))(*vr)
+        values = (fmi3Clock * len(values))(*values)
+        self.fmi3SetClock(self.component, vr, len(vr), values, subactive, len(values))
 
     # Getting and setting the internal FMU state
 

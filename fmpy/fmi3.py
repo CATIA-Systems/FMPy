@@ -922,3 +922,67 @@ class FMU3Slave(_FMU3):
         lastSuccessfulTime = fmi3Float64()
         status = self.fmi3DoStep(self.component, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint, byref(terminate), byref(earlyReturn), byref(lastSuccessfulTime))
         return status, terminate.value != fmi3False, earlyReturn.value != fmi3False, lastSuccessfulTime.value
+
+
+class FMU3ScheduledExecution(_FMU3):
+    """ An FMI 3.0 Scheduled Execution FMU """
+
+    def __init__(self, instanceName=None, **kwargs):
+        kwargs['instanceName'] = instanceName
+
+        super(FMU3ScheduledExecution, self).__init__(**kwargs)
+
+        self._fmi3Function('fmi3InstantiateScheduledExecution', [
+            (fmi3String, 'instanceName'),
+            (fmi3String, 'instantiationToken'),
+            (fmi3String, 'resourceLocation'),
+            (fmi3Boolean, 'visible'),
+            (fmi3Boolean, 'loggingOn'),
+            (POINTER(fmi3ValueReference), 'requiredIntermediateVariables'),
+            (c_size_t, 'nRequiredIntermediateVariables'),
+            (fmi3InstanceEnvironment, 'instanceEnvironment'),
+            (fmi3CallbackLogMessageTYPE, 'logMessage'),
+            (fmi3CallbackIntermediateUpdateTYPE, 'intermediateUpdate'),
+            (fmi3CallbackLockPreemptionTYPE, 'lockPreemption'),
+            (fmi3CallbackUnlockPreemptionTYPE, 'unlockPreemption'),
+        ], fmi3Instance)
+
+        self._fmi3Function('fmi3ActivateModelPartition', [
+            (fmi3Instance, 'instance'),
+            (fmi3ValueReference, 'clockReference'),
+            (c_size_t, 'clockElementIndex'),
+            (fmi3Float64, 'activationTime'),
+        ])
+
+    def instantiate(self, visible=False, loggingOn=False, eventModeRequired=False):
+
+        resourceLocation = pathlib.Path(self.unzipDirectory, 'resources').as_uri()
+
+        def noop():
+            pass
+
+        # save callbacks from GC
+        self.printLogMessage = fmi3CallbackLogMessageTYPE(printLogMessage)
+        self.intermediateUpdate = fmi3CallbackIntermediateUpdateTYPE(intermediateUpdate)
+        self.lockPreemption = fmi3CallbackLockPreemptionTYPE(noop)
+        self.unlockPreemption = fmi3CallbackUnlockPreemptionTYPE(noop)
+
+        self.component = self.fmi3InstantiateScheduledExecution(
+            self.instanceName.encode('utf-8'),
+            self.guid.encode('utf-8'),
+            resourceLocation.encode('utf-8'),
+            fmi3True if visible else fmi3False,
+            fmi3True if loggingOn else fmi3False,
+            None, 0,
+            fmi3InstanceEnvironment(),
+            self.printLogMessage,
+            self.intermediateUpdate,
+            self.lockPreemption,
+            self.unlockPreemption
+        )
+
+        if not self.component:
+            raise Exception("Failed to instantiate FMU")
+
+    def activateModelPartition(self, clockReference, clockElementIndex, activationTime):
+        self.fmi3ActivateModelPartition(self.component, clockReference, clockElementIndex, activationTime)

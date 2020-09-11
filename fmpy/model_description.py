@@ -18,6 +18,7 @@ class ModelDescription(object):
 
         self.coSimulation = None
         self.modelExchange = None
+        self.scheduledExecution = None
 
         self.buildConfigurations = []
 
@@ -39,33 +40,44 @@ class DefaultExperiment(object):
         self.stepSize = None
 
 
-class CoSimulation(object):
+class InterfaceType(object):
 
     def __init__(self):
         self.modelIdentifier = None
         self.needsExecutionTool = False
+        self.canBeInstantiatedOnlyOncePerProcess = False
+        self.canGetAndSetFMUstate = False
+        self.canSerializeFMUstate = False
+        self.providesDirectionalDerivative = False
+        self.providesAdjointDerivatives = False
+        self.providesPerElementDependencies = False
+
+        # FMI 2.0
+        self.canNotUseMemoryManagementFunctions = False
+        self.providesDirectionalDerivative = False
+
+
+class ModelExchange(InterfaceType):
+
+    def __init__(self):
+        super().__init__()
+        self.completedIntegratorStepNotNeeded = False
+
+
+class CoSimulation(InterfaceType):
+
+    def __init__(self):
+        super().__init__()
         self.canHandleVariableCommunicationStepSize = False
         self.canInterpolateInputs = False
         self.maxOutputDerivativeOrder = 0
         self.canRunAsynchronuously = False
-        self.canBeInstantiatedOnlyOncePerProcess = False
-        self.canNotUseMemoryManagementFunctions = False
-        self.canGetAndSetFMUstate = False
-        self.canSerializeFMUstate = False
-        self.providesDirectionalDerivative = False
 
 
-class ModelExchange(object):
+class ScheduledExecution(CoSimulation):
 
     def __init__(self):
-        self.modelIdentifier = None
-        self.needsExecutionTool = False
-        self.completedIntegratorStepNotNeeded = False
-        self.canBeInstantiatedOnlyOncePerProcess = False
-        self.canNotUseMemoryManagementFunctions = False
-        self.canGetAndSetFMUstate = False
-        self.canSerializeFMUstate = False
-        self.providesDirectionalDerivative = False
+        super().__init__()
 
 
 class BuildConfiguration(object):
@@ -262,8 +274,11 @@ class Unknown(object):
         return '%s' % self.variable
 
 
-def _copy_attributes(element, object, attributes):
+def _copy_attributes(element, object, attributes=None):
     """ Copy attributes from an XML element to a Python object """
+
+    if attributes is None:
+        attributes = object.__dict__.keys()
 
     for attribute in attributes:
 
@@ -485,30 +500,16 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
 
         for me in root.findall('ModelExchange'):
             modelDescription.modelExchange = ModelExchange()
-            _copy_attributes(me, modelDescription.modelExchange,
-                             ['modelIdentifier',
-                              'needsExecutionTool',
-                              'completedIntegratorStepNotNeeded',
-                              'canBeInstantiatedOnlyOncePerProcess',
-                              'canNotUseMemoryManagementFunctions',
-                              'canGetAndSetFMUstate',
-                              'canSerializeFMUstate',
-                              'providesDirectionalDerivative'])
+            _copy_attributes(me, modelDescription.modelExchange)
 
         for cs in root.findall('CoSimulation'):
             modelDescription.coSimulation = CoSimulation()
-            _copy_attributes(cs, modelDescription.coSimulation,
-                             ['modelIdentifier',
-                              'needsExecutionTool',
-                              'canHandleVariableCommunicationStepSize',
-                              'canInterpolateInputs',
-                              'maxOutputDerivativeOrder',
-                              'canRunAsynchronuously',
-                              'canBeInstantiatedOnlyOncePerProcess',
-                              'canNotUseMemoryManagementFunctions',
-                              'canGetAndSetFMUstate',
-                              'canSerializeFMUstate',
-                              'providesDirectionalDerivative'])
+            _copy_attributes(cs, modelDescription.coSimulation)
+
+        for se in root.findall('ScheduledExecution'):
+            modelDescription.scheduledExecution = ScheduledExecution()
+            _copy_attributes(se, modelDescription.scheduledExecution)
+
     # build configurations
     if fmiVersion == '2.0':
 

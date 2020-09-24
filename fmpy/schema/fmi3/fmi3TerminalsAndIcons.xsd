@@ -59,7 +59,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 									<xs:attribute name="y2" type="xs:double" use="required"/>
 								</xs:complexType>
 							</xs:element>
-							<xs:element ref="VendorAnnotations" minOccurs="0"/>
+							<xs:element ref="Annotations" minOccurs="0"/>
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
@@ -70,7 +70,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
-				<xs:element ref="VendorAnnotations" minOccurs="0"/>
+				<xs:element ref="Annotations" minOccurs="0"/>
 			</xs:sequence>
 			<xs:attribute name="fmiVersion" use="required">
 				<xs:simpleType>

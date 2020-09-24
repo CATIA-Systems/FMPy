@@ -4,8 +4,17 @@
 *.csv
 *.html
 
+# binaries
+*.a
+*.dll
+*.dylib
+*.exe
+*.lib
+*.so
+
 # source archives
 *.tar.gz
+*.zip
 
 # Affinity Designer documents
 *.afdesign
@@ -18,6 +27,7 @@ build/
 cvode-*/
 dist/
 MANIFEST
+rpclib-*/
 *.egg-info
 
 # test artifacts

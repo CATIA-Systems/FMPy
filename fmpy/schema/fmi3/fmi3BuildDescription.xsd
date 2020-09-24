@@ -38,7 +38,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:element name="fmiBuildDescription">
 		<xs:complexType>
 			<xs:sequence>
-				<xs:element name="BuildConfiguration" minOccurs="1" maxOccurs="unbounded">
+				<xs:element name="BuildConfiguration" maxOccurs="unbounded">
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element name="SourceFileSet" minOccurs="0" maxOccurs="unbounded">
@@ -46,6 +46,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 									<xs:sequence>
 										<xs:element name="SourceFile" maxOccurs="unbounded">
 											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Annotations" minOccurs="0"/>
+												</xs:sequence>
 												<xs:attribute name="name" type="xs:normalizedString" use="required"/>
 											</xs:complexType>
 										</xs:element>
@@ -58,6 +61,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 															<xs:attribute name="description" type="xs:string"/>
 														</xs:complexType>
 													</xs:element>
+													<xs:element ref="Annotations" minOccurs="0"/>
 												</xs:sequence>
 												<xs:attribute name="name" type="xs:normalizedString" use="required"/>
 												<xs:attribute name="optional" type="xs:boolean" default="false"/>
@@ -67,9 +71,13 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 										</xs:element>
 										<xs:element name="IncludeDirectory" minOccurs="0" maxOccurs="unbounded">
 											<xs:complexType>
+												<xs:sequence>
+													<xs:element ref="Annotations" minOccurs="0"/>
+												</xs:sequence>
 												<xs:attribute name="name" type="xs:normalizedString" use="required"/>
 											</xs:complexType>
 										</xs:element>
+										<xs:element ref="Annotations" minOccurs="0"/>
 									</xs:sequence>
 									<xs:attribute name="language" type="xs:normalizedString"/>
 									<xs:attribute name="compiler" type="xs:normalizedString"/>
@@ -78,20 +86,23 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 							</xs:element>
 							<xs:element name="Library" minOccurs="0" maxOccurs="unbounded">
 								<xs:complexType>
+									<xs:sequence>
+										<xs:element ref="Annotations" minOccurs="0"/>
+									</xs:sequence>
 									<xs:attribute name="name" type="xs:normalizedString" use="required"/>
 									<xs:attribute name="version" type="xs:normalizedString"/>
 									<xs:attribute name="external" type="xs:boolean" default="false"/>
 									<xs:attribute name="description" type="xs:string"/>
 								</xs:complexType>
 							</xs:element>
-							<xs:element ref="VendorAnnotations" minOccurs="0"/>
+							<xs:element ref="Annotations" minOccurs="0"/>
 						</xs:sequence>
 						<xs:attribute name="modelIdentifier" type="xs:normalizedString" use="required"/>
 						<xs:attribute name="platform" type="xs:normalizedString"/>
 						<xs:attribute name="description" type="xs:string"/>
 					</xs:complexType>
 				</xs:element>
-				<xs:element ref="VendorAnnotations" minOccurs="0"/>
+				<xs:element ref="Annotations" minOccurs="0"/>
 			</xs:sequence>
 			<xs:attribute name="fmiVersion" use="required">
 				<xs:simpleType>

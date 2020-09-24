@@ -31,7 +31,7 @@ class CVodeSolver(object):
     """ Interface to the CVode solver """
 
     def __init__(self,
-                 nx, nz, get_x, set_x, get_dx, get_z, set_time,
+                 nx, nz, get_x, set_x, get_dx, get_z, set_time, input,
                  startTime,
                  maxStep=float('inf'),
                  relativeTolerance=1e-5,
@@ -56,6 +56,7 @@ class CVodeSolver(object):
         self.get_dx = get_dx
         self.get_z = get_z
         self.set_time = set_time
+        self.input = input
         self.error_info = None
 
         self.discrete = nx == 0
@@ -132,6 +133,7 @@ class CVodeSolver(object):
         """ Root function """
 
         self.set_time(t)
+        self.input.apply(t)
 
         if not self.discrete:
             self.set_x(NV_DATA_S(y), self.nx)

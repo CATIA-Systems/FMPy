@@ -21,6 +21,7 @@ FMPy is a free Python library to simulate `Functional Mock-up Units (FMUs) <http
 
 packages = ['fmpy',
             'fmpy.cross_check',
+            'fmpy.cswrapper',
             'fmpy.examples',
             'fmpy.logging',
             'fmpy.gui',
@@ -33,6 +34,10 @@ package_data = {
     'fmpy': [
         'c-code/*.h',
         'c-code/CMakeLists.txt',
+        'cswrapper/cswrapper.dll',
+        'cswrapper/cswrapper.dylib',
+        'cswrapper/cswrapper.so',
+        'cswrapper/license.txt',
         'logging/darwin64/logging.dylib',
         'logging/linux64/logging.so',
         'logging/win32/logging.dll',
@@ -61,14 +66,14 @@ install_requires = [
 
 extras_require = {
     'examples': ['dask[bag]', 'requests'],
-    'plot': ['matplotlib'],
+    'plot': ['matplotlib', 'scipy'],
     'gui': ['PyQt5', 'pyqtgraph']
 }
 
 extras_require['complete'] = sorted(set(sum(extras_require.values(), [])))
 
 setup(name='FMPy',
-      version='0.2.20',
+      version='0.2.23',
       description="Simulate Functional Mock-up Units (FMUs) in Python",
       long_description=long_description,
       author="Torsten Sommer",

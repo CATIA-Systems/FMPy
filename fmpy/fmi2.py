@@ -186,7 +186,12 @@ class _FMU2(_FMU):
         """
 
         if not hasattr(self.dll, fname):
-            setattr(self, fname, None)
+
+            def raise_exception(*args):
+                raise Exception("Function %s is missing in shared library." % fname)
+
+            setattr(self, fname, raise_exception)
+
             return
 
         # get the exported function form the shared library
@@ -408,7 +413,11 @@ class FMU2Model(_FMU2):
 
         super(FMU2Model, self).__init__(**kwargs)
 
-        self.eventInfo = fmi2EventInfo()
+        # Enter and exit the different modes
+
+        self._fmi2Function('fmi2EnterEventMode',
+                           ['component'],
+                           [fmi2Component])
 
         self._fmi2Function('fmi2NewDiscreteStates',
                            ['component', 'eventInfo'],
@@ -418,17 +427,21 @@ class FMU2Model(_FMU2):
                            ['component'],
                            [fmi2Component])
 
-        self._fmi2Function('fmi2EnterEventMode',
-                           ['component'],
-                           [fmi2Component])
+        self._fmi2Function('fmi2CompletedIntegratorStep',
+                           ['component', 'noSetFMUStatePriorToCurrentPoint', 'enterEventMode', 'terminateSimulation'],
+                           [fmi2Component, fmi2Boolean, POINTER(fmi2Boolean), POINTER(fmi2Boolean)])
 
-        self._fmi2Function('fmi2GetContinuousStates',
-                           ['component', 'x', 'nx'],
-                           [fmi2Component, POINTER(fmi2Real), c_size_t])
+        # Providing independent variables and re-initialization of caching
+
+        self._fmi2Function('fmi2SetTime',
+                           ['component', 'time'],
+                           [fmi2Component, fmi2Real])
 
         self._fmi2Function('fmi2SetContinuousStates',
                            ['component', 'x', 'nx'],
                            [fmi2Component, POINTER(fmi2Real), c_size_t])
+
+        # Evaluation of the model equations
 
         self._fmi2Function('fmi2GetDerivatives',
                            ['component', 'derivatives', 'nx'],
@@ -438,13 +451,13 @@ class FMU2Model(_FMU2):
                            ['component', 'eventIndicators', 'ni'],
                            [fmi2Component, POINTER(fmi2Real), c_size_t])
 
-        self._fmi2Function('fmi2SetTime',
-                           ['component', 'time'],
-                           [fmi2Component, fmi2Real])
+        self._fmi2Function('fmi2GetContinuousStates',
+                           ['component', 'x', 'nx'],
+                           [fmi2Component, POINTER(fmi2Real), c_size_t])
 
-        self._fmi2Function('fmi2CompletedIntegratorStep',
-                           ['component', 'noSetFMUStatePriorToCurrentPoint', 'enterEventMode', 'terminateSimulation'],
-                           [fmi2Component, fmi2Boolean, POINTER(fmi2Boolean), POINTER(fmi2Boolean)])
+        self._fmi2Function('fmi2GetNominalsOfContinuousStates',
+                           ['component', 'x_nominal', 'nx'],
+                           [fmi2Component, POINTER(fmi2Real), c_size_t])
 
     # Enter and exit the different modes
 
@@ -452,7 +465,17 @@ class FMU2Model(_FMU2):
         return self.fmi2EnterEventMode(self.component)
 
     def newDiscreteStates(self):
-        return self.fmi2NewDiscreteStates(self.component, byref(self.eventInfo))
+
+        eventInfo = fmi2EventInfo()
+
+        self.fmi2NewDiscreteStates(self.component, byref(eventInfo))
+
+        return (eventInfo.newDiscreteStatesNeeded           != fmi2False,
+                eventInfo.terminateSimulation               != fmi2False,
+                eventInfo.nominalsOfContinuousStatesChanged != fmi2False,
+                eventInfo.valuesOfContinuousStatesChanged   != fmi2False,
+                eventInfo.nextEventTimeDefined              != fmi2False,
+                eventInfo.nextEventTime)
 
     def enterContinuousTimeMode(self):
         return self.fmi2EnterContinuousTimeMode(self.component)
@@ -482,8 +505,8 @@ class FMU2Model(_FMU2):
     def getContinuousStates(self, x, nx):
         return self.fmi2GetContinuousStates(self.component, x, nx)
 
-    def getNominalsOfContinuousStatesTYPE(self):
-        pass
+    def getNominalsOfContinuousStates(self, x_nominal, nx):
+        return self.fmi2GetNominalsOfContinuousStates(self.component, x_nominal, nx)
 
 
 class FMU2Slave(_FMU2):

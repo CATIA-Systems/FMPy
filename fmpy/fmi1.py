@@ -172,15 +172,24 @@ class _FMU(object):
                 a += hex(0 if v is None else v)
             elif t == POINTER(c_uint):
                 # value references
-                a += '[' + ', '.join(map(str, v)) + ']'
+                if v is None:
+                    a += 'NULL'
+                else:
+                    a += '[' + ', '.join(map(str, v)) + ']'
             elif t == POINTER(c_double):
                 if hasattr(v, '__len__'):
                     # c_double_Array_N
                     a += '[' + ', '.join(map(str, v)) + ']'
                 else:
-                    # double pointers are always flowed by the size of the array
-                    arr = np.ctypeslib.as_array(v, (args[i+1],))
-                    a += '[' + ', '.join(map(str, arr)) + ']'
+                    if len(args) > i + 1:
+                        # double pointers are always flowed by the size of the array
+                        arr = np.ctypeslib.as_array(v, (args[i + 1],))
+                        a += '[' + ', '.join(map(str, arr)) + ']'
+                    else:
+                        # except for fmi3DoStep
+                        v_ = cast(v, POINTER(c_double))
+                        a += str(str(v_.contents.value))
+
             elif hasattr(v, '_obj'):
                 # byref object
                 if hasattr(v._obj, 'value'):
@@ -527,8 +536,6 @@ class FMU1Model(_FMU1):
 
         super(FMU1Model, self).__init__(**kwargs)
 
-        self.eventInfo = fmi1EventInfo()
-
         # Inquire version numbers of header files
         self._fmi1Function('GetModelTypesPlatform', [], [], fmi1String)
 
@@ -624,12 +631,19 @@ class FMU1Model(_FMU1):
     def completedIntegratorStep(self):
         stepEvent = fmi1Boolean()
         self.fmi1CompletedIntegratorStep(self.component, byref(stepEvent))
-        return stepEvent != fmi1False
+        return stepEvent.value != fmi1False
 
     # Evaluation of the model equations
 
     def initialize(self, toleranceControlled=fmi1False, relativeTolerance=0.0):
-        return self.fmi1Initialize(self.component, toleranceControlled, relativeTolerance, byref(self.eventInfo))
+        eventInfo = fmi1EventInfo()
+        self.fmi1Initialize(self.component, toleranceControlled, relativeTolerance, byref(eventInfo))
+        return (eventInfo.iterationConverged != fmi1False,
+                eventInfo.stateValueReferencesChanged != fmi1False,
+                eventInfo.stateValuesChanged != fmi1False,
+                eventInfo.terminateSimulation != fmi1False,
+                eventInfo.upcomingTimeEvent != fmi1False,
+                eventInfo.nextEventTime)
 
     def getDerivatives(self, derivatives, size):
         return self.fmi1GetDerivatives(self.component, derivatives, size)
@@ -638,7 +652,14 @@ class FMU1Model(_FMU1):
         return self.fmi1GetEventIndicators(self.component, eventIndicators, size)
 
     def eventUpdate(self, intermediateResults=fmi1False):
-        return self.fmi1EventUpdate(self.component, intermediateResults, byref(self.eventInfo))
+        eventInfo = fmi1EventInfo()
+        self.fmi1EventUpdate(self.component, intermediateResults, byref(eventInfo))
+        return (eventInfo.iterationConverged          != fmi1False,
+                eventInfo.stateValueReferencesChanged != fmi1False,
+                eventInfo.stateValuesChanged          != fmi1False,
+                eventInfo.terminateSimulation         != fmi1False,
+                eventInfo.upcomingTimeEvent           != fmi1False,
+                eventInfo.nextEventTime)
 
     def getContinuousStates(self, states, size):
         return self.fmi1GetContinuousStates(self.component, states, size)

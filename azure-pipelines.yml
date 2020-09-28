@@ -31,7 +31,7 @@ jobs:
 
   - bash: |
       source activate myEnvironment
-      python setup.py bdist_wheel --universal
+      python setup.py sdist bdist_wheel --universal
       for f in dist/FMPy-*.whl; do
         pip install $f --no-deps -vv
       done
@@ -228,3 +228,8 @@ jobs:
     inputs:
       pathtoPublish: merged/FMPy-x.x.x-py2.py3-none-any.whl
       artifactName: merged
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: linux/FMPy-x.x.x.tar.gz
+      artifactName: sdist

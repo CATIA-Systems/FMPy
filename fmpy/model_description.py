@@ -60,14 +60,14 @@ class InterfaceType(object):
 class ModelExchange(InterfaceType):
 
     def __init__(self):
-        super().__init__()
+        super(ModelExchange, self).__init__()
         self.completedIntegratorStepNotNeeded = False
 
 
 class CoSimulation(InterfaceType):
 
     def __init__(self):
-        super().__init__()
+        super(CoSimulation, self).__init__()
         self.canHandleVariableCommunicationStepSize = False
         self.canInterpolateInputs = False
         self.maxOutputDerivativeOrder = 0
@@ -77,7 +77,7 @@ class CoSimulation(InterfaceType):
 class ScheduledExecution(CoSimulation):
 
     def __init__(self):
-        super().__init__()
+        super(ScheduledExecution, self).__init__()
 
 
 class BuildConfiguration(object):

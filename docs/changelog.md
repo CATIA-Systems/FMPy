@@ -1,3 +1,10 @@
+## v0.2.24 (2020-10-14)
+
+### Enhancements
+
+- Allow start values with units and display units
+- Add FMI 3.0 Scheduled Execution API
+
 ## v0.2.23 (2020-09-02)
 
 ### Enhancements

@@ -2,17 +2,19 @@ import unittest
 from fmpy.util import download_file, validate_result
 from fmpy import *
 
+v = '0.0.4'  # Reference FMUs version
+
 
 class ReferenceFMUsTest(unittest.TestCase):
 
     def setUp(self):
-        download_file(url='https://github.com/modelica/Reference-FMUs/releases/download/v0.0.3/Reference-FMUs-0.0.3.zip',
-                      checksum='f9b5c0199127d174e38583fc8733de4286dfd1da8236507007ab7b38f0e32796')
-        extract('Reference-FMUs-0.0.3.zip', 'Reference-FMUs-dist')
+        download_file(url='https://github.com/modelica/Reference-FMUs/releases/download/v' + v + '/Reference-FMUs-' + v + '.zip',
+                      checksum='ed4b2346782c44937a411037c19a32ac2bd09cd43a5fce9bb0fddc571723fc3a')
+        extract('Reference-FMUs-' + v + '.zip', 'Reference-FMUs-dist')
 
-        download_file(url='https://github.com/modelica/Reference-FMUs/archive/v0.0.3.zip',
-                      checksum='ce58f006d3fcee52261ce2f7a3dad635161d4dcaaf0e093fdcd5ded7ee0df647')
-        extract('v0.0.3.zip', 'Reference-FMUs-repo')
+        download_file(url='https://github.com/modelica/Reference-FMUs/archive/v' + v + '.zip',
+                      checksum='1c9efd38cbe89ea8f31e588fe8a767b082d23a1ed1f3875e2ac770fc3f371489')
+        extract('v' + v + '.zip', 'Reference-FMUs-repo')
 
     def test_fmi1_cs(self):
         for model_name in ['BouncingBall', 'Dahlquist', 'Resource', 'Stair', 'VanDerPol']:
@@ -43,7 +45,7 @@ class ReferenceFMUsTest(unittest.TestCase):
                     'string_param':     "FMI is awesome!"
                 }
 
-                in_csv = os.path.join('Reference-FMUs-repo', 'Reference-FMUs-0.0.3', model_name, model_name + '_in.csv')
+                in_csv = os.path.join('Reference-FMUs-repo', 'Reference-FMUs-' + v, model_name, model_name + '_in.csv')
                 input = read_csv(in_csv) if os.path.isfile(in_csv) else None
             else:
                 start_values = {}
@@ -51,7 +53,7 @@ class ReferenceFMUsTest(unittest.TestCase):
 
             filename = os.path.join('Reference-FMUs-dist', '3.0', model_name + '.fmu')
 
-            ref_csv = os.path.join('Reference-FMUs-repo', 'Reference-FMUs-0.0.3', model_name, model_name + '_ref.csv')
+            ref_csv = os.path.join('Reference-FMUs-repo', 'Reference-FMUs-' + v, model_name, model_name + '_ref.csv')
             reference = read_csv(ref_csv)
 
             for fmi_type in ['ModelExchange', 'CoSimulation']:
@@ -59,3 +61,32 @@ class ReferenceFMUsTest(unittest.TestCase):
                 rel_out = validate_result(result, reference)
                 self.assertEqual(0, rel_out)
                 # plot_result(result, reference)
+
+    def test_fmi3_clocks(self):
+        """ Test the SE specific API """
+
+        import shutil
+        from fmpy.fmi3 import FMU3ScheduledExecution
+
+        filename = os.path.join(os.getcwd(), 'Reference-FMUs-dist', '3.0', 'Clocks.fmu')
+
+        model_description = read_model_description(filename)
+
+        unzipdir = extract(filename)
+
+        fmu = FMU3ScheduledExecution(
+            guid=model_description.guid,
+            unzipDirectory=unzipdir,
+            modelIdentifier=model_description.scheduledExecution.modelIdentifier)
+
+        fmu.instantiate()
+
+        fmu.enterInitializationMode()
+        fmu.exitInitializationMode()
+
+        fmu.activateModelPartition(clockReference=1001, clockElementIndex=0, activationTime=0)
+
+        fmu.terminate()
+        fmu.freeInstance()
+
+        shutil.rmtree(unzipdir, ignore_errors=True)

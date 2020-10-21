@@ -67,7 +67,8 @@ install_requires = [
 extras_require = {
     'examples': ['dask[bag]', 'requests'],
     'plot': ['matplotlib', 'scipy'],
-    'gui': ['PyQt5', 'pyqtgraph']
+    'gui': ['PyQt5', 'pyqtgraph'],
+    'notebook': ['notebook', 'plotly']
 }
 
 extras_require['complete'] = sorted(set(sum(extras_require.values(), [])))

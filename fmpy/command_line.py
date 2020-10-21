@@ -22,6 +22,10 @@ def main():
     Compile a source code FMU:
     
         fmpy compile Rectifier.fmu
+        
+    Create a Jupyter Notebook
+    
+        fmpy create-jupyter-notebook Rectifier.fmu
     """
 
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -102,6 +106,12 @@ def main():
             print("Creating CMake project in %s" % os.path.abspath(project_dir))
 
         create_cmake_project(args.fmu_filename, project_dir)
+
+    elif args.command == 'create-jupyter-notebook':
+
+        from fmpy.util import create_jupyter_notebook
+
+        create_jupyter_notebook(args.fmu_filename)
 
     elif args.command == 'simulate':
 

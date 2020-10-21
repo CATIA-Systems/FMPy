@@ -15,6 +15,51 @@ from time import time as current_time
 eps = 1e-13
 
 
+class SimulationResult(np.ndarray):
+
+    def __new__(subtype, shape, dtype=float, buffer=None, offset=0, strides=None, order=None, modelDescription=None):
+        obj = super(SimulationResult, subtype).__new__(subtype, shape, dtype, buffer, offset, strides, order)
+        obj.modelDescription = modelDescription
+        return obj
+
+    def __array_finalize__(self, obj):
+        if obj is None:
+            return
+        self.modelDescription = getattr(obj, 'modelDescription', None)
+
+
+def _get_output_variables(model_description, max_variables=5):
+    """ Create a list of default output variables """
+
+    output_variables = []
+
+    # output variables
+    for variable in model_description.modelVariables:
+        if variable.causality == 'output':
+            output_variables.append(variable)
+
+    if len(output_variables) > 0:
+        return output_variables
+
+    # continuous states
+    if model_description.derivatives is not None:
+        output_variables = [derivative.variable.derivative for derivative in model_description.derivatives]
+
+    if len(output_variables) > 0:
+        return output_variables[:max_variables]
+
+    # local variables
+    for variable in model_description.modelVariables:
+        if variable.variability == 'local':
+            output_variables.append(variable)
+
+    if len(output_variables) > 0:
+        return output_variables[:max_variables]
+
+    # any variable
+    return model_description.modelVariables[:max_variables]
+
+
 class Recorder(object):
     """ Helper class to record the variables during the simulation """
 
@@ -38,6 +83,9 @@ class Recorder(object):
         self.constants = {}
         self.modelDescription = modelDescription
 
+        if variableNames is None:
+            variableNames = [variable.name for variable in _get_output_variables(modelDescription)]
+
         # collect the variables to record
         for sv in modelDescription.modelVariables:
 
@@ -45,7 +93,7 @@ class Recorder(object):
                 continue  # "time" is reserved for the simulation time
 
             # collect the variables to record
-            if (variableNames is not None and sv.name in variableNames) or (variableNames is None and sv.causality == 'output'):
+            if sv.name in variableNames:
                 type = sv.type
                 if type == 'Enumeration':
                     type = 'Integer' if modelDescription.fmiVersion in {'1.0', '2.0'} else 'Int32'
@@ -108,7 +156,13 @@ class Recorder(object):
     def result(self):
         """ Return a structured NumPy array with the recorded results """
 
-        return np.array(self.rows, dtype=np.dtype(self.cols))
+        arr = np.array(self.rows, dtype=np.dtype(self.cols))
+
+        info_arr = arr.view(SimulationResult)
+
+        info_arr.modelDescription = self.modelDescription
+
+        return info_arr
 
     @property
     def lastSampleTime(self):
@@ -549,11 +603,15 @@ def simulate_fmu(filename,
         else:
             start_time = 0.0
 
+    start_time = float(start_time)
+
     if stop_time is None:
         if experiment is not None and experiment.stopTime is not None:
             stop_time = experiment.stopTime
         else:
             stop_time = start_time + 1.0
+
+    stop_time = float(stop_time)
 
     if relative_tolerance is None and experiment is not None:
         relative_tolerance = experiment.tolerance

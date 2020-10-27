@@ -334,6 +334,8 @@ def apply_start_values(fmu, model_description, start_values, apply_default_start
 
     start_values = start_values.copy()
 
+    unit_definitions = dict((u.name, dict((d.name, d) for d in u.displayUnits)) for u in model_description.unitDefinitions)
+
     for variable in model_description.modelVariables:
 
         if variable.name in start_values:
@@ -342,6 +344,31 @@ def apply_start_values(fmu, model_description, start_values, apply_default_start
             value = variable.start
         else:
             continue
+
+        if type(value) is tuple:
+            if len(value) != 2:
+                raise Exception('The start value for variable %s must be a scalar value or a tuple (<value>, {<unit>|<display_unit>}) but was "%s".' % (variable.name, value))
+            value, unit = value
+        else:
+            unit = None
+
+        if unit is None or unit == variable.unit:
+            pass
+        elif variable.declaredType is not None and unit == variable.declaredType.unit:
+            pass
+        else:
+            if variable.unit is not None:
+                base_unit = variable.unit
+            elif variable.declaredType is not None:
+                base_unit = variable.declaredType.unit
+            else:
+                raise Exception('Variable %s has no unit but the unit "%s" was specified for its start value.' % (variable.name, unit))
+
+            if unit not in unit_definitions[base_unit]:
+                raise Exception('The unit "%s" of the start value for variable %s is not defined.' % (unit, variable.name))
+
+            display_unit = unit_definitions[base_unit][unit]
+            value = (value - display_unit.offset) / display_unit.factor
 
         vr = variable.valueReference
 

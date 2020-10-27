@@ -24,7 +24,7 @@
 
 # build artifacts
 build/
-cvode-*/
+sundials-*/
 dist/
 MANIFEST
 rpclib-*/

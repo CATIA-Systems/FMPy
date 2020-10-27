@@ -1,3 +1,17 @@
+## How do I update an existing installation of FMPy?
+
+If you've installed FMPy with `conda`, open a conda prompt and run
+
+```
+conda update -c conda-forge fmpy
+```
+
+If you've installed FMPy with `pip`, run
+
+```
+pip install fmpy --upgrade
+```
+
 ## How do I install a development build?
 
 - go to the [CI server](https://dev.azure.com/CATIA-Systems/FMPy/)

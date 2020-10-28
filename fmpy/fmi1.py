@@ -2,7 +2,6 @@
 
 import os
 import pathlib
-import numpy as np
 from ctypes import *
 from . import free, freeLibrary, platform, sharedLibraryExtension, calloc
 
@@ -183,7 +182,7 @@ class _FMU(object):
                 else:
                     if len(args) > i + 1:
                         # double pointers are always flowed by the size of the array
-                        arr = np.ctypeslib.as_array(v, (args[i + 1],))
+                        arr = v[:args[i + 1]]
                         a += '[' + ', '.join(map(str, arr)) + ']'
                     else:
                         # except for fmi3DoStep

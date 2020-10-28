@@ -92,7 +92,7 @@ def write_csv(filename, result, columns=None):
                 # convert index to 1-based subscripts
                 subs = ','.join(map(lambda sub: str(sub + 1), i))
                 cols.append(('%s[%s]' % (name, subs), subtype))
-                sl = [slice(0, None)] + [slice(s, s + 1) for s in i]
+                sl = tuple([slice(0, None)] + [slice(s, s + 1) for s in i])
                 data.append(y[sl].flatten())
         else:
             cols.append((name, dtype.type))

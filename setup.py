@@ -28,7 +28,8 @@ packages = ['fmpy',
             'fmpy.gui.generated',
             'fmpy.ssp',
             'fmpy.ssp.examples',
-            'fmpy.sundials']
+            'fmpy.sundials',
+            'fmpy.webapp']
 
 package_data = {
     'fmpy': [
@@ -54,6 +55,7 @@ package_data = {
     ],
     'fmpy.gui': ['icons/app_icon.ico'],
     'fmpy.ssp': ['schema/*.xsd'],
+    'fmpy.webapp': ['assets/*.css'],
 }
 
 install_requires = [
@@ -68,7 +70,8 @@ extras_require = {
     'examples': ['dask[bag]', 'requests'],
     'plot': ['matplotlib', 'scipy'],
     'gui': ['PyQt5', 'pyqtgraph'],
-    'notebook': ['notebook', 'plotly']
+    'notebook': ['notebook', 'plotly'],
+    'webapp': ['dash-bootstrap-components']
 }
 
 extras_require['complete'] = sorted(set(sum(extras_require.values(), [])))

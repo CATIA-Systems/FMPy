@@ -369,7 +369,7 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
     from . import plot_library
 
     if plot_library == 'plotly':
-        figure = create_plotly_figure(result)
+        figure = create_plotly_figure(result, names=names)
         figure.update_layout(template='simple_white')
         figure.show()
         return

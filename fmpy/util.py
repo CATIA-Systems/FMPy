@@ -370,8 +370,10 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
 
     if plot_library == 'plotly':
         figure = create_plotly_figure(result, names=names)
-        figure.update_layout(template='simple_white')
-        figure.show()
+        if filename is None:
+            figure.show()
+        else:
+            figure.write_image(filename)
         return
 
     import matplotlib.pylab as pylab

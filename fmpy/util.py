@@ -255,7 +255,20 @@ def create_plotly_figure(result, names=None, time_unit=None):
 
     model_description = getattr(result, 'modelDescription', None)
 
-    variables = dict((v.name, v) for v in model_description.modelVariables) if model_description else {}
+    units = {}
+    display_units = {}
+
+    if model_description:
+        # get the units and display units
+        for unit in model_description.unitDefinitions:
+            if unit.displayUnits:
+                display_units[unit.name] = unit.displayUnits[0]
+
+        for v in model_description.modelVariables:
+            unit = v.unit
+            if unit is None and v.declaredType:
+                unit = v.declaredType.unit
+            units[v.name] = unit
 
     time = result['time']
 
@@ -310,14 +323,7 @@ def create_plotly_figure(result, names=None, time_unit=None):
     plots = []
 
     for name in names:
-        if name in variables:
-            variable = variables[name]
-            unit = variable.unit
-            if unit is None and variable.declaredType is not None:
-                unit = variable.declaredType.unit
-        else:
-            unit = None
-        plots.append((unit, [name]))
+        plots.append((units[name] if name in units else None, [name]))
 
     fig = make_subplots(rows=len(plots), cols=1, shared_xaxes=True)
 
@@ -326,6 +332,11 @@ def create_plotly_figure(result, names=None, time_unit=None):
         for name in names:
 
             y = result[name]
+
+            if unit in display_units:
+                display_unit = display_units[unit]
+                y = y * display_unit.factor + display_unit.offset
+                unit = display_unit.name
 
             fig.add_trace(
                 go.Scatter(x=time, y=y,

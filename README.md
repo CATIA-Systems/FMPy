@@ -10,10 +10,9 @@ FMPy is a free Python library to simulate [Functional Mock-up Units (FMUs)](http
 - supports FMI 1.0 and 2.0
 - supports Co-Simulation and Model Exchange
 - runs on Windows, Linux and macOS
-- has a graphical user interface
+- has a [command line](#simulate-an-fmu-on-the-command-line), [graphical user interface](#start-the-graphical-user-interface), and [web app](#start-the-web-app)
+- creates [Jupyter Notebooks](#create-a-jupyter-notebook)
 - compiles C code FMUs and generates [CMake](https://cmake.org/) projects for debugging
-
-Try [this Jupyter notebook](https://notebooks.azure.com/t-sommer/projects/CoupledClutches) online!
 
 ## Installation
 
@@ -92,6 +91,35 @@ Get more information about the available options
 ```
 fmpy --help
 ```
+
+## Create a Jupyter Notebook
+
+To create a [Jupyter](https://jupyter.org/) Notebook open an FMU in the FMPy GUI and select `Tools > Create Jupyter Notebook...` or run
+
+```
+fmpy create-jupyter-notebook Rectifier.fmu
+```
+
+on the command line and open the notebook in Jupyter with
+
+```
+jupyter notebook Rectifier.ipynb
+```
+
+![Web App](docs/Rectifier_Notebook.png)
+
+## Start the Web App
+
+The FMPy Web App is built with [Dash](https://plotly.com/dash/) and a great way to share your FMUs with anyone that has a web browser.
+To start it run
+
+```
+python -m fmpy.webapp Rectfier.fmu
+```
+
+on the command line or use `--help` for more options.
+
+![Web App](docs/Rectifier_WebApp.png)
 
 ## Advanced Usage
 

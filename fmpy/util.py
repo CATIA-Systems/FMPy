@@ -339,10 +339,10 @@ def create_plotly_figure(result, names=None, time_unit=None):
 
         fig['layout']['yaxis%d' % (i + 1)].update(title=title)
 
-    fig['layout']['height'] = 200 * len(plots)
+    fig['layout']['height'] = 160 * len(plots) + 30 * max(0, 5 - len(plots))
     fig['layout']['margin']['t'] = 30
     fig['layout']['margin']['b'] = 0
-    fig['layout']['margin']['r'] = 0
+    fig['layout']['margin']['r'] = 30
     fig['layout']['plot_bgcolor'] = 'rgba(0,0,0,0)'
     fig['layout']['xaxis%d' % len(plots)].update(title='time [%s]' % time_unit)
 

@@ -1,3 +1,12 @@
+## v0.2.25 (2020-11-04)
+
+### Enhancements
+
+- Add Dash based web app
+- Add Jupyter Notebook generation
+- Don't import NumPy in fmi1.py to allow reuse in projects with minimal dependencies (#184)
+- Convert array indices in write_csv() to tuple to avoid FutureWarning
+
 ## v0.2.24 (2020-10-14)
 
 ### Enhancements

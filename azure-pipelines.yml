@@ -7,9 +7,9 @@ jobs:
       python27:
         python.version: '2.7'
         python.libraries: 'pathlib'
-      python36:
-        python.version: '3.6'
-        python.libraries: ''
+      python37:
+        python.version: '3.7'
+        python.libraries: 'ipython=7 notebook'
   pool:
     vmImage: 'ubuntu-16.04'
   steps:
@@ -21,7 +21,7 @@ jobs:
 
   - bash: |
       source activate myEnvironment
-      conda install --yes --quiet --name myEnvironment -c conda-forge python=$PYTHON_VERSION cmake dask lark-parser lxml matplotlib numpy pyqt pyqtgraph pytest-cov requests scipy $PYTHON_LIBRARIES
+      conda install --yes --quiet --name myEnvironment -c conda-forge python=$PYTHON_VERSION cmake dask lark-parser lxml matplotlib numpy plotly pyqt pyqtgraph pytest-cov requests scipy $PYTHON_LIBRARIES
     displayName: Install Anaconda packages
 
   - bash: |
@@ -64,9 +64,9 @@ jobs:
       python27:
         python.version: '2.7'
         python.libraries: 'pathlib'
-      python36:
-        python.version: '3.6'
-        python.libraries: ''
+      python38:
+        python.version: '3.7'
+        python.libraries: 'ipython=7 notebook'
   pool:
     vmImage: 'macos-10.15'
 
@@ -85,7 +85,7 @@ jobs:
 
   - bash: |
       source activate myEnvironment
-      conda install --yes --quiet --name myEnvironment -c conda-forge python=$PYTHON_VERSION dask lark-parser lxml matplotlib numpy pyqt pyqtgraph pytest-cov requests scipy $PYTHON_LIBRARIES
+      conda install --yes --quiet --name myEnvironment -c conda-forge python=$PYTHON_VERSION dask lark-parser lxml matplotlib numpy plotly pyqt pyqtgraph pytest-cov requests scipy $PYTHON_LIBRARIES
     displayName: Install Anaconda packages
 
   - bash: |
@@ -128,8 +128,8 @@ jobs:
 #      lxml broken for Python 2.7
 #      python27:
 #        python.version: '2.7'
-      python36:
-        python.version: '3.6'
+      python37:
+        python.version: '3.7'
   pool:
     vmImage: 'vs2017-win2016'
 
@@ -143,7 +143,7 @@ jobs:
     
   - script: |
       call activate myEnvironment
-      conda install --yes --quiet --name myEnvironment -c conda-forge python=%PYTHON_VERSION% cmake dask lark-parser lxml matplotlib numpy pyqt pyqtgraph pytest-cov pywin32 requests scipy
+      conda install --yes --quiet --name myEnvironment -c conda-forge python=%PYTHON_VERSION% cmake dask ipython=7 lark-parser lxml matplotlib notebook numpy plotly pyqt pyqtgraph pytest-cov pywin32 requests scipy
     displayName: Install Anaconda packages
 
   - script: |
@@ -203,17 +203,17 @@ jobs:
 
   - task: DownloadPipelineArtifact@2
     inputs:
-      artifact: linux-python-3.6
+      artifact: linux-python-3.7
       downloadPath: linux
 
   - task: DownloadPipelineArtifact@2
     inputs:
-      artifact: macosx-python-3.6
+      artifact: macosx-python-3.7
       downloadPath: macosx
 
   - task: DownloadPipelineArtifact@2
     inputs:
-      artifact: windows-python-3.6
+      artifact: windows-python-3.7
       downloadPath: windows
 
   - bash: |

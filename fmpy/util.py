@@ -92,7 +92,7 @@ def write_csv(filename, result, columns=None):
                 # convert index to 1-based subscripts
                 subs = ','.join(map(lambda sub: str(sub + 1), i))
                 cols.append(('%s[%s]' % (name, subs), subtype))
-                sl = [slice(0, None)] + [slice(s, s + 1) for s in i]
+                sl = tuple([slice(0, None)] + [slice(s, s + 1) for s in i])
                 data.append(y[sl].flatten())
         else:
             cols.append((name, dtype.type))
@@ -248,6 +248,127 @@ def validate_result(result, reference, stop_time=None):
     return rel_out
 
 
+def create_plotly_figure(result, names=None, events=False, time_unit=None):
+
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    model_description = getattr(result, 'modelDescription', None)
+
+    units = {}
+    display_units = {}
+
+    if model_description:
+        # get the units and display units
+        for unit in model_description.unitDefinitions:
+            if unit.displayUnits:
+                display_units[unit.name] = unit.displayUnits[0]
+
+        for v in model_description.modelVariables:
+            unit = v.unit
+            if unit is None and v.declaredType:
+                unit = v.declaredType.unit
+            units[v.name] = unit
+
+    time = result['time']
+
+    min_ticks = 5
+
+    if time_unit is None:
+
+        time_span = time[-1] - time[0]
+
+        if time_span < min_ticks * 1e-6:
+            time_unit = 'ns'
+        elif time_span < min_ticks * 1e-3:
+            time_unit = 'us'
+        elif time_span < 1:
+            time_unit = 'ms'
+        elif time_span > min_ticks * 365 * 24 * 60 * 60:
+            time_unit = 'years'
+        elif time_span > min_ticks * 24 * 60 * 60:
+            time_unit = 'days'
+        elif time_span > min_ticks * 60 * 60:
+            time_unit = 'h'
+        elif time_span > min_ticks * 60:
+            time_unit = 'min'
+        else:
+            time_unit = 's'
+
+    if time_unit == 'ns':
+        time *= 1e9
+    elif time_unit == 'us':
+        time *= 1e6
+    elif time_unit == 'ms':
+        time *= 1e3
+    elif time_unit == 's':
+        pass
+    elif time_unit == 'min':
+        time /= 60
+    elif time_unit == 'h':
+        time /= 60 * 60
+    elif time_unit == 'days':
+        time /= 24 * 60 * 60
+    elif time_unit == 'years':
+        time /= 365 * 24 * 60 * 60
+    else:
+        raise Exception('time_unit must be one of "ns", "us", "ms", "s", "min", "h", "days" or "years" but was "%s".' % time_unit)
+
+    if names is None:
+        # plot at most 20 signals
+        names = result.dtype.names[1:20]
+
+    # one signal per plot
+    # plots = [(None, [name]) for name in names]
+    plots = []
+
+    for name in names:
+        plots.append((units[name] if name in units else None, [name]))
+
+    fig = make_subplots(rows=len(plots), cols=1, shared_xaxes=True)
+
+    for i, (unit, names) in enumerate(plots):
+
+        for name in names:
+
+            y = result[name]
+
+            if unit in display_units:
+                display_unit = display_units[unit]
+                y = y * display_unit.factor + display_unit.offset
+                unit = display_unit.name
+
+            fig.add_trace(
+                go.Scatter(x=time, y=y,
+                           name=name,
+                           line=dict(color='#636efa', width=1),
+                           fill='tozeroy' if y.dtype == bool else None,
+                           fillcolor='rgba(0,0,255,0.1)'),
+                row=i + 1, col=1)
+
+        title = "%s [%s]" % (name, unit) if unit else name
+
+        fig['layout']['yaxis%d' % (i + 1)].update(title=title)
+
+    if events:
+        for t_event in time[np.argwhere(np.diff(time) == 0).flatten()]:
+            fig.add_vline(x=t_event, line={'color': '#fbe424', 'width': 1})
+
+    fig['layout']['height'] = 160 * len(plots) + 30 * max(0, 5 - len(plots))
+    fig['layout']['margin']['t'] = 30
+    fig['layout']['margin']['b'] = 0
+    fig['layout']['margin']['r'] = 30
+    fig['layout']['plot_bgcolor'] = 'rgba(0,0,0,0)'
+    fig['layout']['xaxis%d' % len(plots)].update(title='time [%s]' % time_unit)
+
+    fig.update_xaxes(showgrid=True, gridwidth=1, ticklen=0, gridcolor='LightGrey', linecolor='black', showline=True, zeroline=True, zerolinewidth=1, zerolinecolor='LightGrey')
+    fig.update_yaxes(showgrid=True, gridwidth=1, ticklen=0, gridcolor='LightGrey', linecolor='black', showline=True, zerolinewidth=1, zerolinecolor='LightGrey')
+
+    fig.update_layout(showlegend=False)
+
+    return fig
+
+
 def plot_result(result, reference=None, names=None, filename=None, window_title=None, events=False):
     """ Plot a collection of time series.
 
@@ -259,6 +380,16 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
         window_title: title for the figure window
         events:       draw vertical lines at events
     """
+
+    from . import plot_library
+
+    if plot_library == 'plotly':
+        figure = create_plotly_figure(result, names=names, events=events)
+        if filename is None:
+            figure.show()
+        else:
+            figure.write_image(filename)
+        return
 
     import matplotlib.pylab as pylab
     import matplotlib.pyplot as plt
@@ -1021,3 +1152,101 @@ def _is_string(s):
     
     import sys
     return isinstance(s, basestring if sys.version_info[0] == 2 else str)
+
+
+def create_jupyter_notebook(filename, notebook_filename=None):
+
+    import nbformat as nbf
+    from fmpy import read_model_description
+
+    if notebook_filename is None:
+        notebook_filename, _ = os.path.splitext(filename)
+        notebook_filename += '.ipynb'
+
+    model_description = read_model_description(filename)
+
+    if model_description.defaultExperiment and model_description.defaultExperiment.stopTime:
+        stop_time = model_description.defaultExperiment.stopTime
+    else:
+        stop_time = 1
+
+    parameters = []
+    output_variables = []
+    max_name = 7
+    max_start = 7
+    max_unit = 3
+    max_output = 0
+
+    from .simulation import _get_output_variables
+
+    for variable in _get_output_variables(model_description):
+        max_output = max(max_output, len(variable.name))
+        output_variables.append((variable.name, variable.description))
+
+    for variable in model_description.modelVariables:
+        if variable.causality == 'parameter' and variable.variability in ['fixed',
+                                                                          'tunable'] and not '.' in variable.name:
+            name, start, unit, description = variable.name, variable.start, variable.unit, variable.description
+            if variable.type == 'String':
+                start = "'%s'" % start
+            if unit is None and variable.declaredType is not None:
+                unit = variable.declaredType.unit
+            max_name = max(max_name, len(name))
+            max_start = max(max_start, len(start))
+            max_unit = max(max_unit, len(unit)) if unit else max_unit
+            parameters.append((name, start, unit, description))
+
+    code = "import fmpy\n"
+    code += "from fmpy import *\n"
+    code += "\n"
+    code += "fmpy.plot_library = 'plotly'  # experimental\n"
+    code += "\n"
+    code += "\n"
+    # use relative path if possible
+    if os.path.normpath(os.path.dirname(filename)) == os.path.normpath(os.path.dirname(notebook_filename)):
+        code += "filename = '%s'\n" % os.path.basename(filename)
+    else:
+        code += "filename = r'%s'\n" % filename
+    code += "\n"
+    code += "start_values = {\n"
+    code += "    " + "# variable".ljust(max_name + 3) + "start".rjust(max_start + 2) + "   unit".ljust(
+        max_unit + 10) + "description\n"
+
+    for name, start, unit, description in parameters:
+        code += "    " + ("'" + name + "':").ljust(max_name + 3) + " "
+        if unit:
+            code += ("(" + start).rjust(max_start + 1)
+            code += (", '" + unit + "'),").ljust(max_unit + 6)
+        else:
+            code += start.rjust(max_start + 1) + "," + " " * (max_unit + 5)
+        if description:
+            code += "  # " + description
+        code += "\n"
+
+    code += "}\n"
+    code += "\n"
+    code += "output = [\n"
+    for name, description in output_variables:
+        code += "    " + ("'%s'," % name).ljust(max_output + 3)
+        if description:
+            code += "  # " + description
+        code += "\n"
+    code += "]\n"
+    code += "\n"
+    code += "result = simulate_fmu(filename, start_values=start_values, output=output, stop_time=%s)\n" % stop_time
+    code += "\n"
+    code += "plot_result(result)"
+
+    nb = nbf.v4.new_notebook()
+
+    cells = []
+
+    if model_description.description:
+        cells.append(nbf.v4.new_markdown_cell(model_description.description))
+
+    cells.append(nbf.v4.new_code_cell(code))
+
+    nb['cells'] = cells
+
+    with open(notebook_filename, 'w') as f:
+        nbf.write(nb, f)

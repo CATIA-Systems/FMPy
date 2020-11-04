@@ -251,6 +251,13 @@ class MainWindow(QMainWindow):
         self.ui.actionReload.triggered.connect(lambda: self.load(self.filename))
         self.ui.actionSaveChanges.triggered.connect(self.saveChanges)
 
+        # tools menu
+        self.ui.actionCompilePlatformBinary.triggered.connect(self.compilePlatformBinary)
+        self.ui.actionCreateJupyterNotebook.triggered.connect(self.createJupyterNotebook)
+        self.ui.actionCreateCMakeProject.triggered.connect(self.createCMakeProject)
+        self.ui.actionAddRemoting.triggered.connect(self.addRemoting)
+        self.ui.actionAddCoSimulationWrapper.triggered.connect(self.addCoSimulationWrapper)
+
         # help menu
         self.ui.actionOpenFMI1SpecCS.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://svn.modelica.org/fmi/branches/public/specifications/v1.0/FMI_for_CoSimulation_v1.0.1.pdf')))
         self.ui.actionOpenFMI1SpecME.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://svn.modelica.org/fmi/branches/public/specifications/v1.0/FMI_for_ModelExchange_v1.0.1.pdf')))
@@ -258,10 +265,6 @@ class MainWindow(QMainWindow):
         self.ui.actionOpenTestFMUs.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/modelica/fmi-cross-check/tree/master/fmus')))
         self.ui.actionOpenWebsite.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/CATIA-Systems/FMPy')))
         self.ui.actionShowReleaseNotes.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://fmpy.readthedocs.io/en/latest/changelog/')))
-        self.ui.actionCompilePlatformBinary.triggered.connect(self.compilePlatformBinary)
-        self.ui.actionCreateCMakeProject.triggered.connect(self.createCMakeProject)
-        self.ui.actionAddRemoting.triggered.connect(self.addRemoting)
-        self.ui.actionAddCoSimulationWrapper.triggered.connect(self.addCoSimulationWrapper)
 
         # filter menu
         self.filterMenu = QMenu()
@@ -434,6 +437,8 @@ class MainWindow(QMainWindow):
         can_compile = md.fmiVersion == '2.0' and 'c-code' in platforms
         self.ui.actionCompilePlatformBinary.setEnabled(can_compile)
         self.ui.actionCreateCMakeProject.setEnabled(can_compile)
+
+        self.ui.actionCreateJupyterNotebook.setEnabled(True)
 
         can_add_remoting = md.fmiVersion == '2.0' and 'win32' in platforms and 'win64' not in platforms
         self.ui.actionAddRemoting.setEnabled(can_add_remoting)
@@ -1161,6 +1166,27 @@ class MainWindow(QMainWindow):
             return
 
         self.load(self.filename)
+
+
+    def createJupyterNotebook(self):
+        """ Create a Juypyter Notebook to simulate the FMU """
+
+        from fmpy.util import create_jupyter_notebook
+
+        filename, ext = os.path.splitext(self.filename)
+
+        filename = QFileDialog.getSaveFileName(
+            parent=self,
+            directory=filename + '.ipynb',
+            filter='Jupyter Notebooks (*.ipynb);;All Files (*)'
+        )
+
+        if filename:
+            try:
+                create_jupyter_notebook(self.filename, filename[0])
+            except Exception as e:
+                QMessageBox.critical(self, "Failed to create Jupyter Notebook", str(e))
+
 
     def createCMakeProject(self):
         """ Create a CMake project from a C code FMU """

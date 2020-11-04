@@ -1351,6 +1351,7 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="actionAddFileAssociation"/>
     <addaction name="separator"/>
     <addaction name="actionCompilePlatformBinary"/>
+    <addaction name="actionCreateJupyterNotebook"/>
     <addaction name="actionCreateCMakeProject"/>
     <addaction name="actionAddRemoting"/>
     <addaction name="actionAddCoSimulationWrapper"/>
@@ -1909,6 +1910,14 @@ QToolButton::menu-button {
    </property>
    <property name="text">
     <string>Add Co-Simulation &amp;Wrapper</string>
+   </property>
+  </action>
+  <action name="actionCreateJupyterNotebook">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Create &amp;Jupyter Notebook...</string>
    </property>
   </action>
  </widget>

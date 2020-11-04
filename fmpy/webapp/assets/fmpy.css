@@ -1,0 +1,9 @@
+html, body {
+    height: 100%;
+}
+
+.input-group-text {
+    width: 4em;
+    color: #6c757d;
+    background-color: #ffffff;
+}

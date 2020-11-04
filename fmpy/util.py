@@ -248,7 +248,7 @@ def validate_result(result, reference, stop_time=None):
     return rel_out
 
 
-def create_plotly_figure(result, names=None, time_unit=None):
+def create_plotly_figure(result, names=None, events=False, time_unit=None):
 
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
@@ -350,6 +350,10 @@ def create_plotly_figure(result, names=None, time_unit=None):
 
         fig['layout']['yaxis%d' % (i + 1)].update(title=title)
 
+    if events:
+        for t_event in time[np.argwhere(np.diff(time) == 0).flatten()]:
+            fig.add_vline(x=t_event, line={'color': '#fbe424', 'width': 1})
+
     fig['layout']['height'] = 160 * len(plots) + 30 * max(0, 5 - len(plots))
     fig['layout']['margin']['t'] = 30
     fig['layout']['margin']['b'] = 0
@@ -380,7 +384,7 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
     from . import plot_library
 
     if plot_library == 'plotly':
-        figure = create_plotly_figure(result, names=names)
+        figure = create_plotly_figure(result, names=names, events=events)
         if filename is None:
             figure.show()
         else:

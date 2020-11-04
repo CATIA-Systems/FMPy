@@ -341,7 +341,7 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None):
             fig.add_trace(
                 go.Scatter(x=time, y=y,
                            name=name,
-                           line=dict(color='rgb(0,0,200)', width=1),
+                           line=dict(color='#636efa', width=1),
                            fill='tozeroy' if y.dtype == bool else None,
                            fillcolor='rgba(0,0,255,0.1)'),
                 row=i + 1, col=1)

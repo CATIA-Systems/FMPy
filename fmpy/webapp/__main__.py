@@ -13,6 +13,8 @@ import argparse
 parser = argparse.ArgumentParser(description="Run the FMPy WebApp")
 
 parser.add_argument('fmu_filename', help="Filename of the FMU")
+parser.add_argument('--start-values', nargs='+', help="Variables for which start values can be set")
+parser.add_argument('--output-variables', nargs='+', help="Variables to plot")
 parser.add_argument('--host', default='127.0.0.1', help="Host IP used to serve the application")
 parser.add_argument('--port', default='8050', type=int, help="Port used to serve the application")
 parser.add_argument('--debug', action='store_true', help="Set Flask debug mode and enable dev tools")
@@ -25,9 +27,7 @@ print('Extracting FMU to %s' % unzipdir)
 
 model_description = read_model_description(unzipdir)
 
-# server = flask.Flask(__name__)
-
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP]) #, server=server)
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 app.title = model_description.modelName
 
@@ -35,39 +35,49 @@ names = []
 rows = []
 states = []
 
+parameters = args.start_values
+
+if parameters is None:
+    parameters = []
+    for variable in model_description.modelVariables:
+        if variable.causality == 'parameter' and variable.initial != 'calculated':
+            parameters.append(variable.name)
+
 for i, variable in enumerate(model_description.modelVariables):
 
-    if variable.causality == 'parameter':
+    if variable.name not in parameters:
+        continue
 
-        unit = variable.unit
+    unit = variable.unit
 
-        if unit is None and variable.declaredType is not None:
-            unit = variable.declaredType.unit
+    if unit is None and variable.declaredType is not None:
+        unit = variable.declaredType.unit
 
-        names.append(variable.name)
+    names.append(variable.name)
 
-        id = f'variable-{i}'
+    id = f'variable-{i}'
 
-        row = dbc.FormGroup(
-            [
-                dbc.Label(variable.name, html_for=id, width=6),
-                dbc.Col(
-                    dbc.InputGroup(
-                        [
-                            dbc.Input(id=id, value=variable.start, style={'text-align': 'right'}),
-                            dbc.InputGroupAddon(unit if unit else ' ', addon_type='append'),
-                        ], size="sm"
-                    ),
-                    width=6,
+    row = dbc.FormGroup(
+        [
+            dbc.Label(variable.name, html_for=id, width=6),
+            dbc.Col(
+                dbc.InputGroup(
+                    [
+                        dbc.Input(id=id, value=variable.start, style={'text-align': 'right'}),
+                        dbc.InputGroupAddon(unit if unit else ' ', addon_type='append'),
+                    ], size="sm"
                 ),
-            ],
-            row=True,
-            className='mb-2'
-        )
+                width=6,
+            ),
+            #html.Small(variable.description, className='form-text text-muted ml-3')
+        ],
+        row=True,
+        className='mb-2'
+    )
 
-        rows.append(row)
+    rows.append(row)
 
-        states.append(State(id, 'value'))
+    states.append(State(id, 'value'))
 
 stop_time = None
 
@@ -154,17 +164,17 @@ app.layout = dbc.Container([
                     dbc.Button('Simulate', id='simulate-button', color='primary', className='mr-4'),
                     dbc.InputGroup(
                         [
-                            dbc.Input(id="stop-time", value=stop_time, style={'width': '4em'}),
-                            dbc.InputGroupAddon('s', addon_type="append", style={'width': '2em'})
+                            dbc.Input(id="stop-time", value=stop_time, style={'text-align': 'right', 'width': '5rem'}),
+                            dbc.InputGroupAddon('s', addon_type="append", style={'width': '2rem'})
                         ], className='mr-4'
                     )
                 ], inline=True
             ),
             dbc.Row(
                 [
-                    dbc.Col(rows, width=4),
-                    dbc.Col(id='result-col', width=8),
-                ], className='mt-5'
+                    dbc.Col(rows, width=12, lg=4, style={'margin-top': '2rem'}),
+                    dbc.Col(id='result-col', width=12, lg=8),
+                ], className='mt-4'
             ),
         ],
         id='simulation-container'
@@ -213,7 +223,8 @@ def update_output_div(n_clicks, stop_time, *values):
 
         result = simulate_fmu(filename=args.fmu_filename,
                               start_values=start_values,
-                              stop_time=stop_time)
+                              stop_time=stop_time,
+                              output=args.output_variables)
 
         fig = create_plotly_figure(result=result)
 

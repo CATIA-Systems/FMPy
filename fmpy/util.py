@@ -1189,6 +1189,8 @@ def create_jupyter_notebook(filename, notebook_filename=None):
             name, start, unit, description = variable.name, variable.start, variable.unit, variable.description
             if variable.type == 'String':
                 start = "'%s'" % start
+            elif variable.type == 'Boolean':
+                start = 'True' if start == 'true' else 'False'
             if unit is None and variable.declaredType is not None:
                 unit = variable.declaredType.unit
             max_name = max(max_name, len(name))

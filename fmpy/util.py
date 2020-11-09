@@ -1167,8 +1167,7 @@ def create_jupyter_notebook(filename, notebook_filename=None):
         output_variables.append((variable.name, variable.description))
 
     for variable in model_description.modelVariables:
-        if variable.causality == 'parameter' and variable.variability in ['fixed',
-                                                                          'tunable'] and not '.' in variable.name:
+        if variable.causality == 'parameter' and variable.variability in ['fixed', 'tunable']:
             name, start, unit, description = variable.name, variable.start, variable.unit, variable.description
             if variable.type == 'String':
                 start = "'%s'" % start

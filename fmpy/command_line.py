@@ -31,7 +31,8 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
                                      description=textwrap.dedent(description))
 
-    parser.add_argument('command', choices=['info', 'validate', 'simulate', 'compile', 'add-cswrapper', 'add-remoting', 'create-cmake-project'],
+    parser.add_argument('command', choices=['info', 'validate', 'simulate', 'compile', 'add-cswrapper', 'add-remoting',
+                                            'create-cmake-project', 'create-jupyter-notebook'],
                         help="Command to execute")
     parser.add_argument('fmu_filename', help="filename of the FMU")
 

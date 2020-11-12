@@ -4,11 +4,11 @@ import os
 
 # namespaces for XML parsing
 ns = {
-    'ssc': 'http://www.pmsf.net/xsd/SystemStructureCommonDraft',
-    'ssd': 'http://www.pmsf.net/xsd/SystemStructureDescriptionDraft',
-    'ssm': 'http://www.pmsf.net/xsd/SystemStructureParameterMappingDraft',
-    'ssv': 'http://www.pmsf.net/xsd/SystemStructureParameterValuesDraft',
-    'sss': 'http://www.pmsf.net/xsd/SystemStructureSignalDictionaryDraft',
+    'ssc': 'http://ssp-standard.org/SSP1/SystemStructureCommon',
+    'ssd': 'http://ssp-standard.org/SSP1/SystemStructureDescription',
+    'ssm': 'http://ssp-standard.org/SSP1/SystemStructureParameterMapping',
+    'ssv': 'http://ssp-standard.org/SSP1/SystemStructureParameterValues',
+    'ssb': 'http://ssp-standard.org/SSP1/SystemStructureSignalDictionary',
 }
 
 
@@ -433,7 +433,7 @@ def _handle_signal_dictionary(element):
 
     dictionary = SignalDictionary(**element.attrib)
 
-    for e in element.findall('sss:DictionaryEntry', namespaces=ns):
+    for e in element.findall('ssb:DictionaryEntry', namespaces=ns):
 
         entry = DictionaryEntry(name=e.get('name'))
 
@@ -554,7 +554,7 @@ def handle_system(system, filename):
                 sd = tree.getroot()
         else:
             # inline
-            sd = d.find('sss:SignalDictionary', namespaces=ns)
+            sd = d.find('ssb:SignalDictionary', namespaces=ns)
 
         signal_dictionary = _handle_signal_dictionary(sd)
 

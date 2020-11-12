@@ -1,22 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
-    xmlns:ssc="http://www.pmsf.net/xsd/SystemStructureCommonDraft"
-    targetNamespace="http://www.pmsf.net/xsd/SystemStructureCommonDraft">
+    xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon"
+    targetNamespace="http://ssp-standard.org/SSP1/SystemStructureCommon">
     <xs:annotation>
         <xs:documentation xml:lang="en">
-            This is a draft schema proposal for the MAP-SSP SystemStructure format common content
-            and is subject to change at any time for any reason. Note that the target namespace is
-            a placeholder and will change upon adoption.
+            This is the normative XML Schema 1.0 schema for the MAP SSP
+            SystemStructure 1.0 common content across formats.
             
-            <!-- Rationale:
-                 
-                 This schema contains parts that are common across all SSP schemas and are thus
-                 defined centrally in this namespace and schema, to be referenced by all other
-                 schemas in the SSP group.
-            -->
-                                    
-            Version: 20171219
-            
+            Version: 1.0
+
+            Copyright 2016 -- 2019 Modelica Association Project "SSP"
+
+            Redistribution and use in source and binary forms, with or
+            without modification, are permitted provided that the
+            following conditions are met:
+
+            1. Redistributions of source code must retain the above
+               copyright notice, this list of conditions and the
+               following disclaimer.
+
+            2. Redistributions in binary form must reproduce the above
+               copyright notice, this list of conditions and the
+               following disclaimer in the documentation and/or other
+               materials provided with the distribution.
+
+            THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+            CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+            INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+            MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+            DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+            CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+            INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+            (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+            GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+            BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+            LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+            (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+            OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+            POSSIBILITY OF SUCH DAMAGE.
         </xs:documentation>
     </xs:annotation>
     
@@ -219,24 +240,6 @@
                                 
                                 For MAP-SSP defined annotations, this will be a domain under
                                 the org.modelica prefix.
-                                
-                                <!-- Rationale:
-                                     
-                                     The vendor annotations mechanism was initially patterned
-                                     after the one in FMI, for good or worse.  In order to
-                                     avoid some of the problems with that mechanism, annotations
-                                     are allowed on all model elements, so that no complex
-                                     mechanisms for mapping annotation information to model 
-                                     elements is needed.  The use of rDNS notation for type
-                                     names should at least alleviate the problem of clashing
-                                     tool names.
-                                     
-                                     In order to make this mechanism also usable for agreed
-                                     upon extensions to the base standard, it was deemed to
-                                     be useful to rename the mechanism to remove vendor and tool
-                                     from the names and to reserve some namespace for non-vendor-
-                                     specific extensions.
-                                -->
                             </xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
@@ -268,11 +271,6 @@
                                 of connected underlying connectors could be used if unambiguous.
                                 If a unit cannot be deduced unambinguously, the user should
                                 be informed of this error.
-                                
-                                <!-- TODO: Equally, if the unit of the connector
-                                           differs from the unit of the underlying FMU variable this
-                                           constitutes and error. OR: Allow overriding, require further
-                                           attribute to do so? -->
                             </xs:documentation>
                         </xs:annotation>
                     </xs:attribute>

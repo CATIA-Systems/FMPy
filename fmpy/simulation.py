@@ -742,6 +742,12 @@ def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, d
             fmu = fmi3.FMU3Model(**fmu_args)
             fmu.instantiate(visible=visible, loggingOn=debug_logging)
 
+    elif fmi_type in [None, 'ScheduledExecution'] and model_description.scheduledExecution is not None:
+
+        fmu_args['modelIdentifier'] = model_description.scheduledExecution.modelIdentifier
+        fmu = fmi3.FMU3ScheduledExecution(**fmu_args)
+        fmu.instantiate(visible=visible, loggingOn=debug_logging)
+
     else:
 
         raise Exception('FMI type "%s" is not supported by the FMU' % fmi_type)

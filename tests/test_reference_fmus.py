@@ -74,10 +74,7 @@ class ReferenceFMUsTest(unittest.TestCase):
 
         unzipdir = extract(filename)
 
-        fmu = FMU3ScheduledExecution(
-            guid=model_description.guid,
-            unzipDirectory=unzipdir,
-            modelIdentifier=model_description.scheduledExecution.modelIdentifier)
+        fmu = instantiate_fmu(unzipdir, model_description, fmi_type='ScheduledExecution')
 
         fmu.instantiate()
 

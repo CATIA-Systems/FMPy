@@ -27,7 +27,6 @@ packages = ['fmpy',
             'fmpy.gui',
             'fmpy.gui.generated',
             'fmpy.ssp',
-            'fmpy.ssp.examples',
             'fmpy.sundials',
             'fmpy.webapp']
 

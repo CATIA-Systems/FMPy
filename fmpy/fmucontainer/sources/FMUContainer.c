@@ -375,7 +375,9 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
 void fmi2FreeInstance(fmi2Component c) {
 
-	GET_SYSTEM
+	if (!c) return;
+	
+	System *s = (System *)c;
 
 	for (size_t i = 0; i < s->nComponents; i++) {
 		Model *m = &(s->components[i]);
@@ -387,7 +389,6 @@ void fmi2FreeInstance(fmi2Component c) {
 #endif
 	}
 
-END:
 	free(s);
 }
 

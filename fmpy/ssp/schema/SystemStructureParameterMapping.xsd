@@ -1,40 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
-    xmlns:ssm="http://www.pmsf.net/xsd/SystemStructureParameterMappingDraft"
-    xmlns:ssc="http://www.pmsf.net/xsd/SystemStructureCommonDraft"
-    targetNamespace="http://www.pmsf.net/xsd/SystemStructureParameterMappingDraft">
+    xmlns:ssm="http://ssp-standard.org/SSP1/SystemStructureParameterMapping"
+    xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon"
+    targetNamespace="http://ssp-standard.org/SSP1/SystemStructureParameterMapping">
     <xs:annotation>
         <xs:documentation xml:lang="en">
-            This is a draft schema proposal for the MAP-SSP SystemStructureParameterMapping format
-            and is subject to change at any time for any reason. Note that the target namespace is
-            a placeholder and will change upon adoption.
+            This is the normative XML Schema 1.0 schema for the MAP SSP
+            SystemStructureParameterMapping 1.0 format.
             
-            <!-- Rationale:
-                 
-                 The following definition of SSM file formats and XML content embedded in SSD file formats
-                 is intended to be a very minimalistic exchange format for the mapping of parameters from
-                 various parameter sources (provided as parameter bindings in SSD files or through other
-                 mechanisms to the parameters of SSD systems and components.
-                 
-                 The format is intended as an interchange format between different tools, not
-                 as a replacement for tool-specific formats, and is focused on the exchange of
-                 information on systems needed for their execution.  For the interchange of
-                 architectural information on systems between architecture tools other formats
-                 including more architectural information are likely more suited.
-            -->
-            
-            A parameter mapping can be provided either as a stand-alone XML file (conventionally
-            with a .ssm file type) which can be referenced from SSD files, or it can be embedded
-            in the ParameterMapping element of the SSD directly.  In that case the MappingEntry
-            elements are directly contained in the ParameterMapping element of the SSD, without
-            use of the ParameterMapping element of this schema.
-                        
-            Version: 20171219
-            
+            Version: 1.0
+
+            Copyright 2016 -- 2019 Modelica Association Project "SSP"
+
+            Redistribution and use in source and binary forms, with or
+            without modification, are permitted provided that the
+            following conditions are met:
+
+            1. Redistributions of source code must retain the above
+               copyright notice, this list of conditions and the
+               following disclaimer.
+
+            2. Redistributions in binary form must reproduce the above
+               copyright notice, this list of conditions and the
+               following disclaimer in the documentation and/or other
+               materials provided with the distribution.
+
+            THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+            CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+            INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+            MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+            DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+            CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+            INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+            (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+            GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+            BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+            LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+            (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+            OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+            POSSIBILITY OF SUCH DAMAGE.
         </xs:documentation>
     </xs:annotation>
     
-    <xs:import namespace="http://www.pmsf.net/xsd/SystemStructureCommonDraft" schemaLocation="SystemStructureCommon.xsd"/>
+    <xs:import namespace="http://ssp-standard.org/SSP1/SystemStructureCommon" schemaLocation="SystemStructureCommon.xsd"/>
     
     <xs:element name="ParameterMapping">
         <xs:complexType>
@@ -42,12 +50,17 @@
                 <xs:element name="MappingEntry" minOccurs="0" maxOccurs="unbounded" type="ssm:TMappingEntry"/>
                 <xs:element name="Annotations" minOccurs="0" type="ssc:TAnnotations"/>
             </xs:sequence>
-            <xs:attribute name="version" type="xs:normalizedString" use="required" fixed="Draft20171219">
+            <xs:attribute name="version" use="required">
                 <xs:annotation>
                     <xs:documentation xml:lang="en">
-                        Version of SSM format, fixed at 1.0 for the actual release.
+                        Version of SSM format, 1.0 for this release.
                     </xs:documentation>
                 </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:normalizedString">
+                        <xs:pattern value="1[.][0-9]+(-.*)?"/>
+                    </xs:restriction>
+                </xs:simpleType>
             </xs:attribute>
             <xs:attributeGroup ref="ssc:ABaseElement"/>
             <xs:attributeGroup ref="ssc:ATopLevelMetaData"/>

@@ -114,7 +114,7 @@ The FMPy Web App is built with [Dash](https://plotly.com/dash/) and a great way 
 To start it run
 
 ```
-python -m fmpy.webapp Rectfier.fmu
+python -m fmpy.webapp Rectifier.fmu
 ```
 
 on the command line or use `--help` for more options.

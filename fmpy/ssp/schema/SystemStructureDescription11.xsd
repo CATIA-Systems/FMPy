@@ -2,11 +2,17 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
     xmlns:ssd="http://ssp-standard.org/SSP1/SystemStructureDescription"
     xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon"
-    targetNamespace="http://ssp-standard.org/SSP1/SystemStructureDescription">
+    xmlns:ssv="http://ssp-standard.org/SSP1/SystemStructureParameterValues"
+    xmlns:ssm="http://ssp-standard.org/SSP1/SystemStructureParameterMapping"
+    xmlns:ssb="http://ssp-standard.org/SSP1/SystemStructureSignalDictionary"
+    targetNamespace="http://ssp-standard.org/SSP1/SystemStructureDescription"
+    xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning" vc:minVersion="1.1">
     <xs:annotation>
         <xs:documentation xml:lang="en">
-            This is the normative XML Schema 1.0 schema for the MAP SSP
-            SystemStructureDescription 1.0 format.
+            This is the XML Schema 1.1 schema for the MAP SSP
+            SystemStructureDescription 1.0 format.  It is provided
+            as a non-normative alternative to the XML Schema 1.0 schema
+            to support simpler cross-namespace validation of SSD files.
             
             Version: 1.0
 
@@ -43,6 +49,9 @@
     </xs:annotation>
     
     <xs:import namespace="http://ssp-standard.org/SSP1/SystemStructureCommon" schemaLocation="SystemStructureCommon.xsd"/>
+    <xs:import namespace="http://ssp-standard.org/SSP1/SystemStructureParameterValues" schemaLocation="SystemStructureParameterValues.xsd"/>
+    <xs:import namespace="http://ssp-standard.org/SSP1/SystemStructureParameterMapping" schemaLocation="SystemStructureParameterMapping.xsd"/>
+    <xs:import namespace="http://ssp-standard.org/SSP1/SystemStructureSignalDictionary" schemaLocation="SystemStructureSignalDictionary.xsd"/>
     
     <xs:element name="SystemStructureDescription">
         <xs:complexType>
@@ -265,19 +274,7 @@
                 </xs:annotation>
                 <xs:complexType>
                     <xs:choice>
-                        <!-- NOTE: In XML Schema 1.1 this choice would also contain the following entry: 
-                                        
-                             <xs:element ref="ssb:SignalDictionary"/>
-                                        
-                             which specifies the proper way to directly embed a SignalDictionary inline.
-                             Due to restrictions in XML Schema 1.0, this would lead to a violation of the
-                             unique particle attribution schema component constraint, since the embedded
-                             ssb:SignalDictionary element would also be matched by the more generic xs:any
-                             specification.  Since XML Schema 1.1 validators are still rare compared with
-                             1.0 validators, the default schema files for SSP are still restricted to 1.0;
-                             however if you have access to a 1.1 validator/validating parser, you can
-                             use the 1.1 variant of these stylesheets instead.
-                        -->
+                        <xs:element ref="ssb:SignalDictionary"/>
                         <xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
                     </xs:choice>
                     <xs:attributeGroup ref="ssc:ABaseElement"/>
@@ -294,7 +291,7 @@
                                 empty otherwise.
                                 
                                 For the default type application/x-ssp-signal-dictionary such inline
-                                content must be an ssb:SignalDictionary element. 
+                                content must be an ssb:SignalDictionary element.
                             </xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
@@ -734,7 +731,7 @@
                         All kinds of system connectors can be parameterized.  In case the system level connectors
                         are connected to FMU components, the parameterization must be compatible with the variable
                         in the connected FMU.
-
+                        
                         ParameterBindings that apply to a component that references another SSD/SSP are handled
                         as if the top-level system of the SSD/SSP was present in the enclosing system instead of
                         the component with one special case: Any parameter bindings in the component are treated
@@ -761,19 +758,7 @@
                             </xs:annotation>
                             <xs:complexType>
                                 <xs:choice>
-                                    <!-- NOTE: In XML Schema 1.1 this choice would also contain the following entry: 
-                                        
-                                         <xs:element ref="ssv:ParameterSet"/>
-                                        
-                                         which specifies the proper way to directly embed a ParameterSet inline.
-                                         Due to restrictions in XML Schema 1.0, this would lead to a violation of the
-                                         unique particle attribution schema component constraint, since the embedded
-                                         ssv:ParameterSet element would also be matched by the more generic xs:any
-                                         specification.  Since XML Schema 1.1 validators are still rare compared with
-                                         1.0 validators, the default schema files for SSP are still restricted to 1.0;
-                                         however if you have access to a 1.1 validator/validating parser, you can
-                                         use the 1.1 variant of these stylesheets instead.
-                                    -->
+                                    <xs:element ref="ssv:ParameterSet"/>
                                     <xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
                                 </xs:choice>
                             </xs:complexType>
@@ -802,19 +787,7 @@
                             </xs:annotation>
                             <xs:complexType>
                                 <xs:choice>
-                                    <!-- NOTE: In XML Schema 1.1 this choice would also contain the following entry: 
-                                        
-                                         <xs:element ref="ssm:ParameterMapping"/>
-                                        
-                                         which specifies the proper way to directly embed a ParameterMapping inline.
-                                         Due to restrictions in XML Schema 1.0, this would lead to a violation of the
-                                         unique particle attribution schema component constraint, since the embedded
-                                         ssm:ParameterMapping element would also be matched by the more generic xs:any
-                                         specification.  Since XML Schema 1.1 validators are still rare compared with
-                                         1.0 validators, the default schema files for SSP are still restricted to 1.0;
-                                         however if you have access to a 1.1 validator/validating parser, you can
-                                         use the 1.1 variant of these stylesheets instead.
-                                    -->
+                                    <xs:element ref="ssm:ParameterMapping"/>
                                     <xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
                                 </xs:choice>
                                 <xs:attributeGroup ref="ssc:ABaseElement"/>

@@ -23,11 +23,11 @@ packages = ['fmpy',
             'fmpy.cross_check',
             'fmpy.cswrapper',
             'fmpy.examples',
+            'fmpy.fmucontainer',
             'fmpy.logging',
             'fmpy.gui',
             'fmpy.gui.generated',
             'fmpy.ssp',
-            'fmpy.ssp.examples',
             'fmpy.sundials',
             'fmpy.webapp']
 
@@ -43,6 +43,14 @@ package_data = {
         'logging/linux64/logging.so',
         'logging/win32/logging.dll',
         'logging/win64/logging.dll',
+        'fmucontainer/binaries/darwin64/FMUContainer.dylib',
+        'fmucontainer/binaries/linux64/FMUContainer.so',
+        'fmucontainer/binaries/win32/FMUContainer.dll',
+        'fmucontainer/binaries/win64/FMUContainer.dll',
+        'fmucontainer/documentation/LICENSE.txt',
+        'fmucontainer/sources/FMUContainer.c',
+        'fmucontainer/sources/mpack.c',
+        'fmucontainer/sources/mpack.h',
         'remoting/client.dll',
         'remoting/license.txt',
         'remoting/server.exe',
@@ -61,9 +69,11 @@ package_data = {
 install_requires = [
     'lark-parser',
     'lxml',
+    'msgpack',
     'numpy',
     'pathlib;python_version<"3.4"',
-    'pywin32;platform_system=="Windows"'
+    'pywin32;platform_system=="Windows"',
+    'pytz'
 ]
 
 extras_require = {
@@ -77,7 +87,7 @@ extras_require = {
 extras_require['complete'] = sorted(set(sum(extras_require.values(), [])))
 
 setup(name='FMPy',
-      version='0.2.25',
+      version='0.2.26',
       description="Simulate Functional Mock-up Units (FMUs) in Python",
       long_description=long_description,
       author="Torsten Sommer",

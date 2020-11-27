@@ -1,0 +1,5 @@
+# build artifacts
+darwin64/
+linux64/
+win32/
+win64/

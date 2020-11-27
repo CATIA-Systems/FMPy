@@ -13,15 +13,20 @@ from .sunlinsol_dense import *
 from .sunmatrix_dense import *
 
 
+def _assert_cv_success(status):
+    if status != CV_SUCCESS:
+        raise Exception("Call to CVode failed.")
+
+
 def _assert_version():
     major = c_int()
     minor = c_int()
     patch = c_int()
     len = 8
     label = create_string_buffer(len)
-    status = SUNDIALSGetVersionNumber(byref(major), byref(minor), byref(patch), label, len)
-    assert status == 0
-    assert major.value == 5
+    _assert_cv_success(SUNDIALSGetVersionNumber(byref(major), byref(minor), byref(patch), label, len))
+    if major.value != 5:
+        raise Exception("Wrong SUNDIALS major version number. Expected 5 but was %d." % major.value)
 
 
 _assert_version()
@@ -92,25 +97,25 @@ class CVodeSolver(object):
         self.g_ = CVRootFn(self.g)
         self.ehfun_ = CVErrHandlerFn(self.ehfun)
 
-        assert CVodeInit(self.cvode_mem, self.f_, startTime, self.x) == CV_SUCCESS
+        _assert_cv_success(CVodeInit(self.cvode_mem, self.f_, startTime, self.x))
 
-        assert CVodeSVtolerances(self.cvode_mem, relativeTolerance, self.abstol) == CV_SUCCESS
+        _assert_cv_success(CVodeSVtolerances(self.cvode_mem, relativeTolerance, self.abstol))
 
-        assert CVodeRootInit(self.cvode_mem, self.nz, self.g_) == CV_SUCCESS
+        _assert_cv_success(CVodeRootInit(self.cvode_mem, self.nz, self.g_))
 
         self.A = SUNDenseMatrix(self.nx, self.nx)
 
         self.LS = SUNLinSol_Dense(self.x, self.A)
 
-        assert CVodeSetLinearSolver(self.cvode_mem, self.LS, self.A) == CV_SUCCESS
+        _assert_cv_success(CVodeSetLinearSolver(self.cvode_mem, self.LS, self.A))
 
-        assert CVodeSetMaxStep(self.cvode_mem, maxStep) == CV_SUCCESS
+        _assert_cv_success(CVodeSetMaxStep(self.cvode_mem, maxStep))
 
-        assert CVodeSetMaxNumSteps(self.cvode_mem, maxNumSteps) == CV_SUCCESS
+        _assert_cv_success(CVodeSetMaxNumSteps(self.cvode_mem, maxNumSteps))
 
-        assert CVodeSetNoInactiveRootWarn(self.cvode_mem) == CV_SUCCESS
+        _assert_cv_success(CVodeSetNoInactiveRootWarn(self.cvode_mem))
 
-        assert CVodeSetErrHandlerFn(self.cvode_mem, self.ehfun_, None) == CV_SUCCESS
+        _assert_cv_success(CVodeSetErrHandlerFn(self.cvode_mem, self.ehfun_, None))
 
     def ehfun(self, error_code, module, function, msg,  user_data):
         """ Error handler function """
@@ -161,7 +166,7 @@ class CVodeSolver(object):
 
         if flag == CV_ROOT_RETURN:
             p_roots_found = np.ctypeslib.as_ctypes(roots_found)
-            assert CVodeGetRootInfo(self.cvode_mem, p_roots_found) == CV_SUCCESS
+            _assert_cv_success(CVodeGetRootInfo(self.cvode_mem, p_roots_found))
         elif flag < 0:
             raise RuntimeError("CVode error (code %s) in module %s, function %s: %s" % self.error_info)
 

@@ -69,9 +69,11 @@ package_data = {
 install_requires = [
     'lark-parser',
     'lxml',
+    'msgpack',
     'numpy',
     'pathlib;python_version<"3.4"',
-    'pywin32;platform_system=="Windows"'
+    'pywin32;platform_system=="Windows"',
+    'pytz'
 ]
 
 extras_require = {

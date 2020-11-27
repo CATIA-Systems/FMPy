@@ -1,3 +1,16 @@
+## v0.2.26 (2020-11-27)
+
+### Enhancements
+
+- Create "FMU Containers" with nested FMUs (experimental) (#193)
+- Handle Scheduled Execution in instantiate_fmu() (#200)
+- Add "create-jupyter-notebook" command to CLI (#192)
+- Add all parameters to start_values in Jupyter Notebook (#190)
+- Fix Boolean start values in Jupyter Notebooks (#188)
+- Validate FMI 3 model description (#181)
+- Remove assert statements from fmpy.sundials (#202)
+- Update SSP schema to v1.0 and remove ssp.examples
+
 ## v0.2.25 (2020-11-04)
 
 ### Enhancements

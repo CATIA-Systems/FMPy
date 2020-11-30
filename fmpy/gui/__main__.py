@@ -2,9 +2,15 @@
 
 if __name__ == '__main__':
 
+    import os
     import sys
+    import ctypes
+    import platform
     from PyQt5.QtWidgets import QApplication
     from fmpy.gui.MainWindow import MainWindow
+
+    if os.name == 'nt' and int(platform.release()) >= 8:
+        ctypes.windll.shcore.SetProcessDpiAwareness(True)
 
     app = QApplication(sys.argv)
     window = MainWindow()

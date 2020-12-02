@@ -144,17 +144,20 @@ def _validate_model_structure(model_description):
         if variable.causality == 'calculatedParameter':
             expected_initial_unknowns.add(variable)
 
-    for unknown in model_description.derivatives:
-        derivative = unknown.variable
-        state = derivative.derivative
-        for variable in [state, derivative]:
-            if variable.initial in {'approx', 'calculated'}:
-                expected_initial_unknowns.add(variable)
+    try:
+        for unknown in model_description.derivatives:
+            derivative = unknown.variable
+            state = derivative.derivative
+            for variable in [state, derivative]:
+                if variable.initial in {'approx', 'calculated'}:
+                    expected_initial_unknowns.add(variable)
 
-    initial_unknowns = set(v.variable for v in model_description.initialUnknowns)
+        initial_unknowns = set(v.variable for v in model_description.initialUnknowns)
 
-    if initial_unknowns != expected_initial_unknowns:
-        problems.append('ModelStructure/InitialUnknowns does not contain the expected set of variables.')
+        if initial_unknowns != expected_initial_unknowns:
+            problems.append('ModelStructure/InitialUnknowns does not contain the expected set of variables.')
+    except:
+        pass  # this check may fail due to inconsistencies detected above
 
     return problems
 

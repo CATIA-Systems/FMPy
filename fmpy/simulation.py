@@ -568,7 +568,7 @@ def simulate_fmu(filename,
         result              a structured numpy array that contains the result
     """
 
-    from fmpy import supported_platforms
+    from fmpy import supported_platforms, platform_tuple
     from fmpy.model_description import read_model_description
 
     platforms = supported_platforms(filename)
@@ -629,7 +629,10 @@ def simulate_fmu(filename,
         unzipdir = filename
         tempdir = None
     else:
-        tempdir = extract(filename)
+        required_paths = ['resources', 'binaries/' + platform, 'binaries/' + platform_tuple]
+        if use_remoting:
+            required_paths.append('binaries/win32')
+        tempdir = extract(filename, include=lambda n: n.startswith(tuple(required_paths)))
         unzipdir = tempdir
 
     if use_remoting:

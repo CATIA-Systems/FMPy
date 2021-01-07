@@ -207,6 +207,8 @@ class Input(object):
         is_fmi1 = isinstance(fmu, _FMU1)
         is_fmi2 = isinstance(fmu, _FMU2)
 
+        self.set_input_derivatives = is_fmi2 and modelDescription.coSimulation and modelDescription.coSimulation.canInterpolateInputs
+
         setters = dict()
 
         # get the setters
@@ -248,16 +250,27 @@ class Input(object):
                 type_ = 'Integer' if variable.type == 'Enumeration' else variable.type
                 discrete_inputs[type_].append((variable.valueReference, variable.name))
 
-        for inputs, buf in [(continuous_inputs, self.continuous), (discrete_inputs, self.discrete)]:
-            for type_, vrs_and_names in inputs.items():
-                vrs, names = zip(*vrs_and_names)
-                setter, value_type = setters[type_]
-                buf.append((
-                    (c_uint32 * len(vrs))(*vrs),
-                    (value_type * len(vrs))(),
-                    np.asarray(np.stack(list(map(lambda n: signals[n], names))), dtype=value_type),
-                    setter
-                ))
+        for type_, vrs_and_names in continuous_inputs.items():
+            vrs, names = zip(*vrs_and_names)
+            setter, value_type = setters[type_]
+            self.continuous.append((
+                (c_uint32 * len(vrs))(*vrs),
+                (value_type * len(vrs))(),
+                (c_int * len(vrs))(*([1] * len(vrs))),
+                (value_type * len(vrs))(),
+                np.asarray(np.stack(list(map(lambda n: signals[n], names))), dtype=value_type),
+                setter
+            ))
+
+        for type_, vrs_and_names in discrete_inputs.items():
+            vrs, names = zip(*vrs_and_names)
+            setter, value_type = setters[type_]
+            self.discrete.append((
+                (c_uint32 * len(vrs))(*vrs),
+                (value_type * len(vrs))(),
+                np.asarray(np.stack(list(map(lambda n: signals[n], names))), dtype=value_type),
+                setter
+            ))
 
     def apply(self, time, continuous=True, discrete=True, after_event=False):
         """ Apply the input
@@ -275,17 +288,20 @@ class Input(object):
 
         # continuous
         if continuous:
-            for vrs, values, table, setter in self.continuous:
-                values[:] = self.interpolate(time=time, t=self.t, table=table, discrete=False, after_event=after_event)
+            for vrs, values, order, derivatives, table, setter in self.continuous:
+                values[:], derivatives[:] = self.interpolate(time=time, t=self.t, table=table, discrete=False, after_event=after_event)
                 if is_fmi3:
                     setter(self.fmu.component, vrs, len(vrs), values, len(values))
                 else:
                     setter(self.fmu.component, vrs, len(vrs), values)
 
+                if self.set_input_derivatives:
+                    self.fmu.fmi2SetRealInputDerivatives(self.fmu.component, vrs, len(vrs), order, derivatives)
+
         # discrete
         if discrete:
             for vrs, values, table, setter in self.discrete:
-                values[:] = self.interpolate(time=time, t=self.t, table=table, discrete=True, after_event=after_event)
+                values[:], der_values = self.interpolate(time=time, t=self.t, table=table, discrete=True, after_event=after_event)
 
                 if values._type_ == c_int8:
                     # special treatment for fmi1Boolean
@@ -334,16 +350,18 @@ class Input(object):
     def interpolate(time, t, table, discrete=False, after_event=False):
 
         if t.size < 2:
-            return table  # only one sample
+            return table, np.zeros_like(table)  # only one sample
 
         # find the left insert index
         i0 = np.searchsorted(t, time)
 
         if i0 == 0:
-            return table[:, 0]  # hold first value
+            values = table[:, 0]  # hold first value
+            return values, np.zeros_like(values)
 
         if i0 == len(t):
-            return table[:, -1]  # hold last value
+            values = table[:, -1]  # hold last value
+            return values, np.zeros_like(values)
 
         # check for event
         if time == t[i0] and i0 < len(t) - 1 and t[i0] == t[i0 + 1]:
@@ -352,14 +370,30 @@ class Input(object):
                 # take the value after the event
                 while i0 < len(t) - 1 and t[i0] == t[i0 + 1]:
                     i0 += 1
+                if i0 < len(t) - 1:
+                    v0 = table[:, i0]
+                    v1 = table[:, i0 + 1]
+                    t0 = t[i0]
+                    t1 = t[i0 + 1]
+                    der_v = (v1 - v0) / (t1 - t0)
+                else:
+                    der_v = np.zeros((table.shape[0],))
+            else:
+                v0 = table[:, i0 - 1]
+                v1 = table[:, i0]
+                t0 = t[i0 - 1]
+                t1 = t[i0]
+                der_v = (v1 - v0) / (t1 - t0)
 
-            return table[:, i0]
+            values = table[:, i0]
+            return values, der_v
 
         i0 -= 1  # interpolate
         i1 = i0 + 1
 
         if discrete:
-            return table[:, i1 if after_event else i0]
+            values = table[:, i1 if after_event else i0]
+            return values, np.zeros_like(values)
 
         t0 = t[i0]
         t1 = t[i1]
@@ -372,8 +406,9 @@ class Input(object):
 
         # interpolate the input value
         v = w0 * v0 + w1 * v1
+        der_v = (v1 - v0) / (t1 - t0)
 
-        return v
+        return v, der_v
 
 
 def apply_start_values(fmu, model_description, start_values, apply_default_start_values=False):

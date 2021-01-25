@@ -252,6 +252,7 @@ class MainWindow(QMainWindow):
         self.ui.actionSaveChanges.triggered.connect(self.saveChanges)
 
         # tools menu
+        self.ui.actionValidateFMU.triggered.connect(self.validateFMU)
         self.ui.actionCompilePlatformBinary.triggered.connect(self.compilePlatformBinary)
         self.ui.actionCreateJupyterNotebook.triggered.connect(self.createJupyterNotebook)
         self.ui.actionCreateCMakeProject.triggered.connect(self.createCMakeProject)
@@ -434,6 +435,8 @@ class MainWindow(QMainWindow):
             self.stopTimeLineEdit.setText(str(experiment.stopTime))
 
         # actions
+        self.ui.actionValidateFMU.setEnabled(True)
+
         can_compile = md.fmiVersion == '2.0' and 'c-code' in platforms
         self.ui.actionCompilePlatformBinary.setEnabled(can_compile)
         self.ui.actionCreateCMakeProject.setEnabled(can_compile)
@@ -926,6 +929,26 @@ class MainWindow(QMainWindow):
         seen = set()
         seen_add = seen.add
         return [x for x in seq if not (x in seen or seen_add(x))]
+
+    def validateFMU(self):
+
+        from ..validation import validate_fmu
+
+        problems = validate_fmu(self.filename)
+
+        if problems:
+            button = QMessageBox.question(self, "Validation failed", "%d problems have been found. Save validation messages?" % len(problems))
+            if button == QMessageBox.Yes:
+                filename, _ = os.path.splitext(self.filename)
+                filename, _ = QFileDialog.getSaveFileName(parent=self,
+                                                          caption="Save validation messages",
+                                                          directory=filename + '_validation.txt',
+                                                          filter="Text Files (*.txt);;All Files (*.*)")
+                if filename:
+                    with open(filename, 'w') as f:
+                        f.writelines(problems)
+        else:
+            QMessageBox.information(self, "Validation successful", "No problems have been found.")
 
     def addFileAssociation(self):
         """ Associate *.fmu with the FMPy GUI """

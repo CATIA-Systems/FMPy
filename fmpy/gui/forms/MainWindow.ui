@@ -1350,6 +1350,7 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="actionCreateDesktopShortcut"/>
     <addaction name="actionAddFileAssociation"/>
     <addaction name="separator"/>
+    <addaction name="actionValidateFMU"/>
     <addaction name="actionCompilePlatformBinary"/>
     <addaction name="actionCreateJupyterNotebook"/>
     <addaction name="actionCreateCMakeProject"/>
@@ -1918,6 +1919,14 @@ QToolButton::menu-button {
    </property>
    <property name="text">
     <string>Create &amp;Jupyter Notebook...</string>
+   </property>
+  </action>
+  <action name="actionValidateFMU">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Validate FMU</string>
    </property>
   </action>
  </widget>

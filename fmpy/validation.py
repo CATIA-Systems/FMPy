@@ -92,6 +92,17 @@ def validate_model_description(model_description, validate_variable_names=False,
                     'The combination causality="%s" and variability="%s" in variable "%s" (line %s) is not allowed.'
                     % (variable.causality, variable.variability, variable.name, variable.sourceline))
 
+        # check for illegal start values (see FMI 2.0.2 spec, p. 49)
+        for variable in model_description.modelVariables:
+
+            if variable.initial == 'calculated' and variable.start:
+                problems.append('The variable "%s" (line %s) has initial="calculated" but provides a start value.' % (
+                    variable.name, variable.sourceline))
+
+            if variable.causality in 'independent' and variable.start:
+                problems.append('The variable "%s" (line %s) has causality="independent" but provides a start value.' % (
+                    variable.name, variable.sourceline))
+
         # validate units (see FMI 2.0 spec, p. 33ff.)
         for variable in model_description.modelVariables:
 

@@ -20,16 +20,19 @@ def validate_fmu(filename):
     """
 
     from . import read_model_description
-    from .validation import validate_model_description
+    from .model_description import ValidationError
+
+    problems = []
 
     try:
-        model_description = read_model_description(filename, validate=False)
+        read_model_description(filename,
+                               validate=True,
+                               validate_variable_names=True,
+                               validate_model_structure=True)
+    except ValidationError as e:
+        problems = e.problems
     except Exception as e:
-        return [str(e)]
-
-    problems = validate_model_description(model_description,
-                                          validate_variable_names=True,
-                                          validate_model_structure=True)
+        problems = [str(e)]
 
     return problems
 

@@ -278,6 +278,19 @@ class Unknown(object):
         return '%s' % self.variable
 
 
+class ValidationError(Exception):
+    """ Exception raised for failed validation of the modelDescription.xml
+
+    Attributes:
+        problems    list of problems found
+    """
+
+    def __init__(self, problems):
+        message = "Failed to validate modelDescription.xml:\n\n- " + '\n- '.join(problems)
+        self.problems = problems
+        super(ValidationError, self).__init__(message)
+
+
 def _copy_attributes(element, object, attributes=None):
     """ Copy attributes from an XML element to a Python object """
 
@@ -433,10 +446,9 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
             schema = etree.XMLSchema(file=os.path.join(module_dir, 'schema', 'fmi3', 'fmi3ModelDescription.xsd'))
 
         if not schema.validate(root):
-            message = "Failed to validate modelDescription.xml:"
-            for entry in schema.error_log:
-                message += "\n%s (line %d, column %d): %s" % (entry.level_name, entry.line, entry.column, entry.message)
-            raise Exception(message)
+            problems = ["%s (line %d, column %d): %s" % (e.level_name, e.line, e.column, e.message)
+                        for e in schema.error_log]
+            raise ValidationError(problems)
 
     modelDescription = ModelDescription()
     _copy_attributes(root, modelDescription, ['fmiVersion', 'guid', 'modelName', 'description', 'generationTool',
@@ -814,15 +826,11 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
             if variable.derivative is not None:
                 variable.derivative = modelDescription.modelVariables[int(variable.derivative)]
 
-    problems = []
-
     if validate:
-        problems += validation.validate_model_description(modelDescription,
-                                                          validate_variable_names=validate_variable_names,
-                                                          validate_model_structure=validate_model_structure)
-
-    if problems:
-        message = ("Failed to validate model description. %d problems were found:\n\n- " % len(problems)) + '\n- '.join(problems)
-        raise Exception(message)
+        problems = validation.validate_model_description(modelDescription,
+                                                         validate_variable_names=validate_variable_names,
+                                                         validate_model_structure=validate_model_structure)
+        if problems:
+            raise ValidationError(problems)
 
     return modelDescription

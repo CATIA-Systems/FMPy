@@ -2,11 +2,6 @@ import os
 import numpy as np
 
 
-class ValidationError(Exception):
-
-    pass
-
-
 def read_csv(filename, variable_names=[], validate=True, structured=False):
     """ Read a CSV file that conforms to the FMI cross-check rules
 
@@ -54,7 +49,7 @@ def read_csv(filename, variable_names=[], validate=True, structured=False):
 
     # check if the time is monotonically increasing
     if traj.size > 1 and np.any(np.diff(time) < 0):
-        raise ValidationError("Values in first column (time) are not monotonically increasing")
+        raise Exception("Values in first column (time) are not monotonically increasing")
 
     # get the trajectory names (without the time)
     traj_names = traj.dtype.names[1:]
@@ -62,7 +57,7 @@ def read_csv(filename, variable_names=[], validate=True, structured=False):
     # check if the variable names match the trajectory names
     for variable_name in variable_names:
         if variable_name not in traj_names:
-            raise ValidationError("Trajectory of '" + variable_name + "' is missing")
+            raise Exception("Trajectory of '" + variable_name + "' is missing")
 
     return traj
 

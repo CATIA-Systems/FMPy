@@ -1328,7 +1328,7 @@ QToolButton:checked, QToolButton:hover:pressed {
     </property>
     <widget class="QMenu" name="menuFMI_Specifications">
      <property name="title">
-      <string>FMI Specifications</string>
+      <string>FMI &amp;Specifications</string>
      </property>
      <addaction name="actionOpenFMI2Spec"/>
      <addaction name="separator"/>
@@ -1812,7 +1812,7 @@ QToolButton::menu-button {
   </action>
   <action name="actionOpenTestFMUs">
    <property name="text">
-    <string>Test FMUs</string>
+    <string>&amp;Test FMUs</string>
    </property>
    <property name="toolTip">
     <string>Test FMUs on fmi-standard.org</string>

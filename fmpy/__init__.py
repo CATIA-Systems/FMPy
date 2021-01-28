@@ -5,7 +5,7 @@ import os
 from ctypes import *
 import _ctypes
 
-__version__ = '0.2.26'
+__version__ = '0.2.27'
 
 # experimental
 plot_library = 'matplotlib'  # 'plotly'

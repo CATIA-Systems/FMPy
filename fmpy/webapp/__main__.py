@@ -27,6 +27,9 @@ print('Extracting FMU to %s' % unzipdir)
 
 model_description = read_model_description(unzipdir)
 
+has_documentation = os.path.isdir(os.path.join(unzipdir, 'documentation'))
+has_model_png = os.path.isfile(os.path.join(unzipdir, 'model.png'))
+
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 app.title = model_description.modelName
@@ -101,7 +104,7 @@ app.layout = dbc.Container([
         [
             dbc.Tab(label="Model Info", tab_id="model-info-tab"),
             dbc.Tab(label="Simulation", tab_id="simulation-tab"),
-            dbc.Tab(label="Documentation", tab_id="documentation-tab"),
+            dbc.Tab(label="Documentation", tab_id="documentation-tab", disabled=not has_documentation),
         ],
         className='pt-4 mb-4',
         active_tab="simulation-tab",
@@ -150,7 +153,7 @@ app.layout = dbc.Container([
                 dbc.Col(
                     [
                         html.Img(src="/model.png", className='img-fluid')
-                    ], width=4
+                    ] if has_model_png else [], width=4
                 ),
             ]
         ),

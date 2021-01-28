@@ -1,3 +1,19 @@
+## v0.2.27 (2021-01-28)
+
+### Enhancements
+
+- Scale icons on High DPI screens (#226)
+- Add min and max columns and "Show All" action (#225)
+- Update link to FMI 2.0.2 spec (#210)
+- Handle missing documentation and model.png in web app (#187)
+- Validate XML against schema in validate_fmu() (#223)
+- Check for illegal start values (#224)
+- Add "Validate FMU" action to GUI (#221)
+- Set input derivatives for FMI 2.0 Co-Simulation (#214)
+- Add "include" parameter to fmpy.extract() (#208)
+- Handle missing "derivative" attribute in validate_fmu() (#206)
+- Call SetProcessDpiAwareness(True) on Windows to avoid broken PyQtGraph plots (#201)
+
 ## v0.2.26 (2020-11-27)
 
 ### Enhancements

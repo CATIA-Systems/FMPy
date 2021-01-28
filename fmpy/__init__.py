@@ -5,7 +5,7 @@ import os
 from ctypes import *
 import _ctypes
 
-__version__ = '0.2.26'
+__version__ = '0.2.27'
 
 # experimental
 plot_library = 'matplotlib'  # 'plotly'
@@ -167,13 +167,13 @@ def fmi_info(filename):
     return fmi_version, fmi_types
 
 
-def extract(filename, unzipdir=None):
+def extract(filename, unzipdir=None, include=None):
     """ Extract a ZIP archive to a temporary directory
 
     Parameters:
         filename    filename of the ZIP archive
         unzipdir    target directory (None: create temporary directory)
-
+        include     a filter function to select the files to extract
     Returns:
         unzipdir    path to the directory that contains the extracted files
     """
@@ -200,8 +200,10 @@ def extract(filename, unzipdir=None):
             if ':' in name or name.startswith('/'):
                 raise Exception("Illegal path %s found in %s. The path must not contain a drive or device letter, or a leading slash." % (name, filename))
 
+        members = filter(include, zf.namelist()) if include else None
+
         # extract the archive
-        zf.extractall(unzipdir)
+        zf.extractall(unzipdir, members=members)
 
     return unzipdir
 

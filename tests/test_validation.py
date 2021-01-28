@@ -1,8 +1,9 @@
 from fmpy import read_model_description
 
 import unittest
+
+from fmpy.model_description import ValidationError
 from fmpy.util import download_file
-from fmpy.validation import *
 
 
 class ValidationTest(unittest.TestCase):
@@ -14,25 +15,25 @@ class ValidationTest(unittest.TestCase):
 
     def test_validate_derivatives(self):
 
-        message = None
+        problems = []
 
         try:
             read_model_description('CoupledClutches.fmu', validate=True, validate_variable_names=False)
-        except Exception as e:
-            message = str(e)
+        except ValidationError as e:
+            problems = e.problems
 
-        self.assertEquals('Failed to validate model description. 1 problems were found:\n\n- The unit "" of variable "inputs" (line 183) is not defined.', message)
+        self.assertEqual(problems[0], 'The unit "" of variable "inputs" (line 183) is not defined.')
 
     def test_validate_variable_names(self):
 
-        message = ""
+        problems = []
 
         try:
             read_model_description('CoupledClutches.fmu', validate=True, validate_variable_names=True)
-        except Exception as e:
-            message = str(e)
+        except ValidationError as e:
+            problems = e.problems
 
-        self.assertTrue(message.startswith('Failed to validate model description. 124 problems were found:'))
+        self.assertEqual(len(problems), 124)
 
 
 if __name__ == '__main__':

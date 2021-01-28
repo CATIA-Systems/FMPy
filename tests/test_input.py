@@ -1,7 +1,5 @@
 import unittest
 import numpy as np
-import sys
-
 from fmpy.simulation import Input
 from fmpy.model_description import ModelDescription, ScalarVariable
 
@@ -15,9 +13,10 @@ class InputTest(unittest.TestCase):
         y = np.array([2])
 
         # "interpolate" input with only one sample
-        v = Input.interpolate(1, t, y)
+        u, du = Input.interpolate(1, t, y)
 
-        self.assertEqual(v,  2)
+        self.assertEqual(u,  2)
+        self.assertEqual(du,  0)
 
     def test_input_continuous(self):
 
@@ -26,24 +25,24 @@ class InputTest(unittest.TestCase):
                       [-1, 0, 1, 2]])
 
         # extrapolate left (hold)
-        v1, v2 = Input.interpolate(-1, t, y)
-        self.assertEqual(v1,  0)
-        self.assertEqual(v2, -1)
+        (u1, u2), (du1, du2) = Input.interpolate(-1, t, y)
+        self.assertTrue((u1, u2) == (0, -1))
+        self.assertTrue((du1, du2) == (0, 0))
 
         # hit sample
-        v1, v2 = Input.interpolate(1, t, y)
-        self.assertEqual(v1, 0)
-        self.assertEqual(v2, 0)
+        (u1, u2), (du1, du2) = Input.interpolate(1, t, y)
+        self.assertTrue((u1, u2) == (0, 0))
+        self.assertTrue((du1, du2) == (0, 1))
 
         # interpolate (linear)
-        v1, v2 = Input.interpolate(1.5, t, y)
-        self.assertAlmostEqual(v1, 1.5)
-        self.assertAlmostEqual(v2, 0.5)
+        (u1, u2), (du1, du2) = Input.interpolate(1.5, t, y)
+        self.assertTrue((u1, u2) == (1.5, 0.5))
+        self.assertTrue((du1, du2) == (3, 1))
 
         # extrapolate right (hold)
-        v1, v2 = Input.interpolate(4, t, y)
-        self.assertEqual(v1, 3)
-        self.assertEqual(v2, 2)
+        (u1, u2), (du1, du2) = Input.interpolate(4, t, y)
+        self.assertTrue((u1, u2) == (3, 2))
+        self.assertTrue((du1, du2) == (0, 0))
 
     def test_continuous_signal_events(self):
 
@@ -88,28 +87,34 @@ class InputTest(unittest.TestCase):
         y = np.array([[0, 0, 4, 3, 3]])
 
         # extrapolate left
-        v = Input.interpolate(-1, t, y)
-        self.assertEqual(v, 0, "Expecting first value")
+        u, du = Input.interpolate(-1, t, y)
+        self.assertEqual(u, 0, "Expecting first value")
+        self.assertEqual(du, 0)
 
         # hit sample
-        v = Input.interpolate(0, t, y)
-        self.assertEqual(v, 0, "Expecting value at sample")
+        u, du = Input.interpolate(0, t, y)
+        self.assertEqual(u, 0, "Expecting value at sample")
+        self.assertEqual(du, 0)
 
         # interpolate
-        v = Input.interpolate(0.5, t, y)
-        self.assertEqual(v, 0, "Expecting to hold previous value")
+        u, du = Input.interpolate(0.5, t, y)
+        self.assertEqual(u, 0, "Expecting to hold previous value")
+        self.assertEqual(du, 0)
 
         # before event
-        v = Input.interpolate(1, t, y)
-        self.assertEqual(v, 0, "Expecting value before event")
+        u, du = Input.interpolate(1, t, y)
+        self.assertEqual(u, 0, "Expecting value before event")
+        self.assertEqual(du, 0)
 
         # after event
-        v = Input.interpolate(1, t, y, after_event=True)
-        self.assertEqual(v, 3, "Expecting value after event")
+        u, du = Input.interpolate(1, t, y, after_event=True)
+        self.assertEqual(u, 3, "Expecting value after event")
+        self.assertEqual(du, 0)
 
         # extrapolate right
-        v = Input.interpolate(3, t, y)
-        self.assertEqual(v, 3, "Expecting last value")
+        u, du = Input.interpolate(3, t, y)
+        self.assertEqual(u, 3, "Expecting last value")
+        self.assertEqual(du, 0)
 
 
 if __name__ == '__main__':

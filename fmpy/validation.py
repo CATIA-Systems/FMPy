@@ -20,16 +20,19 @@ def validate_fmu(filename):
     """
 
     from . import read_model_description
-    from .validation import validate_model_description
+    from .model_description import ValidationError
+
+    problems = []
 
     try:
-        model_description = read_model_description(filename, validate=False)
+        read_model_description(filename,
+                               validate=True,
+                               validate_variable_names=True,
+                               validate_model_structure=True)
+    except ValidationError as e:
+        problems = e.problems
     except Exception as e:
-        return [str(e)]
-
-    problems = validate_model_description(model_description,
-                                          validate_variable_names=True,
-                                          validate_model_structure=True)
+        problems = [str(e)]
 
     return problems
 
@@ -92,6 +95,17 @@ def validate_model_description(model_description, validate_variable_names=False,
                     'The combination causality="%s" and variability="%s" in variable "%s" (line %s) is not allowed.'
                     % (variable.causality, variable.variability, variable.name, variable.sourceline))
 
+        # check for illegal start values (see FMI 2.0.2 spec, p. 49)
+        for variable in model_description.modelVariables:
+
+            if variable.initial == 'calculated' and variable.start:
+                problems.append('The variable "%s" (line %s) has initial="calculated" but provides a start value.' % (
+                    variable.name, variable.sourceline))
+
+            if variable.causality in 'independent' and variable.start:
+                problems.append('The variable "%s" (line %s) has causality="independent" but provides a start value.' % (
+                    variable.name, variable.sourceline))
+
         # validate units (see FMI 2.0 spec, p. 33ff.)
         for variable in model_description.modelVariables:
 
@@ -144,17 +158,20 @@ def _validate_model_structure(model_description):
         if variable.causality == 'calculatedParameter':
             expected_initial_unknowns.add(variable)
 
-    for unknown in model_description.derivatives:
-        derivative = unknown.variable
-        state = derivative.derivative
-        for variable in [state, derivative]:
-            if variable.initial in {'approx', 'calculated'}:
-                expected_initial_unknowns.add(variable)
+    try:
+        for unknown in model_description.derivatives:
+            derivative = unknown.variable
+            state = derivative.derivative
+            for variable in [state, derivative]:
+                if variable.initial in {'approx', 'calculated'}:
+                    expected_initial_unknowns.add(variable)
 
-    initial_unknowns = set(v.variable for v in model_description.initialUnknowns)
+        initial_unknowns = set(v.variable for v in model_description.initialUnknowns)
 
-    if initial_unknowns != expected_initial_unknowns:
-        problems.append('ModelStructure/InitialUnknowns does not contain the expected set of variables.')
+        if initial_unknowns != expected_initial_unknowns:
+            problems.append('ModelStructure/InitialUnknowns does not contain the expected set of variables.')
+    except:
+        pass  # this check may fail due to inconsistencies detected above
 
     return problems
 

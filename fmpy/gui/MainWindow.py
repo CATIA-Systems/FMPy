@@ -31,6 +31,8 @@ import pyqtgraph as pg
 
 pg.setConfigOptions(background='w', foreground='k', antialias=True)
 
+COLLAPSABLE_COLUMNS = ['Value Reference', 'Initial', 'Causality', 'Variability', 'Min', 'Max']
+
 
 class ClickableLabel(QLabel):
     """ A QLabel that shows a pointing hand cursor and emits a *clicked* event when clicked """
@@ -175,9 +177,7 @@ class MainWindow(QMainWindow):
             self.ui.treeView.setColumnWidth(i, w)
             self.ui.tableView.setColumnWidth(i, w)
 
-            if n in ['Value Reference', 'Initial', 'Causality', 'Variability']:
-                self.ui.treeView.setColumnHidden(i, True)
-                self.ui.tableView.setColumnHidden(i, True)
+        self.hideAllColumns()
 
         # populate the recent files list
         settings = QSettings()
@@ -238,7 +238,10 @@ class MainWindow(QMainWindow):
         self.actionEditTable = self.contextMenu.addAction("Edit Table", self.editTable)
         self.contextMenu.addSeparator()
         self.columnsMenu = self.contextMenu.addMenu('Columns')
-        for column in ['Value Reference', 'Initial', 'Causality', 'Variability']:
+        action = self.columnsMenu.addAction('Show All')
+        action.triggered.connect(self.showAllColumns)
+        self.columnsMenu.addSeparator()
+        for column in COLLAPSABLE_COLUMNS:
             action = self.columnsMenu.addAction(column)
             action.setCheckable(True)
             action.toggled.connect(lambda show, col=column: self.showColumn(col, show))
@@ -252,6 +255,7 @@ class MainWindow(QMainWindow):
         self.ui.actionSaveChanges.triggered.connect(self.saveChanges)
 
         # tools menu
+        self.ui.actionValidateFMU.triggered.connect(self.validateFMU)
         self.ui.actionCompilePlatformBinary.triggered.connect(self.compilePlatformBinary)
         self.ui.actionCreateJupyterNotebook.triggered.connect(self.createJupyterNotebook)
         self.ui.actionCreateCMakeProject.triggered.connect(self.createCMakeProject)
@@ -261,7 +265,7 @@ class MainWindow(QMainWindow):
         # help menu
         self.ui.actionOpenFMI1SpecCS.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://svn.modelica.org/fmi/branches/public/specifications/v1.0/FMI_for_CoSimulation_v1.0.1.pdf')))
         self.ui.actionOpenFMI1SpecME.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://svn.modelica.org/fmi/branches/public/specifications/v1.0/FMI_for_ModelExchange_v1.0.1.pdf')))
-        self.ui.actionOpenFMI2Spec.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://svn.modelica.org/fmi/branches/public/specifications/v2.0/FMI_for_ModelExchange_and_CoSimulation_v2.0.pdf')))
+        self.ui.actionOpenFMI2Spec.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/modelica/fmi-standard/releases/download/v2.0.2/FMI-Specification-2.0.2.pdf')))
         self.ui.actionOpenTestFMUs.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/modelica/fmi-cross-check/tree/master/fmus')))
         self.ui.actionOpenWebsite.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/CATIA-Systems/FMPy')))
         self.ui.actionShowReleaseNotes.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://fmpy.readthedocs.io/en/latest/changelog/')))
@@ -434,6 +438,8 @@ class MainWindow(QMainWindow):
             self.stopTimeLineEdit.setText(str(experiment.stopTime))
 
         # actions
+        self.ui.actionValidateFMU.setEnabled(True)
+
         can_compile = md.fmiVersion == '2.0' and 'c-code' in platforms
         self.ui.actionCompilePlatformBinary.setEnabled(can_compile)
         self.ui.actionCreateCMakeProject.setEnabled(can_compile)
@@ -826,6 +832,14 @@ class MainWindow(QMainWindow):
         self.ui.treeView.setColumnHidden(i, not show)
         self.ui.tableView.setColumnHidden(i, not show)
 
+    def showAllColumns(self):
+        for name in COLLAPSABLE_COLUMNS:
+            self.showColumn(name, True)
+
+    def hideAllColumns(self):
+        for name in COLLAPSABLE_COLUMNS:
+            self.showColumn(name, False)
+
     def setStatusMessage(self, level, text):
 
         if level in ['debug', 'info', 'warning', 'error']:
@@ -926,6 +940,26 @@ class MainWindow(QMainWindow):
         seen = set()
         seen_add = seen.add
         return [x for x in seq if not (x in seen or seen_add(x))]
+
+    def validateFMU(self):
+
+        from ..validation import validate_fmu
+
+        problems = validate_fmu(self.filename)
+
+        if problems:
+            button = QMessageBox.question(self, "Validation failed", "%d problems have been found. Save validation messages?" % len(problems))
+            if button == QMessageBox.Yes:
+                filename, _ = os.path.splitext(self.filename)
+                filename, _ = QFileDialog.getSaveFileName(parent=self,
+                                                          caption="Save validation messages",
+                                                          directory=filename + '_validation.txt',
+                                                          filter="Text Files (*.txt);;All Files (*.*)")
+                if filename:
+                    with open(filename, 'w') as f:
+                        f.writelines(problems)
+        else:
+            QMessageBox.information(self, "Validation successful", "No problems have been found.")
 
     def addFileAssociation(self):
         """ Associate *.fmu with the FMPy GUI """

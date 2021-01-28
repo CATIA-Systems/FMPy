@@ -1328,7 +1328,7 @@ QToolButton:checked, QToolButton:hover:pressed {
     </property>
     <widget class="QMenu" name="menuFMI_Specifications">
      <property name="title">
-      <string>FMI Specifications</string>
+      <string>FMI &amp;Specifications</string>
      </property>
      <addaction name="actionOpenFMI2Spec"/>
      <addaction name="separator"/>
@@ -1350,6 +1350,7 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="actionCreateDesktopShortcut"/>
     <addaction name="actionAddFileAssociation"/>
     <addaction name="separator"/>
+    <addaction name="actionValidateFMU"/>
     <addaction name="actionCompilePlatformBinary"/>
     <addaction name="actionCreateJupyterNotebook"/>
     <addaction name="actionCreateCMakeProject"/>
@@ -1759,7 +1760,10 @@ QToolButton::menu-button {
   </action>
   <action name="actionOpenFMI2Spec">
    <property name="text">
-    <string>FMI 2.0</string>
+    <string>FMI 2.0.2</string>
+   </property>
+   <property name="toolTip">
+    <string>FMI 2.0.2</string>
    </property>
   </action>
   <action name="actionOpenFMI1SpecCS">
@@ -1808,7 +1812,7 @@ QToolButton::menu-button {
   </action>
   <action name="actionOpenTestFMUs">
    <property name="text">
-    <string>Test FMUs</string>
+    <string>&amp;Test FMUs</string>
    </property>
    <property name="toolTip">
     <string>Test FMUs on fmi-standard.org</string>
@@ -1918,6 +1922,14 @@ QToolButton::menu-button {
    </property>
    <property name="text">
     <string>Create &amp;Jupyter Notebook...</string>
+   </property>
+  </action>
+  <action name="actionValidateFMU">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Validate FMU</string>
    </property>
   </action>
  </widget>

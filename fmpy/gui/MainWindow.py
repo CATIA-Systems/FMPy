@@ -31,6 +31,8 @@ import pyqtgraph as pg
 
 pg.setConfigOptions(background='w', foreground='k', antialias=True)
 
+COLLAPSABLE_COLUMNS = ['Value Reference', 'Initial', 'Causality', 'Variability', 'Min', 'Max']
+
 
 class ClickableLabel(QLabel):
     """ A QLabel that shows a pointing hand cursor and emits a *clicked* event when clicked """
@@ -175,9 +177,7 @@ class MainWindow(QMainWindow):
             self.ui.treeView.setColumnWidth(i, w)
             self.ui.tableView.setColumnWidth(i, w)
 
-            if n in ['Value Reference', 'Initial', 'Causality', 'Variability']:
-                self.ui.treeView.setColumnHidden(i, True)
-                self.ui.tableView.setColumnHidden(i, True)
+        self.hideAllColumns()
 
         # populate the recent files list
         settings = QSettings()
@@ -238,7 +238,10 @@ class MainWindow(QMainWindow):
         self.actionEditTable = self.contextMenu.addAction("Edit Table", self.editTable)
         self.contextMenu.addSeparator()
         self.columnsMenu = self.contextMenu.addMenu('Columns')
-        for column in ['Value Reference', 'Initial', 'Causality', 'Variability']:
+        action = self.columnsMenu.addAction('Show All')
+        action.triggered.connect(self.showAllColumns)
+        self.columnsMenu.addSeparator()
+        for column in COLLAPSABLE_COLUMNS:
             action = self.columnsMenu.addAction(column)
             action.setCheckable(True)
             action.toggled.connect(lambda show, col=column: self.showColumn(col, show))
@@ -828,6 +831,14 @@ class MainWindow(QMainWindow):
         i = VariablesModel.COLUMN_NAMES.index(name)
         self.ui.treeView.setColumnHidden(i, not show)
         self.ui.tableView.setColumnHidden(i, not show)
+
+    def showAllColumns(self):
+        for name in COLLAPSABLE_COLUMNS:
+            self.showColumn(name, True)
+
+    def hideAllColumns(self):
+        for name in COLLAPSABLE_COLUMNS:
+            self.showColumn(name, False)
 
     def setStatusMessage(self, level, text):
 

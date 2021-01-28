@@ -29,8 +29,8 @@ class TreeItem(object):
 
 class VariablesModel(QAbstractItemModel):
 
-    COLUMN_NAMES = ['Name', 'Value Reference', 'Initial', 'Causality', 'Variability', 'Start', 'Unit', 'Plot', 'Description']
-    COLUMN_WIDTHS = [200, 100, 70, 70, 70, 70, 40, 40]
+    COLUMN_NAMES = ['Name', 'Value Reference', 'Initial', 'Causality', 'Variability', 'Start', 'Min', 'Max', 'Unit', 'Plot', 'Description']
+    COLUMN_WIDTHS = [200, 100, 70, 70, 70, 70, 70, 70, 40, 40]
     variableSelected = pyqtSignal(ScalarVariable, name='variableSelected')
     variableDeselected = pyqtSignal(ScalarVariable, name='variableDeselected')
 
@@ -63,7 +63,7 @@ class VariablesModel(QAbstractItemModel):
         elif role == Qt.CheckStateRole and column == 'Plot':
             return Qt.Checked if v in self.selectedVariables else Qt.Unchecked
 
-        elif role == Qt.TextAlignmentRole and column in ['Value Reference', 'Start']:
+        elif role == Qt.TextAlignmentRole and column in ['Value Reference', 'Start', 'Min', 'Max']:
             return Qt.AlignRight | Qt.AlignVCenter
 
         elif role == Qt.FontRole and column == 'Start' and v.name in self.startValues:
@@ -85,6 +85,16 @@ class VariablesModel(QAbstractItemModel):
                     return self.startValues[v.name]
                 elif v.start is not None:
                     return str(v.start)
+            elif column == 'Min':
+                if v.min is not None:
+                    return v.min
+                elif v.declaredType is not None and v.declaredType.min is not None:
+                    return v.declaredType.min
+            elif column == 'Max':
+                if v.max is not None:
+                    return v.max
+                elif v.declaredType is not None and v.declaredType.max is not None:
+                    return v.declaredType.max
             elif column == 'Unit':
                 if v.unit is not None:
                     return v.unit

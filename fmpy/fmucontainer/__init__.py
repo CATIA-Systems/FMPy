@@ -7,6 +7,20 @@ def create_fmu_container(configuration, output_filename):
         see tests/test_fmu_container.py for an example
     """
 
+    def xml_encode(s):
+        """ Escape non-ASCII characters """
+
+        s = s.replace('&', '&amp;')
+        s = s.replace('<', '&lt;')
+        s = s.replace('>', '&gt;')
+        s = s.replace('"', '&quot;')
+
+        for c in s:
+            if ord(c) > 127:
+                s = s.replace(c, '&#x' + format(ord(c), 'x') + ';')
+
+        return s
+
     import os
     import shutil
     import fmpy
@@ -78,8 +92,8 @@ def create_fmu_container(configuration, output_filename):
                     name = mapping['name']
                 if 'description' in mapping:
                     description = mapping['description']
-            description = ' description="%s"' % description if description else ''
-            l.append('    <ScalarVariable name="%s" valueReference="%d" causality="%s" variability="%s"%s>' % (name, vi, v.causality, v.variability, description))
+            description = ' description="%s"' % xml_encode(description) if description else ''
+            l.append('    <ScalarVariable name="%s" valueReference="%d" causality="%s" variability="%s"%s>' % (xml_encode(name), vi, v.causality, v.variability, description))
             l.append('      <%s%s/>' % (v.type, ' start="%s"' % v.start if v.start else ''))
             l.append('    </ScalarVariable>')
             vi += 1

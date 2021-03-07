@@ -1,8 +1,11 @@
 # noinspection PyPep8
 
 import shutil
+
+from fmpy.model_description import ModelDescription
+
 from .fmi1 import *
-from .fmi1 import _FMU1
+from .fmi1 import _FMU1, _FMU
 from .fmi2 import *
 from .fmi2 import _FMU2
 from . import fmi3
@@ -10,6 +13,7 @@ from . import extract
 from .util import auto_interval
 import numpy as np
 from time import time as current_time
+from typing import Union, Any, Dict, Sequence, Callable
 
 # absolute tolerance for equality when comparing two floats
 eps = 1e-13
@@ -555,28 +559,28 @@ class ForwardEuler(object):
 
 
 def simulate_fmu(filename,
-                 validate=True,
-                 start_time=None,
-                 stop_time=None,
-                 solver='CVode',
-                 step_size=None,
-                 relative_tolerance=None,
-                 output_interval=None,
-                 record_events=True,
-                 fmi_type=None,
-                 start_values={},
-                 apply_default_start_values=False,
-                 input=None,
-                 output=None,
-                 timeout=None,
-                 debug_logging=False,
-                 visible=False,
-                 logger=None,
-                 fmi_call_logger=None,
-                 step_finished=None,
-                 model_description=None,
-                 fmu_instance=None,
-                 set_input_derivatives=False):
+                 validate: bool = True,
+                 start_time: Union[float, str] = None,
+                 stop_time: Union[float, str] = None,
+                 solver: str ='CVode',
+                 step_size: Union[float, str] = None,
+                 relative_tolerance: Union[float, str] = None,
+                 output_interval: Union[float, str] = None,
+                 record_events: bool = True,
+                 fmi_type: str = None,
+                 start_values: Dict[str, Any] = {},
+                 apply_default_start_values: bool = False,
+                 input: Input = None,
+                 output: Sequence[str] = None,
+                 timeout: Union[float, str] = None,
+                 debug_logging: bool = False,
+                 visible: bool = False,
+                 logger: Callable = None,
+                 fmi_call_logger: Callable[[str], None] = None,
+                 step_finished: Callable[[float, Recorder], bool] = None,
+                 model_description: ModelDescription = None,
+                 fmu_instance: _FMU = None,
+                 set_input_derivatives: bool = False) -> SimulationResult:
     """ Simulate an FMU
 
     Parameters:

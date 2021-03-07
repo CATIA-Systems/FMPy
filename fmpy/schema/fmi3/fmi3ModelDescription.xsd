@@ -44,16 +44,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element name="ModelExchange" type="fmi3ModelExchange" minOccurs="0"/>
-				<xs:element name="CoSimulation" minOccurs="0">
-					<xs:complexType>
-						<xs:complexContent>
-							<xs:extension base="fmi3CoSimulation">
-								<xs:attribute name="hasEventMode" type="xs:boolean" default="false"/>
-							</xs:extension>
-						</xs:complexContent>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="ScheduledExecution" type="fmi3CoSimulation" minOccurs="0"/>
+				<xs:element name="CoSimulation" type="fmi3CoSimulation" minOccurs="0"/>
+				<xs:element name="ScheduledExecution" type="fmi3ScheduledExecution" minOccurs="0"/>
 				<xs:element name="UnitDefinitions" minOccurs="0">
 					<xs:complexType>
 						<xs:sequence maxOccurs="unbounded">
@@ -101,25 +93,36 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element name="Output" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
-							<xs:element name="Derivative" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element name="StateDerivative" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element name="ClockedState" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
 							<xs:element name="InitialUnknown" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
 							<xs:element name="EventIndicator" minOccurs="0" maxOccurs="unbounded">
-	                                                        <xs:complexType>
-		                                                        <xs:attribute name="valueReference" type="xs:unsignedInt" use="required"/>
-	                                                        </xs:complexType>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element ref="Annotations" minOccurs="0"/>
+									</xs:sequence>
+									<xs:attribute name="valueReference" type="xs:unsignedInt" use="required"/>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="Clock" minOccurs="0" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element ref="Annotations" minOccurs="0"/>
+									</xs:sequence>
+									<xs:attribute name="valueReference" type="xs:unsignedInt" use="required"/>
+									<xs:attribute name="clockedVariables">
+										<xs:simpleType>
+											<xs:list itemType="xs:unsignedInt"/>
+										</xs:simpleType>
+									</xs:attribute>
+								</xs:complexType>
 							</xs:element>
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
 				<xs:element ref="Annotations" minOccurs="0"/>
 			</xs:sequence>
-			<xs:attribute name="fmiVersion" use="required">
-				<xs:simpleType>
-					<xs:restriction base="xs:normalizedString">
-						<xs:pattern value="3[.](0-.*)"/>
-					</xs:restriction>
-				</xs:simpleType>
-			</xs:attribute>
+			<xs:attribute name="fmiVersion" fixed="3.0-alpha.6" use="required"/>
 			<xs:attribute name="modelName" type="xs:string" use="required"/>
 			<xs:attribute name="instantiationToken" type="xs:normalizedString" use="required"/>
 			<xs:attribute name="description" type="xs:string"/>

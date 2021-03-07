@@ -79,6 +79,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 										</xs:element>
 										<xs:element ref="Annotations" minOccurs="0"/>
 									</xs:sequence>
+									<xs:attribute name="name" type="xs:normalizedString"/>
 									<xs:attribute name="language" type="xs:normalizedString"/>
 									<xs:attribute name="compiler" type="xs:normalizedString"/>
 									<xs:attribute name="compilerOptions" type="xs:string"/>

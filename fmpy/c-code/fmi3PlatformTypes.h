@@ -2,7 +2,7 @@
 #define fmi3PlatformTypes_h
 
 /*
-This header file defines the data types of FMI 3.0-alpha.5.
+This header file defines the data types of FMI 3.0-alpha.6.
 It must be used by both FMU and FMI master.
 
 Copyright (C) 2008-2011 MODELISAR consortium,
@@ -42,19 +42,19 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 /* tag::Component[] */
-typedef void*           fmi3Instance;             /* Pointer to FMU instance */
+typedef           void* fmi3Instance;             /* Pointer to the FMU instance */
 /* end::Component[] */
 
 /* tag::ComponentEnvironment[] */
-typedef void*           fmi3InstanceEnvironment;  /* Pointer to FMU environment */
+typedef           void* fmi3InstanceEnvironment;  /* Pointer to the FMU environment */
 /* end::ComponentEnvironment[] */
 
 /* tag::FMUState[] */
-typedef void*           fmi3FMUState;             /* Pointer to internal FMU state */
+typedef           void* fmi3FMUState;             /* Pointer to the internal FMU state */
 /* end::FMUState[] */
 
 /* tag::ValueReference[] */
-typedef unsigned int    fmi3ValueReference;       /* Handle to the value of a variable */
+typedef        uint32_t fmi3ValueReference;       /* Handle to the value of a variable */
 /* end::ValueReference[] */
 
 /* tag::VariableTypes[] */
@@ -68,15 +68,15 @@ typedef         int32_t fmi3Int32;    /* 32-bit signed integer */
 typedef        uint32_t fmi3UInt32;   /* 32-bit unsigned integer */
 typedef         int64_t fmi3Int64;    /* 64-bit signed integer */
 typedef        uint64_t fmi3UInt64;   /* 64-bit unsigned integer */
-typedef             int fmi3Boolean;  /* Data type to be used with fmi3True and fmi3False */
+typedef           _Bool fmi3Boolean;  /* Data type to be used with fmi3True and fmi3False */
 typedef            char fmi3Char;     /* Data type for one character */
 typedef const fmi3Char* fmi3String;   /* Data type for character strings
                                          ('\0' terminated, UTF-8 encoded) */
-typedef            char fmi3Byte;     /* Smallest addressable unit of the machine
+typedef         uint8_t fmi3Byte;     /* Smallest addressable unit of the machine
                                          (typically one byte) */
 typedef const fmi3Byte* fmi3Binary;   /* Data type for binary data
                                          (out-of-band length terminated) */
-typedef             int fmi3Clock ;   /* Data type to be used with fmi3ClockActive and
+typedef           _Bool fmi3Clock;    /* Data type to be used with fmi3ClockActive and
                                          fmi3ClockInactive */
 
 /* Values for fmi3Boolean */

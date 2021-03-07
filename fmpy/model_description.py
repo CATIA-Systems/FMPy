@@ -74,12 +74,20 @@ class CoSimulation(InterfaceType):
         self.canInterpolateInputs = False
         self.maxOutputDerivativeOrder = 0
         self.canRunAsynchronuously = False
+        self.providesIntermediateUpdate = False
+        self.recommendedIntermediateInputSmoothness = 0
+        self.canReturnEarlyAfterIntermediateUpdate = False
+        self.fixedInternalStepSize = None
+        self.hasEventMode = False
 
 
-class ScheduledExecution(CoSimulation):
+class ScheduledExecution(InterfaceType):
 
     def __init__(self):
         super(ScheduledExecution, self).__init__()
+        self.maxOutputDerivativeOrder = 0
+        self.providesIntermediateUpdate = False
+        self.recommendedIntermediateInputSmoothness = 0
 
 
 class BuildConfiguration(object):
@@ -107,7 +115,10 @@ class PreProcessorDefinition(object):
 class SourceFileSet(object):
 
     def __init__(self):
+        self.name = None
         self.language = None
+        self.compiler = None
+        self.compilerOptions = None
         self.preprocessorDefinitions = []
         self.sourceFiles = []
         self.includeDirectories = []
@@ -178,6 +189,17 @@ class ScalarVariable(object):
 
         self.sourceline = None
         "Line number in the modelDescription.xml or None if unknown"
+
+        # Clock attributes
+        self.priority = None
+        self.interval = None
+        self.intervalDecimal = None
+        self.shiftDecimal = None
+        self.supportsFraction = None
+        self.resolution = None
+        self.intervalCounter = None
+        self.shiftCounter = None
+
 
     def __repr__(self):
         return '%s "%s"' % (self.type, self.name)
@@ -465,7 +487,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
     elif is_fmi2:
         modelDescription.numberOfContinuousStates = len(root.findall('ModelStructure/Derivatives/Unknown'))
     else:
-        modelDescription.numberOfContinuousStates = len(root.findall('ModelStructure/Derivative'))
+        modelDescription.numberOfContinuousStates = len(root.findall('ModelStructure/StateDerivative'))
 
     # default experiment
     for d in root.findall('DefaultExperiment'):

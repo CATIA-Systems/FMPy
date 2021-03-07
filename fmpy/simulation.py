@@ -367,6 +367,8 @@ class Input(object):
         # check for event
         if time == t[i0] and i0 < len(t) - 1 and t[i0] == t[i0 + 1]:
 
+            der_v = np.zeros((table.shape[0],))
+
             if after_event:
                 # take the value after the event
                 while i0 < len(t) - 1 and t[i0] == t[i0 + 1]:
@@ -376,15 +378,15 @@ class Input(object):
                     v1 = table[:, i0 + 1]
                     t0 = t[i0]
                     t1 = t[i0 + 1]
-                    der_v = (v1 - v0) / (t1 - t0)
-                else:
-                    der_v = np.zeros((table.shape[0],))
+                    if not discrete:
+                        der_v = (v1 - v0) / (t1 - t0)
             else:
                 v0 = table[:, i0 - 1]
                 v1 = table[:, i0]
                 t0 = t[i0 - 1]
                 t1 = t[i0]
-                der_v = (v1 - v0) / (t1 - t0)
+                if not discrete:
+                    der_v = (v1 - v0) / (t1 - t0)
 
             values = table[:, i0]
             return values, der_v
@@ -875,17 +877,17 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
         input.apply(time)
         fmu.exitInitializationMode()
 
-        newDiscreteStatesNeeded = True
+        discreteStatesNeedUpdate = True
         terminateSimulation = False
 
-        while newDiscreteStatesNeeded and not terminateSimulation:
+        while discreteStatesNeedUpdate and not terminateSimulation:
             # update discrete states
-            (newDiscreteStatesNeeded,
+            (discreteStatesNeedUpdate,
              terminateSimulation,
              nominalsOfContinuousStatesChanged,
              valuesOfContinuousStatesChanged,
              nextEventTimeDefined,
-             nextEventTime) = fmu.newDiscreteStates()
+             nextEventTime) = fmu.updateDiscreteStates()
 
         fmu.enterContinuousTimeMode()
 
@@ -1047,7 +1049,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                      nominalsOfContinuousStatesChanged,
                      valuesOfContinuousStatesChanged,
                      nextEventTimeDefined,
-                     nextEventTime) = fmu.newDiscreteStates()
+                     nextEventTime) = fmu.updateDiscreteStates()
 
                 if terminateSimulation:
                     break

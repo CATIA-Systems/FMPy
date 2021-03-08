@@ -800,7 +800,7 @@ def compile_dll(model_description, sources_dir, compiler=None):
         command += ' && gcc'
         if platform != 'darwin64':
             command += ' -static-libgcc'
-        command += ' -shared -o%s *.o' % target
+        command += ' -shared -o%s *.o -lm' % target
 
     else:
         raise Exception("Unsupported compiler: '%s'" % compiler)

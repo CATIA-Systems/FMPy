@@ -2,18 +2,18 @@ import unittest
 from fmpy.util import download_file, validate_result
 from fmpy import *
 
-v = '0.0.4'  # Reference FMUs version
+v = '0.0.5'  # Reference FMUs version
 
 
 class ReferenceFMUsTest(unittest.TestCase):
 
     def setUp(self):
         download_file(url='https://github.com/modelica/Reference-FMUs/releases/download/v' + v + '/Reference-FMUs-' + v + '.zip',
-                      checksum='ed4b2346782c44937a411037c19a32ac2bd09cd43a5fce9bb0fddc571723fc3a')
+                      checksum='07291b9223ac2b479078afd4acea42d13118a64c2c1b5aa7a3c6f987585358fd')
         extract('Reference-FMUs-' + v + '.zip', 'Reference-FMUs-dist')
 
         download_file(url='https://github.com/modelica/Reference-FMUs/archive/v' + v + '.zip',
-                      checksum='1c9efd38cbe89ea8f31e588fe8a767b082d23a1ed1f3875e2ac770fc3f371489')
+                      checksum='2c2f10626bc8c6104e42e4565a2b0a3cb72829c6059dcbe8dc1dc102a5a1689d')
         extract('v' + v + '.zip', 'Reference-FMUs-repo')
 
     def test_fmi1_cs(self):
@@ -62,6 +62,7 @@ class ReferenceFMUsTest(unittest.TestCase):
                 self.assertEqual(0, rel_out)
                 # plot_result(result, reference)
 
+    @unittest.skip("XML of Clock.fmu is broken")
     def test_fmi3_clocks(self):
         """ Test the SE specific API """
 

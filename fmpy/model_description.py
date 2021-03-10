@@ -819,7 +819,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
     if is_fmi3:
 
         for attr, element in [(modelDescription.outputs, 'Output'),
-                              (modelDescription.derivatives, 'Derivative'),
+                              (modelDescription.derivatives, 'StateDerivative'),
                               (modelDescription.initialUnknowns, 'InitialUnknown'),
                               (modelDescription.eventIndicators, 'EventIndicator')]:
 
@@ -846,7 +846,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
         # resolve derivatives
         for variable in modelDescription.modelVariables:
             if variable.derivative is not None:
-                variable.derivative = modelDescription.modelVariables[int(variable.derivative)]
+                variable.derivative = variables[int(variable.derivative)]
 
     if validate:
         problems = validation.validate_model_description(modelDescription,

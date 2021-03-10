@@ -356,14 +356,13 @@ def read_build_description(filename, validate=True):
     import zipfile
     from lxml import etree
     import os
-    from .util import _is_string
 
-    if _is_string(filename) and os.path.isdir(filename):  # extracted FMU
+    if isinstance(filename, str) and os.path.isdir(filename):  # extracted FMU
         filename = os.path.join(filename, 'sources/buildDescription.xml')
         if not os.path.isfile(filename):
             return []
         tree = etree.parse(filename)
-    elif _is_string(filename) and os.path.isfile(filename) and filename.lower().endswith('.xml'):  # XML file
+    elif isinstance(filename, str) and os.path.isfile(filename) and filename.lower().endswith('.xml'):  # XML file
         if not os.path.isfile(filename):
             return []
         tree = etree.parse(filename)
@@ -441,17 +440,16 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
     import zipfile
     from lxml import etree
     import os
-    from .util import _is_string
     from . import validation
     import numpy as np
 
     # remember the original filename
     _filename = filename
 
-    if _is_string(filename) and os.path.isdir(filename):  # extracted FMU
+    if isinstance(filename, str) and os.path.isdir(filename):  # extracted FMU
         filename = os.path.join(filename, 'modelDescription.xml')
         tree = etree.parse(filename)
-    elif _is_string(filename) and os.path.isfile(filename) and filename.lower().endswith('.xml'):  # XML file
+    elif isinstance(filename, str) and os.path.isfile(filename) and filename.lower().endswith('.xml'):  # XML file
         tree = etree.parse(filename)
     else:  # FMU as path or file like object
         with zipfile.ZipFile(filename, 'r') as zf:
@@ -584,7 +582,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
                 buildConfiguration.sourceFileSets.append(source_file_set)
                 source_file_set.sourceFiles = source_files
 
-    elif is_fmi3 and not (_is_string(_filename) and _filename.endswith('.xml')):
+    elif is_fmi3 and not (isinstance(filename, str) and _filename.endswith('.xml')):
         # read buildDescription.xml if _filename is a folder or ZIP file
         modelDescription.buildConfigurations = read_build_description(_filename, validate=validate)
 

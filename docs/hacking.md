@@ -17,7 +17,7 @@ conda create -q -n py36_64 -c anaconda python=3.6 dask lxml matplotlib numpy pyq
 ```
 
 on Linux and macOS the `pywin32` package is not required but you might need to prepend `sudo` to
-the command depending on your permissions. If you want Python 2.7 you can use `python=2.7`.
+the command depending on your permissions.
 If you want a 32-bit Python environment you have to enter `set CONDA_FORCE_32BIT=1` before creating
 the environment. Note that in order to simulate FMUs the Python environment has to match the
 platforms supported by the FMU. I.e. you need a 64-bit Python on Windows to simulate an FMU that

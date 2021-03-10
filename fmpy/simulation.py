@@ -7,7 +7,7 @@ from .fmi2 import *
 from .fmi2 import _FMU2
 from . import fmi3
 from . import extract
-from .util import auto_interval, _is_string
+from .util import auto_interval
 import numpy as np
 from time import time as current_time
 
@@ -484,7 +484,7 @@ def apply_start_values(fmu, model_description, start_values, apply_default_start
 
         # convert the type
         if variable.shape:
-            if _is_string(value):
+            if isinstance(value, str):
                 value = value.split()
             value = list(map(lambda e: variable._python_type(e), value))
             if len(value) != np.prod(variable.shape):

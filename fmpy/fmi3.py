@@ -620,10 +620,10 @@ class _FMU3(_FMU):
         size = (c_size_t * len(vr))(*[len(v) for v in values])
         self.fmi3SetBinary(self.component, vr, len(vr), size, values_, len(values))
 
-    def setClock(self, vr, values, subactive=None):
+    def setClock(self, vr, values):
         vr = (fmi3ValueReference * len(vr))(*vr)
         values = (fmi3Clock * len(values))(*values)
-        self.fmi3SetClock(self.component, vr, len(vr), values, subactive, len(values))
+        self.fmi3SetClock(self.component, vr, len(vr), values, len(values))
 
     # Getting and setting the internal FMU state
 

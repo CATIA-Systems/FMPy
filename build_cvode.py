@@ -22,7 +22,7 @@ for build_dir in ['cswrapper/build', 'sundials-5.3.0', sundials_binary_dir, 'fmp
     if os.path.isdir(build_dir):
         shutil.rmtree(build_dir)
 
-url = 'https://computing.llnl.gov/projects/sundials/download/sundials-5.3.0.tar.gz'
+url = 'https://github.com/LLNL/sundials/releases/download/v5.3.0/sundials-5.3.0.tar.gz'
 checksum = '88dff7e11a366853d8afd5de05bf197a8129a804d9d4461fb64297f1ef89bca7'
 
 filename = os.path.basename(url)

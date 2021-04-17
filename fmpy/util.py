@@ -1,4 +1,5 @@
 import os
+
 import numpy as np
 
 
@@ -711,21 +712,26 @@ def visual_c_versions():
     return sorted(versions)
 
 
-def compile_dll(model_description, sources_dir, compiler=None):
+def compile_dll(model_description, sources_dir, compiler=None, target_platform=None):
     """ Compile the shared library
 
     Parameters:
-        sources_dir:    directory that contains the FMU's source code
-        compiler:       compiler to use (None: use Visual C on Windows, GCC otherwise)
+        sources_dir    directory that contains the FMU's source code
+        compiler       compiler to use (None: use Visual C on Windows, GCC otherwise)
+        platform       platform to compile for the binary for
     """
 
-    from . import platform, sharedLibraryExtension
+    from . import platform, system
+    import subprocess
+
+    if target_platform is None:
+        target_platform = platform
 
     if model_description.fmiVersion == '1.0':
         raise Exception("FMI 1.0 source FMUs are currently not supported")
 
     if compiler is None:
-        if platform.startswith('win'):
+        if target_platform in ['win32', 'win64', 'x86_64-windows']:
             compiler = 'vc'
         else:
             compiler = 'gcc'
@@ -756,13 +762,20 @@ def compile_dll(model_description, sources_dir, compiler=None):
     if len(source_files) == 0:
         raise Exception("No source files specified in the model description.")
 
-    target = build_configuration.modelIdentifier + sharedLibraryExtension
+    print('Compiling platform binary...')
 
-    print('Compiling %s...' % target)
+    sources = ' '.join(source_files)
+    model_identifier = build_configuration.modelIdentifier
 
     if compiler == 'vc':
 
+        target = model_identifier + '.dll'
+
         vc_versions = visual_c_versions()
+
+        toolset = 'x86_amd64' if target_platform in ['win64', 'x86_64-windows'] else 'x86'
+
+        definitions = ' '.join(f' /D{d}' for d in preprocessor_definitions)
 
         if len(vc_versions) == 0:
             raise Exception("No VisualStudio found")
@@ -771,37 +784,39 @@ def compile_dll(model_description, sources_dir, compiler=None):
         vc_version = vc_versions[-1]
 
         if vc_version < 150:
-            command = r'call "%%VS%dCOMNTOOLS%%\..\..\VC\vcvarsall.bat"' % vc_version
+            command = rf'call "%%VS{vc_version}COMNTOOLS%%\..\..\VC\vcvarsall.bat" {toolset}'
         else:
             installation_path = visual_studio_installation_path()
-            command = 'call "' + installation_path + r'\VC\Auxiliary\Build\vcvarsall.bat"'
+            command = rf'call "{installation_path}\VC\Auxiliary\Build\vcvarsall.bat" {toolset}'
 
-        if platform == 'win64':
-            command += ' x86_amd64'
-        else:
-            command += ' x86'
-
-        command += ' && cl /LD /I. /I"%s"' % include_dir
-        for definition in preprocessor_definitions:
-            command += ' /D' + definition
-        command += ' /Fe' + build_configuration.modelIdentifier + ' shlwapi.lib ' + ' '.join(source_files)
+        command += f' && cl /LD /I. /I"{include_dir}" {definitions} /Fe{model_identifier} shlwapi.lib {sources}'
 
     elif compiler == 'gcc':
 
-        command = ''
-        if platform.startswith('win'):
-            command += r'set PATH=C:\MinGW\bin;%%PATH%% && '
-        command += 'gcc -c -I. -I%s' % include_dir
-        if platform in ['linux32', 'linux64']:
-            command += ' -fPIC'
-        for definition in preprocessor_definitions:
-            command += ' -D' + definition
-        command += ' ' + ' '.join(source_files)
-        command += ' && gcc'
-        if platform != 'darwin64':
-            command += ' -static-libgcc'
-        command += ' -shared -o%s *.o -lm' % target
+        definitions = ' '.join(f' -D{d}' for d in preprocessor_definitions)
 
+        if target_platform in ['linux64', 'x86_64-linux']:
+
+            cc = 'gcc'
+            target = model_identifier + '.so'
+
+            if system == 'windows':
+                cc = 'wsl ' + cc
+                output = subprocess.check_output(f"wsl wslpath -a '{include_dir}'")
+                include_dir = output.decode('utf-8').strip()
+
+            command = f'{cc} -c -I. -I{include_dir} -fPIC {definitions} {sources}'
+            command += f' && {cc} -static-libgcc -shared -o{target} *.o -lm'
+
+        elif target_platform in ['darwin64', 'x86_64-darwin']:
+
+            target = model_identifier + '.dylib'
+
+            command = f'gcc -c -I. -I{include_dir} {definitions} {sources}'
+            command += f' && gcc -shared -o{target} *.o -lm'
+
+        else:
+            raise Exception("Unsupported target platform for selected compiler: '%s'" % compiler)
     else:
         raise Exception("Unsupported compiler: '%s'" % compiler)
 
@@ -821,7 +836,7 @@ def compile_dll(model_description, sources_dir, compiler=None):
     return str(dll_path)
 
 
-def compile_platform_binary(filename, output_filename=None):
+def compile_platform_binary(filename, output_filename=None, target_platform=None):
     """ Compile the binary of an FMU for the current platform and add it to the FMU
 
     Parameters:
@@ -837,16 +852,21 @@ def compile_platform_binary(filename, output_filename=None):
 
     model_description = read_model_description(filename)
 
-    binary = compile_dll(model_description=model_description, sources_dir=os.path.join(unzipdir, 'sources'))
+    if target_platform is None:
+        target_platform = platform if model_description.fmiVersion in ['1.0', '2.0'] else platform_tuple
+
+    binary = compile_dll(model_description=model_description,
+                         sources_dir=os.path.join(unzipdir, 'sources'),
+                         target_platform=target_platform)
 
     unzipdir2 = extract(filename)
 
-    platform_dir = os.path.join(unzipdir2, 'binaries', platform if model_description.fmiVersion in ['1.0', '2.0'] else platform_tuple)
+    target_platform_dir = os.path.join(unzipdir2, 'binaries', target_platform)
 
-    if not os.path.exists(platform_dir):
-        os.makedirs(platform_dir)
+    if not os.path.exists(target_platform_dir):
+        os.makedirs(target_platform_dir)
 
-    copyfile(src=binary, dst=os.path.join(platform_dir, os.path.basename(binary)))
+    copyfile(src=binary, dst=os.path.join(target_platform_dir, os.path.basename(binary)))
 
     if output_filename is None:
         output_filename = filename  # overwrite the existing archive

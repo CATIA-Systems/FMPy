@@ -9,7 +9,7 @@
 	<xs:annotation>
 		<xs:documentation>
 Copyright(c) 2008-2011 MODELISAR consortium,
-             2012-2019 Modelica Association Project "FMI".
+             2012-2021 Modelica Association Project "FMI".
              All rights reserved.
 
 This file is licensed by the copyright holders under the 2-Clause BSD License
@@ -93,36 +93,16 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element name="Output" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
-							<xs:element name="StateDerivative" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element name="ContinuousStateDerivative" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
 							<xs:element name="ClockedState" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
 							<xs:element name="InitialUnknown" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
-							<xs:element name="EventIndicator" minOccurs="0" maxOccurs="unbounded">
-								<xs:complexType>
-									<xs:sequence>
-										<xs:element ref="Annotations" minOccurs="0"/>
-									</xs:sequence>
-									<xs:attribute name="valueReference" type="xs:unsignedInt" use="required"/>
-								</xs:complexType>
-							</xs:element>
-							<xs:element name="Clock" minOccurs="0" maxOccurs="unbounded">
-								<xs:complexType>
-									<xs:sequence>
-										<xs:element ref="Annotations" minOccurs="0"/>
-									</xs:sequence>
-									<xs:attribute name="valueReference" type="xs:unsignedInt" use="required"/>
-									<xs:attribute name="clockedVariables">
-										<xs:simpleType>
-											<xs:list itemType="xs:unsignedInt"/>
-										</xs:simpleType>
-									</xs:attribute>
-								</xs:complexType>
-							</xs:element>
+							<xs:element name="EventIndicator" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
 				<xs:element ref="Annotations" minOccurs="0"/>
 			</xs:sequence>
-			<xs:attribute name="fmiVersion" fixed="3.0-alpha.6" use="required"/>
+			<xs:attribute name="fmiVersion" fixed="3.0-beta.1" use="required"/>
 			<xs:attribute name="modelName" type="xs:string" use="required"/>
 			<xs:attribute name="instantiationToken" type="xs:normalizedString" use="required"/>
 			<xs:attribute name="description" type="xs:string"/>

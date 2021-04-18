@@ -897,7 +897,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
         'nz': model_description.numberOfEventIndicators,
         'get_x': fmu.getContinuousStates,
         'set_x': fmu.setContinuousStates,
-        'get_dx': fmu.getDerivatives,
+        'get_dx': fmu.getContinuousStateDerivatives if is_fmi3 else fmu.getDerivatives,
         'get_z': fmu.getEventIndicators,
         'input': input
     }

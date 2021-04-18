@@ -29,8 +29,9 @@ class ModelDescription(object):
         # model structure
         self.outputs = []
         self.derivatives = []
-        self.initialUnknowns = []
+        self.clockedStates = []
         self.eventIndicators = []
+        self.initialUnknowns = []
 
 
 class DefaultExperiment(object):
@@ -130,12 +131,34 @@ class SourceFileSet(object):
 class ScalarVariable(object):
 
     def __init__(self, name, valueReference):
-        self.name = name
-        self.valueReference = valueReference
-        self.description = None
 
         self.type = None
         "One of 'Real', 'Integer', 'Enumeration', 'Boolean', 'String'"
+
+        self.name = name
+
+        self.valueReference = valueReference
+
+        self.description = None
+
+        self.causality = None
+        "One of 'parameter', 'calculatedParameter', 'input', 'output', 'local', 'independent'"
+
+        self.variability = None
+        "One of 'constant', 'fixed', 'tunable', 'discrete' or 'continuous'"
+
+        self.initial = None
+        "One of 'exact', 'approx', 'calculated' or None"
+
+        self.canHandleMultipleSetPerTimeInstant = None
+
+        self.intermediateUpdate = None
+
+        self.previous = None
+
+        self.clocks = []
+
+        self.declaredType = None
 
         self.dimensions = []
         "List of fixed dimensions"
@@ -173,17 +196,6 @@ class ScalarVariable(object):
         self.derivative = None
         "Derivative"
 
-        self.causality = None
-        "One of 'parameter', 'calculatedParameter', 'input', 'output', 'local', 'independent'"
-
-        self.variability = None
-        "One of 'constant', 'fixed', 'tunable', 'discrete' or 'continuous'"
-
-        self.initial = None
-        "One of 'exact', 'approx', 'calculated' or None"
-
-        self.declaredType = None
-
         self.reinit = False
         "Can be reinitialized at an event by the FMU"
 
@@ -191,6 +203,7 @@ class ScalarVariable(object):
         "Line number in the modelDescription.xml or None if unknown"
 
         # Clock attributes
+        self.canBeDeactivated = None
         self.priority = None
         self.interval = None
         self.intervalDecimal = None
@@ -199,7 +212,6 @@ class ScalarVariable(object):
         self.resolution = None
         self.intervalCounter = None
         self.shiftCounter = None
-
 
     def __repr__(self):
         return '%s "%s"' % (self.type, self.name)
@@ -487,7 +499,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
     elif is_fmi2:
         modelDescription.numberOfContinuousStates = len(root.findall('ModelStructure/Derivatives/Unknown'))
     else:
-        modelDescription.numberOfContinuousStates = len(root.findall('ModelStructure/StateDerivative'))
+        modelDescription.numberOfContinuousStates = len(root.findall('ModelStructure/ContinuousStateDerivative'))
 
     # default experiment
     for d in root.findall('DefaultExperiment'):
@@ -819,7 +831,8 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
     if is_fmi3:
 
         for attr, element in [(modelDescription.outputs, 'Output'),
-                              (modelDescription.derivatives, 'StateDerivative'),
+                              (modelDescription.derivatives, 'ContinuousStateDerivative'),
+                              (modelDescription.clockedStates, 'ClockedState'),
                               (modelDescription.initialUnknowns, 'InitialUnknown'),
                               (modelDescription.eventIndicators, 'EventIndicator')]:
 

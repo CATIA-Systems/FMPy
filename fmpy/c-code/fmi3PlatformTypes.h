@@ -2,11 +2,11 @@
 #define fmi3PlatformTypes_h
 
 /*
-This header file defines the data types of FMI 3.0-alpha.6.
+This header file defines the data types of FMI 3.0-beta.1.
 It must be used by both FMU and FMI master.
 
 Copyright (C) 2008-2011 MODELISAR consortium,
-              2012-2020 Modelica Association Project "FMI"
+              2012-2021 Modelica Association Project "FMI"
               All rights reserved.
 
 This file is licensed by the copyright holders under the 2-Clause BSD License
@@ -37,8 +37,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ----------------------------------------------------------------------------
 */
 
-/* Include the integer type definitions */
+/* Include the integer and boolean type definitions */
 #include <stdint.h>
+#include <stdbool.h>
 
 
 /* tag::Component[] */
@@ -68,7 +69,7 @@ typedef         int32_t fmi3Int32;    /* 32-bit signed integer */
 typedef        uint32_t fmi3UInt32;   /* 32-bit unsigned integer */
 typedef         int64_t fmi3Int64;    /* 64-bit signed integer */
 typedef        uint64_t fmi3UInt64;   /* 64-bit unsigned integer */
-typedef           _Bool fmi3Boolean;  /* Data type to be used with fmi3True and fmi3False */
+typedef            bool fmi3Boolean;  /* Data type to be used with fmi3True and fmi3False */
 typedef            char fmi3Char;     /* Data type for one character */
 typedef const fmi3Char* fmi3String;   /* Data type for character strings
                                          ('\0' terminated, UTF-8 encoded) */
@@ -76,16 +77,16 @@ typedef         uint8_t fmi3Byte;     /* Smallest addressable unit of the machin
                                          (typically one byte) */
 typedef const fmi3Byte* fmi3Binary;   /* Data type for binary data
                                          (out-of-band length terminated) */
-typedef           _Bool fmi3Clock;    /* Data type to be used with fmi3ClockActive and
+typedef            bool fmi3Clock;    /* Data type to be used with fmi3ClockActive and
                                          fmi3ClockInactive */
 
 /* Values for fmi3Boolean */
-#define fmi3True  1
-#define fmi3False 0
+#define fmi3True  true
+#define fmi3False false
 
 /* Values for fmi3Clock */
-#define fmi3ClockActive   1
-#define fmi3ClockInactive 0
+#define fmi3ClockActive   true
+#define fmi3ClockInactive false
 /* end::VariableTypes[] */
 
 #endif /* fmi3PlatformTypes_h */

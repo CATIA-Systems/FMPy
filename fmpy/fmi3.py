@@ -3,7 +3,7 @@
 import os
 import pathlib
 from ctypes import *
-from . import free, calloc, sharedLibraryExtension, platform_tuple
+from . import sharedLibraryExtension, platform_tuple
 from .fmi1 import _FMU, printLogMessage
 
 
@@ -54,10 +54,10 @@ fmi3Discrete       = 4
 fmi3Dependent      = 5
 
 # enum fmi3IntervalQualifier
-fmi3IntervalQualifier = c_int
-fmi3NewInterval       = 0
-fmi3NoChange          = 1
-fmi3NotYetKnown       = 2
+fmi3IntervalQualifier   = c_int
+fmi3IntervalNotYetKnown = 0
+fmi3IntervalUnchanged   = 1
+fmi3IntervalChanged     = 2
 
 # callback functions
 fmi3CallbackLogMessageTYPE         = CFUNCTYPE(None, fmi3InstanceEnvironment, fmi3String, fmi3Status, fmi3String, fmi3String)
@@ -256,53 +256,53 @@ class _FMU3(_FMU):
             (fmi3Instance,                   'instance'),
             (POINTER(fmi3ValueReference),    'valueReferences'),
             (c_size_t,                       'nValueReferences'),
-            (POINTER(fmi3Float64),           'interval'),
-            (POINTER(fmi3IntervalQualifier), 'qualifier'),
-            (c_size_t,                       'nValues'),
+            (POINTER(fmi3Float64),           'intervals'),
+            (POINTER(fmi3IntervalQualifier), 'qualifiers'),
+            (c_size_t,                       'nIntervals'),
         ])
 
         self._fmi3Function('fmi3GetIntervalFraction', [
             (fmi3Instance,                   'instance'),
             (POINTER(fmi3ValueReference),    'valueReferences'),
             (c_size_t,                       'nValueReferences'),
-            (POINTER(fmi3UInt64),            'intervalCounter'),
-            (POINTER(fmi3UInt64),            'resolution'),
-            (POINTER(fmi3IntervalQualifier), 'qualifier'),
-            (c_size_t,                       'nValues')
+            (POINTER(fmi3UInt64),            'intervalCounters'),
+            (POINTER(fmi3UInt64),            'resolutions'),
+            (POINTER(fmi3IntervalQualifier), 'qualifiers'),
+            (c_size_t,                       'nIntervals')
         ])
 
         self._fmi3Function('fmi3GetShiftDecimal', [
             (fmi3Instance,                   'instance'),
             (POINTER(fmi3ValueReference),    'valueReferences'),
             (c_size_t,                       'nValueReferences'),
-            (POINTER(fmi3Float64),           'shift'),
-            (c_size_t,                       'nValues'),
+            (POINTER(fmi3Float64),           'shifts'),
+            (c_size_t,                       'nShifts'),
         ])
 
         self._fmi3Function('fmi3GetShiftFraction', [
             (fmi3Instance,                   'instance'),
             (POINTER(fmi3ValueReference),    'valueReferences'),
             (c_size_t,                       'nValueReferences'),
-            (POINTER(fmi3UInt64),            'shiftCounter'),
-            (POINTER(fmi3UInt64),            'resolution'),
-            (c_size_t,                       'nValues')
+            (POINTER(fmi3UInt64),            'shiftCounters'),
+            (POINTER(fmi3UInt64),            'resolutions'),
+            (c_size_t,                       'nShifts')
         ])
 
         self._fmi3Function('fmi3SetIntervalDecimal', [
             (fmi3Instance,                'instance'),
             (POINTER(fmi3ValueReference), 'valueReferences'),
             (c_size_t,                    'nValueReferences'),
-            (POINTER(fmi3Float64),        'interval'),
-            (c_size_t,                    'nValues')
+            (POINTER(fmi3Float64),        'intervals'),
+            (c_size_t,                    'nIntervals')
         ])
 
         self._fmi3Function('fmi3SetIntervalFraction', [
             (fmi3Instance,                'instance'),
             (POINTER(fmi3ValueReference), 'valueReferences'),
             (c_size_t,                    'nValueReferences'),
-            (POINTER(fmi3UInt64),         'intervalCounter'),
-            (POINTER(fmi3UInt64),         'resolution'),
-            (c_size_t,                    'nValues')
+            (POINTER(fmi3UInt64),         'intervalCounters'),
+            (POINTER(fmi3UInt64),         'resolutions'),
+            (c_size_t,                    'nIntervals')
         ])
 
         self._fmi3Function('fmi3UpdateDiscreteStates', [
@@ -747,7 +747,7 @@ class FMU3Model(_FMU3):
             (c_size_t,             'nContinuousStates')
         ])
 
-        self._fmi3Function('fmi3GetDerivatives', [
+        self._fmi3Function('fmi3GetContinuousStateDerivatives', [
             (fmi3Instance,         'instance'),
             (POINTER(fmi3Float64), 'derivatives'),
             (c_size_t,             'nContinuousStates')
@@ -821,8 +821,8 @@ class FMU3Model(_FMU3):
 
     # Evaluation of the model equations
 
-    def getDerivatives(self, derivatives, nContinuousStates):
-        return self.fmi3GetDerivatives(self.component, derivatives, nContinuousStates)
+    def getContinuousStateDerivatives(self, derivatives, nContinuousStates):
+        return self.fmi3GetContinuousStateDerivatives(self.component, derivatives, nContinuousStates)
 
     def getEventIndicators(self, eventIndicators, nEventIndicators):
         return self.fmi3GetEventIndicators(self.component, eventIndicators, nEventIndicators)
@@ -830,8 +830,8 @@ class FMU3Model(_FMU3):
     def getContinuousStates(self, continuousStates, nContinuousStates):
         return self.fmi3GetContinuousStates(self.component, continuousStates, nContinuousStates)
 
-    def getNominalsOfContinuousState(self):
-        pass
+    def getNominalsOfContinuousState(self, nominals, nContinuousStates):
+        return self.fmi3GetNominalsOfContinuousState(self.component, nominals, nContinuousStates)
 
 
 class FMU3Slave(_FMU3):
@@ -1002,3 +1002,21 @@ class FMU3ScheduledExecution(_FMU3):
 
     def activateModelPartition(self, clockReference, clockElementIndex, activationTime):
         self.fmi3ActivateModelPartition(self.component, clockReference, clockElementIndex, activationTime)
+
+    def getIntervalDecimal(self, valueReferences, intervals, qualifiers):
+        self.fmi3GetIntervalDecimal(self.component, valueReferences, len(valueReferences), intervals, qualifiers, len(intervals))
+
+    def getIntervalFraction(self, valueReferences, intervalCounters, resolutions, qualifiers):
+        self.fmi3GetIntervalFraction(self.component, valueReferences, len(valueReferences), intervalCounters, resolutions, qualifiers, len(intervalCounters))
+
+    def getShiftDecimal(self, valueReferences, shifts):
+        self.fmi3GetShiftDecimal(self.component, valueReferences, len(valueReferences), shifts, len(shifts))
+
+    def getShiftFraction(self, valueReferences, shiftCounters, resolutions):
+        self.fmi3GetShiftFraction(self.component, valueReferences, len(valueReferences), shiftCounters, resolutions, len(shiftCounters))
+
+    def setIntervalDecimal(self, valueReferences, intervals):
+        self.fmi3SetIntervalDecimal(self.component, valueReferences, len(valueReferences), intervals, len(intervals))
+
+    def setIntervalFraction(self, valueReferences, intervalCounters, resolutions):
+        self.fmi3SetIntervalFraction(self.component, valueReferences, len(valueReferences), intervalCounters, resolutions, len(intervalCounters))

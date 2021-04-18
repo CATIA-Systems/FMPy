@@ -5,7 +5,7 @@
 	<xs:annotation>
 		<xs:documentation>
 Copyright(c) 2008-2011 MODELISAR consortium,
-             2012-2019 Modelica Association Project "FMI".
+             2012-2021 Modelica Association Project "FMI".
              All rights reserved.
 
 This file is licensed by the copyright holders under the 2-Clause BSD License
@@ -290,14 +290,14 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:complexType name="fmi3EnumerationBase" abstract="true">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableCore">
-				<xs:attribute name="declaredType" type="xs:normalizedString" use="required"/>				
+				<xs:attribute name="declaredType" type="xs:normalizedString" use="required"/>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
 	<xs:complexType name="fmi3VariableBase" abstract="true">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableCore">
-				<xs:attribute name="declaredType" type="xs:normalizedString"/>		
+				<xs:attribute name="declaredType" type="xs:normalizedString"/>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
@@ -335,7 +335,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					<xs:enumeration value="tunable"/>
 					<xs:enumeration value="discrete"/>
 					<xs:enumeration value="continuous"/>
-					<xs:enumeration value="clock"/>
 				</xs:restriction>
 			</xs:simpleType>
 		</xs:attribute>
@@ -351,6 +350,11 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		<xs:attribute name="canHandleMultipleSetPerTimeInstant" type="xs:boolean"/>
 		<xs:attribute name="intermediateUpdate" type="xs:boolean"/>
 		<xs:attribute name="previous" type="xs:unsignedInt"/>
+		<xs:attribute name="clocks">
+			<xs:simpleType>
+				<xs:list itemType="xs:unsignedInt"/>
+			</xs:simpleType>
+		</xs:attribute>
 	</xs:complexType>
 
 	<xs:group name="fmi3Variable">

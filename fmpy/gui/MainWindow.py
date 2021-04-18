@@ -104,6 +104,8 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        self.showColumnActions = {}
+
         # use a smaller default font size on Mac and Linux
         if sys.platform in ['darwin', 'linux']:
             defaultFont = QFont()
@@ -245,6 +247,7 @@ class MainWindow(QMainWindow):
             action = self.columnsMenu.addAction(column)
             action.setCheckable(True)
             action.toggled.connect(lambda show, col=column: self.showColumn(col, show))
+            self.showColumnActions[column] = action
         self.contextMenu.addSeparator()
         self.actionClearPlots = self.contextMenu.addAction("Clear Plots", self.clearPlots)
 
@@ -836,6 +839,8 @@ class MainWindow(QMainWindow):
         self.updatePlotData()
 
     def showColumn(self, name, show):
+        if name in self.showColumnActions:
+            self.showColumnActions[name].setChecked(show)
         i = VariablesModel.COLUMN_NAMES.index(name)
         self.ui.treeView.setColumnHidden(i, not show)
         self.ui.tableView.setColumnHidden(i, not show)

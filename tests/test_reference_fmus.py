@@ -2,18 +2,18 @@ import unittest
 from fmpy.util import download_file, validate_result
 from fmpy import *
 
-v = '0.0.5'  # Reference FMUs version
+v = '0.0.6'  # Reference FMUs version
 
 
 class ReferenceFMUsTest(unittest.TestCase):
 
     def setUp(self):
         download_file(url='https://github.com/modelica/Reference-FMUs/releases/download/v' + v + '/Reference-FMUs-' + v + '.zip',
-                      checksum='07291b9223ac2b479078afd4acea42d13118a64c2c1b5aa7a3c6f987585358fd')
+                      checksum='0057cbb40808a9ede832e0d6ed94a9451ca14383d6b11154147f6920b26a8c2d')
         extract('Reference-FMUs-' + v + '.zip', 'Reference-FMUs-dist')
 
         download_file(url='https://github.com/modelica/Reference-FMUs/archive/v' + v + '.zip',
-                      checksum='2c2f10626bc8c6104e42e4565a2b0a3cb72829c6059dcbe8dc1dc102a5a1689d')
+                      checksum='99371dcc98099776c541e3b61995e28c9c9b88178d58d41dfc79ea2ef9477a40')
         extract('v' + v + '.zip', 'Reference-FMUs-repo')
 
     def test_fmi1_cs(self):

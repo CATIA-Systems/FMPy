@@ -242,6 +242,8 @@ class MainWindow(QMainWindow):
         self.columnsMenu = self.contextMenu.addMenu('Columns')
         action = self.columnsMenu.addAction('Show All')
         action.triggered.connect(self.showAllColumns)
+        action = self.columnsMenu.addAction('Hide All')
+        action.triggered.connect(self.hideAllColumns)
         self.columnsMenu.addSeparator()
         for column in COLLAPSABLE_COLUMNS:
             action = self.columnsMenu.addAction(column)

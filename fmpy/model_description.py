@@ -443,6 +443,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
     import os
     from .util import _is_string
     from . import validation
+    import numpy as np
 
     # remember the original filename
     _filename = filename
@@ -498,8 +499,6 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
         modelDescription.numberOfContinuousStates = int(root.get('numberOfContinuousStates'))
     elif is_fmi2:
         modelDescription.numberOfContinuousStates = len(root.findall('ModelStructure/Derivatives/Unknown'))
-    else:
-        modelDescription.numberOfContinuousStates = len(root.findall('ModelStructure/ContinuousStateDerivative'))
 
     # default experiment
     for d in root.findall('DefaultExperiment'):
@@ -854,12 +853,18 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
 
                 attr.append(unknown)
 
-        modelDescription.numberOfEventIndicators = len(modelDescription.eventIndicators)
-
         # resolve derivatives
         for variable in modelDescription.modelVariables:
             if variable.derivative is not None:
                 variable.derivative = variables[int(variable.derivative)]
+
+        # calculate numberOfContinuousStates
+        for unknown in modelDescription.derivatives:
+            modelDescription.numberOfContinuousStates += int(np.prod(unknown.variable.shape))
+
+        # calculate numberOfEventIndicators
+        for unknown in modelDescription.eventIndicators:
+            modelDescription.numberOfEventIndicators += int(np.prod(unknown.variable.shape))
 
     if validate:
         problems = validation.validate_model_description(modelDescription,

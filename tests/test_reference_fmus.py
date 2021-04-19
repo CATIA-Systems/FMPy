@@ -67,7 +67,6 @@ class ReferenceFMUsTest(unittest.TestCase):
         """ Test the SE specific API """
 
         import shutil
-        from fmpy.fmi3 import FMU3ScheduledExecution
 
         filename = os.path.join(os.getcwd(), 'Reference-FMUs-dist', '3.0', 'Clocks.fmu')
 

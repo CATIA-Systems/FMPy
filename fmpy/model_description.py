@@ -686,6 +686,7 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
         sv.causality = variable.get('causality', default='local')
         sv.variability = variable.get('variability')
         sv.initial = variable.get('initial')
+        sv.clocks = variable.get('clocks')
         sv.sourceline = variable.sourceline
 
         if fmiVersion in ['1.0', '2.0']:
@@ -855,10 +856,15 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
 
                 attr.append(unknown)
 
-        # resolve derivatives
         for variable in modelDescription.modelVariables:
+
+            # resolve derivative
             if variable.derivative is not None:
                 variable.derivative = variables[int(variable.derivative)]
+
+            # resolve clocks
+            if variable.clocks is not None:
+                variable.clocks = [variables[int(vr)] for vr in variable.clocks.strip().split(' ')]
 
         # calculate numberOfContinuousStates
         for unknown in modelDescription.derivatives:

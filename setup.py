@@ -96,6 +96,7 @@ setup(name='FMPy',
       license="Standard 2-clause BSD",
       packages=packages,
       package_data=package_data,
+      python_requires='>=3.5',
       install_requires=install_requires,
       extras_require=extras_require,
       entry_points={'console_scripts': ['fmpy=fmpy.command_line:main']})

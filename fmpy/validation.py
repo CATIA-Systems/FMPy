@@ -152,7 +152,7 @@ def _validate_model_structure(model_description):
 
     for variable in model_description.modelVariables:
 
-        if variable.causality == 'output' and variable.initial in {'approx', 'calculated'}:
+        if variable.causality == 'output' and variable.initial in {'approx', 'calculated'} and not variable.clocks:
             expected_initial_unknowns.add(variable)
 
         if variable.causality == 'calculatedParameter':

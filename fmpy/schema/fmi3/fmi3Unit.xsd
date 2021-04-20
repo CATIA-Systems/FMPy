@@ -4,7 +4,7 @@
 	<xs:annotation>
 		<xs:documentation>
 Copyright(c) 2008-2011 MODELISAR consortium,
-             2012-2019 Modelica Association Project "FMI".
+             2012-2021 Modelica Association Project "FMI".
              All rights reserved.
 
 This file is licensed by the copyright holders under the 2-Clause BSD License
@@ -59,6 +59,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					<xs:attribute name="name" type="xs:normalizedString" use="required"/>
 					<xs:attribute name="factor" type="xs:double" default="1"/>
 					<xs:attribute name="offset" type="xs:double" default="0"/>
+					<xs:attribute name="inverse" type="xs:boolean" default="false"/>
 				</xs:complexType>
 			</xs:element>
 			<xs:element ref="Annotations" minOccurs="0"/>

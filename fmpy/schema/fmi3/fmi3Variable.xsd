@@ -5,7 +5,7 @@
 	<xs:annotation>
 		<xs:documentation>
 Copyright(c) 2008-2011 MODELISAR consortium,
-             2012-2019 Modelica Association Project "FMI".
+             2012-2021 Modelica Association Project "FMI".
              All rights reserved.
 
 This file is licensed by the copyright holders under the 2-Clause BSD License
@@ -215,8 +215,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:complexType name="fmi3String">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableBase">
-				<xs:sequence maxOccurs="unbounded">
-					<xs:element name="Start">
+				<xs:sequence>
+					<xs:element name="Start" minOccurs="0" maxOccurs="unbounded">
 						<xs:complexType>
 							<xs:attribute name="value" type="xs:string"/>
 						</xs:complexType>
@@ -251,11 +251,11 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					<xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
 				</xs:sequence>
 				<xs:attribute name="quantity" type="xs:normalizedString"/>
-				<xs:attribute name="min" type="xs:int"/>
-				<xs:attribute name="max" type="xs:int"/>
+				<xs:attribute name="min" type="xs:long"/>
+				<xs:attribute name="max" type="xs:long"/>
 				<xs:attribute name="start">
 					<xs:simpleType>
-						<xs:list itemType="xs:int"/>
+						<xs:list itemType="xs:long"/>
 					</xs:simpleType>
 				</xs:attribute>
 			</xs:extension>
@@ -290,14 +290,14 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	<xs:complexType name="fmi3EnumerationBase" abstract="true">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableCore">
-				<xs:attribute name="declaredType" type="xs:normalizedString" use="required"/>				
+				<xs:attribute name="declaredType" type="xs:normalizedString" use="required"/>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
 	<xs:complexType name="fmi3VariableBase" abstract="true">
 		<xs:complexContent>
 			<xs:extension base="fmi3VariableCore">
-				<xs:attribute name="declaredType" type="xs:normalizedString"/>		
+				<xs:attribute name="declaredType" type="xs:normalizedString"/>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
@@ -327,7 +327,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 				</xs:restriction>
 			</xs:simpleType>
 		</xs:attribute>
-		<xs:attribute name="variability" default="continuous">
+		<xs:attribute name="variability">
 			<xs:simpleType>
 				<xs:restriction base="xs:normalizedString">
 					<xs:enumeration value="constant"/>
@@ -335,7 +335,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 					<xs:enumeration value="tunable"/>
 					<xs:enumeration value="discrete"/>
 					<xs:enumeration value="continuous"/>
-					<xs:enumeration value="clock"/>
 				</xs:restriction>
 			</xs:simpleType>
 		</xs:attribute>
@@ -349,9 +348,13 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			</xs:simpleType>
 		</xs:attribute>
 		<xs:attribute name="canHandleMultipleSetPerTimeInstant" type="xs:boolean"/>
-		<xs:attribute name="clockReference" type="xs:unsignedInt"/>
-		<xs:attribute name="clockElementIndex" type="xs:unsignedLong"/>
-		<xs:attribute name="intermediateAccess" type="xs:boolean"/>
+		<xs:attribute name="intermediateUpdate" type="xs:boolean"/>
+		<xs:attribute name="previous" type="xs:unsignedInt"/>
+		<xs:attribute name="clocks">
+			<xs:simpleType>
+				<xs:list itemType="xs:unsignedInt"/>
+			</xs:simpleType>
+		</xs:attribute>
 	</xs:complexType>
 
 	<xs:group name="fmi3Variable">

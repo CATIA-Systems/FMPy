@@ -1,15 +1,19 @@
 # noinspection PyPep8
 
 import shutil
+
+from fmpy.model_description import ModelDescription
+
 from .fmi1 import *
-from .fmi1 import _FMU1
+from .fmi1 import _FMU1, _FMU
 from .fmi2 import *
 from .fmi2 import _FMU2
 from . import fmi3
 from . import extract
-from .util import auto_interval, _is_string
+from .util import auto_interval
 import numpy as np
 from time import time as current_time
+from typing import Union, Any, Dict, Sequence, Callable
 
 # absolute tolerance for equality when comparing two floats
 eps = 1e-13
@@ -176,12 +180,13 @@ class Recorder(object):
 class Input(object):
     """ Helper class that sets the input to the FMU """
 
-    def __init__(self, fmu, modelDescription, signals):
+    def __init__(self, fmu, modelDescription, signals, set_input_derivatives=False):
         """
         Parameters:
-            fmu               the FMU instance
-            modelDescription  the model description instance
-            signals           a structured numpy array that contains the input
+            fmu                    the FMU instance
+            modelDescription       the model description instance
+            signals                a structured numpy array that contains the input
+            set_input_derivatives  calculate and set the input derivatives
 
         Example:
 
@@ -204,10 +209,10 @@ class Input(object):
         # find events
         self.t_events = Input.findEvents(signals, modelDescription)
 
+        self.set_input_derivatives = set_input_derivatives
+
         is_fmi1 = isinstance(fmu, _FMU1)
         is_fmi2 = isinstance(fmu, _FMU2)
-
-        self.set_input_derivatives = is_fmi2 and modelDescription.coSimulation and modelDescription.coSimulation.canInterpolateInputs
 
         setters = dict()
 
@@ -366,6 +371,8 @@ class Input(object):
         # check for event
         if time == t[i0] and i0 < len(t) - 1 and t[i0] == t[i0 + 1]:
 
+            der_v = np.zeros((table.shape[0],))
+
             if after_event:
                 # take the value after the event
                 while i0 < len(t) - 1 and t[i0] == t[i0 + 1]:
@@ -375,15 +382,15 @@ class Input(object):
                     v1 = table[:, i0 + 1]
                     t0 = t[i0]
                     t1 = t[i0 + 1]
-                    der_v = (v1 - v0) / (t1 - t0)
-                else:
-                    der_v = np.zeros((table.shape[0],))
+                    if not discrete:
+                        der_v = (v1 - v0) / (t1 - t0)
             else:
                 v0 = table[:, i0 - 1]
                 v1 = table[:, i0]
                 t0 = t[i0 - 1]
                 t1 = t[i0]
-                der_v = (v1 - v0) / (t1 - t0)
+                if not discrete:
+                    der_v = (v1 - v0) / (t1 - t0)
 
             values = table[:, i0]
             return values, der_v
@@ -481,7 +488,7 @@ def apply_start_values(fmu, model_description, start_values, apply_default_start
 
         # convert the type
         if variable.shape:
-            if _is_string(value):
+            if isinstance(value, str):
                 value = value.split()
             value = list(map(lambda e: variable._python_type(e), value))
             if len(value) != np.prod(variable.shape):
@@ -552,53 +559,54 @@ class ForwardEuler(object):
 
 
 def simulate_fmu(filename,
-                 validate=True,
-                 start_time=None,
-                 stop_time=None,
-                 solver='CVode',
-                 step_size=None,
-                 relative_tolerance=None,
-                 output_interval=None,
-                 record_events=True,
-                 fmi_type=None,
-                 start_values={},
-                 apply_default_start_values=False,
-                 input=None,
-                 output=None,
-                 timeout=None,
-                 debug_logging=False,
-                 visible=False,
-                 logger=None,
-                 fmi_call_logger=None,
-                 step_finished=None,
-                 model_description=None,
-                 fmu_instance=None):
+                 validate: bool = True,
+                 start_time: Union[float, str] = None,
+                 stop_time: Union[float, str] = None,
+                 solver: str ='CVode',
+                 step_size: Union[float, str] = None,
+                 relative_tolerance: Union[float, str] = None,
+                 output_interval: Union[float, str] = None,
+                 record_events: bool = True,
+                 fmi_type: str = None,
+                 start_values: Dict[str, Any] = {},
+                 apply_default_start_values: bool = False,
+                 input: Input = None,
+                 output: Sequence[str] = None,
+                 timeout: Union[float, str] = None,
+                 debug_logging: bool = False,
+                 visible: bool = False,
+                 logger: Callable = None,
+                 fmi_call_logger: Callable[[str], None] = None,
+                 step_finished: Callable[[float, Recorder], bool] = None,
+                 model_description: ModelDescription = None,
+                 fmu_instance: _FMU = None,
+                 set_input_derivatives: bool = False) -> SimulationResult:
     """ Simulate an FMU
 
     Parameters:
-        filename            filename of the FMU or directory with extracted FMU
-        validate            validate the FMU
-        start_time          simulation start time (None: use default experiment or 0 if not defined)
-        stop_time           simulation stop time (None: use default experiment or start_time + 1 if not defined)
-        solver              solver to use for model exchange ('Euler' or 'CVode')
-        step_size           step size for the 'Euler' solver
-        relative_tolerance  relative tolerance for the 'CVode' solver and FMI 2.0 co-simulation FMUs
-        output_interval     interval for sampling the output
-        record_events       record outputs at events (model exchange only)
-        fmi_type            FMI type for the simulation (None: determine from FMU)
-        start_values        dictionary of variable name -> value pairs
+        filename               filename of the FMU or directory with extracted FMU
+        validate               validate the FMU
+        start_time             simulation start time (None: use default experiment or 0 if not defined)
+        stop_time              simulation stop time (None: use default experiment or start_time + 1 if not defined)
+        solver                 solver to use for model exchange ('Euler' or 'CVode')
+        step_size              step size for the 'Euler' solver
+        relative_tolerance     relative tolerance for the 'CVode' solver and FMI 2.0 co-simulation FMUs
+        output_interval        interval for sampling the output
+        record_events          record outputs at events (model exchange only)
+        fmi_type               FMI type for the simulation (None: determine from FMU)
+        start_values           dictionary of variable name -> value pairs
         apply_default_start_values  apply the start values from the model description
-        input               a structured numpy array that contains the input (see :class:`Input`)
-        output              list of variables to record (None: record outputs)
-        timeout             timeout for the simulation
-        debug_logging       enable the FMU's debug logging
-        visible             interactive mode (True) or batch mode (False)
-        fmi_call_logger     callback function to log FMI calls
-        logger              callback function passed to the FMU (experimental)
-        step_finished       callback to interact with the simulation (experimental)
-        model_description   the previously loaded model description (experimental)
-        fmu_instance        the previously instantiated FMU (experimental)
-
+        input                  a structured numpy array that contains the input (see :class:`Input`)
+        output                 list of variables to record (None: record outputs)
+        timeout                timeout for the simulation
+        debug_logging          enable the FMU's debug logging
+        visible                interactive mode (True) or batch mode (False)
+        fmi_call_logger        callback function to log FMI calls
+        logger                 callback function passed to the FMU (experimental)
+        step_finished          callback to interact with the simulation (experimental)
+        model_description      the previously loaded model description (experimental)
+        fmu_instance           the previously instantiated FMU (experimental)
+        set_input_derivatives  set the input derivatives (FMI 2.0 Co-Simulation only)
     Returns:
         result              a structured numpy array that contains the result
     """
@@ -693,7 +701,7 @@ def simulate_fmu(filename,
     if fmi_type == 'ModelExchange':
         result = simulateME(model_description, fmu, start_time, stop_time, solver, step_size, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, record_events, timeout, step_finished)
     elif fmi_type == 'CoSimulation':
-        result = simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, timeout, step_finished)
+        result = simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, timeout, step_finished, set_input_derivatives)
 
     if fmu_instance is None:
         fmu.freeInstance()
@@ -873,17 +881,17 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
         input.apply(time)
         fmu.exitInitializationMode()
 
-        newDiscreteStatesNeeded = True
+        discreteStatesNeedUpdate = True
         terminateSimulation = False
 
-        while newDiscreteStatesNeeded and not terminateSimulation:
+        while discreteStatesNeedUpdate and not terminateSimulation:
             # update discrete states
-            (newDiscreteStatesNeeded,
+            (discreteStatesNeedUpdate,
              terminateSimulation,
              nominalsOfContinuousStatesChanged,
              valuesOfContinuousStatesChanged,
              nextEventTimeDefined,
-             nextEventTime) = fmu.newDiscreteStates()
+             nextEventTime) = fmu.updateDiscreteStates()
 
         fmu.enterContinuousTimeMode()
 
@@ -893,7 +901,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
         'nz': model_description.numberOfEventIndicators,
         'get_x': fmu.getContinuousStates,
         'set_x': fmu.setContinuousStates,
-        'get_dx': fmu.getDerivatives,
+        'get_dx': fmu.getContinuousStateDerivatives if is_fmi3 else fmu.getDerivatives,
         'get_z': fmu.getEventIndicators,
         'input': input
     }
@@ -1045,7 +1053,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                      nominalsOfContinuousStatesChanged,
                      valuesOfContinuousStatesChanged,
                      nextEventTimeDefined,
-                     nextEventTime) = fmu.newDiscreteStates()
+                     nextEventTime) = fmu.updateDiscreteStates()
 
                 if terminateSimulation:
                     break
@@ -1072,7 +1080,10 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
     return recorder.result()
 
 
-def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, timeout, step_finished):
+def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, timeout, step_finished, set_input_derivatives):
+
+    if set_input_derivatives and not model_description.coSimulation.canInterpolateInputs:
+        raise Exception("Parameter set_input_derivatives is True but the FMU cannot interpolate inputs.")
 
     if output_interval is None:
         output_interval = auto_interval(stop_time - start_time)
@@ -1085,7 +1096,7 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
     if is_fmi2:
         fmu.setupExperiment(tolerance=relative_tolerance, startTime=start_time)
 
-    input = Input(fmu=fmu, modelDescription=model_description, signals=input_signals)
+    input = Input(fmu=fmu, modelDescription=model_description, signals=input_signals, set_input_derivatives=set_input_derivatives)
 
     time = start_time
 

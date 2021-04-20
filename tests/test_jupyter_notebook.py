@@ -5,7 +5,7 @@ from fmpy.util import download_test_file, create_jupyter_notebook
 import os
 
 
-@unittest.skipIf(sys.version_info[0] < 3 or os.name == 'nt', "Python 2.7 not supported on CI and hangs on Windows")
+@unittest.skipIf(os.name == 'nt', "CI hangs on Windows")
 class JupyterNotebookTest(unittest.TestCase):
     """ Test the Jupyter Notebook generation """
 

@@ -79,9 +79,3 @@ def create_zip_archive(filename, source_dir):
                 path = os.path.normpath(os.path.join(dirpath, name))
                 if os.path.isfile(path):
                     zf.write(path, os.path.relpath(path, base_path))
-
-
-if __name__ is '__main__':
-
-    add_cswrapper('/Users/tors10/Development/Reference-FMUs/build/dist/Dahlquist.fmu',
-                  '/Users/tors10/Development/Reference-FMUs/build/dist/DahlquistCS1.fmu')

@@ -87,7 +87,7 @@ extras_require = {
 extras_require['complete'] = sorted(set(sum(extras_require.values(), [])))
 
 setup(name='FMPy',
-      version='0.2.27',
+      version='0.3.0',
       description="Simulate Functional Mock-up Units (FMUs) in Python",
       long_description=long_description,
       author="Torsten Sommer",
@@ -96,6 +96,7 @@ setup(name='FMPy',
       license="Standard 2-clause BSD",
       packages=packages,
       package_data=package_data,
+      python_requires='>=3.5',
       install_requires=install_requires,
       extras_require=extras_require,
       entry_points={'console_scripts': ['fmpy=fmpy.command_line:main']})

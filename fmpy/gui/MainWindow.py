@@ -104,6 +104,8 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        self.showColumnActions = {}
+
         # use a smaller default font size on Mac and Linux
         if sys.platform in ['darwin', 'linux']:
             defaultFont = QFont()
@@ -240,11 +242,14 @@ class MainWindow(QMainWindow):
         self.columnsMenu = self.contextMenu.addMenu('Columns')
         action = self.columnsMenu.addAction('Show All')
         action.triggered.connect(self.showAllColumns)
+        action = self.columnsMenu.addAction('Hide All')
+        action.triggered.connect(self.hideAllColumns)
         self.columnsMenu.addSeparator()
         for column in COLLAPSABLE_COLUMNS:
             action = self.columnsMenu.addAction(column)
             action.setCheckable(True)
             action.toggled.connect(lambda show, col=column: self.showColumn(col, show))
+            self.showColumnActions[column] = action
         self.contextMenu.addSeparator()
         self.actionClearPlots = self.contextMenu.addAction("Clear Plots", self.clearPlots)
 
@@ -256,7 +261,10 @@ class MainWindow(QMainWindow):
 
         # tools menu
         self.ui.actionValidateFMU.triggered.connect(self.validateFMU)
-        self.ui.actionCompilePlatformBinary.triggered.connect(self.compilePlatformBinary)
+        self.ui.actionCompileDarwinBinary.triggered.connect(lambda: self.compilePlatformBinary('darwin64'))
+        self.ui.actionCompileLinuxBinary.triggered.connect(lambda: self.compilePlatformBinary('linux64'))
+        self.ui.actionCompileWin32Binary.triggered.connect(lambda: self.compilePlatformBinary('win32'))
+        self.ui.actionCompileWin64Binary.triggered.connect(lambda: self.compilePlatformBinary('win64'))
         self.ui.actionCreateJupyterNotebook.triggered.connect(self.createJupyterNotebook)
         self.ui.actionCreateCMakeProject.triggered.connect(self.createCMakeProject)
         self.ui.actionAddRemoting.triggered.connect(self.addRemoting)
@@ -441,7 +449,12 @@ class MainWindow(QMainWindow):
         self.ui.actionValidateFMU.setEnabled(True)
 
         can_compile = md.fmiVersion == '2.0' and 'c-code' in platforms
-        self.ui.actionCompilePlatformBinary.setEnabled(can_compile)
+
+        self.ui.actionCompileDarwinBinary.setEnabled(can_compile and fmpy.system == 'darwin')
+        self.ui.actionCompileLinuxBinary.setEnabled(can_compile and fmpy.system in ['linux', 'windows'])
+        self.ui.actionCompileWin32Binary.setEnabled(can_compile and fmpy.system == 'windows')
+        self.ui.actionCompileWin64Binary.setEnabled(can_compile and fmpy.system == 'windows')
+
         self.ui.actionCreateCMakeProject.setEnabled(can_compile)
 
         self.ui.actionCreateJupyterNotebook.setEnabled(True)
@@ -828,6 +841,8 @@ class MainWindow(QMainWindow):
         self.updatePlotData()
 
     def showColumn(self, name, show):
+        if name in self.showColumnActions:
+            self.showColumnActions[name].setChecked(show)
         i = VariablesModel.COLUMN_NAMES.index(name)
         self.ui.treeView.setColumnHidden(i, not show)
         self.ui.tableView.setColumnHidden(i, not show)
@@ -1181,26 +1196,27 @@ class MainWindow(QMainWindow):
                 self.startValues.clear()
                 self.startValues.update(start_values)
 
-    def compilePlatformBinary(self):
+    def compilePlatformBinary(self, target_platform):
         """ Compile the platform binary """
 
         from ..util import compile_platform_binary
 
         platforms = supported_platforms(self.filename)
 
-        if fmpy.platform in platforms:
-            button = QMessageBox.question(self, "Platform binary already exists", "The FMU already contains a binary for the current platform. Do you want to compile and overwrite the existing binary?")
+        if target_platform in platforms:
+            button = QMessageBox.question(self, "Platform binary already exists",
+                                          f'The FMU already contains a binary for the platform "{target_platform}".'
+                                          ' Do you want to compile and overwrite the existing binary?')
             if button == QMessageBox.No:
                 return
 
         try:
-            compile_platform_binary(self.filename)
+            compile_platform_binary(self.filename, target_platform=target_platform)
         except Exception as e:
             QMessageBox.critical(self, "Failed to compile platform binaries", str(e))
             return
 
         self.load(self.filename)
-
 
     def createJupyterNotebook(self):
         """ Create a Juypyter Notebook to simulate the FMU """

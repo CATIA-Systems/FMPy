@@ -1,92 +1,103 @@
 """ Object model and loader for the modelDescription.xml """
 
+from typing import List, Union, IO
+
 
 class ModelDescription(object):
 
     def __init__(self):
-        self.guid = None
-        self.fmiVersion = None
-        self.modelName = None
-        self.description = None
-        self.generationTool = None
-        self.generationDateAndTime = None
-        self.variableNamingConvention = 'flat'
-        self.numberOfContinuousStates = 0
-        self.numberOfEventIndicators = 0
+        self.guid: str = None
+        self.fmiVersion: str = None
+        self.modelName: str = None
+        self.description: str = None
+        self.generationTool: str = None
+        self.generationDateAndTime: str = None
+        self.variableNamingConvention: str = 'flat'
+        self.numberOfContinuousStates: int = 0
+        self.numberOfEventIndicators: int = 0
 
-        self.defaultExperiment = None
+        self.defaultExperiment: DefaultExperiment = None
 
-        self.coSimulation = None
-        self.modelExchange = None
-        self.scheduledExecution = None
+        self.coSimulation: CoSimulation = None
+        self.modelExchange: ModelExchange = None
+        self.scheduledExecution: ScheduledExecution = None
 
-        self.buildConfigurations = []
+        self.buildConfigurations: List[BuildConfiguration] = []
 
-        self.unitDefinitions = []
-        self.typeDefinitions = []
-        self.modelVariables = []
+        self.unitDefinitions: List[Unit] = []
+        self.typeDefinitions: List[SimpleType] = []
+        self.modelVariables: List[ScalarVariable] = []
 
         # model structure
-        self.outputs = []
-        self.derivatives = []
-        self.initialUnknowns = []
-        self.eventIndicators = []
+        self.outputs: List[Unknown] = []
+        self.derivatives: List[Unknown] = []
+        self.clockedStates: List[Unknown] = []
+        self.eventIndicators: List[Unknown] = []
+        self.initialUnknowns: List[Unknown] = []
 
 
 class DefaultExperiment(object):
 
     def __init__(self):
-        self.startTime = None
-        self.stopTime = None
-        self.tolerance = None
-        self.stepSize = None
+        self.startTime: str = None
+        self.stopTime: str = None
+        self.tolerance: str = None
+        self.stepSize: str = None
 
 
 class InterfaceType(object):
 
     def __init__(self):
-        self.modelIdentifier = None
-        self.needsExecutionTool = False
-        self.canBeInstantiatedOnlyOncePerProcess = False
-        self.canGetAndSetFMUstate = False
-        self.canSerializeFMUstate = False
-        self.providesDirectionalDerivative = False
-        self.providesAdjointDerivatives = False
-        self.providesPerElementDependencies = False
+        self.modelIdentifier: str = None
+        self.needsExecutionTool: bool = False
+        self.canBeInstantiatedOnlyOncePerProcess: bool = False
+        self.canGetAndSetFMUstate: bool = False
+        self.canSerializeFMUstate: bool = False
+        self.providesDirectionalDerivative: bool = False
+        self.providesAdjointDerivatives: bool = False
+        self.providesPerElementDependencies: bool = False
 
         # FMI 2.0
-        self.canNotUseMemoryManagementFunctions = False
-        self.providesDirectionalDerivative = False
+        self.canNotUseMemoryManagementFunctions: bool = False
+        self.providesDirectionalDerivative: bool = False
 
 
 class ModelExchange(InterfaceType):
 
     def __init__(self):
         super(ModelExchange, self).__init__()
-        self.completedIntegratorStepNotNeeded = False
+        self.completedIntegratorStepNotNeeded: bool = False
 
 
 class CoSimulation(InterfaceType):
 
     def __init__(self):
         super(CoSimulation, self).__init__()
-        self.canHandleVariableCommunicationStepSize = False
-        self.canInterpolateInputs = False
-        self.maxOutputDerivativeOrder = 0
-        self.canRunAsynchronuously = False
+        self.canHandleVariableCommunicationStepSize: bool = False
+        self.canInterpolateInputs: bool = False
+        self.maxOutputDerivativeOrder: int = 0
+        self.canRunAsynchronuously: bool = False
+        self.providesIntermediateUpdate: bool = False
+        self.recommendedIntermediateInputSmoothness = 0
+        self.canReturnEarlyAfterIntermediateUpdate: bool = False
+        self.fixedInternalStepSize: float = None
+        self.hasEventMode: bool = False
 
 
-class ScheduledExecution(CoSimulation):
+class ScheduledExecution(InterfaceType):
 
     def __init__(self):
         super(ScheduledExecution, self).__init__()
+        self.maxOutputDerivativeOrder: int = 0
+        self.providesIntermediateUpdate: bool = False
+        self.recommendedIntermediateInputSmoothness: int = 0
 
 
 class BuildConfiguration(object):
 
     def __init__(self):
-        self.modelIdentifier = None
-        self.sourceFileSets = []
+        self.modelIdentifier: str = None
+        self.sourceFileSets: List[SourceFileSet] = []
 
     def __repr__(self):
         return 'BuildConfiguration %s' % self.sourceFileSets
@@ -95,10 +106,10 @@ class BuildConfiguration(object):
 class PreProcessorDefinition(object):
 
     def __init__(self):
-        self.name = None
-        self.value = None
-        self.optional = False
-        self.description = None
+        self.name: str = None
+        self.value: str = None
+        self.optional: bool = False
+        self.description: str = None
 
     def __repr__(self):
         return '%s=%s' % (self.name, self.value)
@@ -107,10 +118,13 @@ class PreProcessorDefinition(object):
 class SourceFileSet(object):
 
     def __init__(self):
-        self.language = None
-        self.preprocessorDefinitions = []
-        self.sourceFiles = []
-        self.includeDirectories = []
+        self.name: str = None
+        self.language: str = None
+        self.compiler: str = None
+        self.compilerOptions: str = None
+        self.preprocessorDefinitions: List[str] = []
+        self.sourceFiles: List[str] = []
+        self.includeDirectories: List[str] = []
 
     def __repr__(self):
         return '%s %s' % (self.language, self.sourceFiles)
@@ -118,66 +132,90 @@ class SourceFileSet(object):
 
 class ScalarVariable(object):
 
-    def __init__(self, name, valueReference):
-        self.name = name
-        self.valueReference = valueReference
-        self.description = None
+    def __init__(self, name: str, valueReference: int):
 
-        self.type = None
+        self.type: str = None
         "One of 'Real', 'Integer', 'Enumeration', 'Boolean', 'String'"
 
-        self.dimensions = []
-        "List of fixed dimensions"
+        self.name: str = name
 
-        self.dimensionValueReferences = []
-        "List of value references to the variables that hold the dimensions"
+        self.valueReference: int = valueReference
 
-        self.quantitiy = None
-        "Physical quantity"
+        self.description: str = None
 
-        self.unit = None
-        "Unit"
-
-        self.displayUnit = None
-        "Default display unit"
-
-        self.relativeQuantity = False
-        "Relative quantity"
-
-        self.min = None
-        "Minimum value"
-
-        self.max = None
-        "Maximum value"
-
-        self.nominal = None
-        "Nominal value"
-
-        self.unbounded = False
-        "Value is unbounded"
-
-        self.start = None
-        "Initial or guess value"
-
-        self.derivative = None
-        "Derivative"
-
-        self.causality = None
+        self.causality: str = None
         "One of 'parameter', 'calculatedParameter', 'input', 'output', 'local', 'independent'"
 
-        self.variability = None
+        self.variability: str = None
         "One of 'constant', 'fixed', 'tunable', 'discrete' or 'continuous'"
 
-        self.initial = None
+        self.initial: str = None
         "One of 'exact', 'approx', 'calculated' or None"
 
-        self.declaredType = None
+        self.canHandleMultipleSetPerTimeInstant: bool = True
 
-        self.reinit = False
+        self.intermediateUpdate: bool = False
+
+        self.previous: int = None
+
+        # TODO: resolve variables
+        self.clocks: List[int] = []
+
+        self.declaredType: SimpleType = None
+
+        self.dimensions: List[Dimension] = []
+        "List of fixed dimensions"
+
+        self.dimensionValueReferences: List[int] = []
+        "List of value references to the variables that hold the dimensions"
+
+        self.quantity: str = None
+        "Physical quantity"
+
+        self.unit: str = None
+        "Unit"
+
+        self.displayUnit: str = None
+        "Default display unit"
+
+        self.relativeQuantity: bool = False
+        "Relative quantity"
+
+        self.min: str = None
+        "Minimum value"
+
+        self.max: str = None
+        "Maximum value"
+
+        self.nominal: str = None
+        "Nominal value"
+
+        self.unbounded: bool = False
+        "Value is unbounded"
+
+        self.start: str = None
+        "Initial or guess value"
+
+        self.derivative: ScalarVariable = None
+        "The derivative of this variable"
+
+        self.reinit: bool = False
         "Can be reinitialized at an event by the FMU"
 
-        self.sourceline = None
+        self.sourceline: int = None
         "Line number in the modelDescription.xml or None if unknown"
+
+        # Clock attributes
+        # TODO: add type hints
+        self.canBeDeactivated = None
+        self.priority = None
+        self.interval = None
+        self.intervalDecimal = None
+        self.shiftDecimal = None
+        self.supportsFraction = None
+        self.resolution = None
+        self.intervalCounter = None
+        self.shiftCounter = None
 
     def __repr__(self):
         return '%s "%s"' % (self.type, self.name)
@@ -186,25 +224,25 @@ class ScalarVariable(object):
 class Dimension(object):
 
     def __init__(self, **kwargs):
-        self.start = kwargs.get('start')
-        self.valueReference = kwargs.get('valueReference')
+        self.start: str = kwargs.get('start')
+        self.valueReference: int = kwargs.get('valueReference')
 
 
 class SimpleType(object):
     """ Type Definition """
 
     def __init__(self, **kwargs):
-        self.name = kwargs.get('name')
-        self.type = kwargs.get('type')
-        self.quantity = kwargs.get('quantity')
-        self.unit = kwargs.get('unit')
-        self.displayUnit = kwargs.get('displayUnit')
-        self.relativeQuantity = kwargs.get('relativeQuantity')
-        self.min = kwargs.get('min')
-        self.max = kwargs.get('max')
-        self.nominal = kwargs.get('nominal')
+        self.name: str = kwargs.get('name')
+        self.type: str = kwargs.get('type')
+        self.quantity: str = kwargs.get('quantity')
+        self.unit: str = kwargs.get('unit')
+        self.displayUnit: str = kwargs.get('displayUnit')
+        self.relativeQuantity: str = kwargs.get('relativeQuantity')
+        self.min: str = kwargs.get('min')
+        self.max: str = kwargs.get('max')
+        self.nominal: str = kwargs.get('nominal')
         self.unbounded = kwargs.get('unbounded')
-        self.items = kwargs.get('items', [])
+        self.items: List[Item] = kwargs.get('items', [])
 
     def __repr__(self):
         return '%s "%s" [%s]' % (self.type, self.name, self.unit)
@@ -214,9 +252,9 @@ class Item(object):
     """ Enumeration Item """
 
     def __init__(self, **kwargs):
-        self.name = kwargs.get('name')
-        self.value = kwargs.get('value')
-        self.description = kwargs.get('description')
+        self.name: str = kwargs.get('name')
+        self.value: str = kwargs.get('value')
+        self.description: str = kwargs.get('description')
 
     def __repr__(self):
         return '%s (%s) %s' % (self.name, self.value, self.description)
@@ -225,9 +263,9 @@ class Item(object):
 class Unit(object):
 
     def __init__(self, name):
-        self.name = name
-        self.baseUnit = None
-        self.displayUnits = []
+        self.name: str = name
+        self.baseUnit: str = None
+        self.displayUnits: str = []
 
     def __repr__(self):
         return '%s' % self.name
@@ -236,16 +274,16 @@ class Unit(object):
 class BaseUnit(object):
 
     def __init__(self):
-        self.kg = 0
-        self.m = 0
-        self.s = 0
-        self.A = 0
-        self.K = 0
-        self.mol = 0
-        self.cd = 0
-        self.rad = 0
-        self.factor = 1.0
-        self.offset = 0.0
+        self.kg: int = 0
+        self.m: int = 0
+        self.s: int = 0
+        self.A: int = 0
+        self.K: int = 0
+        self.mol: int = 0
+        self.cd: int = 0
+        self.rad: int = 0
+        self.factor: float = 1.0
+        self.offset: float = 0.0
 
     def __repr__(self):
         return "kg=%d, m=%d, s=%d, A=%d, K=%d, mol=%d, cd=%d, rad=%d, factor=%g, offset=%g" % (
@@ -255,9 +293,9 @@ class BaseUnit(object):
 class DisplayUnit(object):
 
     def __init__(self, name):
-        self.name = name
-        self.factor = 1.0
-        self.offset = 0.0
+        self.name: str = name
+        self.factor: float = 1.0
+        self.offset: float = 0.0
 
     def __repr__(self):
         return '%s' % self.name
@@ -267,11 +305,11 @@ class Unknown(object):
 
     def __init__(self):
 
-        self.index = 0
-        self.variable = None
-        self.dependencies = []
-        self.dependenciesKind = []
-        self.sourceline = None
+        self.index: int = 0
+        self.variable: ScalarVariable = None
+        self.dependencies: List[ScalarVariable] = []
+        self.dependenciesKind: List[str] = []
+        self.sourceline: int = None
         "Line number in the modelDescription.xml"
 
     def __repr__(self):
@@ -322,14 +360,13 @@ def read_build_description(filename, validate=True):
     import zipfile
     from lxml import etree
     import os
-    from .util import _is_string
 
-    if _is_string(filename) and os.path.isdir(filename):  # extracted FMU
+    if isinstance(filename, str) and os.path.isdir(filename):  # extracted FMU
         filename = os.path.join(filename, 'sources/buildDescription.xml')
         if not os.path.isfile(filename):
             return []
         tree = etree.parse(filename)
-    elif _is_string(filename) and os.path.isfile(filename) and filename.lower().endswith('.xml'):  # XML file
+    elif isinstance(filename, str) and os.path.isfile(filename) and filename.lower().endswith('.xml'):  # XML file
         if not os.path.isfile(filename):
             return []
         tree = etree.parse(filename)
@@ -391,7 +428,7 @@ def read_build_description(filename, validate=True):
     return build_configurations
 
 
-def read_model_description(filename, validate=True, validate_variable_names=False, validate_model_structure=False):
+def read_model_description(filename: Union[str, IO], validate: bool = True, validate_variable_names: bool = False, validate_model_structure: bool = False) -> ModelDescription:
     """ Read the model description from an FMU without extracting it
 
     Parameters:
@@ -407,16 +444,16 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
     import zipfile
     from lxml import etree
     import os
-    from .util import _is_string
     from . import validation
+    import numpy as np
 
     # remember the original filename
     _filename = filename
 
-    if _is_string(filename) and os.path.isdir(filename):  # extracted FMU
+    if isinstance(filename, str) and os.path.isdir(filename):  # extracted FMU
         filename = os.path.join(filename, 'modelDescription.xml')
         tree = etree.parse(filename)
-    elif _is_string(filename) and os.path.isfile(filename) and filename.lower().endswith('.xml'):  # XML file
+    elif isinstance(filename, str) and os.path.isfile(filename) and filename.lower().endswith('.xml'):  # XML file
         tree = etree.parse(filename)
     else:  # FMU as path or file like object
         with zipfile.ZipFile(filename, 'r') as zf:
@@ -464,8 +501,6 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
         modelDescription.numberOfContinuousStates = int(root.get('numberOfContinuousStates'))
     elif is_fmi2:
         modelDescription.numberOfContinuousStates = len(root.findall('ModelStructure/Derivatives/Unknown'))
-    else:
-        modelDescription.numberOfContinuousStates = len(root.findall('ModelStructure/Derivative'))
 
     # default experiment
     for d in root.findall('DefaultExperiment'):
@@ -551,7 +586,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
                 buildConfiguration.sourceFileSets.append(source_file_set)
                 source_file_set.sourceFiles = source_files
 
-    elif is_fmi3 and not (_is_string(_filename) and _filename.endswith('.xml')):
+    elif is_fmi3 and not (isinstance(filename, str) and _filename.endswith('.xml')):
         # read buildDescription.xml if _filename is a folder or ZIP file
         modelDescription.buildConfigurations = read_build_description(_filename, validate=validate)
 
@@ -637,7 +672,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
         'tunable':    {'parameter': 'exact', 'calculatedParameter': 'calculated', 'structuralParameter': 'exact', 'local': 'calculated'},
         'discrete':   {'input': None, 'output': 'calculated', 'local': 'calculated'},
         'continuous': {'input': None, 'output': 'calculated', 'local': 'calculated', 'independent': None},
-        'clock':      {'input': None, 'output': None},
+        'clock':      {'input': 'exact', 'output': 'calculated', 'local': 'calculated'},
     }
 
     # model variables
@@ -651,6 +686,7 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
         sv.causality = variable.get('causality', default='local')
         sv.variability = variable.get('variability')
         sv.initial = variable.get('initial')
+        sv.clocks = variable.get('clocks')
         sv.sourceline = variable.sourceline
 
         if fmiVersion in ['1.0', '2.0']:
@@ -797,7 +833,8 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
     if is_fmi3:
 
         for attr, element in [(modelDescription.outputs, 'Output'),
-                              (modelDescription.derivatives, 'Derivative'),
+                              (modelDescription.derivatives, 'ContinuousStateDerivative'),
+                              (modelDescription.clockedStates, 'ClockedState'),
                               (modelDescription.initialUnknowns, 'InitialUnknown'),
                               (modelDescription.eventIndicators, 'EventIndicator')]:
 
@@ -819,12 +856,23 @@ def read_model_description(filename, validate=True, validate_variable_names=Fals
 
                 attr.append(unknown)
 
-        modelDescription.numberOfEventIndicators = len(modelDescription.eventIndicators)
-
-        # resolve derivatives
         for variable in modelDescription.modelVariables:
+
+            # resolve derivative
             if variable.derivative is not None:
-                variable.derivative = modelDescription.modelVariables[int(variable.derivative)]
+                variable.derivative = variables[int(variable.derivative)]
+
+            # resolve clocks
+            if variable.clocks is not None:
+                variable.clocks = [variables[int(vr)] for vr in variable.clocks.strip().split(' ')]
+
+        # calculate numberOfContinuousStates
+        for unknown in modelDescription.derivatives:
+            modelDescription.numberOfContinuousStates += int(np.prod(unknown.variable.shape))
+
+        # calculate numberOfEventIndicators
+        for unknown in modelDescription.eventIndicators:
+            modelDescription.numberOfEventIndicators += int(np.prod(unknown.variable.shape))
 
     if validate:
         problems = validation.validate_model_description(modelDescription,

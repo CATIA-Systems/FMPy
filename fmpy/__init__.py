@@ -5,7 +5,7 @@ import os
 from ctypes import *
 import _ctypes
 
-__version__ = '0.2.27'
+__version__ = '0.3.0'
 
 # experimental
 plot_library = 'matplotlib'  # 'plotly'
@@ -71,10 +71,8 @@ def supported_platforms(filename):
         platforms   a list of supported platforms supported by the FMU
     """
 
-    from .util import _is_string
-
     # get the files within the FMU
-    if _is_string(filename) and os.path.isdir(filename):  # extracted FMU
+    if isinstance(filename, str) and os.path.isdir(filename):  # extracted FMU
         names = []
         for dirpath, _, filenames in os.walk(filename):
             for name in filenames:

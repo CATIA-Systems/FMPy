@@ -1299,7 +1299,7 @@ QToolButton:checked, QToolButton:hover:pressed {
      <x>0</x>
      <y>0</y>
      <width>1125</width>
-     <height>26</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -1347,11 +1347,20 @@ QToolButton:checked, QToolButton:hover:pressed {
     <property name="title">
      <string>&amp;Tools</string>
     </property>
+    <widget class="QMenu" name="menuCompilePlatformBinary">
+     <property name="title">
+      <string>Compile Platform &amp;Binary</string>
+     </property>
+     <addaction name="actionCompileDarwinBinary"/>
+     <addaction name="actionCompileLinuxBinary"/>
+     <addaction name="actionCompileWin32Binary"/>
+     <addaction name="actionCompileWin64Binary"/>
+    </widget>
     <addaction name="actionCreateDesktopShortcut"/>
     <addaction name="actionAddFileAssociation"/>
     <addaction name="separator"/>
     <addaction name="actionValidateFMU"/>
-    <addaction name="actionCompilePlatformBinary"/>
+    <addaction name="menuCompilePlatformBinary"/>
     <addaction name="actionCreateJupyterNotebook"/>
     <addaction name="actionCreateCMakeProject"/>
     <addaction name="actionAddRemoting"/>
@@ -1892,14 +1901,6 @@ QToolButton::menu-button {
     <string>Create C&amp;Make Project...</string>
    </property>
   </action>
-  <action name="actionCompilePlatformBinary">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Compile Platform &amp;Binary</string>
-   </property>
-  </action>
   <action name="actionAddRemoting">
    <property name="enabled">
     <bool>false</bool>
@@ -1930,6 +1931,50 @@ QToolButton::menu-button {
    </property>
    <property name="text">
     <string>&amp;Validate FMU</string>
+   </property>
+  </action>
+  <action name="actionCompileWin32Binary">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Windows &amp;32-bit</string>
+   </property>
+   <property name="toolTip">
+    <string>Compile Windows 32-bit binary</string>
+   </property>
+  </action>
+  <action name="actionCompileWin64Binary">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Windows &amp;64-bit</string>
+   </property>
+   <property name="toolTip">
+    <string>Compile Windows 64-bit binary</string>
+   </property>
+  </action>
+  <action name="actionCompileLinuxBinary">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Linux</string>
+   </property>
+   <property name="toolTip">
+    <string>Compile Linux binary</string>
+   </property>
+  </action>
+  <action name="actionCompileDarwinBinary">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Darwin</string>
+   </property>
+   <property name="toolTip">
+    <string>Compile Darwin binary</string>
    </property>
   </action>
  </widget>

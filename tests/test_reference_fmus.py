@@ -2,18 +2,18 @@ import unittest
 from fmpy.util import download_file, validate_result
 from fmpy import *
 
-v = '0.0.4'  # Reference FMUs version
+v = '0.0.7'  # Reference FMUs version
 
 
 class ReferenceFMUsTest(unittest.TestCase):
 
     def setUp(self):
         download_file(url='https://github.com/modelica/Reference-FMUs/releases/download/v' + v + '/Reference-FMUs-' + v + '.zip',
-                      checksum='ed4b2346782c44937a411037c19a32ac2bd09cd43a5fce9bb0fddc571723fc3a')
+                      checksum='72ade2d4d69114dc6dfd2141ed310cdbcb40ef188dc670b0f9af8ba5a1c38ea0')
         extract('Reference-FMUs-' + v + '.zip', 'Reference-FMUs-dist')
 
         download_file(url='https://github.com/modelica/Reference-FMUs/archive/v' + v + '.zip',
-                      checksum='1c9efd38cbe89ea8f31e588fe8a767b082d23a1ed1f3875e2ac770fc3f371489')
+                      checksum='696d597d6c7ef24903793e6caf20bfaa5ed70a07b02bea76ccf370870e8da6c3')
         extract('v' + v + '.zip', 'Reference-FMUs-repo')
 
     def test_fmi1_cs(self):
@@ -66,7 +66,6 @@ class ReferenceFMUsTest(unittest.TestCase):
         """ Test the SE specific API """
 
         import shutil
-        from fmpy.fmi3 import FMU3ScheduledExecution
 
         filename = os.path.join(os.getcwd(), 'Reference-FMUs-dist', '3.0', 'Clocks.fmu')
 

@@ -1,3 +1,17 @@
+## v0.3.0 (2021-04-20)
+
+This release drops Python 2.7 support. The minimum required version is now Python 3.5.
+
+### Enhancements
+
+- Update API to FMI 3.0-beta.1
+- Add type hints to Model Description and simulate_fmu()
+- Add "Hide All" and fix "Show All" columns in GUI
+- Add target_platform parameter to compile_platform_binary()
+- Link against libm when compiling platform binaries on Linux (#242)
+- Add parameter set_input_derivatives to Input and simulate_fmu() (#240)
+- Escape non-ASCII characters in XML attributes (#216)
+
 ## v0.2.27 (2021-01-28)
 
 ### Enhancements

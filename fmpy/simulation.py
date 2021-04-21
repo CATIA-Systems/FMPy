@@ -831,7 +831,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
     if is_fmi1:
         fmu.setTime(time)
     elif is_fmi2:
-        fmu.setupExperiment(startTime=start_time)
+        fmu.setupExperiment(startTime=start_time, stopTime=stop_time)
 
     input = Input(fmu, model_description, input_signals)
 
@@ -877,7 +877,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
     elif is_fmi3:
 
-        fmu.enterInitializationMode(startTime=start_time)
+        fmu.enterInitializationMode(startTime=start_time, stopTime=stop_time)
         input.apply(time)
         fmu.exitInitializationMode()
 
@@ -1094,7 +1094,7 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
     is_fmi2 = model_description.fmiVersion == '2.0'
 
     if is_fmi2:
-        fmu.setupExperiment(tolerance=relative_tolerance, startTime=start_time)
+        fmu.setupExperiment(tolerance=relative_tolerance, startTime=start_time, stopTime=stop_time)
 
     input = Input(fmu=fmu, modelDescription=model_description, signals=input_signals, set_input_derivatives=set_input_derivatives)
 
@@ -1111,16 +1111,16 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
         input.apply(time)
         fmu.exitInitializationMode()
     else:
-        fmu.enterInitializationMode(tolerance=relative_tolerance, startTime=start_time)
+        fmu.enterInitializationMode(tolerance=relative_tolerance, startTime=start_time, stopTime=stop_time)
         input.apply(time)
         fmu.exitInitializationMode()
 
     recorder = Recorder(fmu=fmu, modelDescription=model_description, variableNames=output, interval=output_interval)
 
-    n_steps = 0
+    n_steps = time / output_interval
 
     # simulation loop
-    while time < stop_time:
+    while time + output_interval <= stop_time:
 
         if timeout is not None and (current_time() - sim_start) > timeout:
             break

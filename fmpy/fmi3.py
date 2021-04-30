@@ -685,17 +685,21 @@ class _FMU3(_FMU):
         self.fmi3GetBoolean(self.component, vr, len(vr), value, nValues)
         return list(value)
 
-    def getString(self, vr):
+    def getString(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
         vr = (fmi3ValueReference * len(vr))(*vr)
-        value = (fmi3String * len(vr))()
-        self.fmi3GetString(self.component, vr, len(vr), value)
-        return list(value)
+        value = (fmi3String * nValues)()
+        self.fmi3GetString(self.component, vr, len(vr), value, nValues)
+        return list(map(lambda b: b.decode('utf-8'), value))
 
-    def getBinary(self, vr):
+    def getBinary(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
         vr = (fmi3ValueReference * len(vr))(*vr)
-        value = (fmi3Binary * len(vr))()
+        value = (fmi3Binary * nValues)()
         size = (c_size_t * len(vr))()
-        self.fmi3GetBinary(self.component, vr, len(vr), size, value, len(value))
+        self.fmi3GetBinary(self.component, vr, len(vr), size, value, nValues)
         return list(value)
 
     def getClock(self, vr, nValues=None):

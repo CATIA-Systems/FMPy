@@ -2,6 +2,7 @@ import os
 import unittest
 from fmpy import simulate_fmu
 from fmpy.fmucontainer import create_fmu_container
+from fmpy.validation import validate_fmu
 import numpy as np
 
 
@@ -55,5 +56,9 @@ class FMUContainerTest(unittest.TestCase):
         create_fmu_container(configuration, filename)
 
         w_ref = np.array([(0.5, 0), (1.5, 1), (2, 1), (3, 0)], dtype=[('time', 'f8'), ('w_ref', 'f8')])
+
+        problems = validate_fmu(filename)
+
+        self.assertEqual(problems, [])
 
         result = simulate_fmu(filename, start_values={'k': 20}, input=w_ref, output=['w_ref', 'w'], stop_time=4)

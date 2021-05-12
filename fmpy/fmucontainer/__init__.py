@@ -47,29 +47,12 @@ def create_fmu_container(configuration, output_filename):
         'connections': []
     }
 
-    l = []
-
     component_map = {}
     vi = 0  # variable index
 
-    l.append('<?xml version="1.0" encoding="UTF-8"?>')
-    l.append('<fmiModelDescription')
-    l.append('  fmiVersion="2.0"')
-    l.append('  modelName="%s"' % model_name)
-    l.append('  guid=""')
-    if 'description' in configuration:
-        l.append('  description="%s"' % configuration['description'])
-    l.append('  generationTool="FMPy %s FMU Container"' % fmpy.__version__)
-    l.append('  generationDateAndTime="%s">' % datetime.now(pytz.utc).isoformat())
-    l.append('')
-    l.append('  <CoSimulation modelIdentifier="FMUContainer">')
-    l.append('    <SourceFiles>')
-    l.append('      <File name="FMUContainer.c"/>')
-    l.append('      <File name="mpack.c"/>')
-    l.append('    </SourceFiles>')
-    l.append('  </CoSimulation>')
-    l.append('')
-    l.append('  <ModelVariables>')
+    mv = ''
+    mo = ''
+
     for i, component in enumerate(configuration['components']):
         model_description = read_model_description(component['filename'])
         model_identifier = model_description.coSimulation.modelIdentifier
@@ -93,15 +76,56 @@ def create_fmu_container(configuration, output_filename):
                 if 'description' in mapping:
                     description = mapping['description']
             description = ' description="%s"' % xml_encode(description) if description else ''
-            l.append('    <ScalarVariable name="%s" valueReference="%d" causality="%s" variability="%s"%s>' % (xml_encode(name), vi, v.causality, v.variability, description))
-            l.append('      <%s%s/>' % (v.type, ' start="%s"' % v.start if v.start else ''))
-            l.append('    </ScalarVariable>')
+
+            # model variables
+            mv += f'    <ScalarVariable name="{ xml_encode(name) }" valueReference="{ vi }" causality="{ v.causality }" variability="{ v.variability }"{ description }>\n'
+            mv += f'      <{v.type}'
+            if v.start:
+                mv += f' start="{v.start}"'
+            mv += f'/>\n'
+            mv += f'    </ScalarVariable>\n'
+
+            # model structure
+            if v.causality == 'output':
+                mo += f'      <Unknown index="{ vi + 1 }"/>\n'
+
             vi += 1
-    l.append('  </ModelVariables>')
-    l.append('')
-    l.append('  <ModelStructure/>')
-    l.append('')
-    l.append('</fmiModelDescription>')
+
+    xml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="2.0"
+  modelName="{ model_name }"
+  guid=""
+  description="{ configuration.get('description', '') }"
+  generationTool="FMPy {fmpy.__version__} FMU Container"
+  generationDateAndTime="{ datetime.now(pytz.utc).isoformat() }">
+
+  <CoSimulation modelIdentifier="FMUContainer">
+    <SourceFiles>
+      <File name="FMUContainer.c"/>
+      <File name="mpack.c"/>
+    </SourceFiles>
+  </CoSimulation>
+
+  <ModelVariables>
+{ mv }  </ModelVariables>
+
+  <ModelStructure>
+'''
+
+    if mo:
+        xml += '    <Outputs>\n'
+        xml += mo
+        xml += '    </Outputs>\n'
+        xml += '    <InitialUnknowns>\n'
+        xml += mo
+        xml += '    </InitialUnknowns>'
+
+    xml += '''
+  </ModelStructure>
+
+</fmiModelDescription>
+'''
 
     for sc, sv, ec, ev in configuration['connections']:
         data['connections'].append({
@@ -113,7 +137,7 @@ def create_fmu_container(configuration, output_filename):
         })
 
     with open(os.path.join(unzipdir, 'modelDescription.xml'), 'w') as f:
-        f.write('\n'.join(l) + '\n')
+        f.write(xml)
 
     with open(os.path.join(unzipdir, 'resources', 'config.mp'), 'wb') as f:
         packed = msgpack.packb(data)

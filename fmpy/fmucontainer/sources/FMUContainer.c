@@ -90,8 +90,9 @@ typedef struct {
 
 typedef struct {
 
-	size_t ci;
-	fmi2ValueReference vr;
+    size_t size;
+	size_t *ci;
+	fmi2ValueReference *vr;
 
 } VariableMapping;
 
@@ -263,13 +264,25 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	s->variables = calloc(s->nVariables, sizeof(VariableMapping));
 
 	for (size_t i = 0; i < s->nVariables; i++) {
-		mpack_node_t variable = mpack_node_array_at(variables, i);
+		
+        mpack_node_t variable = mpack_node_array_at(variables, i);
 
-		mpack_node_t component = mpack_node_map_cstr(variable, "component");
-		s->variables[i].ci = mpack_node_u64(component);
+        mpack_node_t components = mpack_node_map_cstr(variable, "components");
+        mpack_node_t valueReferences = mpack_node_map_cstr(variable, "valueReferences");
 
-		mpack_node_t valueReference = mpack_node_map_cstr(variable, "valueReference");
-		s->variables[i].vr = mpack_node_u32(valueReference);
+        s->variables[i].size = mpack_node_array_length(components);
+        s->variables[i].ci = calloc(s->variables[i].size, sizeof(size_t));
+        s->variables[i].vr = calloc(s->variables[i].size, sizeof(fmi2ValueReference));
+
+        for (size_t j = 0; j < s->variables[i].size; j++) {
+
+            mpack_node_t component = mpack_node_array_at(components, j);
+            mpack_node_t valueReference = mpack_node_array_at(valueReferences, j);
+
+            s->variables[i].ci[j] = mpack_node_u64(component);
+            s->variables[i].vr[j] = mpack_node_u32(valueReference);
+        }
+		
 	}
 
 	// clean up and check for errors
@@ -472,8 +485,8 @@ fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 	for (size_t i = 0; i < nvr; i++) {
 		if (vr[i] >= s->nVariables) return fmi2Error;
 		VariableMapping vm = s->variables[vr[i]];
-		Model *m = &(s->components[vm.ci]);
-		CHECK_STATUS(m->fmi2GetReal(m->c, &(vm.vr), 1, &value[i]))
+		Model *m = &(s->components[vm.ci[0]]);
+		CHECK_STATUS(m->fmi2GetReal(m->c, &(vm.vr[0]), 1, &value[i]))
 	}
 END:
 	return status;
@@ -486,8 +499,8 @@ fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 		for (size_t i = 0; i < nvr; i++) {
 			if (vr[i] >= s->nVariables) return fmi2Error;
 			VariableMapping vm = s->variables[vr[i]];
-			Model *m = &(s->components[vm.ci]);
-			CHECK_STATUS(m->fmi2GetInteger(m->c, &(vm.vr), 1, &value[i]))
+			Model *m = &(s->components[vm.ci[0]]);
+			CHECK_STATUS(m->fmi2GetInteger(m->c, &(vm.vr[0]), 1, &value[i]))
 		}
 END:
 	return status;
@@ -500,8 +513,8 @@ fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 		for (size_t i = 0; i < nvr; i++) {
 			if (vr[i] >= s->nVariables) return fmi2Error;
 			VariableMapping vm = s->variables[vr[i]];
-			Model *m = &(s->components[vm.ci]);
-			CHECK_STATUS(m->fmi2GetBoolean(m->c, &(vm.vr), 1, &value[i]))
+			Model *m = &(s->components[vm.ci[0]]);
+			CHECK_STATUS(m->fmi2GetBoolean(m->c, &(vm.vr[0]), 1, &value[i]))
 		}
 END:
 	return status;
@@ -514,8 +527,8 @@ fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t 
 		for (size_t i = 0; i < nvr; i++) {
 			if (vr[i] >= s->nVariables) return fmi2Error;
 			VariableMapping vm = s->variables[vr[i]];
-			Model *m = &(s->components[vm.ci]);
-			CHECK_STATUS(m->fmi2GetString(m->c, &(vm.vr), 1, &value[i]))
+			Model *m = &(s->components[vm.ci[0]]);
+			CHECK_STATUS(m->fmi2GetString(m->c, &(vm.vr[0]), 1, &value[i]))
 		}
 END:
 	return status;
@@ -528,8 +541,10 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 	for (size_t i = 0; i < nvr; i++) {
 		if (vr[i] >= s->nVariables) return fmi2Error;
 		VariableMapping vm = s->variables[vr[i]];
-		Model *m = &(s->components[vm.ci]);
-		CHECK_STATUS(m->fmi2SetReal(m->c, &(vm.vr), 1, &value[i]))
+        for (size_t j = 0; j < vm.size; j++) {
+            Model *m = &(s->components[vm.ci[j]]);
+		    CHECK_STATUS(m->fmi2SetReal(m->c, &(vm.vr[j]), 1, &value[i]))
+        }
 	}
 END:
 	return status;
@@ -539,12 +554,14 @@ fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 	GET_SYSTEM
 
-		for (size_t i = 0; i < nvr; i++) {
-			if (vr[i] >= s->nVariables) return fmi2Error;
-			VariableMapping vm = s->variables[vr[i]];
-			Model *m = &(s->components[vm.ci]);
-			CHECK_STATUS(m->fmi2SetInteger(m->c, &(vm.vr), 1, &value[i]))
-		}
+	for (size_t i = 0; i < nvr; i++) {
+		if (vr[i] >= s->nVariables) return fmi2Error;
+		VariableMapping vm = s->variables[vr[i]];
+        for (size_t j = 0; j < vm.size; j++) {
+            Model *m = &(s->components[vm.ci[j]]);
+            CHECK_STATUS(m->fmi2SetInteger(m->c, &(vm.vr[j]), 1, &value[i]))
+        }
+	}
 END:
 	return status;
 }
@@ -553,12 +570,14 @@ fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 	GET_SYSTEM
 
-		for (size_t i = 0; i < nvr; i++) {
-			if (vr[i] >= s->nVariables) return fmi2Error;
-			VariableMapping vm = s->variables[vr[i]];
-			Model *m = &(s->components[vm.ci]);
-			CHECK_STATUS(m->fmi2SetBoolean(m->c, &(vm.vr), 1, &value[i]))
-		}
+	for (size_t i = 0; i < nvr; i++) {
+		if (vr[i] >= s->nVariables) return fmi2Error;
+		VariableMapping vm = s->variables[vr[i]];
+        for (size_t j = 0; j < vm.size; j++) {
+            Model *m = &(s->components[vm.ci[j]]);
+            CHECK_STATUS(m->fmi2SetBoolean(m->c, &(vm.vr[j]), 1, &value[i]))
+        }
+	}
 END:
 	return status;
 }
@@ -567,12 +586,14 @@ fmi2Status fmi2SetString(fmi2Component c, const fmi2ValueReference vr[], size_t 
 
 	GET_SYSTEM
 
-		for (size_t i = 0; i < nvr; i++) {
-			if (vr[i] >= s->nVariables) return fmi2Error;
-			VariableMapping vm = s->variables[vr[i]];
-			Model *m = &(s->components[vm.ci]);
-			CHECK_STATUS(m->fmi2SetString(m->c, &(vm.vr), 1, &value[i]))
-		}
+	for (size_t i = 0; i < nvr; i++) {
+		if (vr[i] >= s->nVariables) return fmi2Error;
+		VariableMapping vm = s->variables[vr[i]];
+        for (size_t j = 0; j < vm.size; j++) {
+            Model *m = &(s->components[vm.ci[j]]);
+            CHECK_STATUS(m->fmi2SetString(m->c, &(vm.vr[j]), 1, &value[i]))
+        }
+	}
 END:
 	return status;
 }

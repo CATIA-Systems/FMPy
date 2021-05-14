@@ -1,7 +1,7 @@
 import os
 import unittest
 from fmpy import simulate_fmu
-from fmpy.fmucontainer import create_fmu_container
+from fmpy.fmucontainer import create_fmu_container, Variable, Connection
 from fmpy.validation import validate_fmu
 import numpy as np
 
@@ -18,13 +18,13 @@ class FMUContainerTest(unittest.TestCase):
             # description of the container
             'description': 'A controlled drivetrain',
 
-            # optional dictionary to customize attributes of exposed variables
+            # variables of the container
             'variables':
-                {
-                    'controller.PI.k': {'name': 'k'},
-                    'controller.u_s': {'name': 'w_ref', 'description': 'Reference speed'},
-                    'drivetrain.w': {'name': 'w', 'description': 'Motor speed'},
-                },
+                [
+                    Variable('Real', 'tunable', 'parameter', 'k', '100', 'Gain of controller', [('controller', 'PI.k')]),
+                    Variable('Real', 'continuous', 'input', 'w_ref', '0', 'Reference speed', [('controller', 'u_s')]),
+                    Variable('Real', 'continuous', 'output', 'w', None, 'Gain of controller', [('drivetrain', 'w')]),
+                ],
 
             # models to include in the container
             'components':
@@ -32,21 +32,18 @@ class FMUContainerTest(unittest.TestCase):
                     {
                         'filename': os.path.join(examples, 'Controller.fmu'),  # filename of the FMU
                         'name': 'controller',  # instance name
-                        'variables': ['u_s', 'PI.k']  # variables to expose in the container
                     },
                     {
                         'filename': os.path.join(examples, 'Drivetrain.fmu'),
                         'name': 'drivetrain',
-                        'variables': ['w']
                     }
                 ],
 
             # connections between the FMU instances
             'connections':
                 [
-                    # <from_instance>, <from_variable>, <to_instance>, <to_variable>
-                    ('drivetrain', 'w', 'controller', 'u_m'),
-                    ('controller', 'y', 'drivetrain', 'tau'),
+                    Connection('drivetrain', 'w', 'controller', 'u_m'),
+                    Connection('controller', 'y', 'drivetrain', 'tau'),
                 ]
 
         }

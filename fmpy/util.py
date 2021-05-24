@@ -1,5 +1,6 @@
 import os
 
+import fmpy
 import numpy as np
 
 
@@ -888,7 +889,7 @@ def compile_platform_binary(filename, output_filename=None, target_platform=None
     rmtree(unzipdir2, ignore_errors=True)
 
 
-def add_remoting(filename):
+def add_remoting(filename, host_platform, remote_platform):
 
     from . import extract, read_model_description, supported_platforms
     from shutil import copyfile, rmtree
@@ -897,33 +898,57 @@ def add_remoting(filename):
 
     platforms = supported_platforms(filename)
 
-    if 'win32' not in platforms:
-        raise Exception("The FMU does not support the platform \"win32\".")
+    if host_platform == 'win64' and remote_platform == 'win32':
 
-    if 'win64' in platforms:
-        raise Exception("The FMU already supports \"win64\".")
+        if 'win64' in platforms:
+            raise Exception('The FMU already supports "win64".')
+
+        if 'win32' not in platforms:
+            raise Exception('The FMU does not support the platform "win32".')
+
+    elif host_platform == 'linux64' and remote_platform == 'win64':
+
+        if 'linux64' in platforms:
+            raise Exception('The FMU already supports "linux64".')
+
+        if 'win64' not in platforms:
+            raise Exception('The FMU does not support the platform "win64".')
+    else:
+
+        raise Exception("Remoting is not supported for the given combination of host and remote platform.")
 
     model_description = read_model_description(filename)
 
     current_dir = os.path.dirname(__file__)
-    client = os.path.join(current_dir, 'remoting', 'client.dll')
-    server = os.path.join(current_dir, 'remoting', 'server.exe')
+
+    if host_platform == 'win64':
+        client = os.path.join(current_dir, 'remoting', 'win64', 'client.dll')
+        server = os.path.join(current_dir, 'remoting', 'win32', 'server.exe')
+    else:
+        client = os.path.join(current_dir, 'remoting', 'linux64', 'client.so')
+        server = os.path.join(current_dir, 'remoting', 'win64', 'server.exe')
+
     license = os.path.join(current_dir, 'remoting', 'license.txt')
 
     tempdir = extract(filename)
 
-    if model_description.coSimulation is not None:
+    if model_description.coSimulation:
         model_identifier = model_description.coSimulation.modelIdentifier
     else:
         model_identifier = model_description.modelExchange.modelIdentifier
 
     # copy the binaries & license
-    os.mkdir(os.path.join(tempdir, 'binaries', 'win64'))
-    copyfile(client, os.path.join(tempdir, 'binaries', 'win64', model_identifier + '.dll'))
-    copyfile(server, os.path.join(tempdir, 'binaries', 'win64', 'server.exe'))
+    if host_platform == 'win64':
+        os.mkdir(os.path.join(tempdir, 'binaries', 'win64'))
+        copyfile(client, os.path.join(tempdir, 'binaries', 'win64', model_identifier + '.dll'))
+        copyfile(server, os.path.join(tempdir, 'binaries', 'win32', 'server.exe'))
+    else:
+        os.mkdir(os.path.join(tempdir, 'binaries', 'linux64'))
+        copyfile(client, os.path.join(tempdir, 'binaries', 'linux64', model_identifier + '.so'))
+        copyfile(server, os.path.join(tempdir, 'binaries', 'win64', 'server.exe'))
+
     licenses_dir = os.path.join(tempdir, 'documentation', 'licenses')
-    if not os.path.isdir(licenses_dir):
-        os.mkdir(licenses_dir)
+    os.makedirs(licenses_dir, exist_ok=True)
     copyfile(license, os.path.join(tempdir, 'documentation', 'licenses', 'fmpy-remoting-binaries.txt'))
 
     # create a new archive from the existing files + remoting binaries
@@ -1242,3 +1267,68 @@ def create_jupyter_notebook(filename, notebook_filename=None):
 
     with open(notebook_filename, 'w') as f:
         nbf.write(nb, f)
+
+
+def has_wsl():
+    """ Check if the Windows Subsystem for Linux (WSL) is available """
+
+    if fmpy.system != 'windows':
+        return False
+
+    import subprocess
+
+    try:
+        subprocess.run(['wsl', '--help'])
+        return True
+    except:
+        return False
+
+
+def has_wine64():
+    """ Check if the Wine 64-bit is available """
+
+    if fmpy.system != 'linux':
+        return False
+
+    import subprocess
+
+    try:
+        subprocess.run(['wine64', '--help'])
+        return True
+    except:
+        return False
+
+
+def can_simulate(platforms, remote_platform='auto'):
+
+    from . import platform
+
+    if remote_platform is None:  # remoting disabled
+
+        return platform in platforms, None
+
+    elif remote_platform == 'auto':  # auto remoting
+
+        if platform in platforms:
+            return True, None
+        elif platform == 'win64' and 'win32' in platforms:
+            return True, 'win32'
+        elif has_wsl() and 'linux64' in platforms:
+            return True, 'linux64'
+        elif has_wine64() and 'win64' in platforms:
+            return True, 'win64'
+        else:
+            return False, None
+
+    else:  # specific remoting
+
+        if remote_platform == 'win32' and platform == 'win64':
+            return True, remote_platform
+        elif remote_platform == 'win64' and has_wine64():
+            return True, remote_platform
+        elif remote_platform == 'linux64' and has_wsl():
+            return True, remote_platform
+
+    return False, None
+
+

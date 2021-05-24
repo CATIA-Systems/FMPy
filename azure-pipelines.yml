@@ -27,6 +27,11 @@ jobs:
 
   - bash: |
       source activate py37
+      python build_remoting.py
+    displayName: Build remoting binaries
+
+  - bash: |
+      source activate py37
       python setup.py bdist_wheel --universal
       for f in dist/FMPy-*.whl; do
         pip install $f --no-deps -vv

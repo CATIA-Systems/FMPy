@@ -18,7 +18,7 @@ from fmpy.gui.generated.MainWindow import Ui_MainWindow
 import fmpy
 from fmpy import read_model_description, supported_platforms, platform
 from fmpy.model_description import ScalarVariable
-
+from fmpy.util import can_simulate
 
 from fmpy.gui.model import VariablesTableModel, VariablesTreeModel, VariablesModel, VariablesFilterModel
 from fmpy.gui.log import Log, LogMessagesFilterProxyModel
@@ -267,7 +267,8 @@ class MainWindow(QMainWindow):
         self.ui.actionCompileWin64Binary.triggered.connect(lambda: self.compilePlatformBinary('win64'))
         self.ui.actionCreateJupyterNotebook.triggered.connect(self.createJupyterNotebook)
         self.ui.actionCreateCMakeProject.triggered.connect(self.createCMakeProject)
-        self.ui.actionAddRemoting.triggered.connect(self.addRemoting)
+        self.ui.actionAddWindows32Remoting.triggered.connect(lambda: self.addRemotingBinaries('win64', 'win32'))
+        self.ui.actionAddLinux64Remoting.triggered.connect(lambda: self.addRemotingBinaries('linux64', 'win64'))
         self.ui.actionAddCoSimulationWrapper.triggered.connect(self.addCoSimulationWrapper)
 
         # help menu
@@ -459,8 +460,8 @@ class MainWindow(QMainWindow):
 
         self.ui.actionCreateJupyterNotebook.setEnabled(True)
 
-        can_add_remoting = md.fmiVersion == '2.0' and 'win32' in platforms and 'win64' not in platforms
-        self.ui.actionAddRemoting.setEnabled(can_add_remoting)
+        self.ui.actionAddWindows32Remoting.setEnabled(md.fmiVersion == '2.0' and 'win32' in platforms and 'win64' not in platforms)
+        self.ui.actionAddLinux64Remoting.setEnabled(md.fmiVersion == '2.0' and 'win64' in platforms and 'linux64' not in platforms)
 
         can_add_cswrapper = md.fmiVersion == '2.0' and md.coSimulation is None and md.modelExchange is not None
         self.ui.actionAddCoSimulationWrapper.setEnabled(can_add_cswrapper)
@@ -517,13 +518,13 @@ class MainWindow(QMainWindow):
         self.ui.actionShowLog.setEnabled(True)
         self.ui.actionShowResults.setEnabled(False)
 
-        can_simulate = platform in platforms or platform == 'win64' and 'win32' in platforms
+        can_sim, _ = can_simulate(platforms)
 
-        self.ui.actionLoadStartValues.setEnabled(can_simulate)
-        self.ui.actionSimulate.setEnabled(can_simulate)
-        self.stopTimeLineEdit.setEnabled(can_simulate)
-        self.fmiTypeComboBox.setEnabled(can_simulate and len(fmi_types) > 1)
-        self.ui.settingsGroupBox.setEnabled(can_simulate)
+        self.ui.actionLoadStartValues.setEnabled(can_sim)
+        self.ui.actionSimulate.setEnabled(can_sim)
+        self.stopTimeLineEdit.setEnabled(can_sim)
+        self.fmiTypeComboBox.setEnabled(can_sim and len(fmi_types) > 1)
+        self.ui.settingsGroupBox.setEnabled(can_sim)
 
         settings = QSettings()
         recent_files = settings.value("recentFiles", defaultValue=[])
@@ -1251,16 +1252,16 @@ class MainWindow(QMainWindow):
         if project_dir:
             create_cmake_project(self.filename, project_dir)
 
-    def addRemoting(self):
-        """ Add 32-bit remoting binaries to the FMU """
+
+    def addRemotingBinaries(self, host_platform, remote_platform):
 
         from ..util import add_remoting
 
         try:
-            add_remoting(self.filename)
+            add_remoting(self.filename, host_platform, remote_platform)
         except Exception as e:
-            QMessageBox.warning(self, "Failed to add 32-bit Remoting",
-                                "Failed to add 32-bit remoting binaries to %s. %s" % (self.filename, e))
+            QMessageBox.warning(self, "Failed to add Remoting Binaries",
+                                f"Failed to add remoting binaries to {self.filename}. {e}")
 
         self.load(self.filename)
 

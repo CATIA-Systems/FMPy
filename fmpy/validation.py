@@ -127,6 +127,12 @@ def validate_model_description(model_description, validate_variable_names=False,
         if validate_model_structure:
             problems += _validate_model_structure(model_description)
 
+    if is_fmi3:
+
+        # assert independent variable
+        if sum(v.causality == 'independent' for v in model_description.modelVariables) != 1:
+            problems.append("Exactly one independent variable must be defined.")
+
     return problems
 
 

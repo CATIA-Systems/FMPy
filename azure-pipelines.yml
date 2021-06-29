@@ -1,6 +1,6 @@
 variables:
 - name: create_environment
-  value: conda create --yes --quiet --name py37 -c conda-forge python=3.7 dask ipython=7 lark-parser lxml matplotlib notebook numpy plotly pyqt pyqtgraph pytest-cov requests scipy
+  value: conda create --yes --quiet --name py37 -c conda-forge python=3.7 attrs dask ipython=7 lark-parser lxml matplotlib notebook numpy plotly pyqt pyqtgraph pytest-cov requests scipy
 
 jobs:
 

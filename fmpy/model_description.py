@@ -1,319 +1,284 @@
 """ Object model and loader for the modelDescription.xml """
 
 from typing import List, Union, IO
+from attr import attrs, attrib, Factory
 
 
-class ModelDescription(object):
-
-    def __init__(self):
-        self.guid: str = None
-        self.fmiVersion: str = None
-        self.modelName: str = None
-        self.description: str = None
-        self.generationTool: str = None
-        self.generationDateAndTime: str = None
-        self.variableNamingConvention: str = 'flat'
-        self.numberOfContinuousStates: int = 0
-        self.numberOfEventIndicators: int = 0
-
-        self.defaultExperiment: DefaultExperiment = None
-
-        self.coSimulation: CoSimulation = None
-        self.modelExchange: ModelExchange = None
-        self.scheduledExecution: ScheduledExecution = None
-
-        self.buildConfigurations: List[BuildConfiguration] = []
-
-        self.unitDefinitions: List[Unit] = []
-        self.typeDefinitions: List[SimpleType] = []
-        self.modelVariables: List[ScalarVariable] = []
-
-        # model structure
-        self.outputs: List[Unknown] = []
-        self.derivatives: List[Unknown] = []
-        self.clockedStates: List[Unknown] = []
-        self.eventIndicators: List[Unknown] = []
-        self.initialUnknowns: List[Unknown] = []
-
-
+@attrs(auto_attribs=True)
 class DefaultExperiment(object):
 
-    def __init__(self):
-        self.startTime: str = None
-        self.stopTime: str = None
-        self.tolerance: str = None
-        self.stepSize: str = None
+    startTime: str = None
+    stopTime: str = None
+    tolerance: str = None
+    stepSize: str = None
 
 
+@attrs(eq=False)
 class InterfaceType(object):
 
-    def __init__(self):
-        self.modelIdentifier: str = None
-        self.needsExecutionTool: bool = False
-        self.canBeInstantiatedOnlyOncePerProcess: bool = False
-        self.canGetAndSetFMUstate: bool = False
-        self.canSerializeFMUstate: bool = False
-        self.providesDirectionalDerivative: bool = False
-        self.providesAdjointDerivatives: bool = False
-        self.providesPerElementDependencies: bool = False
+    modelIdentifier = attrib(type=str, default=None)
+    needsExecutionTool = attrib(type=bool, default=False, repr=False)
+    canBeInstantiatedOnlyOncePerProcess = attrib(type=bool, default=False, repr=False)
+    canGetAndSetFMUstate = attrib(type=bool, default=False, repr=False)
+    canSerializeFMUstate = attrib(type=bool, default=False, repr=False)
+    providesDirectionalDerivative = attrib(type=bool, default=False, repr=False)
+    providesAdjointDerivatives = attrib(type=bool, default=False, repr=False)
+    providesPerElementDependencies = attrib(type=bool, default=False, repr=False)
 
-        # FMI 2.0
-        self.canNotUseMemoryManagementFunctions: bool = False
-        self.providesDirectionalDerivative: bool = False
+    # FMI 2.0
+    canNotUseMemoryManagementFunctions = attrib(type=bool, default=False, repr=False)
+    providesDirectionalDerivative = attrib(type=bool, default=False, repr=False)
 
 
+@attrs(eq=False)
 class ModelExchange(InterfaceType):
 
-    def __init__(self):
-        super(ModelExchange, self).__init__()
-        self.completedIntegratorStepNotNeeded: bool = False
+    completedIntegratorStepNotNeeded = attrib(type=bool, default=False, repr=False)
 
 
+@attrs(eq=False)
 class CoSimulation(InterfaceType):
 
-    def __init__(self):
-        super(CoSimulation, self).__init__()
-        self.canHandleVariableCommunicationStepSize: bool = False
-        self.canInterpolateInputs: bool = False
-        self.maxOutputDerivativeOrder: int = 0
-        self.canRunAsynchronuously: bool = False
-        self.providesIntermediateUpdate: bool = False
-        self.recommendedIntermediateInputSmoothness = 0
-        self.canReturnEarlyAfterIntermediateUpdate: bool = False
-        self.fixedInternalStepSize: float = None
-        self.hasEventMode: bool = False
+    canHandleVariableCommunicationStepSize = attrib(type=bool, default=False, repr=False)
+    canInterpolateInputs = attrib(type=bool, default=False, repr=False)
+    maxOutputDerivativeOrder = attrib(type=int, default=0, repr=False)
+    canRunAsynchronuously = attrib(type=bool, default=False, repr=False)
+    providesIntermediateUpdate = attrib(type=bool, default=False, repr=False)
+    recommendedIntermediateInputSmoothness = 0
+    canReturnEarlyAfterIntermediateUpdate = attrib(type=bool, default=False, repr=False)
+    fixedInternalStepSize = attrib(type=float, default=None, repr=False)
+    hasEventMode = attrib(type=bool, default=False, repr=False)
 
 
+@attrs(eq=False)
 class ScheduledExecution(InterfaceType):
 
-    def __init__(self):
-        super(ScheduledExecution, self).__init__()
-        self.maxOutputDerivativeOrder: int = 0
-        self.providesIntermediateUpdate: bool = False
-        self.recommendedIntermediateInputSmoothness: int = 0
+    maxOutputDerivativeOrder = attrib(type=int, default=0, repr=False)
+    providesIntermediateUpdate = attrib(type=bool, default=False, repr=False)
+    recommendedIntermediateInputSmoothness = attrib(type=int, default=0, repr=False)
 
 
-class BuildConfiguration(object):
-
-    def __init__(self):
-        self.modelIdentifier: str = None
-        self.sourceFileSets: List[SourceFileSet] = []
-
-    def __repr__(self):
-        return 'BuildConfiguration %s' % self.sourceFileSets
-
-
+@attrs(auto_attribs=True, eq=False)
 class PreProcessorDefinition(object):
 
-    def __init__(self):
-        self.name: str = None
-        self.value: str = None
-        self.optional: bool = False
-        self.description: str = None
-
-    def __repr__(self):
-        return '%s=%s' % (self.name, self.value)
+    name: str = None
+    value: str = None
+    optional: bool = False
+    description: str = None
 
 
+@attrs(auto_attribs=True, eq=False)
 class SourceFileSet(object):
 
-    def __init__(self):
-        self.name: str = None
-        self.language: str = None
-        self.compiler: str = None
-        self.compilerOptions: str = None
-        self.preprocessorDefinitions: List[str] = []
-        self.sourceFiles: List[str] = []
-        self.includeDirectories: List[str] = []
-
-    def __repr__(self):
-        return '%s %s' % (self.language, self.sourceFiles)
+    name: str = None
+    language: str = None
+    compiler: str = None
+    compilerOptions: str = None
+    preprocessorDefinitions: List[str] = Factory(list)
+    sourceFiles: List[str] = Factory(list)
+    includeDirectories: List[str] = Factory(list)
 
 
-class ScalarVariable(object):
+@attrs(auto_attribs=True, eq=False)
+class BuildConfiguration(object):
 
-    def __init__(self, name: str, valueReference: int):
-
-        self.type: str = None
-        "One of 'Real', 'Integer', 'Enumeration', 'Boolean', 'String'"
-
-        self.name: str = name
-
-        self.valueReference: int = valueReference
-
-        self.description: str = None
-
-        self.causality: str = None
-        "One of 'parameter', 'calculatedParameter', 'input', 'output', 'local', 'independent'"
-
-        self.variability: str = None
-        "One of 'constant', 'fixed', 'tunable', 'discrete' or 'continuous'"
-
-        self.initial: str = None
-        "One of 'exact', 'approx', 'calculated' or None"
-
-        self.canHandleMultipleSetPerTimeInstant: bool = True
-
-        self.intermediateUpdate: bool = False
-
-        self.previous: int = None
-
-        # TODO: resolve variables
-        self.clocks: List[int] = []
-
-        self.declaredType: SimpleType = None
-
-        self.dimensions: List[Dimension] = []
-        "List of fixed dimensions"
-
-        self.dimensionValueReferences: List[int] = []
-        "List of value references to the variables that hold the dimensions"
-
-        self.quantity: str = None
-        "Physical quantity"
-
-        self.unit: str = None
-        "Unit"
-
-        self.displayUnit: str = None
-        "Default display unit"
-
-        self.relativeQuantity: bool = False
-        "Relative quantity"
-
-        self.min: str = None
-        "Minimum value"
-
-        self.max: str = None
-        "Maximum value"
-
-        self.nominal: str = None
-        "Nominal value"
-
-        self.unbounded: bool = False
-        "Value is unbounded"
-
-        self.start: str = None
-        "Initial or guess value"
-
-        self.derivative: ScalarVariable = None
-        "The derivative of this variable"
-
-        self.reinit: bool = False
-        "Can be reinitialized at an event by the FMU"
-
-        self.sourceline: int = None
-        "Line number in the modelDescription.xml or None if unknown"
-
-        # Clock attributes
-        # TODO: add type hints
-        self.canBeDeactivated = None
-        self.priority = None
-        self.interval = None
-        self.intervalDecimal = None
-        self.shiftDecimal = None
-        self.supportsFraction = None
-        self.resolution = None
-        self.intervalCounter = None
-        self.shiftCounter = None
-
-    def __repr__(self):
-        return '%s "%s"' % (self.type, self.name)
+    modelIdentifier: str = None
+    sourceFileSets: List[SourceFileSet] = Factory(list)
 
 
+@attrs(eq=False)
 class Dimension(object):
 
-    def __init__(self, **kwargs):
-        self.start: str = kwargs.get('start')
-        self.valueReference: int = kwargs.get('valueReference')
+    start = attrib(type=str)
+    valueReference = attrib(type=int)
 
 
-class SimpleType(object):
-    """ Type Definition """
-
-    def __init__(self, **kwargs):
-        self.name: str = kwargs.get('name')
-        self.type: str = kwargs.get('type')
-        self.quantity: str = kwargs.get('quantity')
-        self.unit: str = kwargs.get('unit')
-        self.displayUnit: str = kwargs.get('displayUnit')
-        self.relativeQuantity: str = kwargs.get('relativeQuantity')
-        self.min: str = kwargs.get('min')
-        self.max: str = kwargs.get('max')
-        self.nominal: str = kwargs.get('nominal')
-        self.unbounded = kwargs.get('unbounded')
-        self.items: List[Item] = kwargs.get('items', [])
-
-    def __repr__(self):
-        return '%s "%s" [%s]' % (self.type, self.name, self.unit)
-
-
+@attrs(eq=False)
 class Item(object):
     """ Enumeration Item """
 
-    def __init__(self, **kwargs):
-        self.name: str = kwargs.get('name')
-        self.value: str = kwargs.get('value')
-        self.description: str = kwargs.get('description')
-
-    def __repr__(self):
-        return '%s (%s) %s' % (self.name, self.value, self.description)
+    name = attrib(type=str, default=None)
+    value = attrib(type=str, default=None)
+    description = attrib(type=str, default=None, repr=False)
 
 
+@attrs(eq=False)
+class SimpleType(object):
+    """ Type Definition """
+
+    name = attrib(type=str, default=None)
+    type = attrib(type=str, default=None)
+    quantity = attrib(type=str, default=None, repr=False)
+    unit = attrib(type=str, default=None)
+    displayUnit = attrib(type=str, default=None, repr=False)
+    relativeQuantity = attrib(type=str, default=None, repr=False)
+    min = attrib(type=str, default=None, repr=False)
+    max = attrib(type=str, default=None, repr=False)
+    nominal = attrib(type=str, default=None, repr=False)
+    unbounded = attrib(type=str, default=None, repr=False)
+    items = attrib(type=List[Item], default=Factory(list), repr=False)
+
+
+@attrs(eq=False)
 class Unit(object):
 
-    def __init__(self, name):
-        self.name: str = name
-        self.baseUnit: str = None
-        self.displayUnits: str = []
-
-    def __repr__(self):
-        return '%s' % self.name
+    name = attrib(type=str, default=None)
+    baseUnit = attrib(type=str, default=None, repr=False)
+    displayUnits = attrib(type=List[str], default=Factory(list), repr=False)
 
 
+@attrs(eq=False)
 class BaseUnit(object):
 
-    def __init__(self):
-        self.kg: int = 0
-        self.m: int = 0
-        self.s: int = 0
-        self.A: int = 0
-        self.K: int = 0
-        self.mol: int = 0
-        self.cd: int = 0
-        self.rad: int = 0
-        self.factor: float = 1.0
-        self.offset: float = 0.0
-
-    def __repr__(self):
-        return "kg=%d, m=%d, s=%d, A=%d, K=%d, mol=%d, cd=%d, rad=%d, factor=%g, offset=%g" % (
-            self.kg, self.m, self.s, self.A, self.K, self.mol, self.cd, self.rad, self.factor, self.offset)
+    kg = attrib(type=int, default=0)
+    m = attrib(type=int, default=0)
+    s = attrib(type=int, default=0)
+    A = attrib(type=int, default=0)
+    K = attrib(type=int, default=0)
+    mol = attrib(type=int, default=0)
+    cd = attrib(type=int, default=0)
+    rad = attrib(type=int, default=0)
+    factor = attrib(type=float, default=1.0)
+    offset = attrib(type=float, default=0.0)
 
 
+@attrs(eq=False)
 class DisplayUnit(object):
 
-    def __init__(self, name):
-        self.name: str = name
-        self.factor: float = 1.0
-        self.offset: float = 0.0
-
-    def __repr__(self):
-        return '%s' % self.name
+    name = attrib(type=str, default=None)
+    factor = attrib(type=float, default=1.0, repr=False)
+    offset = attrib(type=float, default=0.0, repr=False)
 
 
+@attrs(eq=False)
+class ScalarVariable(object):
+
+    name = attrib(type=str)
+
+    valueReference = attrib(type=int, repr=False)
+
+    type = attrib(type=str, default=None)
+    "One of 'Real', 'Integer', 'Enumeration', 'Boolean', 'String'"
+
+    description = attrib(type=str, default=None, repr=False)
+
+    causality = attrib(type=str, default=None, repr=False)
+    "One of 'parameter', 'calculatedParameter', 'input', 'output', 'local', 'independent'"
+
+    variability = attrib(type=str, default=None, repr=False)
+    "One of 'constant', 'fixed', 'tunable', 'discrete' or 'continuous'"
+
+    initial = attrib(type=str, default=None, repr=False)
+    "One of 'exact', 'approx', 'calculated' or None"
+
+    canHandleMultipleSetPerTimeInstant = attrib(type=bool, default=True, repr=False)
+
+    intermediateUpdate = attrib(type=bool, default=False, repr=False)
+
+    previous = attrib(type=int, default=None, repr=False)
+
+    # TODO: resolve variables
+    clocks = attrib(type=List[int], default=Factory(list))
+
+    declaredType = attrib(type=SimpleType, default=None, repr=False)
+
+    dimensions = attrib(type=List[Dimension], default=Factory(list))
+    "List of fixed dimensions"
+
+    dimensionValueReferences = attrib(type=List[int], default=Factory(list))
+    "List of value references to the variables that hold the dimensions"
+
+    quantity = attrib(type=str, default=None, repr=False)
+    "Physical quantity"
+
+    unit = attrib(type=str, default=None, repr=False)
+    "Unit"
+
+    displayUnit = attrib(type=str, default=None, repr=False)
+    "Default display unit"
+
+    relativeQuantity = attrib(type=bool, default=False, repr=False)
+    "Relative quantity"
+
+    min = attrib(type=str, default=None, repr=False)
+    "Minimum value"
+
+    max = attrib(type=str, default=None, repr=False)
+    "Maximum value"
+
+    nominal = attrib(type=str, default=None, repr=False)
+    "Nominal value"
+
+    unbounded = attrib(type=bool, default=False, repr=False)
+    "Value is unbounded"
+
+    start = attrib(type=str, default=None, repr=False)
+    "Initial or guess value"
+
+    derivative = attrib(type='ScalarVariable', default=None, repr=False)
+    "The derivative of this variable"
+
+    reinit = attrib(type=bool, default=False, repr=False)
+    "Can be reinitialized at an event by the FMU"
+
+    sourceline = attrib(type=int, default=None, repr=False)
+    "Line number in the modelDescription.xml or None if unknown"
+
+    # Clock attributes
+    # TODO: add type hints
+    canBeDeactivated = None
+    priority = None
+    interval = None
+    intervalDecimal = None
+    shiftDecimal = None
+    supportsFraction = None
+    resolution = None
+    intervalCounter = None
+    shiftCounter = None
+
+
+@attrs(eq=False)
 class Unknown(object):
 
-    def __init__(self):
+    index = attrib(type=int, default=0, repr=False)
+    variable = attrib(type=ScalarVariable, default=None)
+    dependencies = attrib(type=List[ScalarVariable], default=Factory(list), repr=False)
+    dependenciesKind = attrib(type=List[str], default=Factory(list), repr=False)
+    sourceline = attrib(type=int, default=0, repr=False)
+    "Line number in the modelDescription.xml"
 
-        self.index: int = 0
-        self.variable: ScalarVariable = None
-        self.dependencies: List[ScalarVariable] = []
-        self.dependenciesKind: List[str] = []
-        self.sourceline: int = None
-        "Line number in the modelDescription.xml"
 
-    def __repr__(self):
-        return '%s' % self.variable
+@attrs(eq=False)
+class ModelDescription(object):
+
+    guid = attrib(type=str, default=None, repr=False)
+    fmiVersion = attrib(type=str, default=None)
+    modelName = attrib(type=str, default=None)
+    description = attrib(type=str, default=None, repr=False)
+    generationTool = attrib(type=str, default=None, repr=False)
+    generationDateAndTime = attrib(type=str, default=None, repr=False)
+    variableNamingConvention = attrib(type=str, default='flat', repr=False)
+    numberOfContinuousStates = attrib(type=int, default=0, repr=False)
+    numberOfEventIndicators = attrib(type=int, default=0, repr=False)
+
+    defaultExperiment = attrib(type=DefaultExperiment, default=None, repr=False)
+
+    coSimulation = attrib(type=CoSimulation, default=None)
+    modelExchange = attrib(type=ModelExchange, default=None)
+    scheduledExecution = attrib(type=ScheduledExecution, default=None)
+
+    buildConfigurations = attrib(type=List[BuildConfiguration], default=Factory(list), repr=False)
+
+    unitDefinitions = attrib(type=List[Unit], default=Factory(list), repr=False)
+    typeDefinitions = attrib(type=List[SimpleType], default=Factory(list), repr=False)
+    modelVariables = attrib(type=List[ScalarVariable], default=Factory(list), repr=False)
+
+    # model structure
+    outputs = attrib(type=List[Unknown], default=Factory(list), repr=False)
+    derivatives = attrib(type=List[Unknown], default=Factory(list), repr=False)
+    clockedStates = attrib(type=List[Unknown], default=Factory(list), repr=False)
+    eventIndicators = attrib(type=List[Unknown], default=Factory(list), repr=False)
+    initialUnknowns = attrib(type=List[Unknown], default=Factory(list), repr=False)
 
 
 class ValidationError(Exception):

@@ -67,6 +67,7 @@ package_data = {
 }
 
 install_requires = [
+    'attrs',
     'lark-parser',
     'lxml',
     'msgpack',

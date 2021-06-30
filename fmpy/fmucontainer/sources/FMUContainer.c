@@ -184,12 +184,13 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	} else if (strncmp(fmuResourceLocation, scheme2, strlen(scheme2)) == 0) {
 		path = strdup(&fmuResourceLocation[strlen(scheme2) - 1]);
 	} else {
+        functions->logger(NULL, instanceName, fmi2Error, "logError", "The fmuResourceLocation must start with \"file:///\" or \"file:/\".");
 		return NULL;
 	}
 
 #ifdef _WIN32
-	// strip any leading slashes
-	while (path[0] == '/') {
+	// strip leading slash if path starts with a drive letter
+    if (strlen(path) > 2 && path[0] == '/' && path[2] == ':') {
 		strcpy(path, &path[1]);
 	}
 #endif
@@ -273,7 +274,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
 	// clean up and check for errors
 	if (mpack_tree_destroy(&tree) != mpack_ok) {
-		fprintf(stderr, "An error occurred decoding the data!\n");
+        functions->logger(NULL, instanceName, fmi2Error, "logError", "An error occurred decoding %s.", configPath);
 		return NULL;
 	}
 

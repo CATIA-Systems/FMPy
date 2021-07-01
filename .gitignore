@@ -42,3 +42,7 @@ tests/Rectifier/
 
 # generated documentation
 _build
+
+# virtual environment
+
+venv/

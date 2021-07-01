@@ -73,7 +73,9 @@ install_requires = [
     'numpy',
     'pathlib;python_version<"3.4"',
     'pywin32;platform_system=="Windows"',
-    'pytz'
+    'pytz',
+    'pydantic',
+    'gym'
 ]
 
 extras_require = {

@@ -378,6 +378,7 @@ class JaysBuffer(StatisticGame):
 
         
 if __name__ == "__main__":
+    # test the little thingy
     filename = os.path.split(__file__)[0] + "/ai_in_buffer.fmu"
     done = False
     fmi=JaysBuffer(filename= os.path.split(__file__)[0] + '/ai_in_buffer.fmu')

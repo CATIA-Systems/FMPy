@@ -1,3 +1,23 @@
+
+# This installing this Fork
+
+git clone the repository. cd into the folder an d
+´´´
+pip install -e . -U
+´´´
+note that you still need to install sundails dependencies correctly. You may follow
+https://github.com/CATIA-Systems/FMPy/issues/54
+to generate the necessary folders/files in fmpy/sundials.
+
+Pro Tip:
+Do a 
+```
+pip install fmpy
+```
+in some virtual environment of fmpy and copy the necessary files from venv/lib/python3.8/site-packages/fmpy into the forked repo....
+
+#################################################################################
+
 [![Build Status](https://dev.azure.com/CATIA-Systems/FMPy/_apis/build/status/CATIA-Systems.FMPy?branchName=develop)](https://dev.azure.com/CATIA-Systems/FMPy/_build/latest?definitionId=1&branchName=develop)
 [![PyPI](https://img.shields.io/pypi/dm/FMPy.svg?label=PyPI%20downloads)](https://pypi.org/project/FMPy/)
 [![Conda](https://img.shields.io/conda/dn/conda-forge/FMPy.svg?label=Conda%20downloads)](https://anaconda.org/conda-forge/fmpy)

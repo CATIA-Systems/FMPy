@@ -1,5 +1,5 @@
 
-# This installing this Fork
+# Installing this Fork
 
 git clone the repository. cd into the folder an d
 ´´´

@@ -20,9 +20,8 @@ class CCodeTest(unittest.TestCase):
         """ Compile the platform binary """
 
         for fmu in self.fmus:
-            download_file(self.url + fmu)
 
-            filename = os.path.basename(fmu)
+            filename = download_file(self.url + fmu)
 
             compile_platform_binary(filename)
 
@@ -45,9 +44,7 @@ class CCodeTest(unittest.TestCase):
 
         for fmu in self.fmus:
 
-            download_file(self.url + fmu)
-
-            filename = os.path.basename(fmu)
+            filename = download_file(self.url + fmu)
 
             model_name, _ = os.path.splitext(filename)
 

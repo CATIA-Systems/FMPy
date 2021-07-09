@@ -17,11 +17,11 @@ class OutputGridTest(unittest.TestCase):
         url = 'https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/win64/Test-FMUs/0.0.2/Dahlquist/Dahlquist.fmu'
         sha256 = '6df6ab64705615dfa1217123a103c23384a081763a6f71726ba7943503da8fc0'
 
-        download_file(url, checksum=sha256)
+        filename = download_file(url, checksum=sha256)
 
         h = 0.02
 
-        result = simulate_fmu(os.path.basename(url), output_interval=h, stop_time=10)
+        result = simulate_fmu(filename, output_interval=h, stop_time=10)
 
         time = result['time']
 

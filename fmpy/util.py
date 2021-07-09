@@ -540,8 +540,11 @@ def sha256_checksum(filename):
     return sha256.hexdigest()
 
 
-def download_file(url, checksum=None):
-    """ Download a file to the current directory """
+def download_file(url: str, checksum: str = None) -> str:
+    """ Download a file to the current directory
+
+        returns the filename of the downloaded file
+    """
 
     filename = os.path.basename(url)
 
@@ -576,6 +579,8 @@ def download_file(url, checksum=None):
         hash = sha256_checksum(filename)
         if not hash.startswith(checksum):
             raise Exception("%s has the wrong SHA256 checksum. Expected %s but was %s." % (filename, checksum, hash))
+
+    return filename
 
 
 def download_test_file(fmi_version, fmi_type, tool_name, tool_version, model_name, filename):

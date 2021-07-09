@@ -10,10 +10,10 @@ class TypeDefinitionsTest(unittest.TestCase):
 
         for fmi_version in ['1.0', '2.0']:
 
-            download_file('https://github.com/modelica/fmi-cross-check/raw/master/fmus/'
+            filename = download_file('https://github.com/modelica/fmi-cross-check/raw/master/fmus/'
                           + fmi_version + '/cs/win64/Dymola/2017/DFFREG/DFFREG.fmu')
 
-            model_description = read_model_description('DFFREG.fmu')
+            model_description = read_model_description(filename)
 
             real = model_description.typeDefinitions[0]
 

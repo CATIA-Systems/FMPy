@@ -77,9 +77,6 @@ def printLogMessage(instanceEnvironment, instanceName, status, category, message
     print("[%s] %s" % (label, message))
 
 
-def stepFinished(instanceEnvironment, status):
-    pass
-
 
 class _FMU3(_FMU):
     """ Base class for FMI 3.0 FMUs """

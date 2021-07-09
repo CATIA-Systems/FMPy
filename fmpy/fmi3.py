@@ -7,34 +7,34 @@ from . import sharedLibraryExtension, platform_tuple
 from .fmi1 import _FMU, printLogMessage
 
 
-fmi3Instance             = c_void_p
-fmi3InstanceEnvironment  = c_void_p
-fmi3FMUState             = c_void_p
-fmi3ValueReference       = c_uint
-fmi3Float32              = c_float
-fmi3Float64              = c_double
-fmi3Int8                 = c_int8
-fmi3UInt8                = c_uint8
-fmi3Int16                = c_int16
-fmi3UInt16               = c_uint16
-fmi3Int32                = c_int32
-fmi3UInt32               = c_uint32
-fmi3Int64                = c_int64
-fmi3UInt64               = c_uint64
-fmi3Boolean              = c_bool
-fmi3Char                 = c_char
-fmi3String               = c_char_p
-fmi3Byte                 = c_char
-fmi3Binary               = c_char_p
-fmi3Clock                = c_bool
+fmi3Instance            = c_void_p
+fmi3InstanceEnvironment = c_void_p
+fmi3FMUState            = c_void_p
+fmi3ValueReference      = c_uint
+fmi3Float32             = c_float
+fmi3Float64             = c_double
+fmi3Int8                = c_int8
+fmi3UInt8               = c_uint8
+fmi3Int16               = c_int16
+fmi3UInt16              = c_uint16
+fmi3Int32               = c_int32
+fmi3UInt32              = c_uint32
+fmi3Int64               = c_int64
+fmi3UInt64              = c_uint64
+fmi3Boolean             = c_bool
+fmi3Char                = c_char
+fmi3String              = c_char_p
+fmi3Byte                = c_char
+fmi3Binary              = c_char_p
+fmi3Clock               = c_bool
 
 # values for fmi3Boolean
-fmi3True  = 1
-fmi3False = 0
+fmi3True  = c_bool(True)
+fmi3False = c_bool(False)
 
 # values for fmi3Clock
-fmi3ClockActive   = 1
-fmi3ClockInactive = 0
+fmi3ClockActive   = c_bool(True)
+fmi3ClockInactive = c_bool(False)
 
 # enum fmi3Status
 fmi3Status  = c_int
@@ -66,16 +66,30 @@ fmi3CallbackLockPreemptionTYPE     = CFUNCTYPE(None)
 fmi3CallbackUnlockPreemptionTYPE   = CFUNCTYPE(None)
 
 
-def intermediateUpdate(*args):
+def intermediateUpdate(instanceEnvironment: fmi3InstanceEnvironment,
+                       intermediateUpdateTime: fmi3Float64,
+                       clocksTicked: fmi3Boolean,
+                       intermediateVariableSetRequested: fmi3Boolean,
+                       intermediateVariableGetAllowed: fmi3Boolean,
+                       intermediateStepFinished: fmi3Boolean,
+                       canReturnEarly: fmi3Boolean,
+                       earlyReturnRequested: POINTER(fmi3Boolean),
+                       earlyReturnTime: POINTER(fmi3Float64)) -> fmi3Status:
+
+    earlyReturnRequested.contents = fmi3False
+
     return fmi3OK
 
 
-def printLogMessage(instanceEnvironment, instanceName, status, category, message):
+def printLogMessage(instanceEnvironment: fmi3InstanceEnvironment,
+                    instanceName: fmi3String,
+                    status: fmi3Status,
+                    category: fmi3Status,
+                    message: fmi3Status) -> None:
     """ Print the FMU's log messages to the command line """
 
     label = ['OK', 'WARNING', 'DISCARD', 'ERROR', 'FATAL', 'PENDING'][status]
     print("[%s] %s" % (label, message))
-
 
 
 class _FMU3(_FMU):

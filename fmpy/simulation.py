@@ -1059,6 +1059,8 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
             state_event, roots_found, time = solver.step(time, t_next)
         else:
             # skip
+            state_event = False
+            roots_found = []
             time = t_next
 
         # set the time

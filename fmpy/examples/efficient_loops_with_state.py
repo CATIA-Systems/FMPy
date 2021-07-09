@@ -1,6 +1,5 @@
 
-""" This example demonstrates how to save CPU time by reusing the extracted FMU,
- loaded model description, and FMU instance when simulating the same FMU multiple times """
+""" This example demonstrates how to use an fmu as a state machine"""
 
 from fmpy import *
 from fmpy.util import download_file

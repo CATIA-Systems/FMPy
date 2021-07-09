@@ -3,6 +3,7 @@ from unittest import skipIf
 from fmpy.examples.coupled_clutches import simulate_coupled_clutches
 from fmpy.examples.custom_input import simulate_custom_input
 from fmpy.examples.efficient_loops import run_efficient_loop
+from fmpy.examples.efficient_loops_with_state import run_efficient_loop_with_state
 from fmpy.examples.parameter_variation import run_experiment
 from fmpy import platform
 import numpy as np
@@ -58,6 +59,9 @@ class ExamplesTest(unittest.TestCase):
 
     def test_efficient_loops(self):
         run_efficient_loop()
+    def test_efficient_loop_with_states(self):
+        run_efficient_loop_with_state()
+
 
     @skipIf(platform not in ['win32', 'win64'], "FMU only available for Windows")
     def test_parameter_variation(self):

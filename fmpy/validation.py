@@ -66,6 +66,11 @@ def validate_model_description(model_description, validate_variable_names=False,
             if (variable.initial in {'exact', 'approx'} or variable.causality == 'input') and variable.start is None:
                 problems.append('Variable "%s" (line %s) has no start value.' % (variable.name, variable.sourceline))
 
+        # assert that initial is not set for input and independent variables (see FMI 2.0 spec, p. 49)
+        for variable in model_description.modelVariables:
+            if variable.causality in {'input', 'independent'} and variable.initial is not None:
+                problems.append(f'Variable "{variable.name}" (line {variable.sourceline}) " has causality "{variable.causality}" but defines a intial "{variable.initial}".')
+
         # legal combinations of causality and variability (see FMI 2.0 spec, p. 49)
         legal_combinations = {
             ('parameter', 'fixed'),

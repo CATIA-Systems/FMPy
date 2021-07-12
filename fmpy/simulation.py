@@ -709,7 +709,7 @@ def simulate_fmu(filename,
         result = simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, timeout, step_finished, set_input_derivatives, initialize)
    
     if fmu_instance is None:
-        fm.terminate()
+        fmu.terminate()
         fmu.freeInstance()
 
     if server is not None:

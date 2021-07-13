@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<xs:include schemaLocation="fmi3VariableDependency.xsd"/>
-	<xs:include schemaLocation="fmi3Unit.xsd"/>
-	<xs:include schemaLocation="fmi3Variable.xsd"/>
-	<xs:include schemaLocation="fmi3Type.xsd"/>
-	<xs:include schemaLocation="fmi3Annotation.xsd"/>
-	<xs:include schemaLocation="fmi3InterfaceType.xsd"/>
-	<xs:annotation>
-		<xs:documentation>
+    <xs:include schemaLocation="fmi3VariableDependency.xsd"/>
+    <xs:include schemaLocation="fmi3Unit.xsd"/>
+    <xs:include schemaLocation="fmi3Variable.xsd"/>
+    <xs:include schemaLocation="fmi3Type.xsd"/>
+    <xs:include schemaLocation="fmi3Annotation.xsd"/>
+    <xs:include schemaLocation="fmi3InterfaceType.xsd"/>
+    <xs:annotation>
+        <xs:documentation>
 Copyright(c) 2008-2011 MODELISAR consortium,
              2012-2021 Modelica Association Project "FMI".
              All rights reserved.
@@ -38,88 +38,88 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ----------------------------------------------------------------------------
-		</xs:documentation>
-	</xs:annotation>
-	<xs:element name="fmiModelDescription">
-		<xs:complexType>
-			<xs:sequence>
-				<xs:element name="ModelExchange" type="fmi3ModelExchange" minOccurs="0"/>
-				<xs:element name="CoSimulation" type="fmi3CoSimulation" minOccurs="0"/>
-				<xs:element name="ScheduledExecution" type="fmi3ScheduledExecution" minOccurs="0"/>
-				<xs:element name="UnitDefinitions" minOccurs="0">
-					<xs:complexType>
-						<xs:sequence maxOccurs="unbounded">
-							<xs:element name="Unit" type="fmi3Unit"/>
-						</xs:sequence>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="TypeDefinitions" minOccurs="0">
-					<xs:complexType>
-						<xs:group ref="fmi3TypeDefinition" maxOccurs="unbounded"/>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="LogCategories" minOccurs="0">
-					<xs:complexType>
-						<xs:sequence maxOccurs="unbounded">
-							<xs:element name="Category">
-								<xs:complexType>
-									<xs:sequence>
-										<xs:element ref="Annotations" minOccurs="0"/>
-									</xs:sequence>
-									<xs:attribute name="name" type="xs:normalizedString" use="required"/>
-									<xs:attribute name="description" type="xs:string"/>
-								</xs:complexType>
-							</xs:element>
-						</xs:sequence>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="DefaultExperiment" minOccurs="0">
-					<xs:complexType>
-						<xs:sequence>
-							<xs:element ref="Annotations" minOccurs="0"/>
-						</xs:sequence>
-						<xs:attribute name="startTime" type="xs:double"/>
-						<xs:attribute name="stopTime" type="xs:double"/>
-						<xs:attribute name="tolerance" type="xs:double"/>
-						<xs:attribute name="stepSize" type="xs:double"/>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="ModelVariables">
-					<xs:complexType>
-						<xs:group ref="fmi3Variable" maxOccurs="unbounded"/>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="ModelStructure">
-					<xs:complexType>
-						<xs:sequence>
-							<xs:element name="Output" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
-							<xs:element name="ContinuousStateDerivative" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
-							<xs:element name="ClockedState" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
-							<xs:element name="InitialUnknown" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
-							<xs:element name="EventIndicator" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
-						</xs:sequence>
-					</xs:complexType>
-				</xs:element>
-				<xs:element ref="Annotations" minOccurs="0"/>
-			</xs:sequence>
-			<xs:attribute name="fmiVersion" fixed="3.0-beta.1" use="required"/>
-			<xs:attribute name="modelName" type="xs:string" use="required"/>
-			<xs:attribute name="instantiationToken" type="xs:normalizedString" use="required"/>
-			<xs:attribute name="description" type="xs:string"/>
-			<xs:attribute name="author" type="xs:string"/>
-			<xs:attribute name="version" type="xs:normalizedString"/>
-			<xs:attribute name="copyright" type="xs:string"/>
-			<xs:attribute name="license" type="xs:string"/>
-			<xs:attribute name="generationTool" type="xs:normalizedString"/>
-			<xs:attribute name="generationDateAndTime" type="xs:dateTime"/>
-			<xs:attribute name="variableNamingConvention" default="flat">
-				<xs:simpleType>
-					<xs:restriction base="xs:normalizedString">
-						<xs:enumeration value="flat"/>
-						<xs:enumeration value="structured"/>
-					</xs:restriction>
-				</xs:simpleType>
-			</xs:attribute>
-		</xs:complexType>
-	</xs:element>
+        </xs:documentation>
+    </xs:annotation>
+    <xs:element name="fmiModelDescription">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="ModelExchange" type="fmi3ModelExchange" minOccurs="0"/>
+                <xs:element name="CoSimulation" type="fmi3CoSimulation" minOccurs="0"/>
+                <xs:element name="ScheduledExecution" type="fmi3ScheduledExecution" minOccurs="0"/>
+                <xs:element name="UnitDefinitions" minOccurs="0">
+                    <xs:complexType>
+                        <xs:sequence maxOccurs="unbounded">
+                            <xs:element name="Unit" type="fmi3Unit"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="TypeDefinitions" minOccurs="0">
+                    <xs:complexType>
+                        <xs:group ref="fmi3TypeDefinition" maxOccurs="unbounded"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="LogCategories" minOccurs="0">
+                    <xs:complexType>
+                        <xs:sequence maxOccurs="unbounded">
+                            <xs:element name="Category">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element ref="Annotations" minOccurs="0"/>
+                                    </xs:sequence>
+                                    <xs:attribute name="name" type="xs:normalizedString" use="required"/>
+                                    <xs:attribute name="description" type="xs:string"/>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="DefaultExperiment" minOccurs="0">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element ref="Annotations" minOccurs="0"/>
+                        </xs:sequence>
+                        <xs:attribute name="startTime" type="xs:double"/>
+                        <xs:attribute name="stopTime" type="xs:double"/>
+                        <xs:attribute name="tolerance" type="xs:double"/>
+                        <xs:attribute name="stepSize" type="xs:double"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="ModelVariables">
+                    <xs:complexType>
+                        <xs:group ref="fmi3Variable" maxOccurs="unbounded"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="ModelStructure">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Output" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
+                            <xs:element name="ContinuousStateDerivative" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
+                            <xs:element name="ClockedState" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
+                            <xs:element name="InitialUnknown" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
+                            <xs:element name="EventIndicator" type="fmi3Unknown" minOccurs="0" maxOccurs="unbounded"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element ref="Annotations" minOccurs="0"/>
+            </xs:sequence>
+            <xs:attribute name="fmiVersion" fixed="3.0-beta.1" use="required"/>
+            <xs:attribute name="modelName" type="xs:string" use="required"/>
+            <xs:attribute name="instantiationToken" type="xs:normalizedString" use="required"/>
+            <xs:attribute name="description" type="xs:string"/>
+            <xs:attribute name="author" type="xs:string"/>
+            <xs:attribute name="version" type="xs:normalizedString"/>
+            <xs:attribute name="copyright" type="xs:string"/>
+            <xs:attribute name="license" type="xs:string"/>
+            <xs:attribute name="generationTool" type="xs:normalizedString"/>
+            <xs:attribute name="generationDateAndTime" type="xs:dateTime"/>
+            <xs:attribute name="variableNamingConvention" default="flat">
+                <xs:simpleType>
+                    <xs:restriction base="xs:normalizedString">
+                        <xs:enumeration value="flat"/>
+                        <xs:enumeration value="structured"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
 </xs:schema>

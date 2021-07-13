@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<xs:annotation>
-		<xs:documentation>
+    <xs:annotation>
+        <xs:documentation>
 Copyright(c) 2008-2011 MODELISAR consortium,
              2012-2021 Modelica Association Project "FMI".
              All rights reserved.
@@ -32,49 +32,49 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ----------------------------------------------------------------------------
-		</xs:documentation>
-	</xs:annotation>
-	<xs:include schemaLocation="fmi3Annotation.xsd"/>
-	<xs:complexType name="fmi3InterfaceType" abstract="true">
-		<xs:sequence minOccurs="0">
-			<xs:element ref="Annotations" minOccurs="0"/>
-		</xs:sequence>
-		<xs:attribute name="modelIdentifier" type="xs:normalizedString" use="required"/>
-		<xs:attribute name="needsExecutionTool" type="xs:boolean" default="false"/>
-		<xs:attribute name="canBeInstantiatedOnlyOncePerProcess" type="xs:boolean" default="false"/>
-		<xs:attribute name="canGetAndSetFMUState" type="xs:boolean" default="false"/>
-		<xs:attribute name="canSerializeFMUState" type="xs:boolean" default="false"/>
-		<xs:attribute name="providesDirectionalDerivatives" type="xs:boolean" default="false"/>
-		<xs:attribute name="providesAdjointDerivatives" type="xs:boolean" default="false"/>
-		<xs:attribute name="providesPerElementDependencies" type="xs:boolean" default="false"/>
-	</xs:complexType>
-	<xs:complexType name="fmi3ModelExchange">
-		<xs:complexContent>
-			<xs:extension base="fmi3InterfaceType">
-				<xs:attribute name="completedIntegratorStepNotNeeded" type="xs:boolean" default="false"/>
-			</xs:extension>
-		</xs:complexContent>
-	</xs:complexType>
-	<xs:complexType name="fmi3CoSimulation">
-		<xs:complexContent>
-			<xs:extension base="fmi3InterfaceType">
-				<xs:attribute name="canHandleVariableCommunicationStepSize" type="xs:boolean" default="false"/>
-				<xs:attribute name="maxOutputDerivativeOrder" type="xs:unsignedInt" default="0"/>
-				<xs:attribute name="providesIntermediateUpdate" type="xs:boolean" default="false"/>
-				<xs:attribute name="recommendedIntermediateInputSmoothness" type="xs:int" default="0"/>
-				<xs:attribute name="canReturnEarlyAfterIntermediateUpdate" type="xs:boolean" default="false"/>
-				<xs:attribute name="fixedInternalStepSize" type="xs:double"/>
-				<xs:attribute name="hasEventMode" type="xs:boolean" default="false"/>
-			</xs:extension>
-		</xs:complexContent>
-	</xs:complexType>
-	<xs:complexType name="fmi3ScheduledExecution">
-		<xs:complexContent>
-			<xs:extension base="fmi3InterfaceType">
-				<xs:attribute name="maxOutputDerivativeOrder" type="xs:unsignedInt" default="0"/>
-				<xs:attribute name="providesIntermediateUpdate" type="xs:boolean" default="false"/>
-				<xs:attribute name="recommendedIntermediateInputSmoothness" type="xs:int" default="0"/>
-			</xs:extension>
-		</xs:complexContent>
-	</xs:complexType>
+        </xs:documentation>
+    </xs:annotation>
+    <xs:include schemaLocation="fmi3Annotation.xsd"/>
+    <xs:complexType name="fmi3InterfaceType" abstract="true">
+        <xs:sequence minOccurs="0">
+            <xs:element ref="Annotations" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="modelIdentifier" type="xs:normalizedString" use="required"/>
+        <xs:attribute name="needsExecutionTool" type="xs:boolean" default="false"/>
+        <xs:attribute name="canBeInstantiatedOnlyOncePerProcess" type="xs:boolean" default="false"/>
+        <xs:attribute name="canGetAndSetFMUState" type="xs:boolean" default="false"/>
+        <xs:attribute name="canSerializeFMUState" type="xs:boolean" default="false"/>
+        <xs:attribute name="providesDirectionalDerivatives" type="xs:boolean" default="false"/>
+        <xs:attribute name="providesAdjointDerivatives" type="xs:boolean" default="false"/>
+        <xs:attribute name="providesPerElementDependencies" type="xs:boolean" default="false"/>
+    </xs:complexType>
+    <xs:complexType name="fmi3ModelExchange">
+        <xs:complexContent>
+            <xs:extension base="fmi3InterfaceType">
+                <xs:attribute name="completedIntegratorStepNotNeeded" type="xs:boolean" default="false"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    <xs:complexType name="fmi3CoSimulation">
+        <xs:complexContent>
+            <xs:extension base="fmi3InterfaceType">
+                <xs:attribute name="canHandleVariableCommunicationStepSize" type="xs:boolean" default="false"/>
+                <xs:attribute name="maxOutputDerivativeOrder" type="xs:unsignedInt" default="0"/>
+                <xs:attribute name="providesIntermediateUpdate" type="xs:boolean" default="false"/>
+                <xs:attribute name="recommendedIntermediateInputSmoothness" type="xs:int" default="0"/>
+                <xs:attribute name="canReturnEarlyAfterIntermediateUpdate" type="xs:boolean" default="false"/>
+                <xs:attribute name="fixedInternalStepSize" type="xs:double"/>
+                <xs:attribute name="hasEventMode" type="xs:boolean" default="false"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    <xs:complexType name="fmi3ScheduledExecution">
+        <xs:complexContent>
+            <xs:extension base="fmi3InterfaceType">
+                <xs:attribute name="maxOutputDerivativeOrder" type="xs:unsignedInt" default="0"/>
+                <xs:attribute name="providesIntermediateUpdate" type="xs:boolean" default="false"/>
+                <xs:attribute name="recommendedIntermediateInputSmoothness" type="xs:int" default="0"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
 </xs:schema>

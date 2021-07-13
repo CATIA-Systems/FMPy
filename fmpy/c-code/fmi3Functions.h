@@ -158,6 +158,8 @@ Common Functions
 #define fmi3SetClock                 fmi3FullName(fmi3SetClock)
 #define fmi3GetIntervalDecimal       fmi3FullName(fmi3GetIntervalDecimal)
 #define fmi3GetIntervalFraction      fmi3FullName(fmi3GetIntervalFraction)
+#define fmi3GetShiftDecimal          fmi3FullName(fmi3GetShiftDecimal)
+#define fmi3GetShiftFraction         fmi3FullName(fmi3GetShiftFraction)
 #define fmi3SetIntervalDecimal       fmi3FullName(fmi3SetIntervalDecimal)
 #define fmi3SetIntervalFraction      fmi3FullName(fmi3SetIntervalFraction)
 #define fmi3UpdateDiscreteStates     fmi3FullName(fmi3UpdateDiscreteStates)

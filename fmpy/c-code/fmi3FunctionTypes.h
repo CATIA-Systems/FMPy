@@ -127,7 +127,7 @@ typedef fmi3Status fmi3SetDebugLoggingTYPE(fmi3Instance instance,
 typedef fmi3Instance fmi3InstantiateModelExchangeTYPE(
     fmi3String                 instanceName,
     fmi3String                 instantiationToken,
-    fmi3String                 resourceLocation,
+    fmi3String                 resourcePath,
     fmi3Boolean                visible,
     fmi3Boolean                loggingOn,
     fmi3InstanceEnvironment    instanceEnvironment,
@@ -136,7 +136,7 @@ typedef fmi3Instance fmi3InstantiateModelExchangeTYPE(
 typedef fmi3Instance fmi3InstantiateCoSimulationTYPE(
     fmi3String                     instanceName,
     fmi3String                     instantiationToken,
-    fmi3String                     resourceLocation,
+    fmi3String                     resourcePath,
     fmi3Boolean                    visible,
     fmi3Boolean                    loggingOn,
     fmi3Boolean                    eventModeUsed,
@@ -150,7 +150,7 @@ typedef fmi3Instance fmi3InstantiateCoSimulationTYPE(
 typedef fmi3Instance fmi3InstantiateScheduledExecutionTYPE(
     fmi3String                     instanceName,
     fmi3String                     instantiationToken,
-    fmi3String                     resourceLocation,
+    fmi3String                     resourcePath,
     fmi3Boolean                    visible,
     fmi3Boolean                    loggingOn,
     const fmi3ValueReference       requiredIntermediateVariables[],

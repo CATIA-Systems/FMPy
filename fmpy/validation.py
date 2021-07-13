@@ -1,7 +1,11 @@
 """ Validation of the modelDescription.xml """
 
+from typing import List
 
-def validate_fmu(filename):
+from fmpy.model_description import ModelDescription
+
+
+def validate_fmu(filename: str) -> List[str]:
     """ Validate the following aspects of an FMU
 
     modelDescription.xml:
@@ -37,7 +41,8 @@ def validate_fmu(filename):
     return problems
 
 
-def validate_model_description(model_description, validate_variable_names=False, validate_model_structure=False):
+def validate_model_description(model_description: ModelDescription, validate_variable_names: bool = False, validate_model_structure: bool = False) -> List[str]:
+
     problems = []
 
     if validate_variable_names:
@@ -51,10 +56,10 @@ def validate_model_description(model_description, validate_variable_names=False,
     variable_names = set()
 
     # assert unique variable names (FMI 1.0 spec, p. 34, FMI 2.0 spec, p. 45)
-    for variable in model_description.modelVariables:
-        if variable.name in variable_names:
-            problems.append('Variable name "%s" (line %s) is not unique.' % (variable.name, variable.sourceline))
-        variable_names.add(variable.name)
+    for v in model_description.modelVariables:
+        if v.name in variable_names:
+            problems.append(f'Variable "{v.name}" (line {v.sourceline}) is not unique.')
+        variable_names.add(v.name)
 
     is_fmi2 = model_description.fmiVersion == '2.0'
     is_fmi3 = model_description.fmiVersion.startswith('3.0')
@@ -62,14 +67,14 @@ def validate_model_description(model_description, validate_variable_names=False,
     if is_fmi2 or is_fmi3:
 
         # assert required start values (see FMI 2.0 spec, p. 53)
-        for variable in model_description.modelVariables:
-            if (variable.initial in {'exact', 'approx'} or variable.causality == 'input') and variable.start is None:
-                problems.append('Variable "%s" (line %s) has no start value.' % (variable.name, variable.sourceline))
+        for v in model_description.modelVariables:
+            if v.type != 'Clock' and (v.initial in {'exact', 'approx'} or v.causality == 'input') and v.start is None:
+                problems.append(f'Variable "{v.name}" (line {v.sourceline}) has no start value.')
 
         # assert that initial is not set for input and independent variables (see FMI 2.0 spec, p. 49)
-        for variable in model_description.modelVariables:
-            if variable.causality in {'input', 'independent'} and variable.initial is not None:
-                problems.append(f'Variable "{variable.name}" (line {variable.sourceline}) " has causality "{variable.causality}" but defines a intial "{variable.initial}".')
+        for v in model_description.modelVariables:
+            if v.causality in {'input', 'independent'} and v.initial is not None:
+                problems.append(f'Variable "{v.name}" (line {v.sourceline}) " has causality "{v.causality}" but defines a intial "{v.initial}".')
 
         # legal combinations of causality and variability (see FMI 2.0 spec, p. 49)
         legal_combinations = {
@@ -96,38 +101,33 @@ def validate_model_description(model_description, validate_variable_names=False,
             legal_combinations.add(('input', 'clock'))
             legal_combinations.add(('output', 'clock'))
 
-        for variable in model_description.modelVariables:
-            if (variable.causality, variable.variability) not in legal_combinations:
-                problems.append(
-                    'The combination causality="%s" and variability="%s" in variable "%s" (line %s) is not allowed.'
-                    % (variable.causality, variable.variability, variable.name, variable.sourceline))
+        for v in model_description.modelVariables:
+            if (v.causality, v.variability) not in legal_combinations:
+                problems.append(f'The combination causality="{v.causality}" and variability="{v.variability}" '
+                                f'in variable "{v.name}" (line {v.sourceline}) is not allowed.')
 
         # check for illegal start values (see FMI 2.0.2 spec, p. 49)
-        for variable in model_description.modelVariables:
+        for v in model_description.modelVariables:
 
-            if variable.initial == 'calculated' and variable.start:
-                problems.append('The variable "%s" (line %s) has initial="calculated" but provides a start value.' % (
-                    variable.name, variable.sourceline))
+            if v.initial == 'calculated' and v.start:
+                problems.append(f'The variable "{v.name}" (line {v.sourceline}) has initial="calculated" but provides a start value.')
 
-            if variable.causality in 'independent' and variable.start:
-                problems.append('The variable "%s" (line %s) has causality="independent" but provides a start value.' % (
-                    variable.name, variable.sourceline))
+            if v.causality in 'independent' and v.start:
+                problems.append(f'The variable "{v.name}" (line {v.sourceline}) has causality="independent" but provides a start value.')
 
         # validate units (see FMI 2.0 spec, p. 33ff.)
-        for variable in model_description.modelVariables:
+        for v in model_description.modelVariables:
 
-            unit = variable.unit
+            unit = v.unit
 
-            if unit is None and variable.declaredType is not None:
-                unit = variable.declaredType.unit
+            if unit is None and v.declaredType is not None:
+                unit = v.declaredType.unit
 
             if unit is not None and unit not in unit_definitions:
-                problems.append('The unit "%s" of variable "%s" (line %s) is not defined.' % (
-                    unit, variable.name, variable.sourceline))
+                problems.append(f'The unit "{unit}" of variable "{v.name}" (line {v.sourceline}) is not defined.')
 
-            if variable.displayUnit is not None and variable.displayUnit not in unit_definitions[unit]:
-                problems.append('The display unit "%s" of variable "%s" (line %s) is not defined.' % (
-                    variable.displayUnit, variable.name, variable.sourceline))
+            if v.displayUnit is not None and v.displayUnit not in unit_definitions[unit]:
+                problems.append(f'The display unit "{v.displayUnit}" of variable "{v.name}" (line {v.sourceline}) is not defined.')
 
         if validate_model_structure:
             problems += _validate_model_structure(model_description)
@@ -141,7 +141,8 @@ def validate_model_description(model_description, validate_variable_names=False,
     return problems
 
 
-def _validate_model_structure(model_description):
+def _validate_model_structure(model_description: ModelDescription) -> List[str]:
+
     problems = []
 
     # validate outputs
@@ -155,10 +156,9 @@ def _validate_model_structure(model_description):
     derivatives = set(v for v in model_description.modelVariables if v.derivative is not None)
     for i, state_derivative in enumerate(model_description.derivatives):
         if state_derivative.variable not in derivatives:
-            problems.append('The variable "%s" (line %d) referenced by the continuous state derivative %d (line %d)'
-                            ' must have the attribute "derivative".'
-                            % (state_derivative.variable.name, state_derivative.variable.sourceline,
-                               i + 1, state_derivative.sourceline))
+            problems.append(f'The variable "{state_derivative.variable.name}" (line {state_derivative.variable.sourceline}) '
+                            f'referenced by the continuous state derivative {i + 1} (line {state_derivative.sourceline}) '
+                            f'must have the attribute "derivative".')
 
     # validate initial unknowns
     expected_initial_unknowns = set()
@@ -193,7 +193,8 @@ def _validate_model_structure(model_description):
     return problems
 
 
-def _validate_variable_names(model_description):
+def _validate_variable_names(model_description: ModelDescription) -> List[str]:
+
     problems = []
 
     if model_description.variableNamingConvention == 'flat':
@@ -201,16 +202,13 @@ def _validate_variable_names(model_description):
         for variable in model_description.modelVariables:
 
             if u'\u000D' in variable.name:
-                problems.append('Variable "%s" (line %s) contains an illegal carriage return character (U+000D).'
-                                % (variable.name, variable.sourceline))
+                problems.append(f'Variable "{variable.name}" (line {variable.sourceline}) contains an illegal carriage return character (U+000D).')
 
             if u'\u000A' in variable.name:
-                problems.append('Variable "%s" (line %s) contains an illegal line feed character (U+000A).'
-                                % (variable.name, variable.sourceline))
+                problems.append(f'Variable "{variable.name}" (line {variable.sourceline}) contains an illegal line feed character (U+000A).')
 
             if u'\u0009' in variable.name:
-                problems.append('Variable "%s" (line %s) contains an illegal tab character (U+0009).'
-                                % (variable.name, variable.sourceline))
+                problems.append(f'Variable "{variable.name}" (line {variable.sourceline}) contains an illegal tab character (U+0009).')
 
     else:  # variableNamingConvention == structured
 

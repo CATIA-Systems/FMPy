@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<xs:annotation>
-		<xs:documentation>
+    <xs:annotation>
+        <xs:documentation>
 Copyright(c) 2008-2011 MODELISAR consortium,
              2012-2021 Modelica Association Project "FMI".
              All rights reserved.
@@ -32,20 +32,20 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ----------------------------------------------------------------------------
-		</xs:documentation>
-	</xs:annotation>
-	<xs:complexType name="fmi3Annotations">
-		<xs:sequence maxOccurs="unbounded">
-			<xs:element name="Annotation">
-				<xs:complexType mixed="true">
-					<xs:sequence>
-						<xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
-					</xs:sequence>
-					<xs:attribute name="type" type="xs:normalizedString" use="required">
-					</xs:attribute>
-				</xs:complexType>
-			</xs:element>
-		</xs:sequence>
-	</xs:complexType>
-	<xs:element name="Annotations" type="fmi3Annotations"/>
+        </xs:documentation>
+    </xs:annotation>
+    <xs:complexType name="fmi3Annotations">
+        <xs:sequence maxOccurs="unbounded">
+            <xs:element name="Annotation">
+                <xs:complexType mixed="true">
+                    <xs:sequence>
+                        <xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                    <xs:attribute name="type" type="xs:normalizedString" use="required">
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:element name="Annotations" type="fmi3Annotations"/>
 </xs:schema>

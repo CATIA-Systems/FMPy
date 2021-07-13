@@ -116,7 +116,7 @@ class _FMU3(_FMU):
         self._fmi3Function('fmi3InstantiateModelExchange', [
             (fmi3String,                         'instanceName'),
             (fmi3String,                         'instantiationToken'),
-            (fmi3String,                         'resourceLocation'),
+            (fmi3String,                         'resourcePath'),
             (fmi3Boolean,                        'visible'),
             (fmi3Boolean,                        'loggingOn'),
             (fmi3InstanceEnvironment,            'instanceEnvironment'),
@@ -126,7 +126,7 @@ class _FMU3(_FMU):
         self._fmi3Function('fmi3InstantiateCoSimulation', [
             (fmi3String,                         'instanceName'),
             (fmi3String,                         'instantiationToken'),
-            (fmi3String,                         'resourceLocation'),
+            (fmi3String,                         'resourcePath'),
             (fmi3Boolean,                        'visible'),
             (fmi3Boolean,                        'loggingOn'),
             (fmi3Boolean,                        'eventModeUsed'),
@@ -139,18 +139,18 @@ class _FMU3(_FMU):
         ], fmi3Instance)
 
         self._fmi3Function('fmi3InstantiateScheduledExecution', [
-            (fmi3String, 'instanceName'),
-            (fmi3String, 'instantiationToken'),
-            (fmi3String, 'resourceLocation'),
-            (fmi3Boolean, 'visible'),
-            (fmi3Boolean, 'loggingOn'),
-            (POINTER(fmi3ValueReference), 'requiredIntermediateVariables'),
-            (c_size_t, 'nRequiredIntermediateVariables'),
-            (fmi3InstanceEnvironment, 'instanceEnvironment'),
-            (fmi3CallbackLogMessageTYPE, 'logMessage'),
+            (fmi3String,                         'instanceName'),
+            (fmi3String,                         'instantiationToken'),
+            (fmi3String,                         'resourcePath'),
+            (fmi3Boolean,                        'visible'),
+            (fmi3Boolean,                        'loggingOn'),
+            (POINTER(fmi3ValueReference),        'requiredIntermediateVariables'),
+            (c_size_t,                           'nRequiredIntermediateVariables'),
+            (fmi3InstanceEnvironment,            'instanceEnvironment'),
+            (fmi3CallbackLogMessageTYPE,         'logMessage'),
             (fmi3CallbackIntermediateUpdateTYPE, 'intermediateUpdate'),
-            (fmi3CallbackLockPreemptionTYPE, 'lockPreemption'),
-            (fmi3CallbackUnlockPreemptionTYPE, 'unlockPreemption'),
+            (fmi3CallbackLockPreemptionTYPE,     'lockPreemption'),
+            (fmi3CallbackUnlockPreemptionTYPE,   'unlockPreemption'),
         ], fmi3Instance)
 
         self._fmi3Function('fmi3FreeInstance', [(fmi3Instance, 'instance')], None)
@@ -886,7 +886,7 @@ class FMU3Model(_FMU3):
 
     def instantiate(self, visible=False, loggingOn=False):
 
-        resourceLocation = pathlib.Path(self.unzipDirectory, 'resources').as_uri()
+        resourcePath = os.path.join(self.unzipDirectory, 'resources')
 
         # save callbacks from GC
         self.printLogMessage = fmi3CallbackLogMessageTYPE(printLogMessage)
@@ -894,7 +894,7 @@ class FMU3Model(_FMU3):
         self.component = self.fmi3InstantiateModelExchange(
             self.instanceName.encode('utf-8'),
             self.guid.encode('utf-8'),
-            resourceLocation.encode('utf-8'),
+            resourcePath.encode('utf-8'),
             fmi3True if visible else fmi3False,
             fmi3True if loggingOn else fmi3False,
             fmi3InstanceEnvironment(),
@@ -948,16 +948,16 @@ class FMU3Slave(_FMU3):
 
     def instantiate(self, visible=False, loggingOn=False, eventModeUsed=False, earlyReturnAllowed=False):
 
-        resourceLocation = pathlib.Path(self.unzipDirectory, 'resources').as_uri()
-
         # save callbacks from GC
         self.printLogMessage = fmi3CallbackLogMessageTYPE(printLogMessage)
         self.intermediateUpdate = fmi3CallbackIntermediateUpdateTYPE(intermediateUpdate)
 
+        resourcePath = os.path.join(self.unzipDirectory, 'resources')
+
         self.component = self.fmi3InstantiateCoSimulation(
             self.instanceName.encode('utf-8'),
             self.guid.encode('utf-8'),
-            resourceLocation.encode('utf-8'),
+            resourcePath.encode('utf-8'),
             fmi3True if visible else fmi3False,
             fmi3True if loggingOn else fmi3False,
             fmi3True if eventModeUsed else fmi3False,
@@ -1014,7 +1014,7 @@ class FMU3ScheduledExecution(_FMU3):
 
     def instantiate(self, visible=False, loggingOn=False):
 
-        resourceLocation = pathlib.Path(self.unzipDirectory, 'resources').as_uri()
+        resourcePath = os.path.join(self.unzipDirectory, 'resources')
 
         def noop():
             pass
@@ -1028,7 +1028,7 @@ class FMU3ScheduledExecution(_FMU3):
         self.component = self.fmi3InstantiateScheduledExecution(
             self.instanceName.encode('utf-8'),
             self.guid.encode('utf-8'),
-            resourceLocation.encode('utf-8'),
+            resourcePath.encode('utf-8'),
             fmi3True if visible else fmi3False,
             fmi3True if loggingOn else fmi3False,
             None, 0,

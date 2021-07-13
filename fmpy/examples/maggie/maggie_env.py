@@ -15,7 +15,7 @@ path = os.path.split(__file__)[0] + "/" if len(os.path.split(__file__)[0]) > 0  
 fmu_file = path + "Simulationsumgebung.FMUs.FMU_MAGGIE_Energiesystem.fmu"
 load_file =  path + "Loadprofiles_MAGGIE.csv"
 
-n_steps =  6
+n_steps =  6 * 24 # one day
 _fmu=FMI_env(fmu_file)
 loads = pd.read_csv(load_file,sep=";", decimal=",").iloc[range(n_steps)]
 loads.pop('time')

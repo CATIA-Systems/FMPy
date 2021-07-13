@@ -1,2 +1,8 @@
 include LICENSE.txt README.rst
 recursive-include fmpy *.py
+include fmpy/examples/maggie/Loadprofiles_MAGGIE.csv
+include fmpy/examples/maggie/Simulationsumgebung.FMUs.FMU_MAGGIE_Energiesystem.fmu
+include fmpy/sundials/x86_64-linux/sundials_cvode.so
+include fmpy/sundials/x86_64-linux/sundials_nvecserial.so
+include fmpy/sundials/x86_64-linux/sundials_sunlinsoldense.so
+include fmpy/sundials/x86_64-linux/sundials_sunmatrixdense.so

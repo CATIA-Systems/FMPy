@@ -75,7 +75,8 @@ install_requires = [
     'pywin32;platform_system=="Windows"',
     'pytz',
     'pydantic',
-    'gym'
+    'gym',
+    'pandas'
 ]
 
 extras_require = {

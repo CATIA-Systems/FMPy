@@ -707,10 +707,10 @@ def simulate_fmu(filename,
         result = simulateME(model_description, fmu, start_time, stop_time, solver, step_size, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, record_events, timeout, step_finished, initialize)
     elif fmi_type == 'CoSimulation':
         result = simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, timeout, step_finished, set_input_derivatives, initialize)
-   
+           
     if fmu_instance is None:
         fmu.terminate()
-        fmu.freeInstance()
+        fmu_instance.freeInstance()
 
     if server is not None:
         server.kill()
@@ -972,6 +972,11 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
             time_event = nextEventTimeDefined and nextEventTime <= t_next
         else:
             time_event = False
+        
+
+        iterationConverged = False
+        terminateSimulation = False
+
 
         if time_event and not fixed_step:
             t_next = nextEventTime

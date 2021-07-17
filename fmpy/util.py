@@ -1,4 +1,5 @@
 import os
+from typing import List, IO, Union
 
 import fmpy
 import numpy as np
@@ -596,8 +597,15 @@ def download_test_file(fmi_version, fmi_type, tool_name, tool_version, model_nam
     download_file(url)
 
 
-def fmu_info(filename, causalities=['input', 'output']):
-    """ Dump the info for an FMU """
+def fmu_info(filename: Union[str, IO], causalities: List[str] = ['input', 'output']) -> str:
+    """ Dump the info for an FMU
+
+    Parameters:
+        filename     filename of the FMU
+        causalities  the causalities of the variables to include
+
+    Returns the info as a multi line string
+    """
 
     from .model_description import read_model_description
     from . import supported_platforms

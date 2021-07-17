@@ -4,6 +4,7 @@ import sys
 import os
 from ctypes import *
 import _ctypes
+from typing import Union, IO, List
 
 __version__ = '0.3.0'
 
@@ -61,7 +62,7 @@ else:
 platform_tuple = architecture + '-' + system
 
 
-def supported_platforms(filename):
+def supported_platforms(filename: Union[str, IO]):
     """ Get the platforms supported by the FMU without extracting it
 
     Parameters:
@@ -206,15 +207,16 @@ def extract(filename, unzipdir=None, include=None):
     return unzipdir
 
 
-def dump(filename):
+def dump(filename: Union[str, IO], causalities: List[str] = ['input', 'output']):
     """ Print the model information and variables of an FMU
 
     Parameters:
-        filename    filename of the FMU
+        filename     filename of the FMU
+        causalities  the causalities of the variables to include
     """
 
     from .util import fmu_info
-    print(fmu_info(filename))
+    print(fmu_info(filename=filename, causalities=causalities))
 
 
 # make the functions available in the fmpy module

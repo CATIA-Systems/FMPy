@@ -292,57 +292,52 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None):
     elif time_unit == 'years':
         time /= 365 * 24 * 60 * 60
     else:
-        raise Exception('time_unit must be one of "ns", "us", "ms", "s", "min", "h", "days" or "years" but was "%s".' % time_unit)
+        raise Exception(f'time_unit must be one of "ns", "us", "ms", "s", "min", "h", "days" or "years" but was "{time_unit}".')
 
     if names is None:
         # plot at most 20 signals
         names = result.dtype.names[1:20]
 
-    # one signal per plot
-    # plots = [(None, [name]) for name in names]
-    plots = []
+    fig = make_subplots(rows=len(names), cols=1, shared_xaxes=True)
 
-    for name in names:
-        plots.append((units[name] if name in units else None, [name]))
+    for i, name in enumerate(names):
 
-    fig = make_subplots(rows=len(plots), cols=1, shared_xaxes=True)
+        y = result[name]
+        unit = units.get(name)
 
-    for i, (unit, names) in enumerate(plots):
+        if unit in display_units:
+            display_unit = display_units[unit]
+            y = y * display_unit.factor + display_unit.offset
+            unit = display_unit.name
 
-        for name in names:
+        line = dict(color='#636efa', width=1)
 
-            y = result[name]
+        if y.dtype in [np.float32, np.float64]:
+            trace = go.Scatter(x=time, y=y, name=name, line=line)
+        elif y.dtype == bool:
+            trace = go.Scatter(x=time, y=y.astype(int), name=name, line=line, fill='tozeroy', fillcolor='rgba(0,0,255,0.1)', line_shape='hv')
+            fig['layout'][f'yaxis{i + 1}'].update(tickvals=[0, 1], ticktext=['false', 'true'], range=[-0.1, 1.1], fixedrange=True)
+        else:
+            trace = go.Scatter(x=time, y=y, name=name, line=line, line_shape='hv')
 
-            if unit in display_units:
-                display_unit = display_units[unit]
-                y = y * display_unit.factor + display_unit.offset
-                unit = display_unit.name
+        fig.add_trace(trace, row=i + 1, col=1)
 
-            fig.add_trace(
-                go.Scatter(x=time, y=y,
-                           name=name,
-                           line=dict(color='#636efa', width=1),
-                           fill='tozeroy' if y.dtype == bool else None,
-                           fillcolor='rgba(0,0,255,0.1)'),
-                row=i + 1, col=1)
-
-        title = "%s [%s]" % (name, unit) if unit else name
-
-        fig['layout']['yaxis%d' % (i + 1)].update(title=title)
+        fig['layout'][f'yaxis{i + 1}'].update(title=f"{name} [{unit}]" if unit else name)
 
     if events:
         for t_event in time[np.argwhere(np.diff(time) == 0).flatten()]:
             fig.add_vline(x=t_event, line={'color': '#fbe424', 'width': 1})
 
-    fig['layout']['height'] = 160 * len(plots) + 30 * max(0, 5 - len(plots))
+    fig['layout']['height'] = 160 * len(names) + 30 * max(0, 5 - len(names))
     fig['layout']['margin']['t'] = 30
     fig['layout']['margin']['b'] = 0
     fig['layout']['margin']['r'] = 30
     fig['layout']['plot_bgcolor'] = 'rgba(0,0,0,0)'
-    fig['layout']['xaxis%d' % len(plots)].update(title='time [%s]' % time_unit)
+    fig['layout'][f'xaxis{len(names)}'].update(title=f'time [{time_unit}]')
 
-    fig.update_xaxes(showgrid=True, gridwidth=1, ticklen=0, gridcolor='LightGrey', linecolor='black', showline=True, zeroline=True, zerolinewidth=1, zerolinecolor='LightGrey')
-    fig.update_yaxes(showgrid=True, gridwidth=1, ticklen=0, gridcolor='LightGrey', linecolor='black', showline=True, zerolinewidth=1, zerolinecolor='LightGrey')
+    axes_attrs = dict(showgrid=True, gridwidth=1, ticklen=0, gridcolor='LightGrey', linecolor='black', showline=True, zerolinewidth=1, zerolinecolor='LightGrey')
+    fig.update_xaxes(zeroline=True, **axes_attrs)
+    fig.update_yaxes(**axes_attrs)
 
     fig.update_layout(showlegend=False)
 

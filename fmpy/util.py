@@ -620,7 +620,6 @@ def fmu_info(filename: Union[str, IO], causalities: List[str] = ['input', 'outpu
         fmi_types.append('Co-Simulation')
 
     l = [f"""
-
 Model Info
 
   FMI Version        {md.fmiVersion}

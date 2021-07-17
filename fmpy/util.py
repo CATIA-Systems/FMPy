@@ -611,37 +611,36 @@ def fmu_info(filename, causalities=['input', 'output']):
     if md.coSimulation is not None:
         fmi_types.append('Co-Simulation')
 
-    l = []
+    l = [f"""
 
-    l.append("")
-    l.append("Model Info")
-    l.append("")
-    l.append("  FMI Version       %s" % md.fmiVersion)
-    l.append("  FMI Type          %s" % ', '.join(fmi_types))
-    l.append("  Model Name        %s" % md.modelName)
-    l.append("  Description       %s" % md.description)
-    l.append("  Platforms         %s" % ', '.join(platforms))
-    l.append("  Continuous States %s" % md.numberOfContinuousStates)
-    l.append("  Event Indicators  %s" % md.numberOfEventIndicators)
-    l.append("  Variables         %s" % len(md.modelVariables))
-    l.append("  Generation Tool   %s" % md.generationTool)
-    l.append("  Generation Date   %s" % md.generationDateAndTime)
+Model Info
+
+  FMI Version        {md.fmiVersion}
+  FMI Type           {', '.join(fmi_types)}
+  Model Name         {md.modelName}
+  Description        {md.description}
+  Platforms          {', '.join(platforms)}
+  Continuous States  {md.numberOfContinuousStates}
+  Event Indicators   {md.numberOfEventIndicators}
+  Variables          {len(md.modelVariables)}
+  Generation Tool    {md.generationTool}
+  Generation Date    {md.generationDateAndTime}
+"""]
 
     if md.defaultExperiment:
 
         ex = md.defaultExperiment
 
-        l.append("")
         l.append('Default Experiment')
         l.append("")
         if ex.startTime:
-            l.append("  Start Time        %g" % ex.startTime)
+            l.append(f"  Start Time         {ex.startTime}")
         if ex.stopTime:
-            l.append("  Stop Time         %g" % ex.stopTime)
+            l.append(f"  Stop Time          {ex.stopTime}")
         if ex.tolerance:
-            l.append("  Tolerance         %g" % ex.tolerance)
+            l.append(f"  Tolerance          {ex.tolerance}")
         if ex.stepSize:
-            l.append("  Step Size         %g" % ex.stepSize)
+            l.append(f"  Step Size          {ex.stepSize}")
 
     inputs = []
     outputs = []
@@ -655,7 +654,7 @@ def fmu_info(filename, causalities=['input', 'output']):
     l.append("")
     l.append("Variables (%s)" % ', '.join(causalities))
     l.append("")
-    l.append('Name                Causality              Start Value  Unit     Description')
+    l.append('  Name               Causality              Start Value  Unit     Description')
     for v in md.modelVariables:
         if v.causality not in causalities:
             continue
@@ -666,7 +665,7 @@ def fmu_info(filename, causalities=['input', 'output']):
 
         args = ['' if s is None else str(s) for s in [v.name, v.causality, start, unit, v.description]]
 
-        l.append('{:19} {:10} {:>23}  {:8} {}'.format(*args))
+        l.append('  {:18} {:10} {:>23}  {:8} {}'.format(*args))
 
     return '\n'.join(l)
 

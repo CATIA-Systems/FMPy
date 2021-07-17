@@ -1226,7 +1226,7 @@ class MainWindow(QMainWindow):
 
         filename, ext = os.path.splitext(self.filename)
 
-        filename = QFileDialog.getSaveFileName(
+        filename, _ = QFileDialog.getSaveFileName(
             parent=self,
             directory=filename + '.ipynb',
             filter='Jupyter Notebooks (*.ipynb);;All Files (*)'
@@ -1234,10 +1234,19 @@ class MainWindow(QMainWindow):
 
         if filename:
             try:
-                create_jupyter_notebook(self.filename, filename[0])
+                create_jupyter_notebook(self.filename, filename)
             except Exception as e:
                 QMessageBox.critical(self, "Failed to create Jupyter Notebook", str(e))
+                return
 
+            if QMessageBox.question(self, "Open Jupyter Notebook?", f"Start Jupyter and open {filename}?") == QMessageBox.Yes:
+
+                from subprocess import run, CREATE_NEW_CONSOLE
+
+                try:
+                    run(['jupyter', 'notebook', filename], creationflags=CREATE_NEW_CONSOLE)
+                except Exception as e:
+                    QMessageBox.critical(self, "Failed to start Jupyter", str(e))
 
     def createCMakeProject(self):
         """ Create a CMake project from a C code FMU """

@@ -356,6 +356,10 @@ class _FMU3(_FMU):
             (c_size_t,                    'nIntervals')
         ])
 
+        self._fmi3Function('fmi3EvaluateDiscreteStates', [
+            (fmi3Instance, 'instance')
+        ])
+
         self._fmi3Function('fmi3UpdateDiscreteStates', [
             (fmi3Instance,         'instance'),
             (POINTER(fmi3Boolean), 'discreteStatesNeedUpdate'),

@@ -4,7 +4,7 @@
 #include "fmi3PlatformTypes.h"
 
 /*
-This header file defines the data and function types of FMI 3.0-beta.1.
+This header file defines the data and function types of FMI 3.0-beta.2.
 It must be used when compiling an FMU or an FMI importer.
 
 Copyright (C) 2011 MODELISAR consortium,
@@ -513,6 +513,10 @@ typedef fmi3Status fmi3SetIntervalFractionTYPE(fmi3Instance instance,
                                                const fmi3UInt64 resolutions[],
                                                size_t nIntervals);
 /* end::SetIntervalFraction[] */
+
+/* tag::EvaluateDiscreteStates[] */
+typedef fmi3Status fmi3EvaluateDiscreteStatesTYPE(fmi3Instance instance);
+/* end::EvaluateDiscreteStates[] */
 
 /* tag::UpdateDiscreteStates[] */
 typedef fmi3Status fmi3UpdateDiscreteStatesTYPE(fmi3Instance instance,

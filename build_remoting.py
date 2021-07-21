@@ -1,79 +1,115 @@
-from fmpy import sharedLibraryExtension, extract
-from fmpy.util import download_file
 import os
+import tarfile
 import shutil
 from subprocess import check_call
+from fmpy.util import download_file
 
+
+url = 'https://github.com/rpclib/rpclib/archive/refs/tags/v2.3.0.tar.gz'
+checksum = 'eb9e6fa65e1a79b37097397f60599b93cb443d304fbc0447c50851bc3452fdef'
+
+# build configuration
+config = 'Release'
+
+download_file(url, checksum)
+
+filename = os.path.basename(url)
+
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+source_dir = 'rpclib-2.3.0'
+
+rpclib_dir = os.path.join(basedir, source_dir).replace('\\', '/')
 
 # clean up
-for p in ['rpclib-2.2.1', 'remoting/client/build', 'remoting/server/build']:
-    if os.path.exists(p):
-        shutil.rmtree(p)
+shutil.rmtree(source_dir, ignore_errors=True)
 
-for f in ['fmpy/remoting/client.dll', 'fmpy/remoting/server.exe']:
-    if os.path.exists(f):
-        os.remove(f)
+print("Extracting %s" % filename)
+with tarfile.open(filename, 'r:gz') as tar:
+    tar.extractall()
 
-rpclib_url = 'https://github.com/rpclib/rpclib/archive/v2.2.1.zip'
-rpclib_checksum = '70f10b59f0eb303ccee4a9dda32e6ed898783be9a539d32b43e6fcb4430dce0c'
-rpclib_filename = os.path.basename(rpclib_url)
+if os.name == 'nt':
 
-download_file(rpclib_url, rpclib_checksum)
+    # patch the CMake project to link static against the MSVC runtime
+    with open(os.path.join(source_dir, 'CMakeLists.txt'), 'a') as file:
+        # Append 'hello' at the end of file
+        file.write('''
+            
+    message(${CMAKE_CXX_FLAGS_RELEASE})
+    message(${CMAKE_CXX_FLAGS_DEBUG})
+    
+    set(CompilerFlags
+            CMAKE_CXX_FLAGS
+            CMAKE_CXX_FLAGS_DEBUG
+            CMAKE_CXX_FLAGS_RELEASE
+            CMAKE_C_FLAGS
+            CMAKE_C_FLAGS_DEBUG
+            CMAKE_C_FLAGS_RELEASE
+            )
+    foreach(CompilerFlag ${CompilerFlags})
+      string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
+    endforeach()
+    
+    message(${CMAKE_CXX_FLAGS_RELEASE})
+    message(${CMAKE_CXX_FLAGS_DEBUG})
+    ''')
 
-extract(rpclib_filename, '.')
+    for bitness, generator in [('win32', 'Visual Studio 15 2017'), ('win64', 'Visual Studio 15 2017 Win64')]:
 
-# root = os.path.dirname(__file__)
+        # clean up
+        shutil.rmtree(os.path.join(basedir, 'remoting', bitness), ignore_errors=True)
 
-# build RPCLIB for win32
-check_call([
-    'cmake',
-    '-DCMAKE_INSTALL_PREFIX=rpclib-2.2.1/win32/install',
-    '-DRPCLIB_MSVC_STATIC_RUNTIME=ON',
-    '-G', 'Visual Studio 15 2017',
-    '-S', 'rpclib-2.2.1',
-    '-B', 'rpclib-2.2.1/win32'
-])
+        print("Building rpclib...")
 
-check_call(['cmake', '--build', 'rpclib-2.2.1/win32', '--target', 'install', '--config', 'Release'])
+        check_call(args=[
+            'cmake',
+            '-B', source_dir + '/' + bitness,
+            '-D', 'RPCLIB_MSVC_STATIC_RUNTIME=ON',
+            '-D', 'CMAKE_INSTALL_PREFIX=' + source_dir + '/' + bitness + '/install',
+            '-G', generator,
+            source_dir
+        ])
 
-# build RPCLIB for win64
-check_call([
-    'cmake',
-    '-DCMAKE_INSTALL_PREFIX=rpclib-2.2.1/win64/install',
-    '-DRPCLIB_MSVC_STATIC_RUNTIME=ON',
-    '-G', 'Visual Studio 15 2017 Win64',
-    '-S', 'rpclib-2.2.1',
-    '-B', 'rpclib-2.2.1/win64'
-])
+        check_call(args=['cmake', '--build', source_dir + '/' + bitness, '--target', 'install', '--config', config])
 
-check_call(['cmake', '--build', 'rpclib-2.2.1/win64', '--target', 'install', '--config', 'Release'])
+        print("Building remoting binaries...")
 
-print('####' + str([
-    'cmake',
-    '-DRPCLIB=' + os.path.abspath('rpclib-2.2.1/win32/install').replace('\\', '/'),
-    '-G', 'Visual Studio 15 2017',
-    '-S', 'remoting/server',
-    '-B', 'remoting/server/build'
-]))
+        check_call(args=[
+            'cmake',
+            '-B', 'remoting/' + bitness,
+            '-G', generator,
+            '-D', 'RPCLIB=' + rpclib_dir + '/' + bitness + '/install',
+            '-B', 'remoting/' + bitness, 'remoting'
+        ])
 
-# build server.exe
-check_call([
-    'cmake',
-    '-DRPCLIB=' + os.path.abspath('rpclib-2.2.1/win32/install').replace('\\', '/'),
-    '-G', 'Visual Studio 15 2017',
-    '-S', 'remoting/server',
-    '-B', 'remoting/server/build'
-])
+        check_call(['cmake', '--build', 'remoting/' + bitness, '--config', config])
 
-check_call(['cmake', '--build', 'remoting/server/build', '--config', 'Release'])
+else:
 
-# build client.exe
-check_call([
-    'cmake',
-    '-DRPCLIB=' + os.path.abspath('rpclib-2.2.1/win64/install').replace('\\', '/'),
-    '-G', 'Visual Studio 15 2017 Win64',
-    '-S', 'remoting/client',
-    '-B', 'remoting/client/build'
-])
+    # clean up
+    shutil.rmtree(os.path.join(basedir, 'remoting', 'linux64'), ignore_errors=True)
 
-check_call(['cmake', '--build', 'remoting/client/build', '--config', 'Release'])
+    print("Building rpclib...")
+
+    check_call(args=[
+        'cmake',
+        '-B', source_dir + '/linux64',
+        '-D', 'CMAKE_INSTALL_PREFIX=' + source_dir + '/linux64' + '/install',
+        '-D', 'CMAKE_POSITION_INDEPENDENT_CODE=ON',
+        '-G', 'Unix Makefiles',
+        source_dir
+    ])
+
+    check_call(args=['cmake', '--build', source_dir + '/linux64', '--target', 'install', '--config', config])
+
+    print("Building remoting binaries...")
+
+    check_call(args=[
+        'cmake',
+        '-B', 'remoting/' + 'linux64',
+        '-G', 'Unix Makefiles',
+        '-D', 'RPCLIB=' + rpclib_dir + '/linux64/install',
+        '-B', 'remoting/linux64', 'remoting'
+    ])
+
+    check_call(['cmake', '--build', 'remoting/linux64', '--config', config])

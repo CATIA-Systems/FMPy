@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<xs:annotation>
-		<xs:documentation>
+    <xs:annotation>
+        <xs:documentation>
 Copyright(c) 2008-2011 MODELISAR consortium,
              2012-2021 Modelica Association Project "FMI".
              All rights reserved.
@@ -32,85 +32,85 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ----------------------------------------------------------------------------
-		</xs:documentation>
-	</xs:annotation>
-	<xs:attributeGroup name="fmi3RealBaseAttributes">
-		<xs:attribute name="quantity" type="xs:normalizedString"/>
-		<xs:attribute name="unit" type="xs:normalizedString"/>
-		<xs:attribute name="displayUnit" type="xs:normalizedString"/>
-		<xs:attribute name="relativeQuantity" type="xs:boolean" default="false"/>
-		<xs:attribute name="unbounded" type="xs:boolean" default="false"/>
-	</xs:attributeGroup>
-	<xs:attributeGroup name="fmi3Float64Attributes">
-		<xs:attribute name="min" type="xs:double"/>
-		<xs:attribute name="max" type="xs:double"/>
-		<xs:attribute name="nominal" type="xs:double"/>
-	</xs:attributeGroup>
-	<xs:attributeGroup name="fmi3Float32Attributes">
-		<xs:attribute name="min" type="xs:float"/>
-		<xs:attribute name="max" type="xs:float"/>
-		<xs:attribute name="nominal" type="xs:float"/>
-	</xs:attributeGroup>
-	<xs:attributeGroup name="fmi3IntegerBaseAttributes">
-		<xs:attribute name="quantity" type="xs:normalizedString"/>
-	</xs:attributeGroup>
-	<xs:attributeGroup name="fmi3Int8Attributes">
-		<xs:attribute name="min" type="xs:byte"/>
-		<xs:attribute name="max" type="xs:byte"/>
-	</xs:attributeGroup>
-	<xs:attributeGroup name="fmi3UInt8Attributes">
-		<xs:attribute name="min" type="xs:unsignedByte"/>
-		<xs:attribute name="max" type="xs:unsignedByte"/>
-	</xs:attributeGroup>
-	<xs:attributeGroup name="fmi3Int16Attributes">
-		<xs:attribute name="min" type="xs:short"/>
-		<xs:attribute name="max" type="xs:short"/>
-	</xs:attributeGroup>
-	<xs:attributeGroup name="fmi3UInt16Attributes">
-		<xs:attribute name="min" type="xs:unsignedShort"/>
-		<xs:attribute name="max" type="xs:unsignedShort"/>
-	</xs:attributeGroup>
-	<xs:attributeGroup name="fmi3Int32Attributes">
-		<xs:attribute name="min" type="xs:int"/>
-		<xs:attribute name="max" type="xs:int"/>
-	</xs:attributeGroup>
-	<xs:attributeGroup name="fmi3UInt32Attributes">
-		<xs:attribute name="min" type="xs:unsignedInt"/>
-		<xs:attribute name="max" type="xs:unsignedInt"/>
-	</xs:attributeGroup>
-	<xs:attributeGroup name="fmi3Int64Attributes">
-		<xs:attribute name="min" type="xs:long"/>
-		<xs:attribute name="max" type="xs:long"/>
-	</xs:attributeGroup>
-	<xs:attributeGroup name="fmi3UInt64Attributes">
-		<xs:attribute name="min" type="xs:unsignedLong"/>
-		<xs:attribute name="max" type="xs:unsignedLong"/>
-	</xs:attributeGroup>
-	<xs:attributeGroup name="fmi3RealVariableAttributes">
-		<xs:attribute name="derivative" type="xs:unsignedInt"/>
-		<xs:attribute name="reinit" type="xs:boolean" default="false"/>
-	</xs:attributeGroup>
-	<xs:attributeGroup name="fmi3ClockAttributes">
-		<xs:attribute name="canBeDeactivated" type="xs:boolean" default="false"/>
-		<xs:attribute name="priority" type="xs:unsignedInt" use="optional"/>
-		<xs:attribute name="interval" use="required">
-			<xs:simpleType>
-				<xs:restriction base="xs:normalizedString">
-					<xs:enumeration value="constant"/>
-					<xs:enumeration value="fixed"/>
-					<xs:enumeration value="calculated"/>
-					<xs:enumeration value="tunable"/>
-					<xs:enumeration value="changing"/>
-					<xs:enumeration value="countdown"/>
-					<xs:enumeration value="triggered"/>
-				</xs:restriction>
-			</xs:simpleType>
-		</xs:attribute>
-		<xs:attribute name="intervalDecimal" type="xs:float" use="optional"/>
-		<xs:attribute name="shiftDecimal" type="xs:float" default="0"/>
-		<xs:attribute name="supportsFraction" type="xs:boolean" default="false"/>
-		<xs:attribute name="resolution" type="xs:unsignedLong" use="optional"/>
-		<xs:attribute name="intervalCounter" type="xs:unsignedLong" use="optional"/>
-		<xs:attribute name="shiftCounter" type="xs:unsignedLong" default="0"/>
-	</xs:attributeGroup>
+        </xs:documentation>
+    </xs:annotation>
+    <xs:attributeGroup name="fmi3RealBaseAttributes">
+        <xs:attribute name="quantity" type="xs:normalizedString"/>
+        <xs:attribute name="unit" type="xs:normalizedString"/>
+        <xs:attribute name="displayUnit" type="xs:normalizedString"/>
+        <xs:attribute name="relativeQuantity" type="xs:boolean" default="false"/>
+        <xs:attribute name="unbounded" type="xs:boolean" default="false"/>
+    </xs:attributeGroup>
+    <xs:attributeGroup name="fmi3Float64Attributes">
+        <xs:attribute name="min" type="xs:double"/>
+        <xs:attribute name="max" type="xs:double"/>
+        <xs:attribute name="nominal" type="xs:double"/>
+    </xs:attributeGroup>
+    <xs:attributeGroup name="fmi3Float32Attributes">
+        <xs:attribute name="min" type="xs:float"/>
+        <xs:attribute name="max" type="xs:float"/>
+        <xs:attribute name="nominal" type="xs:float"/>
+    </xs:attributeGroup>
+    <xs:attributeGroup name="fmi3IntegerBaseAttributes">
+        <xs:attribute name="quantity" type="xs:normalizedString"/>
+    </xs:attributeGroup>
+    <xs:attributeGroup name="fmi3Int8Attributes">
+        <xs:attribute name="min" type="xs:byte"/>
+        <xs:attribute name="max" type="xs:byte"/>
+    </xs:attributeGroup>
+    <xs:attributeGroup name="fmi3UInt8Attributes">
+        <xs:attribute name="min" type="xs:unsignedByte"/>
+        <xs:attribute name="max" type="xs:unsignedByte"/>
+    </xs:attributeGroup>
+    <xs:attributeGroup name="fmi3Int16Attributes">
+        <xs:attribute name="min" type="xs:short"/>
+        <xs:attribute name="max" type="xs:short"/>
+    </xs:attributeGroup>
+    <xs:attributeGroup name="fmi3UInt16Attributes">
+        <xs:attribute name="min" type="xs:unsignedShort"/>
+        <xs:attribute name="max" type="xs:unsignedShort"/>
+    </xs:attributeGroup>
+    <xs:attributeGroup name="fmi3Int32Attributes">
+        <xs:attribute name="min" type="xs:int"/>
+        <xs:attribute name="max" type="xs:int"/>
+    </xs:attributeGroup>
+    <xs:attributeGroup name="fmi3UInt32Attributes">
+        <xs:attribute name="min" type="xs:unsignedInt"/>
+        <xs:attribute name="max" type="xs:unsignedInt"/>
+    </xs:attributeGroup>
+    <xs:attributeGroup name="fmi3Int64Attributes">
+        <xs:attribute name="min" type="xs:long"/>
+        <xs:attribute name="max" type="xs:long"/>
+    </xs:attributeGroup>
+    <xs:attributeGroup name="fmi3UInt64Attributes">
+        <xs:attribute name="min" type="xs:unsignedLong"/>
+        <xs:attribute name="max" type="xs:unsignedLong"/>
+    </xs:attributeGroup>
+    <xs:attributeGroup name="fmi3RealVariableAttributes">
+        <xs:attribute name="derivative" type="xs:unsignedInt"/>
+        <xs:attribute name="reinit" type="xs:boolean" default="false"/>
+    </xs:attributeGroup>
+    <xs:attributeGroup name="fmi3ClockAttributes">
+        <xs:attribute name="canBeDeactivated" type="xs:boolean" default="false"/>
+        <xs:attribute name="priority" type="xs:unsignedInt" use="optional"/>
+        <xs:attribute name="interval" use="required">
+            <xs:simpleType>
+                <xs:restriction base="xs:normalizedString">
+                    <xs:enumeration value="constant"/>
+                    <xs:enumeration value="fixed"/>
+                    <xs:enumeration value="calculated"/>
+                    <xs:enumeration value="tunable"/>
+                    <xs:enumeration value="changing"/>
+                    <xs:enumeration value="countdown"/>
+                    <xs:enumeration value="triggered"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="intervalDecimal" type="xs:float" use="optional"/>
+        <xs:attribute name="shiftDecimal" type="xs:float" default="0"/>
+        <xs:attribute name="supportsFraction" type="xs:boolean" default="false"/>
+        <xs:attribute name="resolution" type="xs:unsignedLong" use="optional"/>
+        <xs:attribute name="intervalCounter" type="xs:unsignedLong" use="optional"/>
+        <xs:attribute name="shiftCounter" type="xs:unsignedLong" default="0"/>
+    </xs:attributeGroup>
 </xs:schema>

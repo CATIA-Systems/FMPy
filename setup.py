@@ -51,9 +51,13 @@ package_data = {
         'fmucontainer/sources/FMUContainer.c',
         'fmucontainer/sources/mpack.c',
         'fmucontainer/sources/mpack.h',
-        'remoting/client.dll',
+        'remoting/linux64/client.so',
+        'remoting/linux64/server',
+        'remoting/win32/client.dll',
+        'remoting/win32/server.exe',
+        'remoting/win64/client.dll',
+        'remoting/win64/server.exe',
         'remoting/license.txt',
-        'remoting/server.exe',
         'schema/fmi1/*.xsd',
         'schema/fmi2/*.xsd',
         'schema/fmi3/*.xsd',
@@ -67,6 +71,7 @@ package_data = {
 }
 
 install_requires = [
+    'attrs',
     'lark-parser',
     'lxml',
     'msgpack',
@@ -87,7 +92,7 @@ extras_require = {
 extras_require['complete'] = sorted(set(sum(extras_require.values(), [])))
 
 setup(name='FMPy',
-      version='0.3.0',
+      version='0.3.1',
       description="Simulate Functional Mock-up Units (FMUs) in Python",
       long_description=long_description,
       author="Torsten Sommer",

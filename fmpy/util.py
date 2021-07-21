@@ -1,5 +1,7 @@
 import os
+from typing import List, IO, Union
 
+import fmpy
 import numpy as np
 
 
@@ -291,57 +293,52 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None):
     elif time_unit == 'years':
         time /= 365 * 24 * 60 * 60
     else:
-        raise Exception('time_unit must be one of "ns", "us", "ms", "s", "min", "h", "days" or "years" but was "%s".' % time_unit)
+        raise Exception(f'time_unit must be one of "ns", "us", "ms", "s", "min", "h", "days" or "years" but was "{time_unit}".')
 
     if names is None:
         # plot at most 20 signals
         names = result.dtype.names[1:20]
 
-    # one signal per plot
-    # plots = [(None, [name]) for name in names]
-    plots = []
+    fig = make_subplots(rows=len(names), cols=1, shared_xaxes=True)
 
-    for name in names:
-        plots.append((units[name] if name in units else None, [name]))
+    for i, name in enumerate(names):
 
-    fig = make_subplots(rows=len(plots), cols=1, shared_xaxes=True)
+        y = result[name]
+        unit = units.get(name)
 
-    for i, (unit, names) in enumerate(plots):
+        if unit in display_units:
+            display_unit = display_units[unit]
+            y = y * display_unit.factor + display_unit.offset
+            unit = display_unit.name
 
-        for name in names:
+        line = dict(color='#636efa', width=1)
 
-            y = result[name]
+        if y.dtype in [np.float32, np.float64]:
+            trace = go.Scatter(x=time, y=y, name=name, line=line)
+        elif y.dtype == bool:
+            trace = go.Scatter(x=time, y=y.astype(int), name=name, line=line, fill='tozeroy', fillcolor='rgba(0,0,255,0.1)', line_shape='hv')
+            fig['layout'][f'yaxis{i + 1}'].update(tickvals=[0, 1], ticktext=['false', 'true'], range=[-0.1, 1.1], fixedrange=True)
+        else:
+            trace = go.Scatter(x=time, y=y, name=name, line=line, line_shape='hv')
 
-            if unit in display_units:
-                display_unit = display_units[unit]
-                y = y * display_unit.factor + display_unit.offset
-                unit = display_unit.name
+        fig.add_trace(trace, row=i + 1, col=1)
 
-            fig.add_trace(
-                go.Scatter(x=time, y=y,
-                           name=name,
-                           line=dict(color='#636efa', width=1),
-                           fill='tozeroy' if y.dtype == bool else None,
-                           fillcolor='rgba(0,0,255,0.1)'),
-                row=i + 1, col=1)
-
-        title = "%s [%s]" % (name, unit) if unit else name
-
-        fig['layout']['yaxis%d' % (i + 1)].update(title=title)
+        fig['layout'][f'yaxis{i + 1}'].update(title=f"{name} [{unit}]" if unit else name)
 
     if events:
         for t_event in time[np.argwhere(np.diff(time) == 0).flatten()]:
             fig.add_vline(x=t_event, line={'color': '#fbe424', 'width': 1})
 
-    fig['layout']['height'] = 160 * len(plots) + 30 * max(0, 5 - len(plots))
+    fig['layout']['height'] = 160 * len(names) + 30 * max(0, 5 - len(names))
     fig['layout']['margin']['t'] = 30
     fig['layout']['margin']['b'] = 0
     fig['layout']['margin']['r'] = 30
     fig['layout']['plot_bgcolor'] = 'rgba(0,0,0,0)'
-    fig['layout']['xaxis%d' % len(plots)].update(title='time [%s]' % time_unit)
+    fig['layout'][f'xaxis{len(names)}'].update(title=f'time [{time_unit}]')
 
-    fig.update_xaxes(showgrid=True, gridwidth=1, ticklen=0, gridcolor='LightGrey', linecolor='black', showline=True, zeroline=True, zerolinewidth=1, zerolinecolor='LightGrey')
-    fig.update_yaxes(showgrid=True, gridwidth=1, ticklen=0, gridcolor='LightGrey', linecolor='black', showline=True, zerolinewidth=1, zerolinecolor='LightGrey')
+    axes_attrs = dict(showgrid=True, gridwidth=1, ticklen=0, gridcolor='LightGrey', linecolor='black', showline=True, zerolinewidth=1, zerolinecolor='LightGrey')
+    fig.update_xaxes(zeroline=True, **axes_attrs)
+    fig.update_yaxes(**axes_attrs)
 
     fig.update_layout(showlegend=False)
 
@@ -539,8 +536,11 @@ def sha256_checksum(filename):
     return sha256.hexdigest()
 
 
-def download_file(url, checksum=None):
-    """ Download a file to the current directory """
+def download_file(url: str, checksum: str = None) -> str:
+    """ Download a file to the current directory
+
+        returns the filename of the downloaded file
+    """
 
     filename = os.path.basename(url)
 
@@ -576,6 +576,8 @@ def download_file(url, checksum=None):
         if not hash.startswith(checksum):
             raise Exception("%s has the wrong SHA256 checksum. Expected %s but was %s." % (filename, checksum, hash))
 
+    return filename
+
 
 def download_test_file(fmi_version, fmi_type, tool_name, tool_version, model_name, filename):
     """ Download a file from the Test FMUs repository to the current directory """
@@ -595,8 +597,15 @@ def download_test_file(fmi_version, fmi_type, tool_name, tool_version, model_nam
     download_file(url)
 
 
-def fmu_info(filename, causalities=['input', 'output']):
-    """ Dump the info for an FMU """
+def fmu_info(filename: Union[str, IO], causalities: List[str] = ['input', 'output']) -> str:
+    """ Dump the info for an FMU
+
+    Parameters:
+        filename     filename of the FMU
+        causalities  the causalities of the variables to include
+
+    Returns the info as a multi line string
+    """
 
     from .model_description import read_model_description
     from . import supported_platforms
@@ -610,37 +619,35 @@ def fmu_info(filename, causalities=['input', 'output']):
     if md.coSimulation is not None:
         fmi_types.append('Co-Simulation')
 
-    l = []
+    l = [f"""
+Model Info
 
-    l.append("")
-    l.append("Model Info")
-    l.append("")
-    l.append("  FMI Version       %s" % md.fmiVersion)
-    l.append("  FMI Type          %s" % ', '.join(fmi_types))
-    l.append("  Model Name        %s" % md.modelName)
-    l.append("  Description       %s" % md.description)
-    l.append("  Platforms         %s" % ', '.join(platforms))
-    l.append("  Continuous States %s" % md.numberOfContinuousStates)
-    l.append("  Event Indicators  %s" % md.numberOfEventIndicators)
-    l.append("  Variables         %s" % len(md.modelVariables))
-    l.append("  Generation Tool   %s" % md.generationTool)
-    l.append("  Generation Date   %s" % md.generationDateAndTime)
+  FMI Version        {md.fmiVersion}
+  FMI Type           {', '.join(fmi_types)}
+  Model Name         {md.modelName}
+  Description        {md.description}
+  Platforms          {', '.join(platforms)}
+  Continuous States  {md.numberOfContinuousStates}
+  Event Indicators   {md.numberOfEventIndicators}
+  Variables          {len(md.modelVariables)}
+  Generation Tool    {md.generationTool}
+  Generation Date    {md.generationDateAndTime}
+"""]
 
     if md.defaultExperiment:
 
         ex = md.defaultExperiment
 
-        l.append("")
         l.append('Default Experiment')
         l.append("")
         if ex.startTime:
-            l.append("  Start Time        %g" % ex.startTime)
+            l.append(f"  Start Time         {ex.startTime}")
         if ex.stopTime:
-            l.append("  Stop Time         %g" % ex.stopTime)
+            l.append(f"  Stop Time          {ex.stopTime}")
         if ex.tolerance:
-            l.append("  Tolerance         %g" % ex.tolerance)
+            l.append(f"  Tolerance          {ex.tolerance}")
         if ex.stepSize:
-            l.append("  Step Size         %g" % ex.stepSize)
+            l.append(f"  Step Size          {ex.stepSize}")
 
     inputs = []
     outputs = []
@@ -654,7 +661,7 @@ def fmu_info(filename, causalities=['input', 'output']):
     l.append("")
     l.append("Variables (%s)" % ', '.join(causalities))
     l.append("")
-    l.append('Name                Causality              Start Value  Unit     Description')
+    l.append('  Name               Causality              Start Value  Unit     Description')
     for v in md.modelVariables:
         if v.causality not in causalities:
             continue
@@ -665,7 +672,7 @@ def fmu_info(filename, causalities=['input', 'output']):
 
         args = ['' if s is None else str(s) for s in [v.name, v.causality, start, unit, v.description]]
 
-        l.append('{:19} {:10} {:>23}  {:8} {}'.format(*args))
+        l.append('  {:18} {:10} {:>23}  {:8} {}'.format(*args))
 
     return '\n'.join(l)
 
@@ -888,7 +895,7 @@ def compile_platform_binary(filename, output_filename=None, target_platform=None
     rmtree(unzipdir2, ignore_errors=True)
 
 
-def add_remoting(filename):
+def add_remoting(filename, host_platform, remote_platform):
 
     from . import extract, read_model_description, supported_platforms
     from shutil import copyfile, rmtree
@@ -897,33 +904,57 @@ def add_remoting(filename):
 
     platforms = supported_platforms(filename)
 
-    if 'win32' not in platforms:
-        raise Exception("The FMU does not support the platform \"win32\".")
+    if host_platform == 'win64' and remote_platform == 'win32':
 
-    if 'win64' in platforms:
-        raise Exception("The FMU already supports \"win64\".")
+        if 'win64' in platforms:
+            raise Exception('The FMU already supports "win64".')
+
+        if 'win32' not in platforms:
+            raise Exception('The FMU does not support the platform "win32".')
+
+    elif host_platform == 'linux64' and remote_platform == 'win64':
+
+        if 'linux64' in platforms:
+            raise Exception('The FMU already supports "linux64".')
+
+        if 'win64' not in platforms:
+            raise Exception('The FMU does not support the platform "win64".')
+    else:
+
+        raise Exception("Remoting is not supported for the given combination of host and remote platform.")
 
     model_description = read_model_description(filename)
 
     current_dir = os.path.dirname(__file__)
-    client = os.path.join(current_dir, 'remoting', 'client.dll')
-    server = os.path.join(current_dir, 'remoting', 'server.exe')
+
+    if host_platform == 'win64':
+        client = os.path.join(current_dir, 'remoting', 'win64', 'client.dll')
+        server = os.path.join(current_dir, 'remoting', 'win32', 'server.exe')
+    else:
+        client = os.path.join(current_dir, 'remoting', 'linux64', 'client.so')
+        server = os.path.join(current_dir, 'remoting', 'win64', 'server.exe')
+
     license = os.path.join(current_dir, 'remoting', 'license.txt')
 
     tempdir = extract(filename)
 
-    if model_description.coSimulation is not None:
+    if model_description.coSimulation:
         model_identifier = model_description.coSimulation.modelIdentifier
     else:
         model_identifier = model_description.modelExchange.modelIdentifier
 
     # copy the binaries & license
-    os.mkdir(os.path.join(tempdir, 'binaries', 'win64'))
-    copyfile(client, os.path.join(tempdir, 'binaries', 'win64', model_identifier + '.dll'))
-    copyfile(server, os.path.join(tempdir, 'binaries', 'win64', 'server.exe'))
+    if host_platform == 'win64':
+        os.mkdir(os.path.join(tempdir, 'binaries', 'win64'))
+        copyfile(client, os.path.join(tempdir, 'binaries', 'win64', model_identifier + '.dll'))
+        copyfile(server, os.path.join(tempdir, 'binaries', 'win32', 'server.exe'))
+    else:
+        os.mkdir(os.path.join(tempdir, 'binaries', 'linux64'))
+        copyfile(client, os.path.join(tempdir, 'binaries', 'linux64', model_identifier + '.so'))
+        copyfile(server, os.path.join(tempdir, 'binaries', 'win64', 'server.exe'))
+
     licenses_dir = os.path.join(tempdir, 'documentation', 'licenses')
-    if not os.path.isdir(licenses_dir):
-        os.mkdir(licenses_dir)
+    os.makedirs(licenses_dir, exist_ok=True)
     copyfile(license, os.path.join(tempdir, 'documentation', 'licenses', 'fmpy-remoting-binaries.txt'))
 
     # create a new archive from the existing files + remoting binaries
@@ -1242,3 +1273,68 @@ def create_jupyter_notebook(filename, notebook_filename=None):
 
     with open(notebook_filename, 'w') as f:
         nbf.write(nb, f)
+
+
+def has_wsl():
+    """ Check if the Windows Subsystem for Linux (WSL) is available """
+
+    if fmpy.system != 'windows':
+        return False
+
+    import subprocess
+
+    try:
+        subprocess.run(['wsl', '--help'])
+        return True
+    except:
+        return False
+
+
+def has_wine64():
+    """ Check if the Wine 64-bit is available """
+
+    if fmpy.system != 'linux':
+        return False
+
+    import subprocess
+
+    try:
+        subprocess.run(['wine64', '--help'])
+        return True
+    except:
+        return False
+
+
+def can_simulate(platforms, remote_platform='auto'):
+
+    from . import platform
+
+    if remote_platform is None:  # remoting disabled
+
+        return platform in platforms, None
+
+    elif remote_platform == 'auto':  # auto remoting
+
+        if platform in platforms:
+            return True, None
+        elif platform == 'win64' and 'win32' in platforms:
+            return True, 'win32'
+        elif has_wsl() and 'linux64' in platforms:
+            return True, 'linux64'
+        elif has_wine64() and 'win64' in platforms:
+            return True, 'win64'
+        else:
+            return False, None
+
+    else:  # specific remoting
+
+        if remote_platform == 'win32' and platform == 'win64':
+            return True, remote_platform
+        elif remote_platform == 'win64' and has_wine64():
+            return True, remote_platform
+        elif remote_platform == 'linux64' and has_wsl():
+            return True, remote_platform
+
+    return False, None
+
+

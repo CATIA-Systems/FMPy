@@ -94,7 +94,16 @@ def main():
     elif args.command == 'add-remoting':
 
         from fmpy.util import add_remoting
-        add_remoting(args.fmu_filename)
+        from fmpy import supported_platforms
+
+        platforms = supported_platforms(args.fmu_filename)
+
+        if 'win32' in platforms and 'win64' not in platforms:
+            add_remoting(args.fmu_filename, 'win64', 'win32')
+        elif 'win64' in platforms and 'linux64' not in platforms:
+            add_remoting(args.fmu_filename, 'linux64', 'win64')
+        else:
+            print("Failed to add remoting binaries.")
 
     elif args.command == 'create-cmake-project':
 

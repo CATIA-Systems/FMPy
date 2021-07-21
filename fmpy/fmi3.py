@@ -7,34 +7,34 @@ from . import sharedLibraryExtension, platform_tuple
 from .fmi1 import _FMU, printLogMessage
 
 
-fmi3Instance             = c_void_p
-fmi3InstanceEnvironment  = c_void_p
-fmi3FMUState             = c_void_p
-fmi3ValueReference       = c_uint
-fmi3Float32              = c_float
-fmi3Float64              = c_double
-fmi3Int8                 = c_int8
-fmi3UInt8                = c_uint8
-fmi3Int16                = c_int16
-fmi3UInt16               = c_uint16
-fmi3Int32                = c_int32
-fmi3UInt32               = c_uint32
-fmi3Int64                = c_int64
-fmi3UInt64               = c_uint64
-fmi3Boolean              = c_bool
-fmi3Char                 = c_char
-fmi3String               = c_char_p
-fmi3Byte                 = c_char
-fmi3Binary               = c_char_p
-fmi3Clock                = c_bool
+fmi3Instance            = c_void_p
+fmi3InstanceEnvironment = c_void_p
+fmi3FMUState            = c_void_p
+fmi3ValueReference      = c_uint
+fmi3Float32             = c_float
+fmi3Float64             = c_double
+fmi3Int8                = c_int8
+fmi3UInt8               = c_uint8
+fmi3Int16               = c_int16
+fmi3UInt16              = c_uint16
+fmi3Int32               = c_int32
+fmi3UInt32              = c_uint32
+fmi3Int64               = c_int64
+fmi3UInt64              = c_uint64
+fmi3Boolean             = c_bool
+fmi3Char                = c_char
+fmi3String              = c_char_p
+fmi3Byte                = c_char
+fmi3Binary              = c_char_p
+fmi3Clock               = c_bool
 
 # values for fmi3Boolean
-fmi3True  = 1
-fmi3False = 0
+fmi3True  = c_bool(True)
+fmi3False = c_bool(False)
 
 # values for fmi3Clock
-fmi3ClockActive   = 1
-fmi3ClockInactive = 0
+fmi3ClockActive   = c_bool(True)
+fmi3ClockInactive = c_bool(False)
 
 # enum fmi3Status
 fmi3Status  = c_int
@@ -66,19 +66,30 @@ fmi3CallbackLockPreemptionTYPE     = CFUNCTYPE(None)
 fmi3CallbackUnlockPreemptionTYPE   = CFUNCTYPE(None)
 
 
-def intermediateUpdate(*args):
+def intermediateUpdate(instanceEnvironment: fmi3InstanceEnvironment,
+                       intermediateUpdateTime: fmi3Float64,
+                       clocksTicked: fmi3Boolean,
+                       intermediateVariableSetRequested: fmi3Boolean,
+                       intermediateVariableGetAllowed: fmi3Boolean,
+                       intermediateStepFinished: fmi3Boolean,
+                       canReturnEarly: fmi3Boolean,
+                       earlyReturnRequested: POINTER(fmi3Boolean),
+                       earlyReturnTime: POINTER(fmi3Float64)) -> fmi3Status:
+
+    earlyReturnRequested.contents = fmi3False
+
     return fmi3OK
 
 
-def printLogMessage(instanceEnvironment, instanceName, status, category, message):
+def printLogMessage(instanceEnvironment: fmi3InstanceEnvironment,
+                    instanceName: fmi3String,
+                    status: fmi3Status,
+                    category: fmi3Status,
+                    message: fmi3Status) -> None:
     """ Print the FMU's log messages to the command line """
 
     label = ['OK', 'WARNING', 'DISCARD', 'ERROR', 'FATAL', 'PENDING'][status]
     print("[%s] %s" % (label, message))
-
-
-def stepFinished(instanceEnvironment, status):
-    pass
 
 
 class _FMU3(_FMU):
@@ -105,7 +116,7 @@ class _FMU3(_FMU):
         self._fmi3Function('fmi3InstantiateModelExchange', [
             (fmi3String,                         'instanceName'),
             (fmi3String,                         'instantiationToken'),
-            (fmi3String,                         'resourceLocation'),
+            (fmi3String,                         'resourcePath'),
             (fmi3Boolean,                        'visible'),
             (fmi3Boolean,                        'loggingOn'),
             (fmi3InstanceEnvironment,            'instanceEnvironment'),
@@ -115,7 +126,7 @@ class _FMU3(_FMU):
         self._fmi3Function('fmi3InstantiateCoSimulation', [
             (fmi3String,                         'instanceName'),
             (fmi3String,                         'instantiationToken'),
-            (fmi3String,                         'resourceLocation'),
+            (fmi3String,                         'resourcePath'),
             (fmi3Boolean,                        'visible'),
             (fmi3Boolean,                        'loggingOn'),
             (fmi3Boolean,                        'eventModeUsed'),
@@ -128,18 +139,18 @@ class _FMU3(_FMU):
         ], fmi3Instance)
 
         self._fmi3Function('fmi3InstantiateScheduledExecution', [
-            (fmi3String, 'instanceName'),
-            (fmi3String, 'instantiationToken'),
-            (fmi3String, 'resourceLocation'),
-            (fmi3Boolean, 'visible'),
-            (fmi3Boolean, 'loggingOn'),
-            (POINTER(fmi3ValueReference), 'requiredIntermediateVariables'),
-            (c_size_t, 'nRequiredIntermediateVariables'),
-            (fmi3InstanceEnvironment, 'instanceEnvironment'),
-            (fmi3CallbackLogMessageTYPE, 'logMessage'),
+            (fmi3String,                         'instanceName'),
+            (fmi3String,                         'instantiationToken'),
+            (fmi3String,                         'resourcePath'),
+            (fmi3Boolean,                        'visible'),
+            (fmi3Boolean,                        'loggingOn'),
+            (POINTER(fmi3ValueReference),        'requiredIntermediateVariables'),
+            (c_size_t,                           'nRequiredIntermediateVariables'),
+            (fmi3InstanceEnvironment,            'instanceEnvironment'),
+            (fmi3CallbackLogMessageTYPE,         'logMessage'),
             (fmi3CallbackIntermediateUpdateTYPE, 'intermediateUpdate'),
-            (fmi3CallbackLockPreemptionTYPE, 'lockPreemption'),
-            (fmi3CallbackUnlockPreemptionTYPE, 'unlockPreemption'),
+            (fmi3CallbackLockPreemptionTYPE,     'lockPreemption'),
+            (fmi3CallbackUnlockPreemptionTYPE,   'unlockPreemption'),
         ], fmi3Instance)
 
         self._fmi3Function('fmi3FreeInstance', [(fmi3Instance, 'instance')], None)
@@ -343,6 +354,10 @@ class _FMU3(_FMU):
             (POINTER(fmi3UInt64),         'intervalCounters'),
             (POINTER(fmi3UInt64),         'resolutions'),
             (c_size_t,                    'nIntervals')
+        ])
+
+        self._fmi3Function('fmi3EvaluateDiscreteStates', [
+            (fmi3Instance, 'instance')
         ])
 
         self._fmi3Function('fmi3UpdateDiscreteStates', [
@@ -685,17 +700,21 @@ class _FMU3(_FMU):
         self.fmi3GetBoolean(self.component, vr, len(vr), value, nValues)
         return list(value)
 
-    def getString(self, vr):
+    def getString(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
         vr = (fmi3ValueReference * len(vr))(*vr)
-        value = (fmi3String * len(vr))()
-        self.fmi3GetString(self.component, vr, len(vr), value)
-        return list(value)
+        value = (fmi3String * nValues)()
+        self.fmi3GetString(self.component, vr, len(vr), value, nValues)
+        return list(map(lambda b: b.decode('utf-8'), value))
 
-    def getBinary(self, vr):
+    def getBinary(self, vr, nValues=None):
+        if nValues is None:
+            nValues = len(vr)
         vr = (fmi3ValueReference * len(vr))(*vr)
-        value = (fmi3Binary * len(vr))()
+        value = (fmi3Binary * nValues)()
         size = (c_size_t * len(vr))()
-        self.fmi3GetBinary(self.component, vr, len(vr), size, value, len(value))
+        self.fmi3GetBinary(self.component, vr, len(vr), size, value, nValues)
         return list(value)
 
     def getClock(self, vr, nValues=None):
@@ -871,7 +890,7 @@ class FMU3Model(_FMU3):
 
     def instantiate(self, visible=False, loggingOn=False):
 
-        resourceLocation = pathlib.Path(self.unzipDirectory, 'resources').as_uri()
+        resourcePath = os.path.join(self.unzipDirectory, 'resources')
 
         # save callbacks from GC
         self.printLogMessage = fmi3CallbackLogMessageTYPE(printLogMessage)
@@ -879,7 +898,7 @@ class FMU3Model(_FMU3):
         self.component = self.fmi3InstantiateModelExchange(
             self.instanceName.encode('utf-8'),
             self.guid.encode('utf-8'),
-            resourceLocation.encode('utf-8'),
+            resourcePath.encode('utf-8'),
             fmi3True if visible else fmi3False,
             fmi3True if loggingOn else fmi3False,
             fmi3InstanceEnvironment(),
@@ -933,16 +952,16 @@ class FMU3Slave(_FMU3):
 
     def instantiate(self, visible=False, loggingOn=False, eventModeUsed=False, earlyReturnAllowed=False):
 
-        resourceLocation = pathlib.Path(self.unzipDirectory, 'resources').as_uri()
-
         # save callbacks from GC
         self.printLogMessage = fmi3CallbackLogMessageTYPE(printLogMessage)
         self.intermediateUpdate = fmi3CallbackIntermediateUpdateTYPE(intermediateUpdate)
 
+        resourcePath = os.path.join(self.unzipDirectory, 'resources')
+
         self.component = self.fmi3InstantiateCoSimulation(
             self.instanceName.encode('utf-8'),
             self.guid.encode('utf-8'),
-            resourceLocation.encode('utf-8'),
+            resourcePath.encode('utf-8'),
             fmi3True if visible else fmi3False,
             fmi3True if loggingOn else fmi3False,
             fmi3True if eventModeUsed else fmi3False,
@@ -999,7 +1018,7 @@ class FMU3ScheduledExecution(_FMU3):
 
     def instantiate(self, visible=False, loggingOn=False):
 
-        resourceLocation = pathlib.Path(self.unzipDirectory, 'resources').as_uri()
+        resourcePath = os.path.join(self.unzipDirectory, 'resources')
 
         def noop():
             pass
@@ -1013,7 +1032,7 @@ class FMU3ScheduledExecution(_FMU3):
         self.component = self.fmi3InstantiateScheduledExecution(
             self.instanceName.encode('utf-8'),
             self.guid.encode('utf-8'),
-            resourceLocation.encode('utf-8'),
+            resourcePath.encode('utf-8'),
             fmi3True if visible else fmi3False,
             fmi3True if loggingOn else fmi3False,
             None, 0,

@@ -1,5 +1,28 @@
 from tempfile import mkdtemp
 
+from attr import attrs
+
+
+@attrs(eq=False, auto_attribs=True)
+class Variable(object):
+
+    type: str = None
+    variability: str = None
+    causality: str = None
+    name: str = None
+    start: str = None
+    description: str = None
+    mapping: str = None
+
+
+@attrs(eq=False, auto_attribs=True)
+class Connection(object):
+
+    startElement: str
+    startConnector: str
+    endElement: str
+    endConnector: str
+
 
 def create_fmu_container(configuration, output_filename):
     """ Create an FMU from nested FMUs (experimental)
@@ -47,29 +70,8 @@ def create_fmu_container(configuration, output_filename):
         'connections': []
     }
 
-    l = []
-
     component_map = {}
-    vi = 0  # variable index
 
-    l.append('<?xml version="1.0" encoding="UTF-8"?>')
-    l.append('<fmiModelDescription')
-    l.append('  fmiVersion="2.0"')
-    l.append('  modelName="%s"' % model_name)
-    l.append('  guid=""')
-    if 'description' in configuration:
-        l.append('  description="%s"' % configuration['description'])
-    l.append('  generationTool="FMPy %s FMU Container"' % fmpy.__version__)
-    l.append('  generationDateAndTime="%s">' % datetime.now(pytz.utc).isoformat())
-    l.append('')
-    l.append('  <CoSimulation modelIdentifier="FMUContainer">')
-    l.append('    <SourceFiles>')
-    l.append('      <File name="FMUContainer.c"/>')
-    l.append('      <File name="mpack.c"/>')
-    l.append('    </SourceFiles>')
-    l.append('  </CoSimulation>')
-    l.append('')
-    l.append('  <ModelVariables>')
     for i, component in enumerate(configuration['components']):
         model_description = read_model_description(component['filename'])
         model_identifier = model_description.coSimulation.modelIdentifier
@@ -81,39 +83,81 @@ def create_fmu_container(configuration, output_filename):
             'guid': model_description.guid,
             'modelIdentifier': model_identifier,
         })
-        for name in component['variables']:
-            v = variables[name]
-            data['variables'].append({'component': i, 'valueReference': v.valueReference})
-            name = component['name'] + '.' + v.name
-            description = v.description
-            if name in configuration['variables']:
-                mapping = configuration['variables'][name]
-                if 'name' in mapping:
-                    name = mapping['name']
-                if 'description' in mapping:
-                    description = mapping['description']
-            description = ' description="%s"' % xml_encode(description) if description else ''
-            l.append('    <ScalarVariable name="%s" valueReference="%d" causality="%s" variability="%s"%s>' % (xml_encode(name), vi, v.causality, v.variability, description))
-            l.append('      <%s%s/>' % (v.type, ' start="%s"' % v.start if v.start else ''))
-            l.append('    </ScalarVariable>')
-            vi += 1
-    l.append('  </ModelVariables>')
-    l.append('')
-    l.append('  <ModelStructure/>')
-    l.append('')
-    l.append('</fmiModelDescription>')
 
-    for sc, sv, ec, ev in configuration['connections']:
-        data['connections'].append({
-            'type': component_map[sc][1][sv].type,
-            'startComponent': component_map[sc][0],
-            'endComponent': component_map[ec][0],
-            'startValueReference': component_map[sc][1][sv].valueReference,
-            'endValueReference': component_map[ec][1][ev].valueReference,
+    variables_map = {}
+
+    for i, v in enumerate(configuration['variables']):
+        variables_map[v.name] = (i, v)
+
+    mv = ''  # model variables
+    mo = ''  # model outputs
+
+    for i, v in enumerate(configuration['variables']):
+
+        component_indices = []
+        value_references = []
+
+        # config.mp
+        for component_name, variable_name in v.mapping:
+            component_index, component_variables = component_map[component_name]
+            value_reference = component_variables[variable_name].valueReference
+            component_indices.append(component_index)
+            value_references.append(value_reference)
+
+        data['variables'].append({
+            'components': component_indices,
+            'valueReferences': value_references
         })
 
+        # modelDescription.xml
+        start = f' start="{ v.start }"' if v.start else ''
+        mv += f'\n    <ScalarVariable name="{ v.name }" valueReference="{ i }" variability="{ v.variability }" causality="{ v.causality }" description="{ v.description }">'
+        mv += f'\n      <{v.type}{ start }/>'
+        mv += f'\n    </ScalarVariable>'
+
+        if v.causality == 'output':
+            mo += f'\n      <Unknown index="{ i + 1 }"/>'
+
+    xml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="2.0"
+  modelName="{ model_name }"
+  guid=""
+  description="{ configuration.get('description', '') }"
+  generationTool="FMPy {fmpy.__version__} FMU Container"
+  generationDateAndTime="{ datetime.now(pytz.utc).isoformat() }">
+
+  <CoSimulation modelIdentifier="FMUContainer">
+    <SourceFiles>
+      <File name="FMUContainer.c"/>
+      <File name="mpack.c"/>
+    </SourceFiles>
+  </CoSimulation>
+
+  <ModelVariables>{ mv }
+  </ModelVariables>
+
+  <ModelStructure>
+    <Outputs>{mo}
+    </Outputs>
+    <InitialUnknowns>{ mo }
+    </InitialUnknowns>
+  </ModelStructure>
+
+</fmiModelDescription>
+'''
+
     with open(os.path.join(unzipdir, 'modelDescription.xml'), 'w') as f:
-        f.write('\n'.join(l) + '\n')
+        f.write(xml)
+
+    for c in configuration['connections']:
+        data['connections'].append({
+            'type': component_map[c.startElement][1][c.startConnector].type,
+            'startComponent': component_map[c.startElement][0],
+            'endComponent': component_map[c.endElement][0],
+            'startValueReference': component_map[c.startElement][1][c.startConnector].valueReference,
+            'endValueReference': component_map[c.endElement][1][c.endConnector].valueReference,
+        })
 
     with open(os.path.join(unzipdir, 'resources', 'config.mp'), 'wb') as f:
         packed = msgpack.packb(data)

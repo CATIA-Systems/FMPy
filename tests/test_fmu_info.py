@@ -31,33 +31,33 @@ class FMUInfoTest(unittest.TestCase):
             'win64':    '2017-01-19T18:42:35Z',
         }
 
-        expected = """
+        expected = f"""
 Model Info
 
-  FMI Version       2.0
-  FMI Type          Model Exchange
-  Model Name        CoupledClutches
-  Description       Model CoupledClutches
-  Platforms         %s
-  Continuous States 18
-  Event Indicators  25
-  Variables         178
-  Generation Tool   MapleSim (1196527/1196706/1196706)
-  Generation Date   %s
+  FMI Version        2.0
+  FMI Type           Model Exchange
+  Model Name         CoupledClutches
+  Description        Model CoupledClutches
+  Platforms          {platform}
+  Continuous States  18
+  Event Indicators   25
+  Variables          178
+  Generation Tool    MapleSim (1196527/1196706/1196706)
+  Generation Date    {generation_dates[platform]}
 
 Default Experiment
 
-  Stop Time         1.5
-  Tolerance         0.0001
+  Stop Time          1.5
+  Tolerance          0.0001
 
 Variables (input, output)
 
-Name                Causality              Start Value  Unit     Description
-inputs              input      0.00000000000000000e+00           RI1
-outputs[1]          output     1.00000000000000000e+01  rad/s    J1.w
-outputs[2]          output     0.00000000000000000e+00  rad/s    J2.w
-outputs[3]          output     0.00000000000000000e+00  rad/s    J3.w
-outputs[4]          output     0.00000000000000000e+00  rad/s    J4.w""" % (platform, generation_dates[platform])
+  Name               Causality              Start Value  Unit     Description
+  inputs             input      0.00000000000000000e+00           RI1
+  outputs[1]         output     1.00000000000000000e+01  rad/s    J1.w
+  outputs[2]         output     0.00000000000000000e+00  rad/s    J2.w
+  outputs[3]         output     0.00000000000000000e+00  rad/s    J3.w
+  outputs[4]         output     0.00000000000000000e+00  rad/s    J4.w"""
 
         self.assertEqual(expected, info)
 

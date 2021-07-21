@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<xs:include schemaLocation="fmi3Terminal.xsd"/>
-	<xs:include schemaLocation="fmi3Annotation.xsd"/>
-	<xs:annotation>
-		<xs:documentation>
+    <xs:include schemaLocation="fmi3Terminal.xsd"/>
+    <xs:include schemaLocation="fmi3Annotation.xsd"/>
+    <xs:annotation>
+        <xs:documentation>
 Copyright(c) 2008-2011 MODELISAR consortium,
              2012-2021 Modelica Association Project "FMI".
              All rights reserved.
@@ -34,51 +34,51 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ----------------------------------------------------------------------------
-		</xs:documentation>
-	</xs:annotation>
-	<xs:element name="fmiTerminalsAndIcons">
-		<xs:complexType>
-			<xs:sequence>
-				<xs:element name="GraphicalRepresentation" minOccurs="0">
-					<xs:complexType>
-						<xs:sequence>
-							<xs:element name="CoordinateSystem" minOccurs="0">
-								<xs:complexType>
-									<xs:attribute name="x1" type="xs:double" use="required"/>
-									<xs:attribute name="y1" type="xs:double" use="required"/>
-									<xs:attribute name="x2" type="xs:double" use="required"/>
-									<xs:attribute name="y2" type="xs:double" use="required"/>
-									<xs:attribute name="suggestedScalingFactorTo_mm" type="xs:double" use="required"/>
-								</xs:complexType>
-							</xs:element>
-							<xs:element name="Icon" minOccurs="0">
-								<xs:complexType>
-									<xs:attribute name="x1" type="xs:double" use="required"/>
-									<xs:attribute name="y1" type="xs:double" use="required"/>
-									<xs:attribute name="x2" type="xs:double" use="required"/>
-									<xs:attribute name="y2" type="xs:double" use="required"/>
-								</xs:complexType>
-							</xs:element>
-							<xs:element ref="Annotations" minOccurs="0"/>
-						</xs:sequence>
-					</xs:complexType>
-				</xs:element>
-				<xs:element name="Terminals" minOccurs="0">
-					<xs:complexType>
-						<xs:sequence>
-							<xs:element name="Terminal" type="fmi3Terminal" maxOccurs="unbounded"/>
-						</xs:sequence>
-					</xs:complexType>
-				</xs:element>
-				<xs:element ref="Annotations" minOccurs="0"/>
-			</xs:sequence>
-			<xs:attribute name="fmiVersion" use="required">
-				<xs:simpleType>
-					<xs:restriction base="xs:normalizedString">
-						<xs:pattern value="3[.](0-.*)"/>
-					</xs:restriction>
-				</xs:simpleType>
-			</xs:attribute>
-		</xs:complexType>
-	</xs:element>
+        </xs:documentation>
+    </xs:annotation>
+    <xs:element name="fmiTerminalsAndIcons">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="GraphicalRepresentation" minOccurs="0">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="CoordinateSystem" minOccurs="0">
+                                <xs:complexType>
+                                    <xs:attribute name="x1" type="xs:double" use="required"/>
+                                    <xs:attribute name="y1" type="xs:double" use="required"/>
+                                    <xs:attribute name="x2" type="xs:double" use="required"/>
+                                    <xs:attribute name="y2" type="xs:double" use="required"/>
+                                    <xs:attribute name="suggestedScalingFactorTo_mm" type="xs:double" use="required"/>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element name="Icon" minOccurs="0">
+                                <xs:complexType>
+                                    <xs:attribute name="x1" type="xs:double" use="required"/>
+                                    <xs:attribute name="y1" type="xs:double" use="required"/>
+                                    <xs:attribute name="x2" type="xs:double" use="required"/>
+                                    <xs:attribute name="y2" type="xs:double" use="required"/>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element ref="Annotations" minOccurs="0"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Terminals" minOccurs="0">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Terminal" type="fmi3Terminal" maxOccurs="unbounded"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element ref="Annotations" minOccurs="0"/>
+            </xs:sequence>
+            <xs:attribute name="fmiVersion" use="required">
+                <xs:simpleType>
+                    <xs:restriction base="xs:normalizedString">
+                        <xs:pattern value="3[.](0-.*)"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
 </xs:schema>

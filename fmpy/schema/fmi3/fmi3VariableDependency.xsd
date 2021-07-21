@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<xs:include schemaLocation="fmi3Annotation.xsd"/>
-	<xs:annotation>
-		<xs:documentation>
+    <xs:include schemaLocation="fmi3Annotation.xsd"/>
+    <xs:annotation>
+        <xs:documentation>
 Copyright(c) 2008-2011 MODELISAR consortium,
              2012-2021 Modelica Association Project "FMI".
              All rights reserved.
@@ -33,32 +33,32 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ----------------------------------------------------------------------------
-		</xs:documentation>
-	</xs:annotation>
-	<xs:complexType name="fmi3Unknown">
-		<xs:sequence>
-			<xs:element ref="Annotations" minOccurs="0"/>
-		</xs:sequence>
-		<xs:attribute name="valueReference" type="xs:unsignedInt" use="required"/>
-		<xs:attribute name="dependencies">
-			<xs:simpleType>
-				<xs:list itemType="xs:unsignedInt"/>
-			</xs:simpleType>
-		</xs:attribute>
-		<xs:attribute name="dependenciesKind">
-			<xs:simpleType>
-				<xs:list>
-					<xs:simpleType>
-						<xs:restriction base="xs:normalizedString">
-							<xs:enumeration value="dependent"/>
-							<xs:enumeration value="constant"/>
-							<xs:enumeration value="fixed"/>
-							<xs:enumeration value="tunable"/>
-							<xs:enumeration value="discrete"/>
-						</xs:restriction>
-					</xs:simpleType>
-				</xs:list>
-			</xs:simpleType>
-		</xs:attribute>
-	</xs:complexType>
+        </xs:documentation>
+    </xs:annotation>
+    <xs:complexType name="fmi3Unknown">
+        <xs:sequence>
+            <xs:element ref="Annotations" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="valueReference" type="xs:unsignedInt" use="required"/>
+        <xs:attribute name="dependencies">
+            <xs:simpleType>
+                <xs:list itemType="xs:unsignedInt"/>
+            </xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="dependenciesKind">
+            <xs:simpleType>
+                <xs:list>
+                    <xs:simpleType>
+                        <xs:restriction base="xs:normalizedString">
+                            <xs:enumeration value="dependent"/>
+                            <xs:enumeration value="constant"/>
+                            <xs:enumeration value="fixed"/>
+                            <xs:enumeration value="tunable"/>
+                            <xs:enumeration value="discrete"/>
+                        </xs:restriction>
+                    </xs:simpleType>
+                </xs:list>
+            </xs:simpleType>
+        </xs:attribute>
+    </xs:complexType>
 </xs:schema>

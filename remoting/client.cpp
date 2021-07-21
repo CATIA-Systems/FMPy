@@ -1,13 +1,26 @@
-#include "rpc/client.h"
-#include <iostream>
-#include <vector>
+#ifdef _WIN32
 #include "Windows.h"
 #include "Shlwapi.h"
-#include "remoting.h"
+#pragma comment(lib, "shlwapi.lib")
+#pragma warning(disable:4996)  // for strdup()
+#else
+#include <dlfcn.h>
+#include <libgen.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
+#define MAX_PATH 2048
+#endif
 
-extern "C" {
+#include <chrono>
+#include <thread>
+#include <iostream>
+#include <vector>
+#include "rpc/client.h"
+
+#include "remoting.h"
 #include "fmi2Functions.h"
-}
+
 
 using namespace std;
 
@@ -18,9 +31,15 @@ static void functionInThisDll() {}
 
 static rpc::client *client = nullptr;
 
-static 	PROCESS_INFORMATION s_proccessInfo;
+#ifdef _WIN32
+static 	PROCESS_INFORMATION s_proccessInfo = { 0 };
+#else
+pid_t s_pid = 0;
+#endif
 
 static fmi2CallbackLogger s_logger = nullptr;
+static fmi2ComponentEnvironment s_componentEnvironment = nullptr;
+static char *s_instanceName = nullptr;
 
 #define NOT_IMPLEMENTED return fmi2Error;
 
@@ -35,7 +54,7 @@ const char* fmi2GetTypesPlatform() {
 }
 
 const char* fmi2GetVersion() {
-	return fmi2Version;
+    return fmi2Version;
 }
 
 static void forwardLogMessages(const list<LogMessage> &logMessages) {
@@ -58,58 +77,43 @@ fmi2Status fmi2SetDebugLogging(fmi2Component c, fmi2Boolean loggingOn,	size_t nC
 fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2String fmuGUID, fmi2String fmuResourceLocation, const fmi2CallbackFunctions* functions, fmi2Boolean visible, fmi2Boolean loggingOn) {
 	
 	s_logger = functions->logger;
+    s_componentEnvironment = functions->componentEnvironment;
+    s_instanceName = strdup(instanceName);
 
-	char path[MAX_PATH];
-	char win32DllPath[MAX_PATH];
+#ifdef _WIN32
+    char path[MAX_PATH];
+
 	HMODULE hm = NULL;
 
 	if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
 		GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-		(LPCSTR)&functionInThisDll, &hm) == 0)
-	{
+		(LPCSTR)&functionInThisDll, &hm) == 0) {
 		int ret = GetLastError();
 		//fprintf(stderr, "GetModuleHandle failed, error = %d\n", ret);
 		// Return or however you want to handle an error.
 	}
-	if (GetModuleFileName(hm, path, sizeof(path)) == 0)
-	{
+
+	if (GetModuleFileName(hm, path, sizeof(path)) == 0) {
 		int ret = GetLastError();
 		//fprintf(stderr, "GetModuleFileName failed, error = %d\n", ret);
 		// Return or however you want to handle an error.
 	}
 
-	char drive[_MAX_DRIVE];
-	char dir[_MAX_DIR];
-	char fname[_MAX_FNAME];
-	char ext[_MAX_EXT];
+    const string filename(path);
 
-	_splitpath(path, drive, dir, fname, ext);
+    const string linux64Path = filename.substr(0, filename.find_last_of('\\'));
 
-	if (strcmp(fname, "client") == 0) {
-		functions->logger(NULL, instanceName, fmi2OK, "info", "Server started externally.");
-	} else {
-		PathRemoveFileSpec(path);
+    const string modelIdentifier = filename.substr(filename.find_last_of('\\') + 1, filename.find_last_of('.') - filename.find_last_of('\\') - 1);
 
-		// build the 32-bit DLL path
-		strcpy(win32DllPath, path);
-		PathRemoveFileSpec(win32DllPath);
-		PathAppend(win32DllPath, "win32");
-		PathAppend(win32DllPath, fname);
-		strcat(win32DllPath, ".dll");
+    const string binariesPath = linux64Path.substr(0, linux64Path.find_last_of('\\'));
 
-		// build the server.exe path
-		PathAppend(path, "server.exe");
+    if (!modelIdentifier.compare("client")) {
 
-		cout << path << endl;
+        s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Remoting server started externally.");
+	
+    } else {
 
-		char lpCommandLine[32767];
-
-		strcpy(lpCommandLine, path);
-		strcat(lpCommandLine, " ");
-		strcat(lpCommandLine, win32DllPath);
-		//strcat(lpCommandLine, "\"");
-
-		//LPSTR lpCommandLine_ = "E:\\Development\\FMPy\\wrapper\\server\\build\\Debug\\server.exe E:\\Development\\Reference-FMUs\\build\\temp\\BouncingBall\\binaries\\win32\\BouncingBall.dll";
+        const string command = binariesPath + "\\win32\\server.exe " + binariesPath + "\\win32\\" + modelIdentifier + ".dll";
 
 		// additional information
 		STARTUPINFO si;
@@ -119,25 +123,109 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 		si.cb = sizeof(si);
 		ZeroMemory(&s_proccessInfo, sizeof(s_proccessInfo));
 
-		functions->logger(NULL, "inst", fmi2OK, "info", lpCommandLine);
+        s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Starting remoting server. Command: %s", command.c_str());
 
 		// start the program up
-		auto p = CreateProcess(NULL,   // the path
-			lpCommandLine,        // Command line
-			NULL,           // Process handle not inheritable
-			NULL,           // Thread handle not inheritable
-			FALSE,          // Set handle inheritance to FALSE
-			0,              // No creation flags
-			NULL,           // Use parent's environment block
-			NULL,           // Use parent's starting directory 
-			&si,            // Pointer to STARTUPINFO structure
-			&s_proccessInfo // Pointer to PROCESS_INFORMATION structure (removed extra parentheses)
+		const BOOL success = CreateProcessA(NULL, // the path
+            (LPSTR)command.c_str(),               // command line
+			NULL,                                 // process handle not inheritable
+			NULL,                                 // thread handle not inheritable
+			FALSE,                                // set handle inheritance to FALSE
+            CREATE_NO_WINDOW,                     // creation flags
+			NULL,                                 // use parent's environment block
+			NULL,                                 // use parent's starting directory 
+			&si,                                  // pointer to STARTUPINFO structure
+			&s_proccessInfo                       // pointer to PROCESS_INFORMATION structure
 		);
 
+        if (success) {
+            s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Server process id is %d.", s_proccessInfo.dwProcessId);
+        } else {
+            s_logger(s_componentEnvironment, instanceName, fmi2Error, "error", "Failed to start server.");
+            return nullptr;
+        }
 	}
 
-	client = new rpc::client("localhost", rpc::constants::DEFAULT_PORT);
-	auto r = client->call("fmi2Instantiate", instanceName, (int)fmuType, fmuGUID, fmuResourceLocation, visible, loggingOn).as<ReturnValue>();
+#else
+
+    Dl_info info = { nullptr };
+
+    dladdr((const void *)functionInThisDll, &info);
+
+    const string filename(info.dli_fname);
+
+    const string linux64Path = filename.substr(0, filename.find_last_of('/'));
+    
+    const string modelIdentifier = filename.substr(filename.find_last_of('/') + 1, filename.find_last_of('.') - filename.find_last_of('/') - 1);
+
+    const string binariesPath = linux64Path.substr(0, linux64Path.find_last_of('/'));
+
+    if (!modelIdentifier.compare("client")) {
+    
+        s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Remoting server started externally.");
+    
+    } else {
+
+        const pid_t pid = fork();
+
+        if (pid < 0) {
+
+            s_logger(s_componentEnvironment, instanceName, fmi2Error, "error", "Failed to create server process.");
+            return nullptr;
+
+        } else if (pid == 0) {
+
+            s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Child process (pid = %d).", pid);
+
+            pid_t pgid = setsid();
+
+            if (pgid == -1) {
+                s_logger(s_componentEnvironment, instanceName, fmi2Error, "error", "Failed to create session id.");
+                return nullptr;
+            }
+
+            const string command = "wine64 " + binariesPath + "/win64/server.exe " + binariesPath + "/win64/" + modelIdentifier + ".dll";
+
+            s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Starting server. Command: %s", command.c_str());
+
+            execl("/bin/sh", "sh", "-c", command.c_str(), nullptr);
+
+            s_logger(s_componentEnvironment, instanceName, fmi2Error, "error", "Failed to start server.");
+
+            return nullptr;
+
+        } else {
+
+            s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Server process id is %d.", pid);
+            s_pid = pid;
+
+        }
+
+    }
+#endif
+
+    ReturnValue r;
+
+    for (int attempts = 0;; attempts++) {
+        try {
+            s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Trying to connect...");
+            client = new rpc::client("localhost", rpc::constants::DEFAULT_PORT);
+            r = client->call("fmi2Instantiate", instanceName, (int)fmuType, fmuGUID, fmuResourceLocation, visible, loggingOn).as<ReturnValue>();
+            break;
+        } catch (exception e) {
+            if (attempts < 20) {
+                s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Connection failed.");
+                delete client;
+                this_thread::sleep_for(chrono::milliseconds(500));  // wait for the server to start
+            } else {
+                s_logger(s_componentEnvironment, instanceName, fmi2Error, "info", e.what());
+                return nullptr;
+            }
+        }
+    }
+    
+    s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Connected.");
+
 	forwardLogMessages(r.logMessages);
 	return fmi2Component(r.status);
 }
@@ -148,7 +236,27 @@ void fmi2FreeInstance(fmi2Component c) {
 	//// Close process and thread handles
 	//CloseHandle(s_proccessInfo.hProcess);
 	//CloseHandle(s_proccessInfo.hThread);
-	auto s = TerminateProcess(s_proccessInfo.hProcess, EXIT_SUCCESS);
+#ifdef _WIN32
+    if (s_proccessInfo.hProcess) {
+        cout << "Terminating server." << endl;
+        BOOL s = TerminateProcess(s_proccessInfo.hProcess, EXIT_SUCCESS);
+    }
+#else
+    if (s_pid != 0) {
+
+        s_logger(s_componentEnvironment, s_instanceName, fmi2OK, "info", "Terminating server (process group id %d).", s_pid);
+
+        killpg(s_pid, SIGKILL);
+
+        int status;
+        
+        while (wait(&status) > 0) {
+            s_logger(s_componentEnvironment, s_instanceName, fmi2OK, "info", "Waiting for child processes to terminate.");
+        }
+
+        s_logger(s_componentEnvironment, s_instanceName, fmi2OK, "info", "Server terminated.");
+    }
+#endif
 }
 
 /* Enter and exit initialization mode, terminate and reset */

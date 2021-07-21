@@ -570,7 +570,7 @@ def simulate_fmu(filename,
                  fmi_type: str = None,
                  start_values: Dict[str, Any] = {},
                  apply_default_start_values: bool = False,
-                 input: Input = None,
+                 input: np.ndarray = None,
                  output: Sequence[str] = None,
                  timeout: Union[float, str] = None,
                  debug_logging: bool = False,
@@ -580,7 +580,8 @@ def simulate_fmu(filename,
                  step_finished: Callable[[float, Recorder], bool] = None,
                  model_description: ModelDescription = None,
                  fmu_instance: _FMU = None,
-                 set_input_derivatives: bool = False) -> SimulationResult:
+                 set_input_derivatives: bool = False,
+                 remote_platform: str = 'auto') -> SimulationResult:
     """ Simulate an FMU
 
     Parameters:
@@ -607,25 +608,41 @@ def simulate_fmu(filename,
         model_description      the previously loaded model description (experimental)
         fmu_instance           the previously instantiated FMU (experimental)
         set_input_derivatives  set the input derivatives (FMI 2.0 Co-Simulation only)
+        remote_platform        platform to use for remoting server ('auto': determine automatically if current platform
+                               is not supported, None: no remoting; experimental)
     Returns:
         result              a structured numpy array that contains the result
     """
 
-    from fmpy import supported_platforms, platform_tuple
+    from fmpy import supported_platforms
     from fmpy.model_description import read_model_description
+    from fmpy.util import has_wine64, has_wsl, can_simulate
 
     platforms = supported_platforms(filename)
 
-    # use 32-bit DLL remoting
-    use_remoting = platform == 'win64' and 'win64' not in platforms and 'win32' in platforms
+    if fmu_instance is None and platform not in platforms and remote_platform is None:
+        raise Exception(f"The current platform ({platform}) is not supported by the FMU.")
 
-    if fmu_instance is None and platform not in platforms and not use_remoting:
-        raise Exception("The current platform (%s) is not supported by the FMU." % platform)
+    can_sim, remote_platform = can_simulate(platforms, remote_platform)
+
+    if not can_sim:
+        raise Exception(f"The FMU cannot be simulated on the current platform ({platform}).")
+
+    # if platform not in platforms and remote_platform == 'auto':
+    #     if platform == 'win64' and 'win32' in platforms:
+    #         remote_platform = 'win32'
+    #     elif platform == 'win64' and 'linux64' in platforms and has_wsl():
+    #         remote_platform = 'linux64'
+    #     elif platform == 'linux64' and 'win64' in platforms and has_wine64():
+    #         remote_platform = 'win64'
+    #     else:
+    #         raise Exception(f"The FMU cannot be simulated on the current platform ({platform}).")
+    #
+    # if platform not in platforms and remote_platform not in platforms:
+    #     raise Exception(f"The current platform ({platform}) is not supported by the FMU.")
 
     if model_description is None:
         model_description = read_model_description(filename, validate=validate)
-    else:
-        model_description = model_description
 
     if fmi_type is None:
         if fmu_instance is not None:
@@ -672,28 +689,96 @@ def simulate_fmu(filename,
         unzipdir = filename
         tempdir = None
     else:
-        required_paths = ['resources', 'binaries/' + platform, 'binaries/' + platform_tuple]
-        if use_remoting:
-            required_paths.append('binaries/win32')
-        tempdir = extract(filename, include=lambda n: n.startswith(tuple(required_paths)))
+        required_paths = ['resources', 'binaries/']
+        if remote_platform:
+            required_paths.append(os.path.join('binaries', remote_platform))
+        tempdir = extract(filename, include=None if remote_platform else lambda n: n.startswith(tuple(required_paths)))
         unzipdir = tempdir
 
-    if use_remoting:
-        # start 32-bit server
-        from subprocess import Popen
-        server_path = os.path.dirname(__file__)
-        server_path = os.path.join(server_path, 'remoting', 'server.exe')
+    if remote_platform is None:
+
+        server = None
+        library_path = None
+
+    else:
+
+        import subprocess
+
         if fmi_type == 'ModelExchange':
             model_identifier = model_description.modelExchange.modelIdentifier
         else:
             model_identifier = model_description.coSimulation.modelIdentifier
-        dll_path = os.path.join(unzipdir, 'binaries', 'win32', model_identifier + '.dll')
-        server = Popen([server_path, dll_path])
-    else:
-        server = None
+
+        fmpy_dir = os.path.dirname(__file__)
+
+        if platform == 'win64':
+
+            if remote_platform == 'win32':
+
+                server_path = os.path.join(fmpy_dir, 'remoting', 'win32', 'server.exe')
+                dll_path = os.path.join(unzipdir, 'binaries', 'win32', model_identifier + '.dll')
+
+                library_path = os.path.join(fmpy_dir, 'remoting', 'win64', 'client.dll')
+                server = subprocess.Popen([server_path, dll_path])
+
+            elif remote_platform == 'linux64':
+
+                server_path = os.path.join(fmpy_dir, 'remoting', 'linux64', 'server').replace('\\', '/')
+                process = subprocess.run(['wsl', 'wslpath', server_path], capture_output=True, check=True)
+                server_path = process.stdout.decode("utf-8") .strip()
+
+                so_path = os.path.join(unzipdir, 'binaries', 'linux64', model_identifier + '.so').replace('\\', '/')
+                process = subprocess.run(['wsl', 'wslpath', so_path], capture_output=True, check=True)
+                so_path = process.stdout.decode("utf-8") .strip()
+
+                library_path = os.path.join(fmpy_dir, 'remoting', 'win64', 'client.dll')
+                server = subprocess.Popen(['wsl', server_path, so_path])
+
+            elif remote_platform == 'win64':
+
+                server_path = os.path.join(fmpy_dir, 'remoting', 'win64', 'server.exe')
+                dll_path = os.path.join(unzipdir, 'binaries', 'win64', model_identifier + '.dll')
+
+                library_path = os.path.join(fmpy_dir, 'remoting', 'win64', 'client.dll')
+                server = subprocess.Popen([server_path, dll_path])
+
+            else:
+
+                raise Exception(f"The remote platform {remote_platform} is not supported on the current platform ({platform}).")
+
+        elif platform == 'linux64':
+
+            if remote_platform == 'win32':
+
+                server_path = os.path.join(fmpy_dir, 'remoting', 'win32', 'server.exe')
+                dll_path = os.path.join(unzipdir, 'binaries', 'win32', model_identifier + '.dll')
+                library_path = os.path.join(fmpy_dir, 'remoting', 'linux64', 'client.so')
+                server = subprocess.Popen(['wine', server_path, dll_path])
+
+            elif remote_platform == 'win64':
+
+                server_path = os.path.join(fmpy_dir, 'remoting', 'win64', 'server.exe')
+                dll_path = os.path.join(unzipdir, 'binaries', 'win64', model_identifier + '.dll')
+                library_path = os.path.join(fmpy_dir, 'remoting', 'linux64', 'client.so')
+                server = subprocess.Popen(['wine64', server_path, dll_path])
+
+            elif remote_platform == 'linux64':
+
+                server_path = os.path.join(fmpy_dir, 'remoting', 'linux64', 'server')
+                dll_path = os.path.join(unzipdir, 'binaries', 'linux64', model_identifier + '.so')
+                library_path = os.path.join(fmpy_dir, 'remoting', 'linux64', 'client.so')
+                server = subprocess.Popen([server_path, dll_path])
+
+            else:
+
+                raise Exception(f"The remote platform {remote_platform} is not supported on the current platform ({platform}).")
+
+        else:
+
+            raise Exception(f"Remoting is not supported on the current platform ({platform}).")
 
     if fmu_instance is None:
-        fmu = instantiate_fmu(unzipdir, model_description, fmi_type, visible, debug_logging, logger, fmi_call_logger, use_remoting)
+        fmu = instantiate_fmu(unzipdir, model_description, fmi_type, visible, debug_logging, logger, fmi_call_logger, library_path)
     else:
         fmu = fmu_instance
 
@@ -707,7 +792,8 @@ def simulate_fmu(filename,
         fmu.freeInstance()
 
     if server is not None:
-        server.kill()
+        server.terminate()
+        server.wait()
 
     # clean up
     if tempdir is not None:
@@ -716,7 +802,7 @@ def simulate_fmu(filename,
     return result
 
 
-def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, debug_logging=False, logger=None, fmi_call_logger=None, use_remoting=False):
+def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, debug_logging=False, logger=None, fmi_call_logger=None, library_path=None):
     """
     Create an instance of fmpy.fmi1._FMU (see simulate_fmu() for documentation of the parameters).
     """
@@ -729,8 +815,8 @@ def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, d
         'fmiCallLogger': fmi_call_logger
     }
 
-    if use_remoting:
-        fmu_args['libraryPath'] = os.path.join(os.path.dirname(__file__), 'remoting', 'client.dll')
+    if library_path:
+        fmu_args['libraryPath'] = library_path
 
     if logger is None:
         logger = printLogMessage
@@ -831,7 +917,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
     if is_fmi1:
         fmu.setTime(time)
     elif is_fmi2:
-        fmu.setupExperiment(startTime=start_time)
+        fmu.setupExperiment(startTime=start_time, stopTime=stop_time)
 
     input = Input(fmu, model_description, input_signals)
 
@@ -877,7 +963,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
     elif is_fmi3:
 
-        fmu.enterInitializationMode(startTime=start_time)
+        fmu.enterInitializationMode(startTime=start_time, stopTime=stop_time)
         input.apply(time)
         fmu.exitInitializationMode()
 
@@ -973,6 +1059,8 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
             state_event, roots_found, time = solver.step(time, t_next)
         else:
             # skip
+            state_event = False
+            roots_found = []
             time = t_next
 
         # set the time
@@ -1094,7 +1182,7 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
     is_fmi2 = model_description.fmiVersion == '2.0'
 
     if is_fmi2:
-        fmu.setupExperiment(tolerance=relative_tolerance, startTime=start_time)
+        fmu.setupExperiment(tolerance=relative_tolerance, startTime=start_time, stopTime=stop_time)
 
     input = Input(fmu=fmu, modelDescription=model_description, signals=input_signals, set_input_derivatives=set_input_derivatives)
 
@@ -1111,16 +1199,16 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
         input.apply(time)
         fmu.exitInitializationMode()
     else:
-        fmu.enterInitializationMode(tolerance=relative_tolerance, startTime=start_time)
+        fmu.enterInitializationMode(tolerance=relative_tolerance, startTime=start_time, stopTime=stop_time)
         input.apply(time)
         fmu.exitInitializationMode()
 
     recorder = Recorder(fmu=fmu, modelDescription=model_description, variableNames=output, interval=output_interval)
 
-    n_steps = 0
+    n_steps = time / output_interval
 
     # simulation loop
-    while time < stop_time:
+    while time + output_interval <= stop_time:
 
         if timeout is not None and (current_time() - sim_start) > timeout:
             break

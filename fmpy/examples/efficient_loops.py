@@ -11,10 +11,10 @@ def run_efficient_loop():
     # download the FMU
     url = 'https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/win64/Test-FMUs/0.0.2/VanDerPol/VanDerPol.fmu'
     sha = 'a870f5f7f712e8152bfd60a1c2fd1c0bc10d4ca8124bd3031e321e8dd1e71bb0'
-    download_file(url, sha)
+    filename = download_file(url, sha)
 
     # extract the FMU to a temporary directory
-    unzipdir = extract('VanDerPol.fmu')
+    unzipdir = extract(filename)
 
     # read the model description
     model_description = read_model_description(unzipdir)

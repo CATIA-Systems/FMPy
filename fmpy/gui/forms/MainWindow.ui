@@ -1356,6 +1356,13 @@ QToolButton:checked, QToolButton:hover:pressed {
      <addaction name="actionCompileWin32Binary"/>
      <addaction name="actionCompileWin64Binary"/>
     </widget>
+    <widget class="QMenu" name="menuAddRemoting">
+     <property name="title">
+      <string>Add &amp;Remoting</string>
+     </property>
+     <addaction name="actionAddWindows32Remoting"/>
+     <addaction name="actionAddLinux64Remoting"/>
+    </widget>
     <addaction name="actionCreateDesktopShortcut"/>
     <addaction name="actionAddFileAssociation"/>
     <addaction name="separator"/>
@@ -1363,7 +1370,7 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="menuCompilePlatformBinary"/>
     <addaction name="actionCreateJupyterNotebook"/>
     <addaction name="actionCreateCMakeProject"/>
-    <addaction name="actionAddRemoting"/>
+    <addaction name="menuAddRemoting"/>
     <addaction name="actionAddCoSimulationWrapper"/>
    </widget>
    <addaction name="menu_File"/>
@@ -1901,14 +1908,6 @@ QToolButton::menu-button {
     <string>Create C&amp;Make Project...</string>
    </property>
   </action>
-  <action name="actionAddRemoting">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Add 32-bit &amp;Remoting</string>
-   </property>
-  </action>
   <action name="actionAddCoSimulationWrapper">
    <property name="enabled">
     <bool>false</bool>
@@ -1975,6 +1974,22 @@ QToolButton::menu-button {
    </property>
    <property name="toolTip">
     <string>Compile Darwin binary</string>
+   </property>
+  </action>
+  <action name="actionAddLinux64Remoting">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Windows 64-bit on &amp;Linux 64-bit</string>
+   </property>
+  </action>
+  <action name="actionAddWindows32Remoting">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Windows 32-bit on &amp;Windows 64-bit</string>
    </property>
   </action>
  </widget>

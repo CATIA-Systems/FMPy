@@ -1,3 +1,28 @@
+## v0.3.1 (2021-07-21)
+
+### Bug fixes
+
+- Fix type hint for parameter "input" in "simulate_fmu()" (#286)
+- Set output arguments in fmi3.intermediateUpdate() (#273)
+- Allow fixed and tunable structural parameters (#268)
+- Fix model structure of Container FMU (#267)
+- Add missing parameter "nValues" to getString() and getBinary() and decode byte strings (#263)
+- Set stop time and handle negative start time in (#261)
+
+### Enhancements
+
+- Update FMI 3.0 API to v3.0-beta.2
+- Offer to open generated Jupyter notebook in GUI (#262)
+- Add arguments of fmu_info() to dump() enhancement (#285)
+- Improve Plotly plots of discrete signals (#284)
+- Define variables of Container FMU independent of inner FMUs (#265)
+- Validate that initial is not set for input and independent variables (#280)
+- Return filename from fmpy.util.download_file() (#267)
+- Add win64 on linux64 remoting w/ wine and linux64 on win64 remoting w/ WSL (experimental)
+- Assert mandatory independent variable in FMI 3.0 (#272)
+- Define model description classes with @attrs (#275)
+- Detect drive letter in fmuResourceLocation on Windows
+
 ## v0.3.0 (2021-04-20)
 
 This release drops Python 2.7 support. The minimum required version is now Python 3.5.

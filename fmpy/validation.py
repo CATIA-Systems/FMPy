@@ -25,8 +25,17 @@ def validate_fmu(filename: str) -> List[str]:
 
     from . import read_model_description
     from .model_description import ValidationError
+    import os
+    import zipfile
 
     problems = []
+
+    # check file paths
+    if isinstance(filename, str) and os.path.isfile(filename):
+        with zipfile.ZipFile(filename, 'r') as zf:
+            for file in zf.filelist:
+                if '\\' in file.orig_filename:
+                    problems.append(f'The file path "{file.orig_filename}" contains a backslash.')
 
     try:
         read_model_description(filename,

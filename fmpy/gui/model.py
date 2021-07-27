@@ -112,14 +112,15 @@ class VariablesModel(QAbstractItemModel):
 
         column = self.COLUMN_NAMES[index.column()]
 
-        flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
-
         if column == 'Plot':
-            flags |= Qt.ItemIsUserCheckable
+            variable = self.variableForIndex(index)
+            if variable.dimensions:
+                return Qt.ItemIsSelectable
+            return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsUserCheckable
         elif column == 'Start':
-            flags |= Qt.ItemIsEditable
-
-        return flags
+            return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
+        else:
+            return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def setData(self, index, value, role):
 

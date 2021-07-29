@@ -520,7 +520,7 @@ class _FMU3(_FMU):
     def setDebugLogging(self, loggingOn, categories):
         categories_ = (fmi3String * len(categories))()
         categories_[:] = [c.encode('utf-8') for c in categories]
-        self.fmi3SetDebugLogging(self.component, fmi3True if loggingOn else fmi3False, len(categories), categories_)
+        self.fmi3SetDebugLogging(self.component, fmi3Boolean(loggingOn), len(categories), categories_)
 
     # Creation and destruction of FMU instances and setting debug status
 
@@ -532,20 +532,20 @@ class _FMU3(_FMU):
 
     def enterInitializationMode(self, tolerance=None, startTime=0.0, stopTime=None):
 
-        toleranceDefined = fmi3True if tolerance is not None else fmi3False
+        toleranceDefined = fmi3Boolean(tolerance is not None)
 
         if tolerance is None:
             tolerance = 0.0
 
-        stopTimeDefined = fmi3True if stopTime is not None else fmi3False
+        stopTimeDefined = fmi3Boolean(stopTime is not None)
 
         if stopTime is None:
             stopTime = 0.0
 
-        return self.fmi3EnterInitializationMode(self.component, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime)
+        self.fmi3EnterInitializationMode(self.component, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime)
 
     def exitInitializationMode(self):
-        return self.fmi3ExitInitializationMode(self.component)
+        self.fmi3ExitInitializationMode(self.component)
 
     # Clock related functions
 
@@ -573,11 +573,11 @@ class _FMU3(_FMU):
 
         return self.fmi3EnterEventMode(
             self.component,
-            fmi3True if stepEvent else fmi3False,
-            fmi3True if stateEvent else fmi3False,
+            fmi3Boolean(stepEvent),
+            fmi3Boolean(stateEvent),
             rootsFound,
             len(rootsFound),
-            fmi3True if timeEvent else fmi3False,
+            fmi3Boolean(timeEvent)
         )
 
     def updateDiscreteStates(self):
@@ -597,11 +597,11 @@ class _FMU3(_FMU):
                                       byref(nextEventTimeDefined),
                                       byref(nextEventTime))
 
-        return (discreteStatesNeedUpdate.value          != fmi3False,
-                terminateSimulation.value               != fmi3False,
-                nominalsOfContinuousStatesChanged.value != fmi3False,
-                valuesOfContinuousStatesChanged.value   != fmi3False,
-                nextEventTimeDefined.value              != fmi3False,
+        return (discreteStatesNeedUpdate.value,
+                terminateSimulation.value,
+                nominalsOfContinuousStatesChanged.value,
+                valuesOfContinuousStatesChanged.value,
+                nextEventTimeDefined.value,
                 nextEventTime.value)
 
     def terminate(self):
@@ -899,8 +899,8 @@ class FMU3Model(_FMU3):
             self.instanceName.encode('utf-8'),
             self.guid.encode('utf-8'),
             resourcePath.encode('utf-8'),
-            fmi3True if visible else fmi3False,
-            fmi3True if loggingOn else fmi3False,
+            fmi3Boolean(visible),
+            fmi3Boolean(loggingOn),
             fmi3InstanceEnvironment(),
             self.printLogMessage)
 
@@ -912,10 +912,10 @@ class FMU3Model(_FMU3):
     def enterContinuousTimeMode(self):
         return self.fmi3EnterContinuousTimeMode(self.component)
 
-    def completedIntegratorStep(self, noSetFMUStatePriorToCurrentPoint=fmi3True):
+    def completedIntegratorStep(self, noSetFMUStatePriorToCurrentPoint=True):
         enterEventMode = fmi3Boolean()
         terminateSimulation = fmi3Boolean()
-        self.fmi3CompletedIntegratorStep(self.component, noSetFMUStatePriorToCurrentPoint, byref(enterEventMode), byref(terminateSimulation))
+        self.fmi3CompletedIntegratorStep(self.component, fmi3Boolean(noSetFMUStatePriorToCurrentPoint), byref(enterEventMode), byref(terminateSimulation))
         return enterEventMode.value, terminateSimulation.value
 
     # Providing independent variables and re-initialization of caching
@@ -962,10 +962,10 @@ class FMU3Slave(_FMU3):
             self.instanceName.encode('utf-8'),
             self.guid.encode('utf-8'),
             resourcePath.encode('utf-8'),
-            fmi3True if visible else fmi3False,
-            fmi3True if loggingOn else fmi3False,
-            fmi3True if eventModeUsed else fmi3False,
-            fmi3True if earlyReturnAllowed else fmi3False,
+            fmi3Boolean(visible),
+            fmi3Boolean(loggingOn),
+            fmi3Boolean(eventModeUsed),
+            fmi3Boolean(earlyReturnAllowed),
             None, 0,
             fmi3InstanceEnvironment(),
             self.printLogMessage,
@@ -992,13 +992,23 @@ class FMU3Slave(_FMU3):
         self.fmi3GetOutputDerivatives(self.component, vr, len(vr), order, value)
         return list(value)
 
-    def doStep(self, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint=fmi3True):
+    def doStep(self, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint=True):
+
         eventEncountered = fmi3Boolean()
         terminateSimulation = fmi3Boolean()
         earlyReturn = fmi3Boolean()
         lastSuccessfulTime = fmi3Float64()
-        status = self.fmi3DoStep(self.component, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint, byref(eventEncountered), byref(terminateSimulation), byref(earlyReturn), byref(lastSuccessfulTime))
-        return status, eventEncountered.value != fmi3False, terminateSimulation.value != fmi3False, earlyReturn.value != fmi3False, lastSuccessfulTime.value
+
+        self.fmi3DoStep(self.component,
+                        currentCommunicationPoint,
+                        communicationStepSize,
+                        fmi3Boolean(noSetFMUStatePriorToCurrentPoint),
+                        byref(eventEncountered),
+                        byref(terminateSimulation),
+                        byref(earlyReturn),
+                        byref(lastSuccessfulTime))
+
+        return eventEncountered.value, terminateSimulation.value, earlyReturn.value, lastSuccessfulTime.value
 
 
 class FMU3ScheduledExecution(_FMU3):
@@ -1033,8 +1043,8 @@ class FMU3ScheduledExecution(_FMU3):
             self.instanceName.encode('utf-8'),
             self.guid.encode('utf-8'),
             resourcePath.encode('utf-8'),
-            fmi3True if visible else fmi3False,
-            fmi3True if loggingOn else fmi3False,
+            fmi3Boolean(visible),
+            fmi3Boolean(loggingOn),
             None, 0,
             fmi3InstanceEnvironment(),
             self.printLogMessage,

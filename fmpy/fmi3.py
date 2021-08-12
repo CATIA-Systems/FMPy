@@ -890,7 +890,7 @@ class FMU3Model(_FMU3):
 
     def instantiate(self, visible=False, loggingOn=False):
 
-        resourcePath = os.path.join(self.unzipDirectory, 'resources')
+        resourcePath = os.path.join(self.unzipDirectory, 'resources') + os.path.sep
 
         # save callbacks from GC
         self.printLogMessage = fmi3CallbackLogMessageTYPE(printLogMessage)
@@ -956,7 +956,7 @@ class FMU3Slave(_FMU3):
         self.printLogMessage = fmi3CallbackLogMessageTYPE(printLogMessage)
         self.intermediateUpdate = fmi3CallbackIntermediateUpdateTYPE(intermediateUpdate)
 
-        resourcePath = os.path.join(self.unzipDirectory, 'resources')
+        resourcePath = os.path.join(self.unzipDirectory, 'resources') + os.path.sep
 
         self.component = self.fmi3InstantiateCoSimulation(
             self.instanceName.encode('utf-8'),
@@ -1028,7 +1028,7 @@ class FMU3ScheduledExecution(_FMU3):
 
     def instantiate(self, visible=False, loggingOn=False):
 
-        resourcePath = os.path.join(self.unzipDirectory, 'resources')
+        resourcePath = os.path.join(self.unzipDirectory, 'resources') + os.path.sep
 
         def noop():
             pass

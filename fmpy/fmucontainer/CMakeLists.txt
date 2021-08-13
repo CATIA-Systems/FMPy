@@ -29,6 +29,10 @@ add_library(FMUContainer SHARED
   ../c-code/fmi2Functions.h
   ../c-code/fmi2FunctionTypes.h
   ../c-code/fmi2TypesPlatform.h
+  ../c-code/FMI.h
+  ../c-code/FMI2.h
+  ../c-code/FMI.c
+  ../c-code/FMI2.c
   sources/FMUContainer.c
   sources/mpack.h
   sources/mpack.c

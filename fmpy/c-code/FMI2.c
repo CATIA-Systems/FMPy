@@ -40,33 +40,39 @@ static void cb_logMessage2(fmi2ComponentEnvironment componentEnvironment, fmi2St
 
 #if defined(FMI2_FUNCTION_PREFIX)
 #define LOAD_SYMBOL(f) \
-    instance->fmi2 ## f = fmi2 ## f;
+    instance->fmi2Functions->fmi2 ## f = fmi2 ## f;
 #elif defined(_WIN32)
 #define LOAD_SYMBOL(f) \
-    instance->fmi2 ## f = (fmi2 ## f ## TYPE*)GetProcAddress(instance->libraryHandle, "fmi2" #f); \
-    if (!instance->fmi2 ## f) goto fail;
+    instance->fmi2Functions->fmi2 ## f = (fmi2 ## f ## TYPE*)GetProcAddress(instance->libraryHandle, "fmi2" #f); \
+    if (!instance->fmi2Functions->fmi2 ## f) { \
+        instance->logMessage(instance, FMIError, "error", "Symbol fmi2" #f " is missing in shared library."); \
+        goto fail; \
+    }
 #else
 #define LOAD_SYMBOL(f) \
-    instance->fmi2 ## f = (fmi2 ## f ## TYPE*)dlsym(instance->libraryHandle, "fmi2" #f); \
-    if (!instance->fmi2 ## f) goto fail;
+    instance->fmi2Functions->fmi2 ## f = (fmi2 ## f ## TYPE*)dlsym(instance->libraryHandle, "fmi2" #f); \
+    if (!instance->fmi2Functions->fmi2 ## f) { \
+        instance->logMessage(instance, FMIError, "error", "Symbol fmi2" #f " is missing in shared library."); \
+        goto fail; \
+    }
 #endif
 
 #define CALL(f) \
-    fmi2Status status = instance->fmi2 ## f (instance->component); \
+    fmi2Status status = instance->fmi2Functions->fmi2 ## f (instance->component); \
     if (instance->logFunctionCall) { \
         instance->logFunctionCall(instance, status, "fmi2" #f "()"); \
     } \
     return status;
 
 #define CALL_ARGS(f, m, ...) \
-    fmi2Status status = instance-> fmi2 ## f (instance->component, __VA_ARGS__); \
+    fmi2Status status = instance->fmi2Functions-> fmi2 ## f (instance->component, __VA_ARGS__); \
     if (instance->logFunctionCall) { \
         instance->logFunctionCall(instance, status, "fmi2" #f "(" m ")", __VA_ARGS__); \
     } \
     return status;
 
 #define CALL_ARRAY(s, t) \
-    fmi2Status status = instance->fmi2 ## s ## t(instance->component, vr, nvr, value); \
+    fmi2Status status = instance->fmi2Functions->fmi2 ## s ## t(instance->component, vr, nvr, value); \
     if (instance->logFunctionCall) { \
         FMIValueReferencesToString(instance, vr, nvr); \
         FMIValuesToString(instance, nvr, value, FMI ## t ## Type); \
@@ -83,18 +89,18 @@ const char* FMI2GetTypesPlatform(FMIInstance *instance) {
     if (instance->logFunctionCall) {
             instance->logFunctionCall(instance, FMIOK, "fmi2GetTypesPlatform()");
     }
-    return instance->fmi2GetTypesPlatform();
+    return instance->fmi2Functions->fmi2GetTypesPlatform();
 }
 
 const char* FMI2GetVersion(FMIInstance *instance) {
     if (instance->logFunctionCall) {
         instance->logFunctionCall(instance, FMIOK, "fmi2GetVersion()");
     }
-    return instance->fmi2GetVersion();
+    return instance->fmi2Functions->fmi2GetVersion();
 }
 
 fmi2Status FMI2SetDebugLogging(FMIInstance *instance, fmi2Boolean loggingOn, size_t nCategories, const fmi2String categories[]) {
-    fmi2Status status = instance->fmi2SetDebugLogging(instance->component, loggingOn, nCategories, categories);
+    fmi2Status status = instance->fmi2Functions->fmi2SetDebugLogging(instance->component, loggingOn, nCategories, categories);
     if (instance->logFunctionCall) {
         FMIValuesToString(instance, nCategories, categories, FMIStringType);
         instance->logFunctionCall(instance, status, "fmi2SetDebugLogging(loggingOn=%d, nCategories=%zu, categories=%s)",
@@ -109,12 +115,18 @@ fmi2Status FMI2Instantiate(FMIInstance *instance, const char *fmuResourceLocatio
 
     instance->fmiVersion = FMIVersion2;
 
-    instance->eventInfo2.newDiscreteStatesNeeded = fmi2False;
-    instance->eventInfo2.terminateSimulation = fmi2False;
-    instance->eventInfo2.nominalsOfContinuousStatesChanged = fmi2False;
-    instance->eventInfo2.valuesOfContinuousStatesChanged = fmi2False;
-    instance->eventInfo2.nextEventTimeDefined = fmi2False;
-    instance->eventInfo2.nextEventTime = 0.0;
+    instance->fmi2Functions = calloc(1, sizeof(FMI2Functions));
+
+    if (!instance->fmi2Functions) {
+        return fmi2Error;
+    }
+
+    instance->fmi2Functions->eventInfo.newDiscreteStatesNeeded           = fmi2False;
+    instance->fmi2Functions->eventInfo.terminateSimulation               = fmi2False;
+    instance->fmi2Functions->eventInfo.nominalsOfContinuousStatesChanged = fmi2False;
+    instance->fmi2Functions->eventInfo.valuesOfContinuousStatesChanged   = fmi2False;
+    instance->fmi2Functions->eventInfo.nextEventTimeDefined              = fmi2False;
+    instance->fmi2Functions->eventInfo.nextEventTime                     = 0.0;
 
     instance->state = FMI2StartAndEndState;
 
@@ -191,16 +203,16 @@ fmi2Status FMI2Instantiate(FMIInstance *instance, const char *fmuResourceLocatio
 
 #endif
 
-    instance->functions2.logger = cb_logMessage2;
-    instance->functions2.allocateMemory = calloc;
-    instance->functions2.freeMemory = free;
-    instance->functions2.stepFinished = NULL;
-    instance->functions2.componentEnvironment = instance;
+    instance->fmi2Functions->callbacks.logger               = cb_logMessage2;
+    instance->fmi2Functions->callbacks.allocateMemory       = calloc;
+    instance->fmi2Functions->callbacks.freeMemory           = free;
+    instance->fmi2Functions->callbacks.stepFinished         = NULL;
+    instance->fmi2Functions->callbacks.componentEnvironment = instance;
 
-    instance->component = instance->fmi2Instantiate(instance->name, fmuType, fmuGUID, fmuResourceLocation, &instance->functions2, visible, loggingOn);
+    instance->component = instance->fmi2Functions->fmi2Instantiate(instance->name, fmuType, fmuGUID, fmuResourceLocation, &instance->fmi2Functions->callbacks, visible, loggingOn);
 
     if (instance->logFunctionCall) {
-        fmi2CallbackFunctions *f = &instance->functions2;
+        fmi2CallbackFunctions *f = &instance->fmi2Functions->callbacks;
         instance->logFunctionCall(instance, instance->component ? FMIOK : FMIError,
             "fmi2Instantiate(instanceName=\"%s\", fmuType=%d, fmuGUID=\"%s\", fmuResourceLocation=\"%s\", functions={logger=0x%p, allocateMemory=0x%p, freeMemory=0x%p, stepFinished=0x%p, componentEnvironment=0x%p}, visible=%d, loggingOn=%d)",
             instance->name, fmuType, fmuGUID, fmuResourceLocation, f->logger, f->allocateMemory, f->freeMemory, f->stepFinished, f->componentEnvironment, visible, loggingOn);
@@ -218,7 +230,7 @@ fail:
 
 void FMI2FreeInstance(FMIInstance *instance) {
 
-    instance->fmi2FreeInstance(instance->component);
+    instance->fmi2Functions->fmi2FreeInstance(instance->component);
 
     if (instance->logFunctionCall) {
         instance->logFunctionCall(instance, FMIOK, "fmi2FreeInstance()");
@@ -305,7 +317,7 @@ fmi2Status FMI2FreeFMUstate(FMIInstance *instance, fmi2FMUstate* FMUstate) {
 }
 
 fmi2Status FMI2SerializedFMUstateSize(FMIInstance *instance, fmi2FMUstate  FMUstate, size_t* size) {
-    fmi2Status status = instance->fmi2SerializedFMUstateSize(instance->component, FMUstate, size);
+    fmi2Status status = instance->fmi2Functions->fmi2SerializedFMUstateSize(instance->component, FMUstate, size);
     if (instance->logFunctionCall) {
         instance->logFunctionCall(instance, status, "fmi2SerializedFMUstateSize(FMUstate=0x%p, size=%zu)", FMUstate, *size);
     }
@@ -341,7 +353,7 @@ fmi2Status FMI2EnterEventMode(FMIInstance *instance) {
 }
 
 fmi2Status FMI2NewDiscreteStates(FMIInstance *instance, fmi2EventInfo *eventInfo) {
-    fmi2Status status = instance->fmi2NewDiscreteStates(instance->component, eventInfo);
+    fmi2Status status = instance->fmi2Functions->fmi2NewDiscreteStates(instance->component, eventInfo);
     if (instance->logFunctionCall) {
         instance->logFunctionCall(instance, status,
             "fmi2NewDiscreteStates(eventInfo={newDiscreteStatesNeeded=%d, terminateSimulation=%d, nominalsOfContinuousStatesChanged=%d, valuesOfContinuousStatesChanged=%d, nextEventTimeDefined=%d, nextEventTime=%.16g})",
@@ -359,7 +371,7 @@ fmi2Status FMI2CompletedIntegratorStep(FMIInstance *instance,
     fmi2Boolean   noSetFMUStatePriorToCurrentPoint,
     fmi2Boolean*  enterEventMode,
     fmi2Boolean*  terminateSimulation) {
-    fmi2Status status = instance->fmi2CompletedIntegratorStep(instance->component, noSetFMUStatePriorToCurrentPoint, enterEventMode, terminateSimulation);
+    fmi2Status status = instance->fmi2Functions->fmi2CompletedIntegratorStep(instance->component, noSetFMUStatePriorToCurrentPoint, enterEventMode, terminateSimulation);
     if (instance->logFunctionCall) {
         instance->logFunctionCall(instance, status, "fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=%d, enterEventMode=%d, terminateSimulation=%d)", noSetFMUStatePriorToCurrentPoint, *enterEventMode, *terminateSimulation);
     }
@@ -372,7 +384,7 @@ fmi2Status FMI2SetTime(FMIInstance *instance, fmi2Real time) {
 }
 
 fmi2Status FMI2SetContinuousStates(FMIInstance *instance, const fmi2Real x[], size_t nx) {
-    fmi2Status status = instance->fmi2SetContinuousStates(instance->component, x, nx);
+    fmi2Status status = instance->fmi2Functions->fmi2SetContinuousStates(instance->component, x, nx);
     if (instance->logFunctionCall) {
         FMIValuesToString(instance, nx, x, FMIRealType);
         instance->logFunctionCall(instance, status, "fmi2SetContinuousStates(x=%s, nx=%zu)", instance->buf2, nx);
@@ -382,7 +394,7 @@ fmi2Status FMI2SetContinuousStates(FMIInstance *instance, const fmi2Real x[], si
 
 /* Evaluation of the model equations */
 fmi2Status FMI2GetDerivatives(FMIInstance *instance, fmi2Real derivatives[], size_t nx) {
-    fmi2Status status = instance->fmi2GetDerivatives(instance->component, derivatives, nx);
+    fmi2Status status = instance->fmi2Functions->fmi2GetDerivatives(instance->component, derivatives, nx);
     if (instance->logFunctionCall) {
         FMIValuesToString(instance, nx, derivatives, FMIRealType);
         instance->logFunctionCall(instance, status, "fmi2GetDerivatives(derivatives=%s, nx=%zu)", instance->buf2, nx);
@@ -391,7 +403,7 @@ fmi2Status FMI2GetDerivatives(FMIInstance *instance, fmi2Real derivatives[], siz
 }
 
 fmi2Status FMI2GetEventIndicators(FMIInstance *instance, fmi2Real eventIndicators[], size_t ni) {
-    fmi2Status status = instance->fmi2GetEventIndicators(instance->component, eventIndicators, ni);
+    fmi2Status status = instance->fmi2Functions->fmi2GetEventIndicators(instance->component, eventIndicators, ni);
     if (instance->logFunctionCall) {
         FMIValuesToString(instance, ni, eventIndicators, FMIRealType);
         instance->logFunctionCall(instance, status, "fmi2GetEventIndicators(eventIndicators=%s, ni=%zu)", instance->buf2, ni);
@@ -400,7 +412,7 @@ fmi2Status FMI2GetEventIndicators(FMIInstance *instance, fmi2Real eventIndicator
 }
 
 fmi2Status FMI2GetContinuousStates(FMIInstance *instance, fmi2Real x[], size_t nx) {
-    fmi2Status status = instance->fmi2GetContinuousStates(instance->component, x, nx);
+    fmi2Status status = instance->fmi2Functions->fmi2GetContinuousStates(instance->component, x, nx);
     if (instance->logFunctionCall) {
         FMIValuesToString(instance, nx, x, FMIRealType);
         instance->logFunctionCall(instance, status, "fmi2GetContinuousStates(x=%s, nx=%zu)", instance->buf2, nx);
@@ -409,7 +421,7 @@ fmi2Status FMI2GetContinuousStates(FMIInstance *instance, fmi2Real x[], size_t n
 }
 
 fmi2Status FMI2GetNominalsOfContinuousStates(FMIInstance *instance, fmi2Real x_nominal[], size_t nx) {
-    fmi2Status status = instance->fmi2GetNominalsOfContinuousStates(instance->component, x_nominal, nx);
+    fmi2Status status = instance->fmi2Functions->fmi2GetNominalsOfContinuousStates(instance->component, x_nominal, nx);
     if (instance->logFunctionCall) {
         FMIValuesToString(instance, nx, x_nominal, FMIRealType);
         instance->logFunctionCall(instance, status, "fmi2GetNominalsOfContinuousStates(x_nominal=%s, nx=%zu)", instance->buf2, nx);
@@ -453,7 +465,7 @@ fmi2Status FMI2CancelStep(FMIInstance *instance) {
 
 /* Inquire slave status */
 fmi2Status FMI2GetStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2Status* value) {
-    fmi2Status status = instance->fmi2GetStatus(instance->component, s, value);
+    fmi2Status status = instance->fmi2Functions->fmi2GetStatus(instance->component, s, value);
     if (instance->logFunctionCall) {
         instance->logFunctionCall(instance, status, "fmi2GetStatus(s=%s, value=%d)", s, *value);
     }
@@ -461,7 +473,7 @@ fmi2Status FMI2GetStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2Stat
 }
 
 fmi2Status FMI2GetRealStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2Real* value) {
-    fmi2Status status = instance->fmi2GetRealStatus(instance->component, s, value);
+    fmi2Status status = instance->fmi2Functions->fmi2GetRealStatus(instance->component, s, value);
     if (instance->logFunctionCall) {
         instance->logFunctionCall(instance, status, "fmi2GetRealStatus(s=%s, value=%.16g)", s, *value);
     }
@@ -469,7 +481,7 @@ fmi2Status FMI2GetRealStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2
 }
 
 fmi2Status FMI2GetIntegerStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2Integer* value) {
-    fmi2Status status = instance->fmi2GetIntegerStatus(instance->component, s, value);
+    fmi2Status status = instance->fmi2Functions->fmi2GetIntegerStatus(instance->component, s, value);
     if (instance->logFunctionCall) {
         instance->logFunctionCall(instance, status, "fmi2GetIntegerStatus(s=%s, value=%d)", s, *value);
     }
@@ -477,7 +489,7 @@ fmi2Status FMI2GetIntegerStatus(FMIInstance *instance, const fmi2StatusKind s, f
 }
 
 fmi2Status FMI2GetBooleanStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2Boolean* value) {
-    fmi2Status status = instance->fmi2GetBooleanStatus(instance->component, s, value);
+    fmi2Status status = instance->fmi2Functions->fmi2GetBooleanStatus(instance->component, s, value);
     if (instance->logFunctionCall) {
         instance->logFunctionCall(instance, status, "fmi2GetBooleanStatus(s=%s, value=%d)", s, *value);
     }
@@ -485,7 +497,7 @@ fmi2Status FMI2GetBooleanStatus(FMIInstance *instance, const fmi2StatusKind s, f
 }
 
 fmi2Status FMI2GetStringStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2String* value) {
-    fmi2Status status = instance->fmi2GetStringStatus(instance->component, s, value);
+    fmi2Status status = instance->fmi2Functions->fmi2GetStringStatus(instance->component, s, value);
     if (instance->logFunctionCall) {
         instance->logFunctionCall(instance, status, "fmi2GetStringStatus(s=%s, value=%s)", s, *value);
     }

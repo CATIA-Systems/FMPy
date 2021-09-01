@@ -8,7 +8,81 @@
  *  in the project root for license information.              *
  **************************************************************/
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "fmi2Functions.h"
 #include "FMI.h"
+
+struct FMI2Functions_ {
+
+    fmi2CallbackFunctions            callbacks;
+    fmi2EventInfo                    eventInfo;
+
+    /***************************************************
+    Common Functions for FMI 2.0
+    ****************************************************/
+
+    /* required functions */
+    fmi2GetTypesPlatformTYPE         *fmi2GetTypesPlatform;
+    fmi2GetVersionTYPE               *fmi2GetVersion;
+    fmi2SetDebugLoggingTYPE          *fmi2SetDebugLogging;
+    fmi2InstantiateTYPE              *fmi2Instantiate;
+    fmi2FreeInstanceTYPE             *fmi2FreeInstance;
+    fmi2SetupExperimentTYPE          *fmi2SetupExperiment;
+    fmi2EnterInitializationModeTYPE  *fmi2EnterInitializationMode;
+    fmi2ExitInitializationModeTYPE   *fmi2ExitInitializationMode;
+    fmi2TerminateTYPE                *fmi2Terminate;
+    fmi2ResetTYPE                    *fmi2Reset;
+    fmi2GetRealTYPE                  *fmi2GetReal;
+    fmi2GetIntegerTYPE               *fmi2GetInteger;
+    fmi2GetBooleanTYPE               *fmi2GetBoolean;
+    fmi2GetStringTYPE                *fmi2GetString;
+    fmi2SetRealTYPE                  *fmi2SetReal;
+    fmi2SetIntegerTYPE               *fmi2SetInteger;
+    fmi2SetBooleanTYPE               *fmi2SetBoolean;
+    fmi2SetStringTYPE                *fmi2SetString;
+
+    /* optional functions */
+    fmi2GetFMUstateTYPE              *fmi2GetFMUstate;
+    fmi2SetFMUstateTYPE              *fmi2SetFMUstate;
+    fmi2FreeFMUstateTYPE             *fmi2FreeFMUstate;
+    fmi2SerializedFMUstateSizeTYPE   *fmi2SerializedFMUstateSize;
+    fmi2SerializeFMUstateTYPE        *fmi2SerializeFMUstate;
+    fmi2DeSerializeFMUstateTYPE      *fmi2DeSerializeFMUstate;
+    fmi2GetDirectionalDerivativeTYPE *fmi2GetDirectionalDerivative;
+
+    /***************************************************
+    Functions for FMI 2.0 for Model Exchange
+    ****************************************************/
+
+    fmi2EnterEventModeTYPE                *fmi2EnterEventMode;
+    fmi2NewDiscreteStatesTYPE             *fmi2NewDiscreteStates;
+    fmi2EnterContinuousTimeModeTYPE       *fmi2EnterContinuousTimeMode;
+    fmi2CompletedIntegratorStepTYPE       *fmi2CompletedIntegratorStep;
+    fmi2SetTimeTYPE                       *fmi2SetTime;
+    fmi2SetContinuousStatesTYPE           *fmi2SetContinuousStates;
+    fmi2GetDerivativesTYPE                *fmi2GetDerivatives;
+    fmi2GetEventIndicatorsTYPE            *fmi2GetEventIndicators;
+    fmi2GetContinuousStatesTYPE           *fmi2GetContinuousStates;
+    fmi2GetNominalsOfContinuousStatesTYPE *fmi2GetNominalsOfContinuousStates;
+
+    /***************************************************
+    Functions for FMI 2.0 for Co-Simulation
+    ****************************************************/
+
+    fmi2SetRealInputDerivativesTYPE  *fmi2SetRealInputDerivatives;
+    fmi2GetRealOutputDerivativesTYPE *fmi2GetRealOutputDerivatives;
+    fmi2DoStepTYPE                   *fmi2DoStep;
+    fmi2CancelStepTYPE               *fmi2CancelStep;
+    fmi2GetStatusTYPE                *fmi2GetStatus;
+    fmi2GetRealStatusTYPE            *fmi2GetRealStatus;
+    fmi2GetIntegerStatusTYPE         *fmi2GetIntegerStatus;
+    fmi2GetBooleanStatusTYPE         *fmi2GetBooleanStatus;
+    fmi2GetStringStatusTYPE          *fmi2GetStringStatus;
+
+};
 
 
 /***************************************************
@@ -150,5 +224,9 @@ FMI_STATIC fmi2Status FMI2GetIntegerStatus(FMIInstance *instance, const fmi2Stat
 FMI_STATIC fmi2Status FMI2GetBooleanStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2Boolean* value);
 
 FMI_STATIC fmi2Status FMI2GetStringStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2String*  value);
+
+#ifdef __cplusplus
+}  /* end of extern "C" { */
+#endif
 
 #endif // FMI2_H

@@ -5,10 +5,13 @@
  *  in the project root for license information.              *
  **************************************************************/
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #ifdef _WIN32
+#include <shlwapi.h>
+#pragma comment(lib, "shlwapi.lib")
 #define strdup _strdup
 #else
 #include <stdarg.h>
@@ -57,7 +60,7 @@ FMIInstance *FMICreateInstance(const char *instanceName, const char *libraryPath
 
     instance->libraryHandle = libraryHandle;
 
-    instance->logMessage = logMessage;
+    instance->logMessage      = logMessage;
     instance->logFunctionCall = logFunctionCall;
 
     instance->bufsize1 = INITIAL_MESSAGE_BUFFER_SIZE;
@@ -84,6 +87,10 @@ void FMIFreeInstance(FMIInstance *instance) {
 # endif
         instance->libraryHandle = NULL;
     }
+
+    free(instance->fmi1Functions);
+    free(instance->fmi2Functions);
+    free(instance->fmi3Functions);
 
     free(instance);
 }
@@ -124,23 +131,23 @@ const char* FMIValuesToString(FMIInstance *instance, size_t nvr, const void *val
 
             switch (variableType) {
             case FMIFloat64Type:
-                pos += snprintf(&instance->buf2[pos], instance->bufsize2 - pos, i < nvr - 1 ? "%.16g, " : "%.16g", ((fmi2Real *)value)[i]);
+                pos += snprintf(&instance->buf2[pos], instance->bufsize2 - pos, i < nvr - 1 ? "%.16g, " : "%.16g", ((double *)value)[i]);
                 break;
             case FMIInt32Type:
-                pos += snprintf(&instance->buf2[pos], instance->bufsize2 - pos, i < nvr - 1 ? "%d, " : "%d", ((fmi2Integer *)value)[i]);
+                pos += snprintf(&instance->buf2[pos], instance->bufsize2 - pos, i < nvr - 1 ? "%d, " : "%d", ((int *)value)[i]);
                 break;
             case FMIBooleanType:
                 if (instance->fmiVersion == FMIVersion1) {
                     //pos += snprintf(&instance->buf2[pos], instance->bufsize2 - pos, i < nvr - 1 ? "%d, " : "%d", ((fmi1Boolean *)value)[i]);
                 } else {
-                    pos += snprintf(&instance->buf2[pos], instance->bufsize2 - pos, i < nvr - 1 ? "%d, " : "%d", ((fmi2Boolean *)value)[i]);
+                    pos += snprintf(&instance->buf2[pos], instance->bufsize2 - pos, i < nvr - 1 ? "%d, " : "%d", ((int *)value)[i]);
                 }
                 break;
             case FMIStringType:
-                pos += snprintf(&instance->buf2[pos], instance->bufsize2 - pos, i < nvr - 1 ? "\"%s\", " : "\"%s\"", ((fmi2String *)value)[i]);
+                pos += snprintf(&instance->buf2[pos], instance->bufsize2 - pos, i < nvr - 1 ? "\"%s\", " : "\"%s\"", ((const char **)value)[i]);
                 break;
             case FMIClockType:
-                pos += snprintf(&instance->buf2[pos], instance->bufsize2 - pos, i < nvr - 1 ? "%d, " : "%d", ((fmi3Clock *)value)[i]);
+                pos += snprintf(&instance->buf2[pos], instance->bufsize2 - pos, i < nvr - 1 ? "%d, " : "%d", ((bool *)value)[i]);
                 break;
             }
 
@@ -156,4 +163,42 @@ const char* FMIValuesToString(FMIInstance *instance, size_t nvr, const void *val
     pos += snprintf(&instance->buf2[pos], instance->bufsize2 - pos, "}");
 
     return instance->buf2;
+}
+
+FMIStatus FMIURIToPath(const char *uri, char *path, size_t pathLength) {
+
+#ifdef _WIN32
+    DWORD pcchPath = (DWORD)pathLength;
+
+    if (PathCreateFromUrlA(uri, path, &pcchPath, 0) != S_OK) {
+        return FMIError;
+    }
+#else
+    const char *scheme1 = "file:///";
+    const char *scheme2 = "file:/";
+
+    strncpy(path, uri, pathLength);
+
+    if (strncmp(uri, scheme1, strlen(scheme1)) == 0) {
+        strncpy(path, &uri[strlen(scheme1)] - 1, pathLength);
+    } else if (strncmp(uri, scheme2, strlen(scheme2)) == 0) {
+        strncpy(path, &uri[strlen(scheme2) - 1], pathLength);
+    } else {
+        return FMIError;
+    }
+#endif
+
+    size_t length = strlen(path);
+
+#ifdef _WIN32
+    char sep = '\\';
+#else
+    char sep = '/';
+#endif
+
+    if (path[length] != sep) {
+        strncat(path, &sep, 1);
+    }
+
+    return FMIOK;
 }

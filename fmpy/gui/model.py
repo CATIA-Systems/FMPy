@@ -114,7 +114,7 @@ class VariablesModel(QAbstractItemModel):
 
         if column == 'Plot':
             variable = self.variableForIndex(index)
-            if variable.dimensions:
+            if not variable or variable.dimensions:
                 return Qt.ItemIsSelectable
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsUserCheckable
         elif column == 'Start':

@@ -476,6 +476,10 @@ fmi2Status fmi2DoStep(fmi2Component c, fmi2Real currentCommunicationPoint, fmi2R
 	return handleReturnValue(r);
 }
 
+fmi2Status fmi2CancelStep(fmi2Component c) {
+    NOT_IMPLEMENTED
+}
+
 /* Inquire slave status */
 fmi2Status fmi2GetStatus(fmi2Component c, const fmi2StatusKind s, fmi2Status* value) {
 	auto r = client->call("fmi2GetStatus", int(s)).as<IntegerReturnValue>();

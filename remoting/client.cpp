@@ -210,7 +210,8 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
         try {
             s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Trying to connect...");
             client = new rpc::client("localhost", rpc::constants::DEFAULT_PORT);
-            r = client->call("fmi2Instantiate", instanceName, (int)fmuType, fmuGUID, fmuResourceLocation, visible, loggingOn).as<ReturnValue>();
+            r = client->call("fmi2Instantiate", instanceName, (int)fmuType, fmuGUID ? fmuGUID : "", 
+                fmuResourceLocation ? fmuResourceLocation : "", visible, loggingOn).as<ReturnValue>();
             break;
         } catch (exception e) {
             if (attempts < 20) {

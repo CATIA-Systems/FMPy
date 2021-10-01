@@ -43,11 +43,15 @@ endif ()
 
 # server
 add_executable(server
-  ../fmpy/c-code/fmi2Functions.h
-  ../fmpy/c-code/fmi2FunctionTypes.h
-  ../fmpy/c-code/fmi2TypesPlatform.h
-  remoting.h
-  server.cpp
+    ../fmpy/c-code/fmi2Functions.h
+    ../fmpy/c-code/fmi2FunctionTypes.h
+    ../fmpy/c-code/fmi2TypesPlatform.h
+    ../fmpy/c-code/FMI.h
+    ../fmpy/c-code/FMI2.h
+    ../fmpy/c-code/FMI.c
+    ../fmpy/c-code/FMI2.c
+    remoting.h
+    server.cpp
 )
 
 set_property(TARGET server PROPERTY CXX_STANDARD 11)

@@ -42,6 +42,10 @@ typedef struct {
 
 typedef struct {
 
+    fmi2String instanceName;
+    fmi2CallbackLogger logger;
+    fmi2ComponentEnvironment envrionment;
+
 	size_t nComponents;
 	FMIInstance **components;
 	
@@ -61,6 +65,13 @@ typedef struct {
 
 #define CHECK_STATUS(S) status = S; if (status > fmi2Warning) goto END;
 
+#define NOT_IMPLEMENTED \
+    if (c) { \
+        FMIInstance *m = (FMIInstance *)c; \
+        System *s = m->userData; \
+        s->logger(s->envrionment, s->instanceName, fmi2Error, "fmi2Error", "Function is not implemented."); \
+    } \
+    return fmi2Error;
 
 /***************************************************
 Types for Common Functions
@@ -84,12 +95,21 @@ END:
 	return status;
 }
 
-static fmi2CallbackLogger s_logger = NULL;
-static fmi2ComponentEnvironment s_envrionment = NULL;
-
 void logFMIMessage(FMIInstance *instance, FMIStatus status, const char *category, const char *message) {
-    // TODO: fix instance name and prepend child instance name
-    s_logger(s_envrionment, "instance", status, category, message);
+    
+    System *s = instance->userData;
+    
+    size_t message_len = strlen(message);
+    size_t instanceName_len = strlen(instance->name);
+    size_t total_len = message_len + instanceName_len + 5;
+    
+    char *buf = malloc(total_len);
+
+    snprintf(buf, total_len, "[%s]: %s", instance->name, message);
+
+    s->logger(s->envrionment, s->instanceName, status, category, buf);
+
+    free(buf);
 }
 
 /* Creation and destruction of FMU instances and setting debug status */
@@ -105,15 +125,16 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 		return NULL;
 	}
 
-    s_logger = functions->logger;
-    s_envrionment = functions->componentEnvironment;
-
     if (fmuType != fmi2CoSimulation) {
         functions->logger(NULL, instanceName, fmi2Error, "logError", "Argument fmuType must be fmi2CoSimulation.");
         return NULL;
     }
 
 	System *s = calloc(1, sizeof(System));
+
+    s->instanceName = strdup(instanceName);
+    s->logger       = functions->logger;
+    s->envrionment  = functions->componentEnvironment;
 
     char configFilename[4096] = "";
     char resourcesDir[4096]   = "";
@@ -178,6 +199,8 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 #endif
 
         FMIInstance *m = FMICreateInstance(_name, libraryPath, logFMIMessage, NULL);
+
+        m->userData = s;
 
         FMI2Instantiate(m, NULL, fmi2CoSimulation, _guid, visible, loggingOn);
 
@@ -258,6 +281,7 @@ void fmi2FreeInstance(fmi2Component c) {
         FMIFreeInstance(m);
 	}
 
+    free((void *)s->instanceName);
 	free(s);
 }
 
@@ -455,27 +479,27 @@ END:
 
 /* Getting and setting the internal FMU state */
 fmi2Status fmi2GetFMUstate(fmi2Component c, fmi2FMUstate* FMUstate) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2SetFMUstate(fmi2Component c, fmi2FMUstate  FMUstate) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2FreeFMUstate(fmi2Component c, fmi2FMUstate* FMUstate) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2SerializedFMUstateSize(fmi2Component c, fmi2FMUstate  FMUstate, size_t* size) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2SerializeFMUstate(fmi2Component c, fmi2FMUstate  FMUstate, fmi2Byte serializedState[], size_t size) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2DeSerializeFMUstate(fmi2Component c, const fmi2Byte serializedState[], size_t size, fmi2FMUstate* FMUstate) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 /* Getting partial derivatives */
@@ -484,7 +508,7 @@ fmi2Status fmi2GetDirectionalDerivative(fmi2Component c,
                                         const fmi2ValueReference vKnown_ref[],   size_t nKnown,
                                         const fmi2Real dvKnown[],
                                         fmi2Real dvUnknown[]) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 /***************************************************
@@ -496,14 +520,14 @@ fmi2Status fmi2SetRealInputDerivatives(fmi2Component c,
                                        const fmi2ValueReference vr[], size_t nvr,
                                        const fmi2Integer order[],
                                        const fmi2Real value[]) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2GetRealOutputDerivatives(fmi2Component c,
                                         const fmi2ValueReference vr[], size_t nvr,
                                         const fmi2Integer order[],
                                         fmi2Real value[]) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2DoStep(fmi2Component c,
@@ -550,26 +574,26 @@ END:
 }
 
 fmi2Status fmi2CancelStep(fmi2Component c) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 /* Inquire slave status */
 fmi2Status fmi2GetStatus(fmi2Component c, const fmi2StatusKind s, fmi2Status*  value) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2GetRealStatus(fmi2Component c, const fmi2StatusKind s, fmi2Real*    value) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2GetIntegerStatus(fmi2Component c, const fmi2StatusKind s, fmi2Integer* value) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2GetBooleanStatus(fmi2Component c, const fmi2StatusKind s, fmi2Boolean* value) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2GetStringStatus(fmi2Component c, const fmi2StatusKind s, fmi2String*  value) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }

@@ -165,7 +165,7 @@ const char* FMIValuesToString(FMIInstance *instance, size_t nvr, const void *val
     return instance->buf2;
 }
 
-FMIStatus FMIURIToPath(const char *uri, char *path, size_t pathLength) {
+FMIStatus FMIURIToPath(const char *uri, char *path, const size_t pathLength) {
 
 #ifdef _WIN32
     DWORD pcchPath = (DWORD)pathLength;
@@ -188,17 +188,86 @@ FMIStatus FMIURIToPath(const char *uri, char *path, size_t pathLength) {
     }
 #endif
 
-    size_t length = strlen(path);
-
 #ifdef _WIN32
-    char sep = '\\';
+    const char* sep = "\\";
 #else
-    char sep = '/';
+    const char* sep = "/";
 #endif
 
-    if (path[length] != sep) {
-        strncat(path, &sep, 1);
+    if (path[strlen(path) - 1] != sep[0]) {
+        strncat(path, sep, pathLength);
     }
+
+    return FMIOK;
+}
+
+FMIStatus FMIPathToURI(const char *path, char *uri, const size_t uriLength) {
+
+#ifdef _WIN32
+    DWORD pcchUri = (DWORD)uriLength;
+
+    if (UrlCreateFromPathA(path, uri, &pcchUri, 0) != S_OK) {
+        return FMIError;
+    }
+#else
+    snprintf(uri, uriLength, "file://%s", path);
+
+    if (path[strlen(path) - 1] != '/') {
+        strncat(uri, "/", uriLength);
+    }
+#endif
+
+    return FMIOK;
+}
+
+FMIStatus FMIPlatformBinaryPath(const char *unzipdir, const char *modelIdentifier, FMIVersion fmiVersion, char *platformBinaryPath, size_t size) {
+
+#if defined(_WIN32)
+    const char *platform = "win";
+    const char *system   = "windows";
+    const char *sep      = "\\";
+    const char *ext      = ".dll";
+#elif defined(__APPLE__)
+    const char *platform = "darwin";
+    const char *system   = "darwin";
+    const char *sep      = "/";
+    const char *ext      = ".dylib";
+#else
+    const char *platform = "linux";
+    const char *system   = "linux";
+    const char *sep      = "/";
+    const char *ext      = ".so";
+#endif
+
+#if defined(_WIN64) || defined(__x86_64__)
+    const char *bits = "64";
+    const char *arch = "x86_64";
+#else
+    const char *bits = "32";
+    const char *arch = "x86";
+#endif
+
+    strncat(platformBinaryPath, unzipdir, size);
+
+    if (unzipdir[strlen(unzipdir) - 1] != sep[0]) {
+        strncat(platformBinaryPath, sep, size);
+    }
+
+    strncat(platformBinaryPath, "binaries", size);
+    strncat(platformBinaryPath, sep, size);
+
+    if (fmiVersion == FMIVersion3) {
+        strncat(platformBinaryPath, arch, size);
+        strncat(platformBinaryPath, "-", size);
+        strncat(platformBinaryPath, system, size);
+    } else {
+        strncat(platformBinaryPath, platform, size);
+        strncat(platformBinaryPath, bits, size);
+    }
+
+    strncat(platformBinaryPath, sep, size);
+    strncat(platformBinaryPath, modelIdentifier, size);
+    strncat(platformBinaryPath, ext, size);
 
     return FMIOK;
 }

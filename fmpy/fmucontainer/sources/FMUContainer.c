@@ -170,39 +170,33 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 		mpack_node_t modelIdentifier = mpack_node_map_cstr(component, "modelIdentifier");
         char *_modelIdentifier = mpack_node_cstr_alloc(modelIdentifier, 1024);
 
-#ifdef _WIN32
-        char libraryPath[MAX_PATH] = "";
+        char unzipdir[4069] = "";
+        char componentResourcesDir[4069] = "";
 
-        PathCombine(libraryPath, resourcesDir, _modelIdentifier);
-        PathCombine(libraryPath, libraryPath, "binaries");
-#ifdef _WIN64
-        PathCombine(libraryPath, libraryPath, "win64");
+#ifdef _WIN32
+        PathCombine(unzipdir, resourcesDir, _modelIdentifier);
+        PathCombine(componentResourcesDir, unzipdir, "resources");
 #else
-        PathCombine(libraryPath, libraryPath, "win32");
+        sprintf(unzipdir, "%s/%s", resourcesDir, _modelIdentifier);
+        sprintf(componentResourcesDir, "%s/%s", unzipdir, _modelIdentifier);
 #endif
-        PathCombine(libraryPath, libraryPath, _modelIdentifier);
-        strcat(libraryPath, ".dll");
-#else
-        char libraryPath[PATH_MAX] = "";
-        strcpy(libraryPath, resourcesDir);
-        strcat(libraryPath, "/");
-        strcat(libraryPath, _modelIdentifier);
-#ifdef __APPLE__
-        strcat(libraryPath, "/binaries/darwin64/");
-        strcat(libraryPath, _modelIdentifier);
-        strcat(libraryPath, ".dylib");
-#else
-        strcat(libraryPath, "/binaries/linux64/");
-        strcat(libraryPath, _modelIdentifier);
-        strcat(libraryPath, ".so");
-#endif
-#endif
+        char componentResourcesUri[4069] = "";
+
+        FMIPathToURI(componentResourcesDir, componentResourcesUri, 4096);
+
+        char libraryPath[4069] = "";
+
+        FMIPlatformBinaryPath(unzipdir, _modelIdentifier, FMIVersion2, libraryPath, 4096);
 
         FMIInstance *m = FMICreateInstance(_name, libraryPath, logFMIMessage, NULL);
 
+        if (!m) {
+            return NULL;
+        }
+
         m->userData = s;
 
-        FMI2Instantiate(m, NULL, fmi2CoSimulation, _guid, visible, loggingOn);
+        FMI2Instantiate(m, componentResourcesDir, fmi2CoSimulation, _guid, visible, loggingOn);
 
         s->components[i] = m;
 	}

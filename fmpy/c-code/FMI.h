@@ -157,7 +157,12 @@ FMI_STATIC const char* FMIValueReferencesToString(FMIInstance *instance, const F
 
 FMI_STATIC const char* FMIValuesToString(FMIInstance *instance, size_t nvr, const void *value, FMIVariableType variableType);
 
-FMI_STATIC FMIStatus FMIURIToPath(const char *uri, char *path, size_t pathLength);
+FMI_STATIC FMIStatus FMIURIToPath(const char *uri, char *path, const size_t pathLength);
+
+FMI_STATIC FMIStatus FMIPathToURI(const char *path, char *uri, const size_t uriLength);
+
+FMI_STATIC FMIStatus FMIPlatformBinaryPath(const char *unzipdir, const char *modelIdentifier, FMIVersion fmiVersion, char *platformBinaryPath, size_t size);
+
 
 #ifdef __cplusplus
 }  /* end of extern "C" { */

@@ -1,6 +1,6 @@
 from tempfile import mkdtemp
-
-from attr import attrs
+from typing import List
+from attr import attrs, attrib, Factory
 
 
 @attrs(eq=False, auto_attribs=True)
@@ -16,12 +16,30 @@ class Variable(object):
 
 
 @attrs(eq=False, auto_attribs=True)
+class Component(object):
+
+    filename: str
+    name: str
+
+
+@attrs(eq=False, auto_attribs=True)
 class Connection(object):
 
     startElement: str
     startConnector: str
     endElement: str
     endConnector: str
+
+
+@attrs(eq=False)
+class Configuration(object):
+
+    description = attrib(type=str, default=None, repr=False)
+    variableNamingConvention = attrib(type=str, default='flat', repr=False)
+
+    variables = attrib(type=List[Variable], default=Factory(list), repr=False)
+    components = attrib(type=List[Component], default=Factory(list), repr=False)
+    connections = attrib(type=List[Connection], default=Factory(list), repr=False)
 
 
 def create_fmu_container(configuration, output_filename):
@@ -72,27 +90,27 @@ def create_fmu_container(configuration, output_filename):
 
     component_map = {}
 
-    for i, component in enumerate(configuration['components']):
-        model_description = read_model_description(component['filename'])
+    for i, component in enumerate(configuration.components):
+        model_description = read_model_description(component.filename)
         model_identifier = model_description.coSimulation.modelIdentifier
-        extract(component['filename'], os.path.join(unzipdir, 'resources', model_identifier))
+        extract(component.filename, os.path.join(unzipdir, 'resources', model_identifier))
         variables = dict((v.name, v) for v in model_description.modelVariables)
-        component_map[component['name']] = (i, variables)
+        component_map[component.name] = (i, variables)
         data['components'].append({
-            'name': component['name'],
+            'name': component.name,
             'guid': model_description.guid,
             'modelIdentifier': model_identifier,
         })
 
     variables_map = {}
 
-    for i, v in enumerate(configuration['variables']):
+    for i, v in enumerate(configuration.variables):
         variables_map[v.name] = (i, v)
 
     mv = ''  # model variables
     mo = ''  # model outputs
 
-    for i, v in enumerate(configuration['variables']):
+    for i, v in enumerate(configuration.variables):
 
         component_indices = []
         value_references = []
@@ -123,10 +141,10 @@ def create_fmu_container(configuration, output_filename):
   fmiVersion="2.0"
   modelName="{ model_name }"
   guid=""
-  description="{ configuration.get('description', '') }"
+  description="{ configuration.description }"
   generationTool="FMPy {fmpy.__version__} FMU Container"
-  generationDateAndTime="{ datetime.now(pytz.utc).isoformat() }">
-
+  generationDateAndTime="{ datetime.now(pytz.utc).isoformat() }"
+  variableNamingConvention="{ configuration.variableNamingConvention }">
   <CoSimulation modelIdentifier="FMUContainer">
     <SourceFiles>
       <File name="FMUContainer.c"/>
@@ -150,7 +168,7 @@ def create_fmu_container(configuration, output_filename):
     with open(os.path.join(unzipdir, 'modelDescription.xml'), 'w') as f:
         f.write(xml)
 
-    for c in configuration['connections']:
+    for c in configuration.connections:
         data['connections'].append({
             'type': component_map[c.startElement][1][c.startConnector].type,
             'startComponent': component_map[c.startElement][0],

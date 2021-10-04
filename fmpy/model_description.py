@@ -171,6 +171,9 @@ class ScalarVariable(object):
     initial = attrib(type=str, default=None, repr=False)
     "One of 'exact', 'approx', 'calculated' or None"
 
+    interval = attrib(type=str, default=None, repr=False)
+    "One of 'constant', 'fixed', 'calculated', 'tunable', 'changing', 'countdown', 'triggered' or None"
+
     canHandleMultipleSetPerTimeInstant = attrib(type=bool, default=True, repr=False)
 
     intermediateUpdate = attrib(type=bool, default=False, repr=False)
@@ -651,6 +654,7 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
         sv.causality = variable.get('causality', default='local')
         sv.variability = variable.get('variability')
         sv.initial = variable.get('initial')
+        sv.interval = variable.get('interval')
         sv.clocks = variable.get('clocks')
         sv.sourceline = variable.sourceline
 

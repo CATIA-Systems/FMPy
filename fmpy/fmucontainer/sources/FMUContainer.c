@@ -18,6 +18,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 #include "FMI2.h"
 
@@ -112,6 +113,21 @@ void logFMIMessage(FMIInstance *instance, FMIStatus status, const char *category
     free(buf);
 }
 
+static void logFunctionCall(FMIInstance *instance, FMIStatus status, const char *message, ...) {
+
+    System *s = instance->userData;
+
+    char buf[FMI_MAX_MESSAGE_LENGTH];
+
+    va_list args;
+
+    va_start(args, message);
+    vsnprintf(buf, FMI_MAX_MESSAGE_LENGTH, message, args);
+    va_end(args);
+
+    s->logger(s->envrionment, s->instanceName, (fmi2Status)status, "debug", "[%s]: %s", instance->name, buf);
+}
+
 /* Creation and destruction of FMU instances and setting debug status */
 fmi2Component fmi2Instantiate(fmi2String instanceName,
                               fmi2Type fmuType,
@@ -188,7 +204,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
         FMIPlatformBinaryPath(unzipdir, _modelIdentifier, FMIVersion2, libraryPath, 4096);
 
-        FMIInstance *m = FMICreateInstance(_name, libraryPath, logFMIMessage, NULL);
+        FMIInstance *m = FMICreateInstance(_name, libraryPath, logFMIMessage, loggingOn ? logFunctionCall : NULL);
 
         if (!m) {
             return NULL;

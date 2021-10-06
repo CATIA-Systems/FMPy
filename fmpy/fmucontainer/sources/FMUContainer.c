@@ -194,7 +194,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
         PathCombine(componentResourcesDir, unzipdir, "resources");
 #else
         sprintf(unzipdir, "%s/%s", resourcesDir, _modelIdentifier);
-        sprintf(componentResourcesDir, "%s/%s", unzipdir, _modelIdentifier);
+        sprintf(componentResourcesDir, "%s/%s", unzipdir, "resources");
 #endif
         char componentResourcesUri[4069] = "";
 

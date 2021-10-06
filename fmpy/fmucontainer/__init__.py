@@ -129,7 +129,7 @@ def create_fmu_container(configuration, output_filename):
 
         # modelDescription.xml
         start = f' start="{ v.start }"' if v.start else ''
-        mv += f'\n    <ScalarVariable name="{ v.name }" valueReference="{ i }" variability="{ v.variability }" causality="{ v.causality }" description="{ v.description }">'
+        mv += f'\n    <ScalarVariable name="{ xml_encode(v.name) }" valueReference="{ i }" variability="{ v.variability }" causality="{ v.causality }" description="{ xml_encode(v.description) }">'
         mv += f'\n      <{v.type}{ start }/>'
         mv += f'\n    </ScalarVariable>'
 
@@ -141,7 +141,7 @@ def create_fmu_container(configuration, output_filename):
   fmiVersion="2.0"
   modelName="{ model_name }"
   guid=""
-  description="{ configuration.description }"
+  description="{ xml_encode(configuration.description) }"
   generationTool="FMPy {fmpy.__version__} FMU Container"
   generationDateAndTime="{ datetime.now(pytz.utc).isoformat() }"
   variableNamingConvention="{ configuration.variableNamingConvention }">

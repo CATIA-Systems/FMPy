@@ -196,7 +196,9 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
         m->userData = s;
 
-        FMI2Instantiate(m, componentResourcesUri, fmi2CoSimulation, _guid, visible, loggingOn);
+        if (FMI2Instantiate(m, componentResourcesUri, fmi2CoSimulation, _guid, visible, loggingOn) > FMIWarning) {
+            return NULL;
+        }
 
         s->components[i] = m;
 	}

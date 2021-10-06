@@ -31,6 +31,8 @@ static void cb_logMessage1(fmi1Component c, fmi1String instanceName, fmi1Status 
     vsnprintf(buf, FMI_MAX_MESSAGE_LENGTH, message, args);
     va_end(args);
 
+    if (!currentInstance->logMessage) return;
+
     currentInstance->logMessage(currentInstance, status, category, buf);
 }
 

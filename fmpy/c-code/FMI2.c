@@ -25,6 +25,8 @@
 
 static void cb_logMessage2(fmi2ComponentEnvironment componentEnvironment, fmi2String instanceName, fmi2Status status, fmi2String category, fmi2String message, ...) {
 
+    if (!componentEnvironment) return;
+
     FMIInstance *instance = componentEnvironment;
 
     char buf[FMI_MAX_MESSAGE_LENGTH];
@@ -34,6 +36,8 @@ static void cb_logMessage2(fmi2ComponentEnvironment componentEnvironment, fmi2St
     va_start(args, message);
     vsnprintf(buf, FMI_MAX_MESSAGE_LENGTH, message, args);
     va_end(args);
+
+    if (!instance->logMessage) return;
 
     instance->logMessage(instance, status, category, buf);
 }

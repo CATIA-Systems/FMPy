@@ -60,7 +60,7 @@ const char* fmi2GetVersion() {
 static void forwardLogMessages(const list<LogMessage> &logMessages) {
 	for (auto it = logMessages.begin(); it != logMessages.end(); it++) {
 		auto &m = *it;
-		s_logger(NULL, m.instanceName.c_str(), fmi2Status(m.status), m.category.c_str(), m.message.c_str());
+		s_logger(s_componentEnvironment, m.instanceName.c_str(), fmi2Status(m.status), m.category.c_str(), m.message.c_str());
 	}
 }
 

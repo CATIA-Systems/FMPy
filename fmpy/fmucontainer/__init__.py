@@ -51,6 +51,9 @@ def create_fmu_container(configuration, output_filename):
     def xml_encode(s):
         """ Escape non-ASCII characters """
 
+        if s is None:
+            return ""
+
         s = s.replace('&', '&amp;')
         s = s.replace('<', '&lt;')
         s = s.replace('>', '&gt;')

@@ -1,3 +1,25 @@
+## v0.3.2 (2021-10-14)
+
+### Bug fixes
+
+- Escape XML attributes in Container FMU (#216)
+- Handle NULL pointers in fmi2Instantiate() in remoting client (#324)
+- Add fmi2CancelStep() to remoting client (#325)
+- Calculate t_next from n_fixed_steps (#318)
+- Add trailing path separator to resourcePath in FMI 3.0 (#309)
+- Don't plot multi-dimensional variables (#293)
+- Fix type conversion in FMI 3.0 high level API (#300)
+- Add attribute "interval" to ScalarVariable (#314)
+
+### Enhancements
+
+- Log FMI calls to nested FMUs if loggingOn == true
+- Add Configuration class for FMU Container (#321)
+- Use FMI import framework in FMU Container (#327)
+- Use the Reference FMU's import framework in remoting server (#326)
+- Check uniqueness of value references in FMI 3.0 (#294)
+- Check for backslashes in ZIP file entries (#297)
+
 ## v0.3.1 (2021-07-21)
 
 ### Bug fixes

@@ -60,7 +60,7 @@ const char* fmi2GetVersion() {
 static void forwardLogMessages(const list<LogMessage> &logMessages) {
 	for (auto it = logMessages.begin(); it != logMessages.end(); it++) {
 		auto &m = *it;
-		s_logger(NULL, m.instanceName.c_str(), fmi2Status(m.status), m.category.c_str(), m.message.c_str());
+		s_logger(s_componentEnvironment, m.instanceName.c_str(), fmi2Status(m.status), m.category.c_str(), m.message.c_str());
 	}
 }
 
@@ -210,7 +210,8 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
         try {
             s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Trying to connect...");
             client = new rpc::client("localhost", rpc::constants::DEFAULT_PORT);
-            r = client->call("fmi2Instantiate", instanceName, (int)fmuType, fmuGUID, fmuResourceLocation, visible, loggingOn).as<ReturnValue>();
+            r = client->call("fmi2Instantiate", instanceName, (int)fmuType, fmuGUID ? fmuGUID : "", 
+                fmuResourceLocation ? fmuResourceLocation : "", visible, loggingOn).as<ReturnValue>();
             break;
         } catch (exception e) {
             if (attempts < 20) {
@@ -474,6 +475,10 @@ fmi2Status fmi2GetRealOutputDerivatives(fmi2Component c, const fmi2ValueReferenc
 fmi2Status fmi2DoStep(fmi2Component c, fmi2Real currentCommunicationPoint, fmi2Real communicationStepSize, fmi2Boolean noSetFMUStatePriorToCurrentPoint) {
 	auto r = client->call("fmi2DoStep", double(currentCommunicationPoint), double(communicationStepSize), int(noSetFMUStatePriorToCurrentPoint)).as<ReturnValue>();
 	return handleReturnValue(r);
+}
+
+fmi2Status fmi2CancelStep(fmi2Component c) {
+    NOT_IMPLEMENTED
 }
 
 /* Inquire slave status */

@@ -25,8 +25,17 @@ def validate_fmu(filename: str) -> List[str]:
 
     from . import read_model_description
     from .model_description import ValidationError
+    import os
+    import zipfile
 
     problems = []
+
+    # check file paths
+    if isinstance(filename, str) and os.path.isfile(filename):
+        with zipfile.ZipFile(filename, 'r') as zf:
+            for file in zf.filelist:
+                if '\\' in file.orig_filename:
+                    problems.append(f'The file path "{file.orig_filename}" contains a backslash.')
 
     try:
         read_model_description(filename,
@@ -58,7 +67,7 @@ def validate_model_description(model_description: ModelDescription, validate_var
     # assert unique variable names (FMI 1.0 spec, p. 34, FMI 2.0 spec, p. 45)
     for v in model_description.modelVariables:
         if v.name in variable_names:
-            problems.append(f'Variable "{v.name}" (line {v.sourceline}) is not unique.')
+            problems.append(f'The variable name "{v.name}" (line {v.sourceline}) is not unique.')
         variable_names.add(v.name)
 
     is_fmi2 = model_description.fmiVersion == '2.0'
@@ -137,6 +146,16 @@ def validate_model_description(model_description: ModelDescription, validate_var
         # assert independent variable
         if sum(v.causality == 'independent' for v in model_description.modelVariables) != 1:
             problems.append("Exactly one independent variable must be defined.")
+
+        # assert unique value references
+        variables = dict()
+        
+        for v in model_description.modelVariables:
+            if v.valueReference in variables:
+                p = variables[v.valueReference]
+                problems.append(f'Variable "{v.name}" (line {v.sourceline}) has the same value reference as variable "{p.name}" (line {p.sourceline}).')
+            else:
+                variables[v.valueReference] = v
 
     return problems
 

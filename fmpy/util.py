@@ -386,8 +386,13 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
     time = result['time']
 
     if names is None:
-        # plot at most 20 signals
-        names = result.dtype.names[1:20]
+
+        names = []
+
+        # plot at most 20 one-dimensional signals
+        for d in result.dtype.descr[1:]:
+            if len(d) < 3 and len(names) < 20:
+                names.append(d[0])
 
     if len(names) > 0:
 

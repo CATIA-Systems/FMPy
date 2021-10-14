@@ -1022,6 +1022,8 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
     t_next = start_time
 
+    n_fixed_steps = 0
+
     # simulation loop
     while time < stop_time:
 
@@ -1029,10 +1031,10 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
             break
 
         if fixed_step:
-            if time + step_size < stop_time + eps:
-                t_next = time + step_size
-            else:
+            t_next = start_time + n_fixed_steps * step_size
+            if t_next > stop_time:
                 break
+            n_fixed_steps += 1
         else:
             if time + eps >= t_next:  # t_next has been reached
                 # integrate to the next grid point

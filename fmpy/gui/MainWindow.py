@@ -431,7 +431,7 @@ class MainWindow(QMainWindow):
 
         for v in md.modelVariables:
             self.variables[v.name] = v
-            if v.causality == 'output':
+            if v.causality == 'output' and not v.dimensions:
                 self.selectedVariables.add(v)
 
         fmi_types = []

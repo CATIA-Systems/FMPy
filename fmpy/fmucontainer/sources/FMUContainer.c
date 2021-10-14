@@ -6,12 +6,10 @@
 #pragma comment(lib, "shlwapi.lib")
 #elif defined(__APPLE__)
 #include <libgen.h>
-#include <dlfcn.h>
 #include <sys/syslimits.h>
 #else
 #define _GNU_SOURCE
 #include <libgen.h>
-#include <dlfcn.h>
 #include <linux/limits.h>
 #endif
 
@@ -20,73 +18,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 
-#include "fmi2Functions.h"
+#include "FMI2.h"
 
-
-typedef struct {
-
-#if defined(_WIN32)
-    HMODULE libraryHandle;
-#else
-    void *libraryHandle;
-#endif
-
-    fmi2Component c;
-	fmi2CallbackLogger logger;
-
-    /***************************************************
-    Common Functions
-    ****************************************************/
-    fmi2GetTypesPlatformTYPE         *fmi2GetTypesPlatform;
-    fmi2GetVersionTYPE               *fmi2GetVersion;
-    fmi2SetDebugLoggingTYPE          *fmi2SetDebugLogging;
-    fmi2InstantiateTYPE              *fmi2Instantiate;
-    fmi2FreeInstanceTYPE             *fmi2FreeInstance;
-    fmi2SetupExperimentTYPE          *fmi2SetupExperiment;
-    fmi2EnterInitializationModeTYPE  *fmi2EnterInitializationMode;
-    fmi2ExitInitializationModeTYPE   *fmi2ExitInitializationMode;
-    fmi2TerminateTYPE                *fmi2Terminate;
-    fmi2ResetTYPE                    *fmi2Reset;
-    fmi2GetRealTYPE                  *fmi2GetReal;
-    fmi2GetIntegerTYPE               *fmi2GetInteger;
-    fmi2GetBooleanTYPE               *fmi2GetBoolean;
-    fmi2GetStringTYPE                *fmi2GetString;
-    fmi2SetRealTYPE                  *fmi2SetReal;
-    fmi2SetIntegerTYPE               *fmi2SetInteger;
-    fmi2SetBooleanTYPE               *fmi2SetBoolean;
-    fmi2SetStringTYPE                *fmi2SetString;
-    fmi2GetFMUstateTYPE              *fmi2GetFMUstate;
-    fmi2SetFMUstateTYPE              *fmi2SetFMUstate;
-    fmi2FreeFMUstateTYPE             *fmi2FreeFMUstate;
-    fmi2SerializedFMUstateSizeTYPE   *fmi2SerializedFMUstateSize;
-    fmi2SerializeFMUstateTYPE        *fmi2SerializeFMUstate;
-    fmi2DeSerializeFMUstateTYPE      *fmi2DeSerializeFMUstate;
-    fmi2GetDirectionalDerivativeTYPE *fmi2GetDirectionalDerivative;
-
-	/***************************************************
-	Functions for FMI2 for Co-Simulation
-	****************************************************/
-
-	/* Simulating the slave */
-	fmi2SetRealInputDerivativesTYPE  *fmi2SetRealInputDerivatives;
-	fmi2GetRealOutputDerivativesTYPE *fmi2GetRealOutputDerivatives;
-
-	fmi2DoStepTYPE     *fmi2DoStep;
-	fmi2CancelStepTYPE *fmi2CancelStep;
-
-	/* Inquire slave status */
-	fmi2GetStatusTYPE        *fmi2GetStatus;
-	fmi2GetRealStatusTYPE    *fmi2GetRealStatus;
-	fmi2GetIntegerStatusTYPE *fmi2GetIntegerStatus;
-	fmi2GetBooleanStatusTYPE *fmi2GetBooleanStatus;
-	fmi2GetStringStatusTYPE  *fmi2GetStringStatus;
-
-	const char *name;
-	const char *guid;
-	const char *modelIdentifier;
-
-} Model;
 
 typedef struct {
 
@@ -108,8 +43,12 @@ typedef struct {
 
 typedef struct {
 
+    fmi2String instanceName;
+    fmi2CallbackLogger logger;
+    fmi2ComponentEnvironment envrionment;
+
 	size_t nComponents;
-	Model *components;
+	FMIInstance **components;
 	
 	size_t nVariables;
 	VariableMapping *variables;
@@ -127,6 +66,13 @@ typedef struct {
 
 #define CHECK_STATUS(S) status = S; if (status > fmi2Warning) goto END;
 
+#define NOT_IMPLEMENTED \
+    if (c) { \
+        FMIInstance *m = (FMIInstance *)c; \
+        System *s = m->userData; \
+        s->logger(s->envrionment, s->instanceName, fmi2Error, "fmi2Error", "Function is not implemented."); \
+    } \
+    return fmi2Error;
 
 /***************************************************
 Types for Common Functions
@@ -141,22 +87,46 @@ fmi2Status fmi2SetDebugLogging(fmi2Component c, fmi2Boolean loggingOn, size_t nC
     
 	GET_SYSTEM
 
-		for (size_t i = 0; i < s->nComponents; i++) {
-			Model *m = &(s->components[i]);
-			CHECK_STATUS(m->fmi2SetDebugLogging(m->c, loggingOn, nCategories, categories))
-		}
+	for (size_t i = 0; i < s->nComponents; i++) {
+        FMIInstance *m = s->components[i];
+        CHECK_STATUS(FMI2SetDebugLogging(m, loggingOn, nCategories, categories));
+	}
 
 END:
 	return status;
 }
 
+void logFMIMessage(FMIInstance *instance, FMIStatus status, const char *category, const char *message) {
+    
+    System *s = instance->userData;
+    
+    size_t message_len = strlen(message);
+    size_t instanceName_len = strlen(instance->name);
+    size_t total_len = message_len + instanceName_len + 5;
+    
+    char *buf = malloc(total_len);
 
-/* Creation and destruction of FMU instances and setting debug status */
-#ifdef _WIN32
-#define GET(f) m->f = (f ## TYPE *)GetProcAddress(m->libraryHandle, #f); if (!m->f) { return NULL; }
-#else
-#define GET(f) m->f = (f ## TYPE *)dlsym(m->libraryHandle, #f); if (!m->f) { return NULL; }
-#endif
+    snprintf(buf, total_len, "[%s]: %s", instance->name, message);
+
+    s->logger(s->envrionment, s->instanceName, status, category, buf);
+
+    free(buf);
+}
+
+static void logFunctionCall(FMIInstance *instance, FMIStatus status, const char *message, ...) {
+
+    System *s = instance->userData;
+
+    char buf[FMI_MAX_MESSAGE_LENGTH];
+
+    va_list args;
+
+    va_start(args, message);
+    vsnprintf(buf, FMI_MAX_MESSAGE_LENGTH, message, args);
+    va_end(args);
+
+    s->logger(s->envrionment, s->instanceName, (fmi2Status)status, "debug", "[%s]: %s", instance->name, buf);
+}
 
 /* Creation and destruction of FMU instances and setting debug status */
 fmi2Component fmi2Instantiate(fmi2String instanceName,
@@ -176,38 +146,23 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
         return NULL;
     }
 
-	const char *scheme1 = "file:///";
-	const char *scheme2 = "file:/";
-	char *path;
-
-	if (strncmp(fmuResourceLocation, scheme1, strlen(scheme1)) == 0) {
-		path = strdup(&fmuResourceLocation[strlen(scheme1) - 1]);
-	} else if (strncmp(fmuResourceLocation, scheme2, strlen(scheme2)) == 0) {
-		path = strdup(&fmuResourceLocation[strlen(scheme2) - 1]);
-	} else {
-        functions->logger(NULL, instanceName, fmi2Error, "logError", "The fmuResourceLocation must start with \"file:///\" or \"file:/\".");
-		return NULL;
-	}
-
-#ifdef _WIN32
-	// strip leading slash if path starts with a drive letter
-    if (strlen(path) > 2 && path[0] == '/' && path[2] == ':') {
-		strcpy(path, &path[1]);
-	}
-#endif
-
 	System *s = calloc(1, sizeof(System));
-#ifdef _WIN32
-    char configPath[MAX_PATH] = "";
-#else
-    char configPath[PATH_MAX] = "";
-#endif
-	strcpy(configPath, path);
-	strcat(configPath, "/config.mp");
+
+    s->instanceName = strdup(instanceName);
+    s->logger       = functions->logger;
+    s->envrionment  = functions->componentEnvironment;
+
+    char configFilename[4096] = "";
+    char resourcesDir[4096]   = "";
+
+    FMIURIToPath(fmuResourceLocation, resourcesDir, 4096);
+
+    strcpy(configFilename, resourcesDir);
+	strcat(configFilename, "config.mp");
 
 	// parse a file into a node tree
 	mpack_tree_t tree;
-	mpack_tree_init_filename(&tree, configPath, 0);
+	mpack_tree_init_filename(&tree, configFilename, 0);
 	mpack_tree_parse(&tree);
 	mpack_node_t root = mpack_tree_root(&tree);
 
@@ -217,19 +172,51 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
 	s->nComponents = mpack_node_array_length(components);
 
-	s->components = calloc(s->nComponents, sizeof(Model));
+	s->components = calloc(s->nComponents, sizeof(FMIInstance *));
 
 	for (size_t i = 0; i < s->nComponents; i++) {
 		mpack_node_t component = mpack_node_array_at(components, i);
 
 		mpack_node_t name = mpack_node_map_cstr(component, "name");
-		s->components[i].name = mpack_node_cstr_alloc(name, 1024);
+		char *_name = mpack_node_cstr_alloc(name, 1024);
 
 		mpack_node_t guid = mpack_node_map_cstr(component, "guid");
-		s->components[i].guid = mpack_node_cstr_alloc(guid, 1024);
+        char *_guid = mpack_node_cstr_alloc(guid, 1024);
 
 		mpack_node_t modelIdentifier = mpack_node_map_cstr(component, "modelIdentifier");
-		s->components[i].modelIdentifier = mpack_node_cstr_alloc(modelIdentifier, 1024);
+        char *_modelIdentifier = mpack_node_cstr_alloc(modelIdentifier, 1024);
+
+        char unzipdir[4069] = "";
+        char componentResourcesDir[4069] = "";
+
+#ifdef _WIN32
+        PathCombine(unzipdir, resourcesDir, _modelIdentifier);
+        PathCombine(componentResourcesDir, unzipdir, "resources");
+#else
+        sprintf(unzipdir, "%s/%s", resourcesDir, _modelIdentifier);
+        sprintf(componentResourcesDir, "%s/%s", unzipdir, "resources");
+#endif
+        char componentResourcesUri[4069] = "";
+
+        FMIPathToURI(componentResourcesDir, componentResourcesUri, 4096);
+
+        char libraryPath[4069] = "";
+
+        FMIPlatformBinaryPath(unzipdir, _modelIdentifier, FMIVersion2, libraryPath, 4096);
+
+        FMIInstance *m = FMICreateInstance(_name, libraryPath, logFMIMessage, loggingOn ? logFunctionCall : NULL);
+
+        if (!m) {
+            return NULL;
+        }
+
+        m->userData = s;
+
+        if (FMI2Instantiate(m, componentResourcesUri, fmi2CoSimulation, _guid, visible, loggingOn) > FMIWarning) {
+            return NULL;
+        }
+
+        s->components[i] = m;
 	}
 
 	mpack_node_t connections = mpack_node_map_cstr(root, "connections");
@@ -287,101 +274,8 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
 	// clean up and check for errors
 	if (mpack_tree_destroy(&tree) != mpack_ok) {
-        functions->logger(NULL, instanceName, fmi2Error, "logError", "An error occurred decoding %s.", configPath);
+        functions->logger(NULL, instanceName, fmi2Error, "logError", "An error occurred decoding %s.", configFilename);
 		return NULL;
-	}
-
-	for (size_t i = 0; i < s->nComponents; i++) {
-
-		Model *m = &(s->components[i]);
-
-		m->logger = functions->logger;
-
-#ifdef _WIN32
-		char libraryPath[MAX_PATH] = "";
-
-		PathCombine(libraryPath, path, m->modelIdentifier);
-		PathCombine(libraryPath, libraryPath, "binaries");
-#ifdef _WIN64
-		PathCombine(libraryPath, libraryPath, "win64");
-#else
-		PathCombine(libraryPath, libraryPath, "win32");
-#endif
-		PathCombine(libraryPath, libraryPath, m->modelIdentifier);
-		strcat(libraryPath, ".dll");
-
-		m->libraryHandle = LoadLibrary(libraryPath);
-#else
-        char libraryPath[PATH_MAX] = "";
-        strcpy(libraryPath, path);
-        strcat(libraryPath, "/");
-        strcat(libraryPath, m->modelIdentifier);
-#ifdef __APPLE__
-        strcat(libraryPath, "/binaries/darwin64/");
-        strcat(libraryPath, m->modelIdentifier);
-        strcat(libraryPath, ".dylib");
-#else
-        strcat(libraryPath, "/binaries/linux64/");
-        strcat(libraryPath, m->modelIdentifier);
-        strcat(libraryPath, ".so");
-#endif
-        m->libraryHandle = dlopen(libraryPath, RTLD_LAZY);
-#endif
-
-#ifdef _WIN32
-		char resourcesPath[MAX_PATH];
-#else
-        char resourcesPath[PATH_MAX];
-#endif
-		strcpy(resourcesPath, fmuResourceLocation);
-		strcat(resourcesPath, "/");
-		strcat(resourcesPath, m->modelIdentifier);
-		strcat(resourcesPath, "/resources");
-
-		if (!m->libraryHandle) {
-			functions->logger(functions->componentEnvironment, instanceName, fmi2Error, "error", "Failed to load shared library %s.", libraryPath);
-			return NULL;
-		}
-
-		GET(fmi2GetTypesPlatform)
-		GET(fmi2GetVersion)
-		GET(fmi2SetDebugLogging)
-		GET(fmi2Instantiate)
-		GET(fmi2FreeInstance)
-		GET(fmi2SetupExperiment)
-		GET(fmi2EnterInitializationMode)
-		GET(fmi2ExitInitializationMode)
-		GET(fmi2Terminate)
-		GET(fmi2Reset)
-		GET(fmi2GetReal)
-		GET(fmi2GetInteger)
-		GET(fmi2GetBoolean)
-		GET(fmi2GetString)
-		GET(fmi2SetReal)
-		GET(fmi2SetInteger)
-		GET(fmi2SetBoolean)
-		GET(fmi2SetString)
-		GET(fmi2GetFMUstate)
-		GET(fmi2SetFMUstate)
-		GET(fmi2FreeFMUstate)
-		GET(fmi2SerializedFMUstateSize)
-		GET(fmi2SerializeFMUstate)
-		GET(fmi2DeSerializeFMUstate)
-		GET(fmi2GetDirectionalDerivative)
-
-		GET(fmi2SetRealInputDerivatives)
-		GET(fmi2GetRealOutputDerivatives)
-		GET(fmi2DoStep)
-		GET(fmi2CancelStep)
-		GET(fmi2GetStatus)
-		GET(fmi2GetRealStatus)
-		GET(fmi2GetIntegerStatus)
-		GET(fmi2GetBooleanStatus)
-		GET(fmi2GetStringStatus)
-
-		m->c = m->fmi2Instantiate(m->name, fmi2CoSimulation, m->guid, resourcesPath, functions, visible, loggingOn);
-
-		if (!m->c) return NULL;
 	}
 
     return s;
@@ -394,15 +288,12 @@ void fmi2FreeInstance(fmi2Component c) {
 	System *s = (System *)c;
 
 	for (size_t i = 0; i < s->nComponents; i++) {
-		Model *m = &(s->components[i]);
-		m->fmi2FreeInstance(m->c);
-#ifdef _WIN32
-		FreeLibrary(m->libraryHandle);
-#else
-		dlclose(m->libraryHandle);
-#endif
+		FMIInstance *m = s->components[i];
+		FMI2FreeInstance(m);
+        FMIFreeInstance(m);
 	}
 
+    free((void *)s->instanceName);
 	free(s);
 }
 
@@ -417,8 +308,8 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
 	GET_SYSTEM
 
 	for (size_t i = 0; i < s->nComponents; i++) {
-		Model *m = &(s->components[i]);
-		CHECK_STATUS(m->fmi2SetupExperiment(m->c, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime))
+        FMIInstance *m = s->components[i];
+        CHECK_STATUS(FMI2SetupExperiment(m, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime));
 	}
 
 END:
@@ -430,8 +321,8 @@ fmi2Status fmi2EnterInitializationMode(fmi2Component c) {
 	GET_SYSTEM
 
 	for (size_t i = 0; i < s->nComponents; i++) {
-		Model *m = &(s->components[i]);
-		CHECK_STATUS(m->fmi2EnterInitializationMode(m->c))
+        FMIInstance *m = s->components[i];
+		CHECK_STATUS(FMI2EnterInitializationMode(m))
 	}
 
 END:
@@ -443,8 +334,8 @@ fmi2Status fmi2ExitInitializationMode(fmi2Component c) {
 	GET_SYSTEM
 
 	for (size_t i = 0; i < s->nComponents; i++) {
-		Model *m = &(s->components[i]);
-		CHECK_STATUS(m->fmi2ExitInitializationMode(m->c))
+        FMIInstance *m = s->components[i];
+		CHECK_STATUS(FMI2ExitInitializationMode(m))
 	}
 
 END:
@@ -456,8 +347,8 @@ fmi2Status fmi2Terminate(fmi2Component c) {
 	GET_SYSTEM
 
 	for (size_t i = 0; i < s->nComponents; i++) {
-		Model *m = &(s->components[i]);
-		CHECK_STATUS(m->fmi2Terminate(m->c))
+        FMIInstance *m = s->components[i];
+		CHECK_STATUS(FMI2Terminate(m))
 	}
 
 END:
@@ -469,8 +360,8 @@ fmi2Status fmi2Reset(fmi2Component c) {
 	GET_SYSTEM
 
 		for (size_t i = 0; i < s->nComponents; i++) {
-			Model *m = &(s->components[i]);
-			CHECK_STATUS(m->fmi2Reset(m->c))
+            FMIInstance *m = s->components[i];
+			CHECK_STATUS(FMI2Reset(m))
 		}
 
 END:
@@ -485,8 +376,8 @@ fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 	for (size_t i = 0; i < nvr; i++) {
 		if (vr[i] >= s->nVariables) return fmi2Error;
 		VariableMapping vm = s->variables[vr[i]];
-		Model *m = &(s->components[vm.ci[0]]);
-		CHECK_STATUS(m->fmi2GetReal(m->c, &(vm.vr[0]), 1, &value[i]))
+        FMIInstance *m = s->components[vm.ci[0]];
+		CHECK_STATUS(FMI2GetReal(m, &(vm.vr[0]), 1, &value[i]))
 	}
 END:
 	return status;
@@ -499,8 +390,8 @@ fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 		for (size_t i = 0; i < nvr; i++) {
 			if (vr[i] >= s->nVariables) return fmi2Error;
 			VariableMapping vm = s->variables[vr[i]];
-			Model *m = &(s->components[vm.ci[0]]);
-			CHECK_STATUS(m->fmi2GetInteger(m->c, &(vm.vr[0]), 1, &value[i]))
+            FMIInstance *m = s->components[vm.ci[0]];
+			CHECK_STATUS(FMI2GetInteger(m, &(vm.vr[0]), 1, &value[i]))
 		}
 END:
 	return status;
@@ -513,8 +404,8 @@ fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 		for (size_t i = 0; i < nvr; i++) {
 			if (vr[i] >= s->nVariables) return fmi2Error;
 			VariableMapping vm = s->variables[vr[i]];
-			Model *m = &(s->components[vm.ci[0]]);
-			CHECK_STATUS(m->fmi2GetBoolean(m->c, &(vm.vr[0]), 1, &value[i]))
+            FMIInstance *m = s->components[vm.ci[0]];
+			CHECK_STATUS(FMI2GetBoolean(m, &(vm.vr[0]), 1, &value[i]))
 		}
 END:
 	return status;
@@ -527,8 +418,8 @@ fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t 
 		for (size_t i = 0; i < nvr; i++) {
 			if (vr[i] >= s->nVariables) return fmi2Error;
 			VariableMapping vm = s->variables[vr[i]];
-			Model *m = &(s->components[vm.ci[0]]);
-			CHECK_STATUS(m->fmi2GetString(m->c, &(vm.vr[0]), 1, &value[i]))
+            FMIInstance *m = s->components[vm.ci[0]];
+			CHECK_STATUS(FMI2GetString(m, &(vm.vr[0]), 1, &value[i]))
 		}
 END:
 	return status;
@@ -542,8 +433,8 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 		if (vr[i] >= s->nVariables) return fmi2Error;
 		VariableMapping vm = s->variables[vr[i]];
         for (size_t j = 0; j < vm.size; j++) {
-            Model *m = &(s->components[vm.ci[j]]);
-		    CHECK_STATUS(m->fmi2SetReal(m->c, &(vm.vr[j]), 1, &value[i]))
+            FMIInstance *m = s->components[vm.ci[j]];
+		    CHECK_STATUS(FMI2SetReal(m, &(vm.vr[j]), 1, &value[i]))
         }
 	}
 END:
@@ -558,8 +449,8 @@ fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 		if (vr[i] >= s->nVariables) return fmi2Error;
 		VariableMapping vm = s->variables[vr[i]];
         for (size_t j = 0; j < vm.size; j++) {
-            Model *m = &(s->components[vm.ci[j]]);
-            CHECK_STATUS(m->fmi2SetInteger(m->c, &(vm.vr[j]), 1, &value[i]))
+            FMIInstance *m = s->components[vm.ci[j]];
+            CHECK_STATUS(FMI2SetInteger(m, &(vm.vr[j]), 1, &value[i]))
         }
 	}
 END:
@@ -574,8 +465,8 @@ fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 		if (vr[i] >= s->nVariables) return fmi2Error;
 		VariableMapping vm = s->variables[vr[i]];
         for (size_t j = 0; j < vm.size; j++) {
-            Model *m = &(s->components[vm.ci[j]]);
-            CHECK_STATUS(m->fmi2SetBoolean(m->c, &(vm.vr[j]), 1, &value[i]))
+            FMIInstance *m = s->components[vm.ci[j]];
+            CHECK_STATUS(FMI2SetBoolean(m, &(vm.vr[j]), 1, &value[i]))
         }
 	}
 END:
@@ -590,8 +481,8 @@ fmi2Status fmi2SetString(fmi2Component c, const fmi2ValueReference vr[], size_t 
 		if (vr[i] >= s->nVariables) return fmi2Error;
 		VariableMapping vm = s->variables[vr[i]];
         for (size_t j = 0; j < vm.size; j++) {
-            Model *m = &(s->components[vm.ci[j]]);
-            CHECK_STATUS(m->fmi2SetString(m->c, &(vm.vr[j]), 1, &value[i]))
+            FMIInstance *m = s->components[vm.ci[j]];
+            CHECK_STATUS(FMI2SetString(m, &(vm.vr[j]), 1, &value[i]))
         }
 	}
 END:
@@ -600,27 +491,27 @@ END:
 
 /* Getting and setting the internal FMU state */
 fmi2Status fmi2GetFMUstate(fmi2Component c, fmi2FMUstate* FMUstate) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2SetFMUstate(fmi2Component c, fmi2FMUstate  FMUstate) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2FreeFMUstate(fmi2Component c, fmi2FMUstate* FMUstate) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2SerializedFMUstateSize(fmi2Component c, fmi2FMUstate  FMUstate, size_t* size) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2SerializeFMUstate(fmi2Component c, fmi2FMUstate  FMUstate, fmi2Byte serializedState[], size_t size) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2DeSerializeFMUstate(fmi2Component c, const fmi2Byte serializedState[], size_t size, fmi2FMUstate* FMUstate) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 /* Getting partial derivatives */
@@ -629,7 +520,7 @@ fmi2Status fmi2GetDirectionalDerivative(fmi2Component c,
                                         const fmi2ValueReference vKnown_ref[],   size_t nKnown,
                                         const fmi2Real dvKnown[],
                                         fmi2Real dvUnknown[]) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 /***************************************************
@@ -641,14 +532,14 @@ fmi2Status fmi2SetRealInputDerivatives(fmi2Component c,
                                        const fmi2ValueReference vr[], size_t nvr,
                                        const fmi2Integer order[],
                                        const fmi2Real value[]) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2GetRealOutputDerivatives(fmi2Component c,
                                         const fmi2ValueReference vr[], size_t nvr,
                                         const fmi2Integer order[],
                                         fmi2Real value[]) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2DoStep(fmi2Component c,
@@ -663,31 +554,31 @@ fmi2Status fmi2DoStep(fmi2Component c,
 		fmi2Integer integerValue;
 		fmi2Boolean booleanValue;
 		Connection *k = &(s->connections[i]);
-		Model *m1 = &(s->components[k->startComponent]);
-		Model *m2 = &(s->components[k->endComponent]);
+        FMIInstance *m1 = s->components[k->startComponent];
+        FMIInstance *m2 = s->components[k->endComponent];
 		fmi2ValueReference vr1 = k->startValueReference;
 		fmi2ValueReference vr2 = k->endValueReference;
 
 		switch (k->type) {
 		case 'R':
-			CHECK_STATUS(m1->fmi2GetReal(m1->c, &(vr1), 1, &realValue))
-			CHECK_STATUS(m2->fmi2SetReal(m2->c, &(vr2), 1, &realValue))
+			CHECK_STATUS(FMI2GetReal(m1, &(vr1), 1, &realValue))
+			CHECK_STATUS(FMI2SetReal(m2, &(vr2), 1, &realValue))
 			break;
 		case 'I':
-			CHECK_STATUS(m1->fmi2GetInteger(m1->c, &(vr1), 1, &integerValue))
-			CHECK_STATUS(m2->fmi2SetInteger(m2->c, &(vr2), 1, &integerValue))
+			CHECK_STATUS(FMI2GetInteger(m1, &(vr1), 1, &integerValue))
+			CHECK_STATUS(FMI2SetInteger(m2, &(vr2), 1, &integerValue))
 			break;
 		case 'B':
-			CHECK_STATUS(m1->fmi2GetBoolean(m1->c, &(vr1), 1, &booleanValue))
-			CHECK_STATUS(m2->fmi2SetBoolean(m2->c, &(vr2), 1, &booleanValue))
+			CHECK_STATUS(FMI2GetBoolean(m1, &(vr1), 1, &booleanValue))
+			CHECK_STATUS(FMI2SetBoolean(m2, &(vr2), 1, &booleanValue))
 			break;
 		}
 		
 	}
 
 	for (size_t i = 0; i < s->nComponents; i++) {
-		Model *m = &(s->components[i]);
-		CHECK_STATUS(m->fmi2DoStep(m->c, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint))
+        FMIInstance *m = s->components[i];
+		CHECK_STATUS(FMI2DoStep(m, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint))
 	}
 
 END:
@@ -695,26 +586,26 @@ END:
 }
 
 fmi2Status fmi2CancelStep(fmi2Component c) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 /* Inquire slave status */
 fmi2Status fmi2GetStatus(fmi2Component c, const fmi2StatusKind s, fmi2Status*  value) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2GetRealStatus(fmi2Component c, const fmi2StatusKind s, fmi2Real*    value) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2GetIntegerStatus(fmi2Component c, const fmi2StatusKind s, fmi2Integer* value) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2GetBooleanStatus(fmi2Component c, const fmi2StatusKind s, fmi2Boolean* value) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2GetStringStatus(fmi2Component c, const fmi2StatusKind s, fmi2String*  value) {
-    return fmi2Error;
+    NOT_IMPLEMENTED
 }

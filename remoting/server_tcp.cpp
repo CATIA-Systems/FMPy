@@ -3,9 +3,11 @@
 #else
 #include <pthread.h>
 #include <unistd.h>
+#include <fcntl.h>
 #define MAX_PATH 2048
 #endif
 
+#include <stdarg.h>
 #include <time.h>
 #include <list>
 #include <iostream>
@@ -13,7 +15,7 @@
 
 #include "rpc/server.h"
 
-#include "remoting.h"
+#include "remoting_tcp.h"
 
 extern "C" {
 #include "FMI2.h"
@@ -37,32 +39,86 @@ static void resetExitTimer() {
 	time(&s_lastActive);
 }
 
-#ifdef _WIN32
-DWORD WINAPI MyThreadFunction(LPVOID lpParam) {
-#else
-void *doSomeThing(void *arg) {
-#endif
-    
-    while (s_server) {
+static void logFunctionCall(FMIInstance *instance, FMIStatus status, const char *message, ...) {
 
-		time_t currentTime;
-		time(&currentTime);
+    va_list args;
+    va_start(args, message);
 
-		if (difftime(currentTime, s_lastActive) > 10) {
-			cout << "Client inactive for more than 10 seconds. Exiting." << endl;
-			s_server->stop();
-			return 0;
-		}
+    vprintf(message, args);
 
-#ifdef _WIN32
-        Sleep(500);
-#else
-        usleep(500000);
-#endif		
-	}
+    va_end(args);
 
-	return 0;
+    switch (status) {
+    case FMIOK:
+        printf(" -> OK\n");
+        break;
+    case FMIWarning:
+        printf(" -> Warning\n");
+        break;
+    case FMIDiscard:
+        printf(" -> Discard\n");
+        break;
+    case FMIError:
+        printf(" -> Error\n");
+        break;
+    case FMIFatal:
+        printf(" -> Fatal\n");
+        break;
+    case FMIPending:
+        printf(" -> Pending\n");
+        break;
+    default:
+        printf(" -> Unknown status (%d)\n", status);
+        break;
+    }
 }
+
+static const char *lockFile = NULL;
+
+
+#ifdef _WIN32
+DWORD WINAPI checkLockFile(LPVOID lpParam) {
+
+    HANDLE hLockFile = INVALID_HANDLE_VALUE;
+
+    while (hLockFile == INVALID_HANDLE_VALUE) {
+        Sleep(500);
+        hLockFile = CreateFileA(
+            lockFile,       // lpFileName
+            GENERIC_WRITE,  // dwDesiredAccess
+            0,              // dwShareMode
+            0,              // lpSecurityAttributes
+            CREATE_ALWAYS,  // dwCreationDisposition
+            0,              // dwFlagsAndAttributes
+            0               // hTemplateFile
+        );
+    }
+
+    cout << "Lock file " << lockFile << " open. Exiting." << endl;
+    
+    s_server->stop();
+    
+    return 0;
+}
+#else
+void *checkLockFile(void *arg) {
+
+    FILE* hLockFile = NULL;
+
+    while (!hLockFile) {
+        usleep(500000);
+        hLockFile = fopen(lockFile, "w");
+    }
+
+    cout << "Lock file open. Exiting." << endl;
+
+    s_server->stop();
+
+    return NULL;
+}
+#endif		
+
+
 
 class FMU {
 
@@ -387,8 +443,8 @@ public:
 
 int main(int argc, char *argv[]) {
 
-	if (argc != 2) {
-        cerr << "Usage: server <path_to_fmu>" << endl;
+	if (argc < 2) {
+        cerr << "Usage: server <shared_library> [<lockfile>]" << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -396,29 +452,38 @@ int main(int argc, char *argv[]) {
 
         cout << "Loading " << argv[1] << endl;
 
-	    FMU fmu(argv[1]);
+        FMU fmu(argv[1]);
 
-	    s_server = &fmu.srv;
-	    time(&s_lastActive);
+        s_server = &fmu.srv;
+        time(&s_lastActive);
+
+
+        if (argc > 2) {
+
+            lockFile = argv[2];
 
 #ifdef _WIN32
-	    DWORD dwThreadIdArray;
+            DWORD dwThreadIdArray;
 
-	    HANDLE hThreadArray = CreateThread(
-	    	NULL,                   // default security attributes
-	    	0,                      // use default stack size  
-	    	MyThreadFunction,       // thread function name
-	    	NULL,                   // argument to thread function 
-	    	0,                      // use default creation flags 
-	    	&dwThreadIdArray);      // returns the thread identifier
+            HANDLE hThreadArray = CreateThread(
+                NULL,                   // default security attributes
+                0,                      // use default stack size  
+                checkLockFile,          // thread function name
+                NULL,                   // argument to thread function 
+                0,                      // use default creation flags 
+                &dwThreadIdArray);      // returns the thread identifier
 #else
-        pthread_t tid;
-        int err = pthread_create(&tid, NULL, &doSomeThing, NULL);
-        if (err != 0)
-            printf("Can't create thread :[%s]", strerror(err));
-        else
-            printf("Thread created successfully\n");
+            pthread_t tid;
+            
+            int err = pthread_create(&tid, NULL, &checkLockFile, NULL);
+            
+            if (err != 0) {
+                printf("Can't create thread :[%s]", strerror(err));
+            } else {
+                printf("Thread created successfully\n");
+            }
 #endif
+        }
 
         cout << "Starting RPC server" << endl;
 

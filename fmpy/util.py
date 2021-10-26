@@ -901,81 +901,81 @@ def compile_platform_binary(filename, output_filename=None, target_platform=None
 
 
 def add_remoting(filename, host_platform, remote_platform):
+    """
+        win32 on win64 (SM)
+        linux64 on win64 (WSL + TCP)
+        win64 on linux64 (wine + TCP)
+    """
 
     from . import extract, read_model_description, supported_platforms
     from shutil import copyfile, rmtree
     import zipfile
-    import os
+    from os.path import join, isdir, isfile, normpath, relpath
 
     platforms = supported_platforms(filename)
+    current_dir = os.path.dirname(__file__)
 
-    if host_platform == 'win64' and remote_platform == 'win32':
+    methods = {
+        ('win64', 'win32'): 'sm',
+        ('win64', 'linux64'): 'tcp',
+        ('linux64', 'win64'): 'tcp'
+    }
 
-        if 'win64' in platforms:
-            raise Exception('The FMU already supports "win64".')
-
-        if 'win32' not in platforms:
-            raise Exception('The FMU does not support the platform "win32".')
-
-    elif host_platform == 'linux64' and remote_platform == 'win64':
-
-        if 'linux64' in platforms:
-            raise Exception('The FMU already supports "linux64".')
-
-        if 'win64' not in platforms:
-            raise Exception('The FMU does not support the platform "win64".')
-    else:
-
+    if (host_platform, remote_platform) not in methods:
         raise Exception("Remoting is not supported for the given combination of host and remote platform.")
+
+    if host_platform in platforms:
+        raise Exception(f"The FMU already supports {host_platform}.")
+
+    if remote_platform not in platforms:
+        raise Exception(f"The FMU does not support {remote_platform}.")
+
+    method = methods[(host_platform, remote_platform)]
 
     model_description = read_model_description(filename)
 
-    current_dir = os.path.dirname(__file__)
+    license = join(current_dir, 'remoting', 'license.txt')
 
-    if host_platform == 'win64':
-        client = os.path.join(current_dir, 'remoting', 'win64', 'client.dll')
-        server = os.path.join(current_dir, 'remoting', 'win32', 'server.exe')
+    if isdir(filename):
+        tempdir = filename
     else:
-        client = os.path.join(current_dir, 'remoting', 'linux64', 'client.so')
-        server = os.path.join(current_dir, 'remoting', 'win64', 'server.exe')
-
-    license = os.path.join(current_dir, 'remoting', 'license.txt')
-
-    tempdir = extract(filename)
+        tempdir = extract(filename)
 
     if model_description.coSimulation:
         model_identifier = model_description.coSimulation.modelIdentifier
     else:
         model_identifier = model_description.modelExchange.modelIdentifier
 
+    sl_ext = {'linux64': '.so', 'win32': '.dll', 'win64': '.dll'}
+    ex_ext = {'linux64': '', 'win32': '.exe', 'win64': '.exe'}
+
     # copy the binaries & license
-    if host_platform == 'win64':
-        os.mkdir(os.path.join(tempdir, 'binaries', 'win64'))
-        copyfile(client, os.path.join(tempdir, 'binaries', 'win64', model_identifier + '.dll'))
-        copyfile(server, os.path.join(tempdir, 'binaries', 'win32', 'server.exe'))
-    else:
-        os.mkdir(os.path.join(tempdir, 'binaries', 'linux64'))
-        copyfile(client, os.path.join(tempdir, 'binaries', 'linux64', model_identifier + '.so'))
-        copyfile(server, os.path.join(tempdir, 'binaries', 'win64', 'server.exe'))
+    os.makedirs(join(tempdir, 'binaries', host_platform), exist_ok=True)
 
-    licenses_dir = os.path.join(tempdir, 'documentation', 'licenses')
+    copyfile(src=join(current_dir, 'remoting', host_platform, f'client_{method}{sl_ext[host_platform]}'),
+             dst=join(tempdir, 'binaries', host_platform, model_identifier + sl_ext[host_platform]))
+
+    copyfile(src=join(current_dir, 'remoting', remote_platform, f'server_{method}{ex_ext[remote_platform]}'),
+             dst=join(tempdir, 'binaries', remote_platform, f'server_{method}{ex_ext[remote_platform]}'))
+
+    licenses_dir = join(tempdir, 'documentation', 'licenses')
     os.makedirs(licenses_dir, exist_ok=True)
-    copyfile(license, os.path.join(tempdir, 'documentation', 'licenses', 'fmpy-remoting-binaries.txt'))
+    copyfile(license, join(tempdir, 'documentation', 'licenses', 'fmpy-remoting-binaries.txt'))
 
-    # create a new archive from the existing files + remoting binaries
-    with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED) as zf:
-        base_path = os.path.normpath(tempdir)
-        for dirpath, dirnames, filenames in os.walk(tempdir):
-            for name in sorted(dirnames):
-                path = os.path.normpath(os.path.join(dirpath, name))
-                zf.write(path, os.path.relpath(path, base_path))
-            for name in filenames:
-                path = os.path.normpath(os.path.join(dirpath, name))
-                if os.path.isfile(path):
-                    zf.write(path, os.path.relpath(path, base_path))
-
-    # clean up
-    rmtree(tempdir, ignore_errors=True)
+    if not isdir(filename):
+        # create a new archive from the existing files + remoting binaries
+        with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED) as zf:
+            base_path = normpath(tempdir)
+            for dirpath, dirnames, filenames in os.walk(tempdir):
+                for name in sorted(dirnames):
+                    path = normpath(join(dirpath, name))
+                    zf.write(path, relpath(path, base_path))
+                for name in filenames:
+                    path = normpath(join(dirpath, name))
+                    if isfile(path):
+                        zf.write(path, relpath(path, base_path))
+        # clean up
+        rmtree(tempdir, ignore_errors=True)
 
 
 def auto_interval(t):

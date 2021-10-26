@@ -18,7 +18,7 @@ class RemotingTest(unittest.TestCase):
 
         simulate_fmu(filename, fmi_type='CoSimulation', remote_platform='win32')
 
-        add_remoting(filename, 'win64', 'win32')
+        add_remoting(filename, host_platform='win64', remote_platform='win32')
 
         self.assertIn('win64', supported_platforms(filename))
 
@@ -28,12 +28,12 @@ class RemotingTest(unittest.TestCase):
     def test_remoting_win32_on_win64_me(self):
 
         filename = download_file(
-            'https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/me/win32/FMUSDK/2.0.4/vanDerPol/vanDerPol.fmu',
-            checksum="1c2e40322586360d58fcffa8eb030dd9edb686ef7a0f2bad1e9d59d48504d56a")
+            'https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/me/win32/MapleSim/2021.1/CoupledClutches/CoupledClutches.fmu',
+            checksum='2a22c800285bcda810d9fe59234ee72c29e0fea86bb6ab7d6eb5b703f0afbe4e')
 
         self.assertNotIn('win64', supported_platforms(filename))
 
-        simulate_fmu(filename, fmi_type='ModelExchange', remote_platform='win32')
+        simulate_fmu(filename, fmi_type='ModelExchange', remote_platform='win32', fmi_call_logger=None)
 
         add_remoting(filename, 'win64', 'win32')
 
@@ -52,6 +52,12 @@ class RemotingTest(unittest.TestCase):
 
         simulate_fmu(filename, remote_platform='linux64')
 
+        add_remoting(filename, host_platform='win64', remote_platform='linux64')
+
+        self.assertIn('win64', supported_platforms(filename))
+
+        simulate_fmu(filename, remote_platform=None)
+
     @skipIf(not has_wine64(), "Requires Linux 64-bit and wine 64-bit")
     def test_remoting_win64_on_linux64_cs(self):
 
@@ -61,10 +67,14 @@ class RemotingTest(unittest.TestCase):
 
         self.assertNotIn('linux64', supported_platforms(filename))
 
-        simulate_fmu(filename, remote_platform='win64')
+        simulate_fmu(filename, remote_platform='win64', stop_time=5, output_interval=0.01)
 
-        add_remoting(filename, 'linux64', 'win64')
+        add_remoting(filename, host_platform='linux64', remote_platform='win64')
 
         self.assertIn('win64', supported_platforms(filename))
 
         simulate_fmu(filename, remote_platform=None)
+
+
+if __name__ == '__main__':
+    unittest.main()

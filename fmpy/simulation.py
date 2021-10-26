@@ -10,7 +10,7 @@ from .fmi2 import *
 from .fmi2 import _FMU2
 from . import fmi3
 from . import extract
-from .util import auto_interval
+from .util import auto_interval, add_remoting
 import numpy as np
 from time import time as current_time
 from typing import Union, Any, Dict, Sequence, Callable
@@ -641,19 +641,6 @@ def simulate_fmu(filename,
     if not can_sim:
         raise Exception(f"The FMU cannot be simulated on the current platform ({platform}).")
 
-    # if platform not in platforms and remote_platform == 'auto':
-    #     if platform == 'win64' and 'win32' in platforms:
-    #         remote_platform = 'win32'
-    #     elif platform == 'win64' and 'linux64' in platforms and has_wsl():
-    #         remote_platform = 'linux64'
-    #     elif platform == 'linux64' and 'win64' in platforms and has_wine64():
-    #         remote_platform = 'win64'
-    #     else:
-    #         raise Exception(f"The FMU cannot be simulated on the current platform ({platform}).")
-    #
-    # if platform not in platforms and remote_platform not in platforms:
-    #     raise Exception(f"The current platform ({platform}) is not supported by the FMU.")
-
     if model_description is None:
         model_description = read_model_description(filename, validate=validate)
 
@@ -716,90 +703,11 @@ def simulate_fmu(filename,
         tempdir = extract(filename, include=None if remote_platform else lambda n: n.startswith(tuple(required_paths)))
         unzipdir = tempdir
 
-    if remote_platform is None:
-
-        server = None
-        library_path = None
-
-    else:
-
-        import subprocess
-
-        if fmi_type == 'ModelExchange':
-            model_identifier = model_description.modelExchange.modelIdentifier
-        else:
-            model_identifier = model_description.coSimulation.modelIdentifier
-
-        fmpy_dir = os.path.dirname(__file__)
-
-        if platform == 'win64':
-
-            if remote_platform == 'win32':
-
-                server_path = os.path.join(fmpy_dir, 'remoting', 'win32', 'server.exe')
-                dll_path = os.path.join(unzipdir, 'binaries', 'win32', model_identifier + '.dll')
-
-                library_path = os.path.join(fmpy_dir, 'remoting', 'win64', 'client.dll')
-                server = subprocess.Popen([server_path, dll_path])
-
-            elif remote_platform == 'linux64':
-
-                server_path = os.path.join(fmpy_dir, 'remoting', 'linux64', 'server').replace('\\', '/')
-                process = subprocess.run(['wsl', 'wslpath', server_path], capture_output=True, check=True)
-                server_path = process.stdout.decode("utf-8") .strip()
-
-                so_path = os.path.join(unzipdir, 'binaries', 'linux64', model_identifier + '.so').replace('\\', '/')
-                process = subprocess.run(['wsl', 'wslpath', so_path], capture_output=True, check=True)
-                so_path = process.stdout.decode("utf-8") .strip()
-
-                library_path = os.path.join(fmpy_dir, 'remoting', 'win64', 'client.dll')
-                server = subprocess.Popen(['wsl', server_path, so_path])
-
-            elif remote_platform == 'win64':
-
-                server_path = os.path.join(fmpy_dir, 'remoting', 'win64', 'server.exe')
-                dll_path = os.path.join(unzipdir, 'binaries', 'win64', model_identifier + '.dll')
-
-                library_path = os.path.join(fmpy_dir, 'remoting', 'win64', 'client.dll')
-                server = subprocess.Popen([server_path, dll_path])
-
-            else:
-
-                raise Exception(f"The remote platform {remote_platform} is not supported on the current platform ({platform}).")
-
-        elif platform == 'linux64':
-
-            if remote_platform == 'win32':
-
-                server_path = os.path.join(fmpy_dir, 'remoting', 'win32', 'server.exe')
-                dll_path = os.path.join(unzipdir, 'binaries', 'win32', model_identifier + '.dll')
-                library_path = os.path.join(fmpy_dir, 'remoting', 'linux64', 'client.so')
-                server = subprocess.Popen(['wine', server_path, dll_path])
-
-            elif remote_platform == 'win64':
-
-                server_path = os.path.join(fmpy_dir, 'remoting', 'win64', 'server.exe')
-                dll_path = os.path.join(unzipdir, 'binaries', 'win64', model_identifier + '.dll')
-                library_path = os.path.join(fmpy_dir, 'remoting', 'linux64', 'client.so')
-                server = subprocess.Popen(['wine64', server_path, dll_path])
-
-            elif remote_platform == 'linux64':
-
-                server_path = os.path.join(fmpy_dir, 'remoting', 'linux64', 'server')
-                dll_path = os.path.join(unzipdir, 'binaries', 'linux64', model_identifier + '.so')
-                library_path = os.path.join(fmpy_dir, 'remoting', 'linux64', 'client.so')
-                server = subprocess.Popen([server_path, dll_path])
-
-            else:
-
-                raise Exception(f"The remote platform {remote_platform} is not supported on the current platform ({platform}).")
-
-        else:
-
-            raise Exception(f"Remoting is not supported on the current platform ({platform}).")
+    if remote_platform:
+        add_remoting(unzipdir, host_platform=platform, remote_platform=remote_platform)
 
     if fmu_instance is None:
-        fmu = instantiate_fmu(unzipdir, model_description, fmi_type, visible, debug_logging, logger, fmi_call_logger, library_path, early_return_allowed, use_event_mode)
+        fmu = instantiate_fmu(unzipdir, model_description, fmi_type, visible, debug_logging, logger, fmi_call_logger, None, early_return_allowed, use_event_mode)
     else:
         fmu = fmu_instance
 
@@ -811,10 +719,6 @@ def simulate_fmu(filename,
 
     if fmu_instance is None:
         fmu.freeInstance()
-
-    if server is not None:
-        server.terminate()
-        server.wait()
 
     # clean up
     if tempdir is not None:

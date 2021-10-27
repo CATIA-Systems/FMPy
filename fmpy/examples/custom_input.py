@@ -70,11 +70,11 @@ def simulate_custom_input(show_plot=True):
             print("Threshold reached at t = %g s" % time)
             break
 
-        # append the results
-        rows.append((time, inputs, outputs4))
-
         # advance the time
         time += step_size
+
+        # append the results
+        rows.append((time, inputs, outputs4))
 
     fmu.terminate()
     fmu.freeInstance()

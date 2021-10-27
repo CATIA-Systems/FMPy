@@ -552,7 +552,7 @@ def download_file(url: str, checksum: str = None) -> str:
     if checksum is not None and os.path.isfile(filename):
         hash = sha256_checksum(filename)
         if hash.startswith(checksum.lower()):
-            return  # file already exists
+            return filename  # file already exists
 
     import requests
 

@@ -120,11 +120,19 @@ class SimpleType(object):
 
 
 @attrs(eq=False)
+class DisplayUnit(object):
+
+    name = attrib(type=str, default=None)
+    factor = attrib(type=float, default=1.0, repr=False)
+    offset = attrib(type=float, default=0.0, repr=False)
+
+
+@attrs(eq=False)
 class Unit(object):
 
     name = attrib(type=str, default=None)
     baseUnit = attrib(type=str, default=None, repr=False)
-    displayUnits = attrib(type=List[str], default=Factory(list), repr=False)
+    displayUnits = attrib(type=List[DisplayUnit], default=Factory(list), repr=False)
 
 
 @attrs(eq=False)
@@ -140,14 +148,6 @@ class BaseUnit(object):
     rad = attrib(type=int, default=0)
     factor = attrib(type=float, default=1.0)
     offset = attrib(type=float, default=0.0)
-
-
-@attrs(eq=False)
-class DisplayUnit(object):
-
-    name = attrib(type=str, default=None)
-    factor = attrib(type=float, default=1.0, repr=False)
-    offset = attrib(type=float, default=0.0, repr=False)
 
 
 @attrs(eq=False)

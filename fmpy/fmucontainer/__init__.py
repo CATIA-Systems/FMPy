@@ -1,6 +1,7 @@
 from tempfile import mkdtemp
-from typing import List
+from typing import List, Tuple
 from attr import attrs, attrib, Factory
+from ..model_description import Unit, BaseUnit, DisplayUnit, SimpleType
 
 
 @attrs(eq=False, auto_attribs=True)
@@ -12,7 +13,10 @@ class Variable(object):
     name: str = None
     start: str = None
     description: str = None
-    mapping: str = None
+    mapping: Tuple[str, str] = None
+    declaredType: str = None
+    unit: str = None
+    displayUnit: str = None
 
 
 @attrs(eq=False, auto_attribs=True)
@@ -36,6 +40,9 @@ class Configuration(object):
 
     description = attrib(type=str, default=None, repr=False)
     variableNamingConvention = attrib(type=str, default='flat', repr=False)
+
+    unitDefinitions = attrib(type=List[Unit], default=Factory(list), repr=False)
+    typeDefinitions = attrib(type=List[SimpleType], default=Factory(list), repr=False)
 
     variables = attrib(type=List[Variable], default=Factory(list), repr=False)
     components = attrib(type=List[Component], default=Factory(list), repr=False)
@@ -110,6 +117,56 @@ def create_fmu_container(configuration, output_filename):
     for i, v in enumerate(configuration.variables):
         variables_map[v.name] = (i, v)
 
+    unit_defintions = ''
+
+    def to_xml(o):
+
+        xml = f'<{type(o).__name__}'
+
+        for a in dir(o):
+            if not a.startswith('_'):
+                v = getattr(o, a)
+                if v:
+                    xml += f' {a}="{v}"'
+
+        xml += '/>'
+
+        return xml
+
+    if configuration.unitDefinitions:
+
+        unit_defintions += '\n  <UnitDefinitions>'
+
+        for unit in configuration.unitDefinitions:
+            unit_defintions += f'\n    <Unit name="{unit.name}">'
+            if unit.baseUnit:
+                unit_defintions += '\n      ' + to_xml(unit.baseUnit)
+            for displayUnit in unit.displayUnits:
+                unit_defintions += '\n      ' + to_xml(displayUnit)
+            unit_defintions += '\n    </Unit>'
+
+        unit_defintions += '\n  </UnitDefinitions>'
+
+    type_definitions = ''
+
+    if configuration.typeDefinitions:
+
+        type_definitions += '\n  <TypeDefinitions>'
+
+        for simpleType in configuration.typeDefinitions:
+            type_definitions += f'\n    <SimpleType name="{simpleType.name}">'
+            type_definitions += f'\n      <{simpleType.type}'
+            if simpleType.quantity:
+                type_definitions += f' quantity="{simpleType.quantity}'
+            if simpleType.unit:
+                type_definitions += f' unit="{simpleType.unit}"'
+            if simpleType.displayUnit:
+                type_definitions += f' displayUnit="{simpleType.displayUnit}"'
+            type_definitions += '/>'
+            type_definitions += '\n    </SimpleType>'
+
+        type_definitions += '\n  </TypeDefinitions>'
+
     mv = ''  # model variables
     mo = ''  # model outputs
 
@@ -133,7 +190,14 @@ def create_fmu_container(configuration, output_filename):
         # modelDescription.xml
         start = f' start="{ v.start }"' if v.start else ''
         mv += f'\n    <ScalarVariable name="{ xml_encode(v.name) }" valueReference="{ i }" variability="{ v.variability }" causality="{ v.causality }" description="{ xml_encode(v.description) }">'
-        mv += f'\n      <{v.type}{ start }/>'
+        mv += f'\n      <{v.type}{ start }'
+        if v.declaredType:
+            mv += f' declaredType="{v.declaredType}"'
+        if v.unit:
+            mv += f' unit="{v.unit}"'
+        if v.displayUnit:
+            mv += f' displayUnit="{v.displayUnit}"'
+        mv += '/>'
         mv += f'\n    </ScalarVariable>'
 
         if v.causality == 'output':
@@ -148,12 +212,17 @@ def create_fmu_container(configuration, output_filename):
   generationTool="FMPy {fmpy.__version__} FMU Container"
   generationDateAndTime="{ datetime.now(pytz.utc).isoformat() }"
   variableNamingConvention="{ configuration.variableNamingConvention }">
+  
   <CoSimulation modelIdentifier="FMUContainer">
     <SourceFiles>
       <File name="FMUContainer.c"/>
       <File name="mpack.c"/>
     </SourceFiles>
   </CoSimulation>
+
+  { unit_defintions }
+
+  { type_definitions }
 
   <ModelVariables>{ mv }
   </ModelVariables>

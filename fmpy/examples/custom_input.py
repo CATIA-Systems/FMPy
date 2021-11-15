@@ -62,19 +62,19 @@ def simulate_custom_input(show_plot=True):
         # perform one step
         fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
 
+        # advance the time
+        time += step_size
+
         # get the values for 'inputs' and 'outputs[4]'
         inputs, outputs4 = fmu.getReal([vr_inputs, vr_outputs4])
+
+        # append the results
+        rows.append((time, inputs, outputs4))
 
         # use the threshold to terminate the simulation
         if outputs4 > threshold:
             print("Threshold reached at t = %g s" % time)
             break
-
-        # append the results
-        rows.append((time, inputs, outputs4))
-
-        # advance the time
-        time += step_size
 
     fmu.terminate()
     fmu.freeInstance()

@@ -31,7 +31,7 @@ import pyqtgraph as pg
 
 pg.setConfigOptions(background='w', foreground='k', antialias=True)
 
-COLLAPSABLE_COLUMNS = ['Value Reference', 'Initial', 'Causality', 'Variability', 'Min', 'Max']
+COLLAPSABLE_COLUMNS = ['Type', 'Value Reference', 'Initial', 'Causality', 'Variability', 'Min', 'Max']
 
 
 class ClickableLabel(QLabel):
@@ -1064,14 +1064,16 @@ class MainWindow(QMainWindow):
         """ Create the graphical representation of the FMU's inputs and outputs """
 
         def variableColor(variable):
-            if variable.type == 'Real':
-                return QColor.fromRgb(0, 0, 127)
-            elif variable.type in ['Integer', 'Enumeration']:
-                return QColor.fromRgb(255, 127, 0)
+            if variable.type.startswith(('Float', 'Real')):
+                return QColor.fromRgb(26, 77, 179)
+            elif variable.type.startswith(('Enumeration', 'Int', 'UInt')):
+                return QColor.fromRgb(179, 77, 26)
             elif variable.type == 'Boolean':
                 return QColor.fromRgb(255, 0, 255)
             elif variable.type == 'String':
-                return QColor.fromRgb(0, 128, 0)
+                return QColor.fromRgb(26, 114, 16)
+            elif variable.type == 'Binary':
+                return QColor.fromRgb(81, 81, 81)
             else:
                 return QColor.fromRgb(0, 0, 0)
 
@@ -1108,7 +1110,7 @@ class MainWindow(QMainWindow):
         h = max(50., 10 + lh * max(len(inputVariables), len(outputVariables)))
 
         block = QGraphicsRectItem(0, 0, w, h, group)
-        block.setPen(QColor.fromRgb(0, 0, 255))
+        block.setPen(QColor.fromRgb(0, 0, 0))
 
         pen = QPen()
         pen.setWidthF(1)
@@ -1120,12 +1122,12 @@ class MainWindow(QMainWindow):
         y = floor((h - len(inputVariables) * lh) / 2 - 2)
         for variable in inputVariables:
             text = QGraphicsTextItem(variable.name, group)
-            text.setDefaultTextColor(QColor.fromRgb(0, 0, 255))
+            text.setDefaultTextColor(QColor.fromRgb(0, 0, 0))
             text.setFont(font)
             text.setX(3)
             text.setY(y)
 
-            polygon = QPolygonF([QPointF(-13.5, y + 4), QPointF(1, y + 11), QPointF(-13.5, y + 18)])
+            polygon = QPolygonF([QPointF(-8, y + 7.5), QPointF(-1, y + 11), QPointF(-8, y + 14.5)])
 
             path = QPainterPath()
             path.addPolygon(polygon)
@@ -1133,6 +1135,10 @@ class MainWindow(QMainWindow):
             contour = QGraphicsPathItem(path, group)
             contour.setPen(QPen(Qt.NoPen))
             contour.setBrush(variableColor(variable))
+            pen = QPen()
+            pen.setColor(variableColor(variable))
+            pen.setJoinStyle(Qt.MiterJoin)
+            contour.setPen(pen)
 
             y += lh
 
@@ -1140,17 +1146,19 @@ class MainWindow(QMainWindow):
         y = floor((h - len(outputVariables) * lh) / 2 - 2)
         for variable in outputVariables:
             text = QGraphicsTextItem(variable.name, group)
-            text.setDefaultTextColor(QColor.fromRgb(0, 0, 255))
+            text.setDefaultTextColor(QColor.fromRgb(0, 0, 0))
             text.setFont(font)
             text.setX(w - 3 - text.boundingRect().width())
             text.setY(y)
 
-            polygon = QPolygonF([QPointF(w, y + 0 + 7.5), QPointF(w + 7, y + 3.5 + 7.5), QPointF(w, y + 7 + 7.5)])
+            polygon = QPolygonF([QPointF(w + 1, y + 7.5), QPointF(w + 8, y + 11), QPointF(w + 1, y + 14.5)])
 
             path = QPainterPath()
             path.addPolygon(polygon)
             path.closeSubpath()
             contour = QGraphicsPathItem(path, group)
+            contour.setPen(QPen(Qt.NoPen))
+            contour.setBrush(variableColor(variable))
             pen = QPen()
             pen.setColor(variableColor(variable))
             pen.setJoinStyle(Qt.MiterJoin)

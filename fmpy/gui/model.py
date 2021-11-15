@@ -29,8 +29,8 @@ class TreeItem(object):
 
 class VariablesModel(QAbstractItemModel):
 
-    COLUMN_NAMES = ['Name', 'Value Reference', 'Initial', 'Causality', 'Variability', 'Start', 'Min', 'Max', 'Unit', 'Plot', 'Description']
-    COLUMN_WIDTHS = [200, 100, 70, 70, 70, 70, 70, 70, 40, 40]
+    COLUMN_NAMES = ['Name', 'Type', 'Value Reference', 'Initial', 'Causality', 'Variability', 'Start', 'Min', 'Max', 'Unit', 'Plot', 'Description']
+    COLUMN_WIDTHS = [200, 50, 100, 70, 70, 70, 70, 70, 70, 40, 40]
     variableSelected = pyqtSignal(ScalarVariable, name='variableSelected')
     variableDeselected = pyqtSignal(ScalarVariable, name='variableDeselected')
 
@@ -55,10 +55,23 @@ class VariablesModel(QAbstractItemModel):
     def columnData(self, v, column, role):
 
         if role == Qt.DecorationRole and column == 'Name':
-            if v.causality in ['input', 'output']:
-                return QPixmap(':/icons/%s_%s.png' % (v.type.lower(), v.causality))
-            else:
-                return QPixmap(':/icons/%s.png' % v.type.lower())
+
+            type = v.type.lower()
+
+            causality = v.causality
+
+            if causality in ['parameter', 'calculatedParameter']:
+                causality = 'parameter'
+            elif causality in ['local', 'independent']:
+                causality = 'variable'
+
+            if type.startswith(('float', 'real')):
+                type = 'float'
+
+            if type.startswith(('enumeration', 'int', 'uint')):
+                type = 'integer'
+
+            return QPixmap(':/icons/%s_%s.png' % (type, causality))
 
         elif role == Qt.CheckStateRole and column == 'Plot':
             return Qt.Checked if v in self.selectedVariables else Qt.Unchecked
@@ -72,6 +85,8 @@ class VariablesModel(QAbstractItemModel):
         elif role == Qt.DisplayRole or role == Qt.EditRole:
             if column == 'Name':
                 return v.name
+            elif column == 'Type':
+                return v.type
             elif column == 'Value Reference':
                 return v.valueReference
             elif column == 'Initial':

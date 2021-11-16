@@ -500,7 +500,7 @@ class FMU1Slave(_FMU1):
         return self.fmi1CancelStep(self.component)
 
     def doStep(self, currentCommunicationPoint, communicationStepSize, newStep=fmi1True):
-        return self.fmi1DoStep(self.component, currentCommunicationPoint, communicationStepSize, newStep)
+        self.fmi1DoStep(self.component, currentCommunicationPoint, communicationStepSize, newStep)
 
     def getStatus(self, kind):
         value = fmi1Status(fmi1OK)

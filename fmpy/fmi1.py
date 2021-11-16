@@ -169,6 +169,8 @@ class _FMU(object):
                 if isinstance(v, c_void_p):
                     v = v.value
                 a += hex(0 if v is None else v)
+            elif t == c_bool:
+                a += str(v.value)
             elif t == POINTER(c_uint):
                 # value references
                 if v is None:

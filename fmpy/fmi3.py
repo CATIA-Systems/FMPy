@@ -91,7 +91,7 @@ def printLogMessage(instanceEnvironment: fmi3InstanceEnvironment,
     """ Print the FMU's log messages to the command line """
 
     label = ['OK', 'WARNING', 'DISCARD', 'ERROR', 'FATAL', 'PENDING'][status]
-    print("[%s] %s" % (label, message))
+    print(f"[{label}] {message.decode('utf-8')}")
 
 
 class _FMU3(_FMU):

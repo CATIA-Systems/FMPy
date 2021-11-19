@@ -680,10 +680,18 @@ def simulate_fmu(filename,
         total_time = stop_time - start_time
         step_size = 10 ** (np.round(np.log10(total_time)) - 3)
 
-    if output_interval is None and fmi_type == 'CoSimulation' and experiment is not None and experiment.stepSize is not None:
-        output_interval = experiment.stepSize
-        while (stop_time - start_time) / output_interval > 1000:
-            output_interval *= 2
+    if output_interval is None and fmi_type == 'CoSimulation':
+
+        co_simulation = model_description.coSimulation
+
+        if co_simulation is not None and co_simulation.fixedInternalStepSize is not None:
+            output_interval = float(model_description.coSimulation.fixedInternalStepSize)
+        elif experiment is not None and experiment.stepSize is not None:
+            output_interval = float(experiment.stepSize)
+
+        if output_interval is not None:
+            while (stop_time - start_time) / output_interval > 1000:
+                output_interval *= 2
 
     if os.path.isfile(os.path.join(filename, 'modelDescription.xml')):
         unzipdir = filename

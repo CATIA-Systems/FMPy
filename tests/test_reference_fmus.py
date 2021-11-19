@@ -44,12 +44,13 @@ class ReferenceFMUsTest(unittest.TestCase):
                     'real_fixed_param': 1,
                     'string_param':     "FMI is awesome!"
                 }
-
+                output_interval = 1e-3
                 in_csv = os.path.join('Reference-FMUs-repo', 'Reference-FMUs-' + v, model_name, model_name + '_in.csv')
                 input = read_csv(in_csv) if os.path.isfile(in_csv) else None
             else:
                 start_values = {}
                 input = None
+                output_interval = None
 
             filename = os.path.join('Reference-FMUs-dist', '3.0', model_name + '.fmu')
 
@@ -57,7 +58,7 @@ class ReferenceFMUsTest(unittest.TestCase):
             reference = read_csv(ref_csv)
 
             for fmi_type in ['ModelExchange', 'CoSimulation']:
-                result = simulate_fmu(filename, fmi_type=fmi_type, start_values=start_values, input=input)
+                result = simulate_fmu(filename, fmi_type=fmi_type, start_values=start_values, input=input, output_interval=output_interval)
                 rel_out = validate_result(result, reference)
                 self.assertEqual(0, rel_out)
                 # plot_result(result, reference)

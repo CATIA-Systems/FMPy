@@ -636,7 +636,7 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
     # default values for 'initial' derived from variability and causality
     initial_defaults = {
         'constant':   {'output': 'exact', 'local': 'exact', 'parameter': 'exact'},
-        'fixed':      {'parameter': 'exact', 'calculatedParameter': 'calculated', 'local': 'calculated'},
+        'fixed':      {'parameter': 'exact', 'calculatedParameter': 'calculated', 'structuralParameter': 'exact', 'local': 'calculated'},
         'tunable':    {'parameter': 'exact', 'calculatedParameter': 'calculated', 'structuralParameter': 'exact', 'local': 'calculated'},
         'discrete':   {'input': None, 'output': 'calculated', 'local': 'calculated'},
         'continuous': {'input': None, 'output': 'calculated', 'local': 'calculated', 'independent': None},

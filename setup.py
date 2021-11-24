@@ -86,7 +86,7 @@ extras_require = {
     'plot': ['matplotlib', 'scipy'],
     'gui': ['PyQt5', 'pyqtgraph'],
     'notebook': ['notebook', 'plotly'],
-    'webapp': ['dash-bootstrap-components']
+    'webapp': ['dash-bootstrap-components<1']
 }
 
 extras_require['complete'] = sorted(set(sum(extras_require.values(), [])))

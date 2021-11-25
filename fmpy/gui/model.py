@@ -77,7 +77,7 @@ class VariablesModel(QAbstractItemModel):
             return Qt.Checked if v in self.selectedVariables else Qt.Unchecked
 
         elif role == Qt.TextAlignmentRole and column in ['Value Reference', 'Start', 'Min', 'Max']:
-            return Qt.AlignRight | Qt.AlignVCenter
+            return Qt.AlignRight + Qt.AlignVCenter
 
         elif role == Qt.FontRole and column == 'Start' and v.name in self.startValues:
             return self.boldFont

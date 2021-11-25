@@ -121,7 +121,7 @@ class MainWindow(QMainWindow):
         geo = QApplication.desktop().availableGeometry()
         width = min(geo.width() * 0.85, 1100.0)
         height = min(geo.height() * 0.85, 900.0)
-        self.resize(width, height)
+        self.resize(int(width), int(height))
 
         # hide the variables
         self.ui.dockWidget.hide()

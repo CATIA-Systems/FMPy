@@ -581,7 +581,9 @@ def simulate_fmu(filename,
                  model_description: ModelDescription = None,
                  fmu_instance: _FMU = None,
                  set_input_derivatives: bool = False,
-                 remote_platform: str = 'auto') -> SimulationResult:
+                 remote_platform: str = 'auto',
+                 early_return_allowed: bool = False,
+                 use_event_mode: bool = False) -> SimulationResult:
     """ Simulate an FMU
 
     Parameters:
@@ -610,8 +612,10 @@ def simulate_fmu(filename,
         set_input_derivatives  set the input derivatives (FMI 2.0 Co-Simulation only)
         remote_platform        platform to use for remoting server ('auto': determine automatically if current platform
                                is not supported, None: no remoting; experimental)
+        early_return_allowed   allow early return in FMI 3.0 Co-Simulation
+        use_event_mode         use event mode in FMI 3.0 Co-Simulation if the FMU supports it
     Returns:
-        result              a structured numpy array that contains the result
+        result                 a structured numpy array that contains the result
     """
 
     from fmpy import supported_platforms
@@ -680,10 +684,18 @@ def simulate_fmu(filename,
         total_time = stop_time - start_time
         step_size = 10 ** (np.round(np.log10(total_time)) - 3)
 
-    if output_interval is None and fmi_type == 'CoSimulation' and experiment is not None and experiment.stepSize is not None:
-        output_interval = experiment.stepSize
-        while (stop_time - start_time) / output_interval > 1000:
-            output_interval *= 2
+    if output_interval is None and fmi_type == 'CoSimulation':
+
+        co_simulation = model_description.coSimulation
+
+        if co_simulation is not None and co_simulation.fixedInternalStepSize is not None:
+            output_interval = float(model_description.coSimulation.fixedInternalStepSize)
+        elif experiment is not None and experiment.stepSize is not None:
+            output_interval = float(experiment.stepSize)
+
+        if output_interval is not None:
+            while (stop_time - start_time) / output_interval > 1000:
+                output_interval *= 2
 
     if os.path.isfile(os.path.join(filename, 'modelDescription.xml')):
         unzipdir = filename
@@ -778,7 +790,7 @@ def simulate_fmu(filename,
             raise Exception(f"Remoting is not supported on the current platform ({platform}).")
 
     if fmu_instance is None:
-        fmu = instantiate_fmu(unzipdir, model_description, fmi_type, visible, debug_logging, logger, fmi_call_logger, library_path)
+        fmu = instantiate_fmu(unzipdir, model_description, fmi_type, visible, debug_logging, logger, fmi_call_logger, library_path, early_return_allowed, use_event_mode)
     else:
         fmu = fmu_instance
 
@@ -786,7 +798,7 @@ def simulate_fmu(filename,
     if fmi_type == 'ModelExchange':
         result = simulateME(model_description, fmu, start_time, stop_time, solver, step_size, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, record_events, timeout, step_finished)
     elif fmi_type == 'CoSimulation':
-        result = simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, timeout, step_finished, set_input_derivatives)
+        result = simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, timeout, step_finished, set_input_derivatives, use_event_mode, early_return_allowed)
 
     if fmu_instance is None:
         fmu.freeInstance()
@@ -802,7 +814,7 @@ def simulate_fmu(filename,
     return result
 
 
-def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, debug_logging=False, logger=None, fmi_call_logger=None, library_path=None):
+def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, debug_logging=False, logger=None, fmi_call_logger=None, library_path=None, early_return_allowed=False, event_mode_used=False):
     """
     Create an instance of fmpy.fmi1._FMU (see simulate_fmu() for documentation of the parameters).
     """
@@ -858,7 +870,7 @@ def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, d
             fmu.instantiate(visible=visible, callbacks=callbacks, loggingOn=debug_logging)
         else:
             fmu = fmi3.FMU3Slave(**fmu_args)
-            fmu.instantiate(visible=visible, loggingOn=debug_logging)
+            fmu.instantiate(visible=visible, loggingOn=debug_logging, eventModeUsed=event_mode_used, earlyReturnAllowed=early_return_allowed)
 
     elif fmi_type in [None, 'ModelExchange'] and model_description.modelExchange is not None:
 
@@ -1170,7 +1182,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
     return recorder.result()
 
 
-def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, timeout, step_finished, set_input_derivatives):
+def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, timeout, step_finished, set_input_derivatives, use_event_mode, early_return_allowed):
 
     if set_input_derivatives and not model_description.coSimulation.canInterpolateInputs:
         raise Exception("Parameter set_input_derivatives is True but the FMU cannot interpolate inputs.")
@@ -1205,29 +1217,89 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
         input.apply(time)
         fmu.exitInitializationMode()
 
+        if use_event_mode:
+
+            update_discrete_states = True
+
+            while update_discrete_states:
+                update_discrete_states, terminate, _, _, _, _ = fmu.updateDiscreteStates()
+
+            if terminate:
+                raise Exception("The FMU requested to terminate the simulation during initialization.")
+
+            fmu.enterStepMode()
+
     recorder = Recorder(fmu=fmu, modelDescription=model_description, variableNames=output, interval=output_interval)
 
     n_steps = time / output_interval
 
+    terminate = False
+
+    time = start_time
+
     # simulation loop
-    while time + output_interval <= stop_time:
+    while True:
+
+        recorder.sample(time, force=True)
 
         if timeout is not None and (current_time() - sim_start) > timeout:
             break
 
-        recorder.sample(time)
+        if terminate or time >= stop_time:
+            break
 
         input.apply(time)
 
-        fmu.doStep(currentCommunicationPoint=time, communicationStepSize=output_interval)
+        if is_fmi1 or is_fmi2:
+
+            if time + output_interval <= stop_time:
+                fmu.doStep(currentCommunicationPoint=time, communicationStepSize=output_interval)
+                n_steps += 1
+                time = n_steps * output_interval
+            else:
+                fmu.doStep(currentCommunicationPoint=time, communicationStepSize=stop_time - time)
+                time = stop_time
+        else:
+
+            t_input_event = input.nextEvent(time)
+
+            t_next = (n_steps + 1) * output_interval
+
+            input_event = t_next > t_input_event
+
+            step_size = t_input_event - time if input_event else t_next - time
+
+            event_encountered, terminate, early_return, last_successful_time = fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
+
+            if early_return and not early_return_allowed:
+                raise Exception("FMU returned early from doStep() but Early Return is not allowed.")
+
+            if early_return and last_successful_time < t_next:
+                time = last_successful_time
+            else:
+                time = t_next
+                n_steps += 1
+
+            if use_event_mode and (input_event or event_encountered):
+
+                recorder.sample(last_successful_time, force=True)
+
+                fmu.enterEventMode()
+
+                input.apply(last_successful_time, after_event=True)
+
+                update_discrete_states = True
+
+                while update_discrete_states and not terminate:
+                    update_discrete_states, terminate, _, _, _, _ = fmu.updateDiscreteStates()
+
+                if terminate:
+                    break
+
+                fmu.enterStepMode()
 
         if step_finished is not None and not step_finished(time, recorder):
             break
-
-        n_steps += 1
-        time = n_steps * output_interval
-
-    recorder.sample(time, force=True)
 
     fmu.terminate()
 

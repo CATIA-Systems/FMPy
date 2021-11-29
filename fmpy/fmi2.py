@@ -572,7 +572,7 @@ class FMU2Slave(_FMU2):
         return list(value)
 
     def doStep(self, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint=fmi2True):
-        return self.fmi2DoStep(self.component, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint)
+        self.fmi2DoStep(self.component, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint)
 
     def cancelStep(self):
         self.fmi2CancelStep(self.component)

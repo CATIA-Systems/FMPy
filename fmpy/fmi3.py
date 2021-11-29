@@ -3,6 +3,8 @@
 import os
 import pathlib
 from ctypes import *
+from typing import Tuple
+
 from . import sharedLibraryExtension, platform_tuple
 from .fmi1 import _FMU, printLogMessage
 
@@ -89,7 +91,7 @@ def printLogMessage(instanceEnvironment: fmi3InstanceEnvironment,
     """ Print the FMU's log messages to the command line """
 
     label = ['OK', 'WARNING', 'DISCARD', 'ERROR', 'FATAL', 'PENDING'][status]
-    print("[%s] %s" % (label, message))
+    print(f"[{label}] {message.decode('utf-8')}")
 
 
 class _FMU3(_FMU):
@@ -992,7 +994,7 @@ class FMU3Slave(_FMU3):
         self.fmi3GetOutputDerivatives(self.component, vr, len(vr), order, value)
         return list(value)
 
-    def doStep(self, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint=True):
+    def doStep(self, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint=True) -> Tuple[bool, bool, bool, float]:
 
         eventEncountered = fmi3Boolean()
         terminateSimulation = fmi3Boolean()

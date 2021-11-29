@@ -54,7 +54,7 @@ class ExamplesTest(unittest.TestCase):
 
     def test_custom_input_example(self):
         end_time = simulate_custom_input(show_plot=False)
-        self.assertAlmostEqual(end_time, 1.1)
+        self.assertAlmostEqual(end_time, 1.1, delta=1e-2)
 
     def test_efficient_loops(self):
         run_efficient_loop()

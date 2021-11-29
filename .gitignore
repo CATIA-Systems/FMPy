@@ -16,9 +16,6 @@
 *.tar.gz
 *.zip
 
-# Affinity Designer documents
-*.afdesign
-
 # compiled files
 *.py[cod]
 

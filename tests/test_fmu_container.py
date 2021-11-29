@@ -1,7 +1,7 @@
 import os
 import unittest
-from fmpy import simulate_fmu
-from fmpy.fmucontainer import create_fmu_container, Variable, Connection, Configuration, Component
+from fmpy import simulate_fmu, plot_result
+from fmpy.fmucontainer import create_fmu_container, Variable, Connection, Configuration, Component, Unit, BaseUnit, DisplayUnit, SimpleType
 from fmpy.validation import validate_fmu
 import numpy as np
 
@@ -15,11 +15,43 @@ class FMUContainerTest(unittest.TestCase):
 
         configuration = Configuration(
             description="A controlled drivetrain",
-            variableNamingConvention="structured",
+            variableNamingConvention='structured',
+            unitDefinitions=[
+                Unit(name='rad/s', baseUnit=BaseUnit(rad=1, s=-1), displayUnits=[DisplayUnit(name='rpm', factor=0.1047197551196598)])
+            ],
+            typeDefinitions=[
+                SimpleType(name='AngularVelocity', type='Real', unit='rad/s')
+            ],
             variables=[
-                    Variable('Real', 'tunable', 'parameter', 'k', '100', 'Gain of controller', [('controller', 'PI.k')]),
-                    Variable('Real', 'continuous', 'input', 'w_ref', '0', 'Reference speed', [('controller', 'u_s')]),
-                    Variable('Real', 'continuous', 'output', 'w', None, 'Gain of controller', [('drivetrain', 'w')]),
+                    Variable(
+                        type='Real',
+                        variability='tunable',
+                        causality='parameter',
+                        name='k',
+                        start='100',
+                        description='Gain of controller',
+                        mapping=[('controller', 'PI.k')]
+                    ),
+                    Variable(
+                        type='Real',
+                        variability='continuous',
+                        causality='input',
+                        name='w_ref',
+                        start='0',
+                        description='Reference speed',
+                        mapping=[('controller', 'u_s')],
+                        declaredType='AngularVelocity'
+                    ),
+                    Variable(
+                        type='Real',
+                        variability='continuous',
+                        causality='output',
+                        name='w',
+                        description="Gain of controller",
+                        mapping=[('drivetrain', 'w')],
+                        unit='rad/s',
+                        displayUnit='rpm'
+                    ),
                 ],
             components=[
                     Component(
@@ -48,3 +80,5 @@ class FMUContainerTest(unittest.TestCase):
         self.assertEqual(problems, [])
 
         result = simulate_fmu(filename, start_values={'k': 20}, input=w_ref, output=['w_ref', 'w'], stop_time=4)
+
+        plot_result(result)

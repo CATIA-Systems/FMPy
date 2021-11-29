@@ -1,3 +1,23 @@
+## v0.3.3 (2021-11-29)
+
+### Bug fixes
+
+- Add type cast to arguments of QMainWindows.resize() (#344)
+- return filename in download_file() if file already exists (#332)
+- Decode UTF-8 string in fmi3.printLogMessage()
+- Handle c_bool in _log_fmi_args()
+- Add default "initial" for fixed structural parameters (#340)
+- Update time before recording result in custom input example (#333)
+- Update icons for FMI 3 and add type column (#295)
+- Change type hint for Unit.displayUnits to List[DisplayUnit] (#336)
+
+### Enhancements
+
+- Add Early Return and Event Mode for FMI 3.0 CS
+- Calculate output_interval from fixedInternalStepSize
+- Add type hint to FMU3Slave.doStep()
+- Add unit and type definitions to Container FMU (#335)
+
 ## v0.3.2 (2021-10-14)
 
 ### Bug fixes

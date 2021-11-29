@@ -2,19 +2,19 @@ import unittest
 from fmpy.util import download_file, validate_result
 from fmpy import *
 
-v = '0.0.9'  # Reference FMUs version
+v = '0.0.10'  # Reference FMUs version
 
 
 class ReferenceFMUsTest(unittest.TestCase):
 
     def setUp(self):
-        download_file(url='https://github.com/modelica/Reference-FMUs/releases/download/v' + v + '/Reference-FMUs-' + v + '.zip',
-                      checksum='d86275e74f87b11853f1b2c4bc94dce7cdcec6d1671426650be546e60023e4ef')
+        download_file(url=f'https://github.com/modelica/Reference-FMUs/releases/download/v{v}/Reference-FMUs-{v}.zip',
+                      checksum='46034d78c4ac44a9a8a216a6f5dbcb6e0c4c81ecd194755d22cbae8430f1bd91')
         extract('Reference-FMUs-' + v + '.zip', 'Reference-FMUs-dist')
 
-        download_file(url='https://github.com/modelica/Reference-FMUs/archive/v' + v + '.zip',
-                      checksum='8ae5e2cd969653c1ca655d2ebd5cf97399c95e2f36afec2eca62b5edad88eca8')
-        extract('v' + v + '.zip', 'Reference-FMUs-repo')
+        download_file(url=f'https://github.com/modelica/Reference-FMUs/archive/v{v}.zip',
+                      checksum='7c54b57edf0da955b8fd2b55194cc4363733f318ac48677946c6f7d8f8146d24')
+        extract(f'v{v}.zip', 'Reference-FMUs-repo')
 
     def test_fmi1_cs(self):
         for model_name in ['BouncingBall', 'Dahlquist', 'Resource', 'Stair', 'VanDerPol']:
@@ -44,12 +44,13 @@ class ReferenceFMUsTest(unittest.TestCase):
                     'real_fixed_param': 1,
                     'string_param':     "FMI is awesome!"
                 }
-
+                output_interval = 1e-3
                 in_csv = os.path.join('Reference-FMUs-repo', 'Reference-FMUs-' + v, model_name, model_name + '_in.csv')
                 input = read_csv(in_csv) if os.path.isfile(in_csv) else None
             else:
                 start_values = {}
                 input = None
+                output_interval = None
 
             filename = os.path.join('Reference-FMUs-dist', '3.0', model_name + '.fmu')
 
@@ -57,7 +58,7 @@ class ReferenceFMUsTest(unittest.TestCase):
             reference = read_csv(ref_csv)
 
             for fmi_type in ['ModelExchange', 'CoSimulation']:
-                result = simulate_fmu(filename, fmi_type=fmi_type, start_values=start_values, input=input)
+                result = simulate_fmu(filename, fmi_type=fmi_type, start_values=start_values, input=input, output_interval=output_interval)
                 rel_out = validate_result(result, reference)
                 self.assertEqual(0, rel_out)
                 # plot_result(result, reference)

@@ -1,11 +1,9 @@
 import os
 import flask
-import dash
-import dash_core_components as dcc
-import dash_bootstrap_components as dbc
-import dash_html_components as html
-import fmpy
+from dash import dcc, html, Dash
 from dash.dependencies import Input, Output, State
+import dash_bootstrap_components as dbc
+import fmpy
 from fmpy import read_model_description, simulate_fmu, extract
 from fmpy.util import create_plotly_figure
 import argparse
@@ -30,7 +28,7 @@ model_description = read_model_description(unzipdir)
 has_documentation = os.path.isdir(os.path.join(unzipdir, 'documentation'))
 has_model_png = os.path.isfile(os.path.join(unzipdir, 'model.png'))
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 app.title = model_description.modelName
 
@@ -60,21 +58,19 @@ for i, variable in enumerate(model_description.modelVariables):
 
     id = f'variable-{i}'
 
-    row = dbc.FormGroup(
+    row = dbc.Row(
         [
             dbc.Label(variable.name, html_for=id, width=6),
             dbc.Col(
                 dbc.InputGroup(
                     [
                         dbc.Input(id=id, value=variable.start, style={'text-align': 'right'}),
-                        dbc.InputGroupAddon(unit if unit else ' ', addon_type='append'),
+                        dbc.InputGroupText(unit if unit else " ")
                     ], size="sm"
                 ),
                 width=6,
             ),
-            #html.Small(variable.description, className='form-text text-muted ml-3')
         ],
-        row=True,
         className='mb-2'
     )
 
@@ -164,14 +160,14 @@ app.layout = dbc.Container([
         [
             dbc.Form(
                 [
-                    dbc.Button('Simulate', id='simulate-button', color='primary', className='mr-4'),
                     dbc.InputGroup(
                         [
+                            dbc.Button('Simulate', id='simulate-button', color='primary', className='mr-4'),
                             dbc.Input(id="stop-time", value=stop_time, style={'text-align': 'right', 'width': '5rem'}),
-                            dbc.InputGroupAddon('s', addon_type="append", style={'width': '2rem'})
-                        ], className='mr-4'
+                            dbc.InputGroupText("s", style={'width': '2rem'}),
+                        ], className='mr-4', style={'width': '15rem'}
                     )
-                ], inline=True
+                ],
             ),
             dbc.Row(
                 [
@@ -187,10 +183,11 @@ app.layout = dbc.Container([
         [
             html.Iframe(
                 src='/documentation/index.html',
+                style={'width': '100%', 'height': '100%'},
             )
         ],
-        className='embed-responsive',
         id='documentation-container',
+        className='p-0',
     ),
 
     html.Footer(

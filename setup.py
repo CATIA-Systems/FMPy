@@ -76,7 +76,6 @@ install_requires = [
     'lxml',
     'msgpack',
     'numpy',
-    'pathlib;python_version<"3.4"',
     'pywin32;platform_system=="Windows"',
     'pytz'
 ]
@@ -86,7 +85,7 @@ extras_require = {
     'plot': ['matplotlib', 'scipy'],
     'gui': ['PyQt5', 'pyqtgraph'],
     'notebook': ['notebook', 'plotly'],
-    'webapp': ['dash-bootstrap-components']
+    'webapp': ['dash-bootstrap-components>=1.0.0']
 }
 
 extras_require['complete'] = sorted(set(sum(extras_require.values(), [])))

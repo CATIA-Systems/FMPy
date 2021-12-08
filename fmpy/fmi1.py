@@ -100,6 +100,25 @@ def stepFinished(componentEnvironment, status):
     pass
 
 
+class FMICallException(Exception):
+    """ Raised when an FMI call fails """
+
+    def __init__(self, function: str, status: int):
+
+        if status in range(5):
+            label = ['ok', 'warning', 'discard', 'error', 'fatal', 'pending'][status]
+        else:
+            label = 'illegal return code'
+
+        super().__init__(f"{function} failed with status {status} ({label}).")
+
+        self.function = function
+        "The name of the FMI function"
+
+        self.status = status
+        "The status returned by the FMI function"
+
+
 class _FMU(object):
     """ Base class for all FMUs """
 
@@ -307,7 +326,7 @@ class _FMU1(_FMU):
             if restype == fmi1Status:
                 # check the status code
                 if res > fmi1Warning:
-                    raise Exception("fmi%s failed with status %d." % (fname, res))
+                    raise FMICallException(function=fname, status=res)
 
             return res
 

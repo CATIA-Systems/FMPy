@@ -1,12 +1,11 @@
 """ FMI 3.0 interface """
 
 import os
-import pathlib
 from ctypes import *
 from typing import Tuple
 
 from . import sharedLibraryExtension, platform_tuple
-from .fmi1 import _FMU, printLogMessage
+from .fmi1 import _FMU, FMICallException, printLogMessage
 
 
 fmi3Instance            = c_void_p
@@ -507,7 +506,7 @@ class _FMU3(_FMU):
             if restype == fmi3Status:  # status code
                 # check the status code
                 if res > fmi3Warning:
-                    raise Exception("%s failed with status %d." % (fname, res))
+                    raise FMICallException(function=fname, status=res)
 
             return res
 

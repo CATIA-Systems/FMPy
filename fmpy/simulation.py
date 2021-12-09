@@ -418,7 +418,7 @@ class Input(object):
         return v, der_v
 
 
-def apply_start_values(fmu, model_description, start_values, apply_default_start_values=False):
+def apply_start_values(fmu, model_description, start_values, apply_default_start_values=False, validate=True):
     """ Set start values to an FMU instance
 
     Parameters:
@@ -426,6 +426,7 @@ def apply_start_values(fmu, model_description, start_values, apply_default_start
         model_description       the ModelDescription instance
         start_values            dictionary of variable_name -> start_value pairs
         apply_default_values    apply the start values from the model description
+        validate                check if the start values can be set
     """
 
     start_values = start_values.copy()
@@ -436,7 +437,7 @@ def apply_start_values(fmu, model_description, start_values, apply_default_start
 
         if variable.name in start_values:
             value = start_values.pop(variable.name)
-        elif apply_default_start_values and variable.start is not None:
+        elif apply_default_start_values and variable.start is not None and variable.initial in ['approx', 'exact']:
             value = variable.start
         else:
             continue
@@ -465,6 +466,14 @@ def apply_start_values(fmu, model_description, start_values, apply_default_start
 
             display_unit = unit_definitions[base_unit][unit]
             value = (value - display_unit.offset) / display_unit.factor
+
+        if validate:  # check if start value can be set
+
+            if variable.variability == 'constant':
+                raise Exception(f'Variable "{variable.name}" is a constant and cannot be set.')
+
+            if variable.initial not in ['approx', 'exact']:
+                raise Exception(f'Variable "{variable.name}" has inital={variable.initial} and cannot be set.')
 
         vr = variable.valueReference
 
@@ -588,7 +597,7 @@ def simulate_fmu(filename,
 
     Parameters:
         filename               filename of the FMU or directory with extracted FMU
-        validate               validate the FMU
+        validate               validate the FMU and start values
         start_time             simulation start time (None: use default experiment or 0 if not defined)
         stop_time              simulation stop time (None: use default experiment or start_time + 1 if not defined)
         solver                 solver to use for model exchange ('Euler' or 'CVode')
@@ -796,9 +805,9 @@ def simulate_fmu(filename,
 
     # simulate_fmu the FMU
     if fmi_type == 'ModelExchange':
-        result = simulateME(model_description, fmu, start_time, stop_time, solver, step_size, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, record_events, timeout, step_finished)
+        result = simulateME(model_description, fmu, start_time, stop_time, solver, step_size, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, record_events, timeout, step_finished, validate)
     elif fmi_type == 'CoSimulation':
-        result = simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, timeout, step_finished, set_input_derivatives, use_event_mode, early_return_allowed)
+        result = simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, timeout, step_finished, set_input_derivatives, use_event_mode, early_return_allowed, validate)
 
     if fmu_instance is None:
         fmu.freeInstance()
@@ -899,7 +908,7 @@ def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, d
     return fmu
 
 
-def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_size, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, record_events, timeout, step_finished):
+def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_size, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, record_events, timeout, step_finished, validate):
 
     if relative_tolerance is None:
         relative_tolerance = 1e-5
@@ -933,7 +942,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
     input = Input(fmu, model_description, input_signals)
 
-    apply_start_values(fmu, model_description, start_values, apply_default_start_values)
+    apply_start_values(fmu, model_description, start_values, apply_default_start_values, validate)
 
     # initialize
     if is_fmi1:
@@ -1182,7 +1191,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
     return recorder.result()
 
 
-def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, timeout, step_finished, set_input_derivatives, use_event_mode, early_return_allowed):
+def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, timeout, step_finished, set_input_derivatives, use_event_mode, early_return_allowed, validate):
 
     if set_input_derivatives and not model_description.coSimulation.canInterpolateInputs:
         raise Exception("Parameter set_input_derivatives is True but the FMU cannot interpolate inputs.")
@@ -1202,7 +1211,7 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
 
     time = start_time
 
-    apply_start_values(fmu, model_description, start_values, apply_default_start_values)
+    apply_start_values(fmu, model_description, start_values, apply_default_start_values, validate)
 
     # initialize the model
     if is_fmi1:

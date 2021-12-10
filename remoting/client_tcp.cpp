@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 #define MAX_PATH 2048
 #endif
 
@@ -16,9 +17,12 @@
 #include <thread>
 #include <iostream>
 #include <vector>
+#include <algorithm>
+#include <cctype>
+
 #include "rpc/client.h"
 
-#include "remoting.h"
+#include "remoting_tcp.h"
 #include "fmi2Functions.h"
 
 
@@ -73,9 +77,33 @@ fmi2Status fmi2SetDebugLogging(fmi2Component c, fmi2Boolean loggingOn,	size_t nC
 	NOT_IMPLEMENTED
 }
 
+static string wslpath(const string &path) {
+    // ['wsl', server_path, so_path]
+// C:\Users\tsr2>wsl wslpath "E:\Development\FMPy\remoting\win64\win64\server_tcp.exe"
+// /mnt/e/Development/FMPy/remoting/win64/win64/server_tcp.exe
+
+    size_t colon = path.find_first_of(':', 0);
+
+    string driveLetter = path.substr(0, colon);
+
+    transform(driveLetter.begin(), driveLetter.end(), driveLetter.begin(), [](unsigned char c) { return tolower(c); });
+
+    string p = path.substr(colon + 1, path.length());    
+
+    replace(p.begin(), p.end(), '\\', '/');
+
+    string s = "/mnt/" + driveLetter + p;
+
+    return s;
+}
+
 /* Creation and destruction of FMU instances and setting debug status */
 fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2String fmuGUID, fmi2String fmuResourceLocation, const fmi2CallbackFunctions* functions, fmi2Boolean visible, fmi2Boolean loggingOn) {
 	
+    if (!functions || !functions->logger) {
+        return NULL;
+    }
+
 	s_logger = functions->logger;
     s_componentEnvironment = functions->componentEnvironment;
     s_instanceName = strdup(instanceName);
@@ -85,18 +113,14 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 
 	HMODULE hm = NULL;
 
-	if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-		GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-		(LPCSTR)&functionInThisDll, &hm) == 0) {
-		int ret = GetLastError();
-		//fprintf(stderr, "GetModuleHandle failed, error = %d\n", ret);
-		// Return or however you want to handle an error.
+	if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR)&functionInThisDll, &hm) == 0) {
+        s_logger(s_componentEnvironment, instanceName, fmi2Error, "error", "GetModuleHandle failed, error = %d.", GetLastError());
+        return NULL;
 	}
 
 	if (GetModuleFileName(hm, path, sizeof(path)) == 0) {
-		int ret = GetLastError();
-		//fprintf(stderr, "GetModuleFileName failed, error = %d\n", ret);
-		// Return or however you want to handle an error.
+        s_logger(s_componentEnvironment, instanceName, fmi2Error, "error", "GetModuleFileName failed, error = %d.", GetLastError());
+        return NULL;
 	}
 
     const string filename(path);
@@ -107,36 +131,57 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 
     const string binariesPath = linux64Path.substr(0, linux64Path.find_last_of('\\'));
 
-    if (!modelIdentifier.compare("client")) {
+    if (!modelIdentifier.compare("client_tcp")) {
 
         s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Remoting server started externally.");
 	
     } else {
 
-        const string command = binariesPath + "\\win32\\server.exe " + binariesPath + "\\win32\\" + modelIdentifier + ".dll";
+        // linux64 on Windows via WSL
+       
+        char tempPath[MAX_PATH] = "";
+        char lockFile[MAX_PATH] = "";
 
-		// additional information
-		STARTUPINFO si;
+        GetTempPathA(MAX_PATH, tempPath);
 
-		// set the size of the structures
-		ZeroMemory(&si, sizeof(si));
-		si.cb = sizeof(si);
-		ZeroMemory(&s_proccessInfo, sizeof(s_proccessInfo));
+        GetTempFileNameA(tempPath, "", 0, lockFile);
+
+        // create the lock file
+        HANDLE hLockFile = CreateFile(lockFile, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
+
+        if (hLockFile == INVALID_HANDLE_VALUE) {
+            s_logger(s_componentEnvironment, instanceName, fmi2Error, "error", "Failed to create lock file %s.\n", lockFile);
+            return NULL;
+        }
+
+        const string serverPath = binariesPath + "\\linux64\\server_tcp";
+
+        const string sharedLibraryPath = binariesPath + "\\linux64\\" + modelIdentifier + ".so";
+
+        const string command = "wsl \"" + wslpath(serverPath) + "\" \"" + wslpath(sharedLibraryPath) + "\" \"" + wslpath(lockFile) + "\"";
+
+        // additional information
+        STARTUPINFO si;
+
+        // set the size of the structures
+        ZeroMemory(&si, sizeof(si));
+        si.cb = sizeof(si);
+        ZeroMemory(&s_proccessInfo, sizeof(s_proccessInfo));
 
         s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Starting remoting server. Command: %s", command.c_str());
 
-		// start the program up
-		const BOOL success = CreateProcessA(NULL, // the path
+        // start the program up
+        const BOOL success = CreateProcessA(NULL, // the path
             (LPSTR)command.c_str(),               // command line
-			NULL,                                 // process handle not inheritable
-			NULL,                                 // thread handle not inheritable
-			FALSE,                                // set handle inheritance to FALSE
-            CREATE_NO_WINDOW,                     // creation flags
-			NULL,                                 // use parent's environment block
-			NULL,                                 // use parent's starting directory 
-			&si,                                  // pointer to STARTUPINFO structure
-			&s_proccessInfo                       // pointer to PROCESS_INFORMATION structure
-		);
+            NULL,                                 // process handle not inheritable
+            NULL,                                 // thread handle not inheritable
+            FALSE,                                // set handle inheritance to FALSE
+            0, // CREATE_NO_WINDOW,                     // creation flags
+            NULL,                                 // use parent's environment block
+            NULL,                                 // use parent's starting directory 
+            &si,                                  // pointer to STARTUPINFO structure
+            &s_proccessInfo                       // pointer to PROCESS_INFORMATION structure
+        );
 
         if (success) {
             s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Server process id is %d.", s_proccessInfo.dwProcessId);
@@ -144,9 +189,9 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
             s_logger(s_componentEnvironment, instanceName, fmi2Error, "error", "Failed to start server.");
             return nullptr;
         }
-	}
+    }
 
-#else
+#else // TODO: win64 on Linux via wine
 
     Dl_info info = { nullptr };
 
@@ -160,17 +205,49 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 
     const string binariesPath = linux64Path.substr(0, linux64Path.find_last_of('/'));
 
-    if (!modelIdentifier.compare("client")) {
+    if (!modelIdentifier.compare("client_tcp")) {
     
         s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Remoting server started externally.");
     
     } else {
+
+        // create lock file
+        const char *lockFilePath = tempnam(NULL, "");
+
+        int lockFile = open(lockFilePath, O_CREAT | O_EXCL);
+
+        if (lockFile == -1) {
+            s_logger(s_componentEnvironment, instanceName, fmi2Error, "error", "Failed to create lock file %s.", lockFilePath);
+            return nullptr;
+        } else {
+            s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Lock file: %s.", lockFilePath);
+        }
+
+        struct flock fl;
+        memset(&fl, 0, sizeof(fl));
+
+        // lock in shared mode
+        fl.l_type = F_RDLCK;
+
+        // lock entire file
+        fl.l_whence = SEEK_SET;
+        fl.l_start  = 0;
+        fl.l_len    = 0;     
+        fl.l_pid    = 0;
+
+        if (fcntl(lockFile, F_SETLKW, &fl) == -1) {
+            s_logger(s_componentEnvironment, instanceName, fmi2Error, "error", "Failed to lock file %s.", lockFilePath);
+            return nullptr;
+        } else {
+            s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Lock file locked.");
+        }
 
         const pid_t pid = fork();
 
         if (pid < 0) {
 
             s_logger(s_componentEnvironment, instanceName, fmi2Error, "error", "Failed to create server process.");
+
             return nullptr;
 
         } else if (pid == 0) {
@@ -184,7 +261,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
                 return nullptr;
             }
 
-            const string command = "wine64 " + binariesPath + "/win64/server.exe " + binariesPath + "/win64/" + modelIdentifier + ".dll";
+            const string command = "wine64 \"" + binariesPath + "/win64/server_tcp.exe\" \"" + binariesPath + "/win64/" + modelIdentifier + ".dll\" \"" + lockFilePath + "\"";
 
             s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Starting server. Command: %s", command.c_str());
 
@@ -197,6 +274,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
         } else {
 
             s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Server process id is %d.", pid);
+
             s_pid = pid;
 
         }
@@ -234,9 +312,6 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
 void fmi2FreeInstance(fmi2Component c) {
 	client->call("fmi2FreeInstance");
 
-	//// Close process and thread handles
-	//CloseHandle(s_proccessInfo.hProcess);
-	//CloseHandle(s_proccessInfo.hThread);
 #ifdef _WIN32
     if (s_proccessInfo.hProcess) {
         cout << "Terminating server." << endl;

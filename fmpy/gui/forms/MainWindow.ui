@@ -1776,7 +1776,7 @@ QToolButton::menu-button {
   </action>
   <action name="actionOpenFMI2Spec">
    <property name="text">
-    <string>FMI 2.0.2</string>
+    <string>FMI 2.0.3</string>
    </property>
    <property name="toolTip">
     <string>FMI 2.0.2</string>

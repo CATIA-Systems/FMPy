@@ -257,6 +257,16 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
         mpack_node_t components = mpack_node_map_cstr(variable, "components");
         mpack_node_t valueReferences = mpack_node_map_cstr(variable, "valueReferences");
 
+        bool hasStartValue = mpack_node_map_contains_cstr(variable, "start");
+        
+        mpack_node_t start;
+        mpack_type_t variableType;
+
+        if (hasStartValue) {
+            start = mpack_node_map_cstr(variable, "start");
+            variableType = mpack_node_type(start);
+        }
+
         s->variables[i].size = mpack_node_array_length(components);
         s->variables[i].ci = calloc(s->variables[i].size, sizeof(size_t));
         s->variables[i].vr = calloc(s->variables[i].size, sizeof(fmi2ValueReference));
@@ -265,9 +275,46 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
             mpack_node_t component = mpack_node_array_at(components, j);
             mpack_node_t valueReference = mpack_node_array_at(valueReferences, j);
+            fmi2ValueReference vr = mpack_node_u32(valueReference);
+
+            if (hasStartValue) {
+
+                fmi2Status status;
+                FMIInstance *m = s->components[j];
+
+                switch (variableType) {
+                case mpack_type_double: {
+                    fmi2Real value = mpack_node_double(start);
+                    status = FMI2SetReal(m, &vr, 1, &value);
+                    break;
+                }
+                case mpack_type_int: {
+                    fmi2Integer value = mpack_node_int(start);
+                    status = FMI2SetInteger(m, &vr, 1, &value);
+                    break;
+                }
+                case mpack_type_bool: {
+                    fmi2Boolean value = mpack_node_bool(start);
+                    status = FMI2SetBoolean(m, &vr, 1, &value);
+                    break;
+                }
+                case mpack_type_str: {
+                    fmi2String value = mpack_node_cstr_alloc(start, 2048);
+                    status = FMI2SetString(m, &vr, 1, &value);
+                    MPACK_FREE((void*)value);
+                    break;
+                }
+                default:
+                    break;
+                }
+
+                if (status > fmi2Warning) {
+                    return NULL;
+                }
+            }
 
             s->variables[i].ci[j] = mpack_node_u64(component);
-            s->variables[i].vr[j] = mpack_node_u32(valueReference);
+            s->variables[i].vr[j] = vr;
         }
 		
 	}

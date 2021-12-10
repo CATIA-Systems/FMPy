@@ -272,9 +272,9 @@ class MainWindow(QMainWindow):
         self.ui.actionAddCoSimulationWrapper.triggered.connect(self.addCoSimulationWrapper)
 
         # help menu
-        self.ui.actionOpenFMI1SpecCS.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://svn.modelica.org/fmi/branches/public/specifications/v1.0/FMI_for_CoSimulation_v1.0.1.pdf')))
-        self.ui.actionOpenFMI1SpecME.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://svn.modelica.org/fmi/branches/public/specifications/v1.0/FMI_for_ModelExchange_v1.0.1.pdf')))
-        self.ui.actionOpenFMI2Spec.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/modelica/fmi-standard/releases/download/v2.0.2/FMI-Specification-2.0.2.pdf')))
+        self.ui.actionOpenFMI1SpecCS.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://fmi-standard.org/assets/releases/FMI_for_CoSimulation_v1.0.1.pdf')))
+        self.ui.actionOpenFMI1SpecME.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://fmi-standard.org/assets/releases/FMI_for_ModelExchange_v1.0.1.pdf')))
+        self.ui.actionOpenFMI2Spec.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/modelica/fmi-standard/releases/download/v2.0.3/FMI-Specification-2.0.3.pdf')))
         self.ui.actionOpenTestFMUs.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/modelica/fmi-cross-check/tree/master/fmus')))
         self.ui.actionOpenWebsite.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://github.com/CATIA-Systems/FMPy')))
         self.ui.actionShowReleaseNotes.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://fmpy.readthedocs.io/en/latest/changelog/')))

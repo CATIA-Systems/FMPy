@@ -5,34 +5,24 @@ from subprocess import check_call
 from fmpy.util import download_file
 
 
-url = 'https://github.com/rpclib/rpclib/archive/refs/tags/v2.3.0.tar.gz'
-checksum = 'eb9e6fa65e1a79b37097397f60599b93cb443d304fbc0447c50851bc3452fdef'
-
 # build configuration
-config = 'Release'
-
-download_file(url, checksum)
-
-filename = os.path.basename(url)
+config = 'Debug'
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-source_dir = 'rpclib-2.3.0'
+rpclib_dir = os.path.join(basedir, 'rpclib-2.3.0').replace('\\', '/')
 
-rpclib_dir = os.path.join(basedir, source_dir).replace('\\', '/')
+if not os.path.isdir(rpclib_dir):
 
-# clean up
-shutil.rmtree(source_dir, ignore_errors=True)
+    filename = download_file(url='https://github.com/rpclib/rpclib/archive/refs/tags/v2.3.0.tar.gz',
+                             checksum='eb9e6fa65e1a79b37097397f60599b93cb443d304fbc0447c50851bc3452fdef')
 
-print("Extracting %s" % filename)
-with tarfile.open(filename, 'r:gz') as tar:
-    tar.extractall()
-
-if os.name == 'nt':
+    print("Extracting %s" % filename)
+    with tarfile.open(filename, 'r:gz') as tar:
+        tar.extractall()
 
     # patch the CMake project to link static against the MSVC runtime
-    with open(os.path.join(source_dir, 'CMakeLists.txt'), 'a') as file:
-        # Append 'hello' at the end of file
+    with open(os.path.join(rpclib_dir, 'CMakeLists.txt'), 'a') as file:
         file.write('''
             
     message(${CMAKE_CXX_FLAGS_RELEASE})
@@ -54,32 +44,40 @@ if os.name == 'nt':
     message(${CMAKE_CXX_FLAGS_DEBUG})
     ''')
 
+if os.name == 'nt':
+
     for bitness, generator in [('win32', 'Visual Studio 15 2017'), ('win64', 'Visual Studio 15 2017 Win64')]:
 
         # clean up
         shutil.rmtree(os.path.join(basedir, 'remoting', bitness), ignore_errors=True)
 
-        print("Building rpclib...")
+        print(f"Building rpclib for {bitness}...")
 
         check_call(args=[
             'cmake',
-            '-B', source_dir + '/' + bitness,
+            '-B', rpclib_dir + '/' + bitness,
             '-D', 'RPCLIB_MSVC_STATIC_RUNTIME=ON',
-            '-D', 'CMAKE_INSTALL_PREFIX=' + source_dir + '/' + bitness + '/install',
+            '-D', 'CMAKE_INSTALL_PREFIX=' + os.path.join(rpclib_dir, bitness, 'install'),
             '-G', generator,
-            source_dir
+            rpclib_dir
         ])
 
-        check_call(args=['cmake', '--build', source_dir + '/' + bitness, '--target', 'install', '--config', config])
+        check_call(args=[
+            'cmake',
+            '--build', os.path.join(rpclib_dir, bitness),
+            '--target', 'install',
+            '--config', config
+        ])
 
-        print("Building remoting binaries...")
+        print(f"Building remoting binaries for {bitness}...")
 
         check_call(args=[
             'cmake',
             '-B', 'remoting/' + bitness,
             '-G', generator,
-            '-D', 'RPCLIB=' + rpclib_dir + '/' + bitness + '/install',
-            '-B', 'remoting/' + bitness, 'remoting'
+            '-D', 'RPCLIB=' + os.path.join(rpclib_dir, bitness, 'install'),
+            '-B', 'remoting/' + bitness,
+            'remoting'
         ])
 
         check_call(['cmake', '--build', 'remoting/' + bitness, '--config', config])
@@ -93,14 +91,19 @@ else:
 
     check_call(args=[
         'cmake',
-        '-B', source_dir + '/linux64',
-        '-D', 'CMAKE_INSTALL_PREFIX=' + source_dir + '/linux64' + '/install',
+        '-B', os.path.join(rpclib_dir, 'linux64'),
+        '-D', 'CMAKE_INSTALL_PREFIX=' + os.path.join(rpclib_dir, 'linux64', 'install'),
         '-D', 'CMAKE_POSITION_INDEPENDENT_CODE=ON',
         '-G', 'Unix Makefiles',
-        source_dir
+        rpclib_dir
     ])
 
-    check_call(args=['cmake', '--build', source_dir + '/linux64', '--target', 'install', '--config', config])
+    check_call(args=[
+        'cmake',
+        '--build', os.path.join(rpclib_dir, 'linux64'),
+        '--target', 'install',
+        '--config', config
+    ])
 
     print("Building remoting binaries...")
 
@@ -108,7 +111,7 @@ else:
         'cmake',
         '-B', 'remoting/' + 'linux64',
         '-G', 'Unix Makefiles',
-        '-D', 'RPCLIB=' + rpclib_dir + '/linux64/install',
+        '-D', 'RPCLIB=' + os.path.join(rpclib_dir, 'linux64', 'install'),
         '-B', 'remoting/linux64', 'remoting'
     ])
 

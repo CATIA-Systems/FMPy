@@ -51,12 +51,18 @@ package_data = {
         'fmucontainer/sources/FMUContainer.c',
         'fmucontainer/sources/mpack.c',
         'fmucontainer/sources/mpack.h',
-        'remoting/linux64/client.so',
-        'remoting/linux64/server',
-        'remoting/win32/client.dll',
-        'remoting/win32/server.exe',
-        'remoting/win64/client.dll',
-        'remoting/win64/server.exe',
+        'remoting/linux64/client_sm.so',
+        'remoting/linux64/client_tcp.so',
+        'remoting/linux64/server_sm',
+        'remoting/linux64/server_tcp',
+        'remoting/win32/client_sm.dll',
+        'remoting/win32/client_tcp.dll',
+        'remoting/win32/server_sm.exe',
+        'remoting/win32/server_tcp.exe',
+        'remoting/win64/client_sm.dll',
+        'remoting/win64/client_tcp.dll',
+        'remoting/win64/server_sm.exe',
+        'remoting/win64/server_tcp.exe',
         'remoting/license.txt',
         'schema/fmi1/*.xsd',
         'schema/fmi2/*.xsd',
@@ -76,7 +82,6 @@ install_requires = [
     'lxml',
     'msgpack',
     'numpy',
-    'pathlib;python_version<"3.4"',
     'pywin32;platform_system=="Windows"',
     'pytz'
 ]
@@ -86,13 +91,13 @@ extras_require = {
     'plot': ['matplotlib', 'scipy'],
     'gui': ['PyQt5', 'pyqtgraph'],
     'notebook': ['notebook', 'plotly'],
-    'webapp': ['dash-bootstrap-components']
+    'webapp': ['dash-bootstrap-components>=1.0.0']
 }
 
 extras_require['complete'] = sorted(set(sum(extras_require.values(), [])))
 
 setup(name='FMPy',
-      version='0.3.3',
+      version='0.3.4',
       description="Simulate Functional Mock-up Units (FMUs) in Python",
       long_description=long_description,
       author="Torsten Sommer",

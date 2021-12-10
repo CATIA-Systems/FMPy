@@ -239,7 +239,7 @@ def _validate_variable_names(model_description: ModelDescription) -> List[str]:
             bname           : nondigit (nondigit|digit)* | qname
             nondigit        : "_" | "a".."z" | "A".."Z"
             digit           : "0".."9"
-            qname           : "'" ( qchar | escape ) ( qchar | escape ) "'"
+            qname           : "'" ( qchar | escape )+ "'"
             qchar           : nondigit | digit | "!" | "#" | "$" | "%" | "&" | "(" | ")" 
                               | "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" | ">"
                               | "=" | "?" | "@" | "[" | "]" | "^" | "{" | "}" | "|" | "~" | " "

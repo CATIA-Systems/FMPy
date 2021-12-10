@@ -182,10 +182,22 @@ def create_fmu_container(configuration, output_filename):
             component_indices.append(component_index)
             value_references.append(value_reference)
 
-        data['variables'].append({
+        variable = {
             'components': component_indices,
-            'valueReferences': value_references
-        })
+            'valueReferences': value_references,
+        }
+
+        if v.start is not None:
+            if v.type == 'Real':
+                variable['start'] = float(v.start)
+            elif v.type in ['Enumeration', 'Integer']:
+                variable['start'] = int(v.start)
+            elif v.type == 'Boolean':
+                variable['start'] = bool(v.start)
+            elif v.type == 'String':
+                variable['start'] = v.start
+
+        data['variables'].append(variable)
 
         # modelDescription.xml
         start = f' start="{ v.start }"' if v.start else ''

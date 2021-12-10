@@ -1,3 +1,18 @@
+## v0.3.4 (2021-12-10)
+
+### Bug fixes
+
+- Fix links to FMI Specs (#349)
+- Fix validation of quoted variable names (#347)
+- Set start values of Container FMU's variables (#345)
+
+### Enhancements
+
+- Use Dash 2.0 and update dependencies (#339)
+- Raise FMICallExeption when FMI calls fail (#346)
+- Add shared memory implementation for remoting on Windows (#328)
+- Check if start values can be set (#351)
+
 ## v0.3.3 (2021-11-29)
 
 ### Bug fixes

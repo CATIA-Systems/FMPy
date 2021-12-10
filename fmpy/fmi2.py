@@ -3,7 +3,7 @@
 import pathlib
 from ctypes import *
 from . import free, calloc
-from .fmi1 import _FMU, printLogMessage
+from .fmi1 import _FMU, FMICallException, printLogMessage
 
 
 fmi2Component            = c_void_p
@@ -212,7 +212,7 @@ class _FMU2(_FMU):
             if restype == fmi2Status:  # status code
                 # check the status code
                 if res > fmi2Warning:
-                    raise Exception("%s failed with status %d." % (fname, res))
+                    raise FMICallException(function=fname, status=res)
 
             return res
 

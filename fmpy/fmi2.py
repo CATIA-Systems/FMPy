@@ -582,24 +582,24 @@ class FMU2Slave(_FMU2):
     def getStatus(self, kind):
         value = fmi2Status(fmi2OK)
         self.fmi2GetStatus(self.component, kind, byref(value))
-        return value
+        return value.value
 
     def getRealStatus(self, kind):
         value = fmi2Real(0.0)
         self.fmi2GetRealStatus(self.component, kind, byref(value))
-        return value
+        return value.value
 
     def getIntegerStatus(self, kind):
         value = fmi2Integer(0)
         self.fmi2GetIntegerStatus(self.component, kind, byref(value))
-        return value
+        return value.value
 
     def getBooleanStatus(self, kind):
         value = fmi2Boolean(fmi2False)
         self.fmi2GetBooleanStatus(self.component, kind, byref(value))
-        return value
+        return bool(value.value)
 
     def getStringStatus(self, kind):
         value = fmi2String(b'')
         self.fmi2GetStringStatus(self.component, kind, byref(value))
-        return value
+        return value.value.decode('utf-8')

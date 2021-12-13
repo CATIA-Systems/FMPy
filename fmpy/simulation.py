@@ -1163,7 +1163,7 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
 
         input.apply(time)
 
-        if is_fmi1 or is_fmi2:
+        if is_fmi1:
 
             if time + output_interval <= stop_time:
                 fmu.doStep(currentCommunicationPoint=time, communicationStepSize=output_interval)
@@ -1172,6 +1172,26 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
             else:
                 fmu.doStep(currentCommunicationPoint=time, communicationStepSize=stop_time - time)
                 time = stop_time
+
+        elif is_fmi2:
+
+            try:
+                if time + output_interval <= stop_time:
+                    fmu.doStep(currentCommunicationPoint=time, communicationStepSize=output_interval)
+                    n_steps += 1
+                    time = n_steps * output_interval
+                else:
+                    fmu.doStep(currentCommunicationPoint=time, communicationStepSize=stop_time - time)
+                    time = stop_time
+            except FMICallException as e:
+                if e.status == fmi2Discard:
+                    terminated = fmu.getBooleanStatus(fmi2Terminated)
+                    if terminated:
+                        time = fmu.getRealStatus(fmi2LastSuccessfulTime)
+                        recorder.sample(time, force=True)
+                        break
+                else:
+                    raise e
         else:
 
             t_input_event = input.nextEvent(time)

@@ -367,7 +367,7 @@ class _FMU2(_FMU):
         self.fmi2SerializeFMUstate(self.component, state, serializedState, size)
         return serializedState.raw
 
-    def deSerializeFMUstate(self, serializedState, state=fmi2FMUstate()):
+    def deSerializeFMUstate(self, serializedState, state=None):
         """ De-serialize an FMU state
 
         Parameters:
@@ -377,7 +377,8 @@ class _FMU2(_FMU):
         Returns:
             the de-serialized FMU state
         """
-
+        if state is None:
+            state = fmi2FMUstate()
         buffer = create_string_buffer(serializedState, size=len(serializedState))
         self.fmi2DeSerializeFMUstate(self.component, buffer, len(buffer), byref(state))
         return state

@@ -418,15 +418,17 @@ class Input(object):
         return v, der_v
 
 
-def apply_start_values(fmu, model_description, start_values, apply_default_start_values=False, validate=True):
+def apply_start_values(fmu, model_description, start_values, settable=None):
     """ Set start values to an FMU instance
 
     Parameters:
-        fmu                     the FMU instance
-        model_description       the ModelDescription instance
-        start_values            dictionary of variable_name -> start_value pairs
-        apply_default_values    apply the start values from the model description
-        validate                check if the start values can be set
+        fmu                the FMU instance
+        model_description  the ModelDescription instance
+        start_values       dictionary of variable_name -> start_value pairs
+        settable           callback f(variable) -> bool that indicates if a variable can be set
+
+    returns:
+        a dictionary with the start values that have not been set
     """
 
     start_values = start_values.copy()
@@ -435,16 +437,18 @@ def apply_start_values(fmu, model_description, start_values, apply_default_start
 
     for variable in model_description.modelVariables:
 
-        if variable.name in start_values:
-            value = start_values.pop(variable.name)
-        elif apply_default_start_values and variable.start is not None and variable.initial in ['approx', 'exact']:
-            value = variable.start
-        else:
+        if variable.name not in start_values:
             continue
+
+        if settable is not None and not settable(variable):
+            continue
+
+        value = start_values.pop(variable.name)
 
         if type(value) is tuple:
             if len(value) != 2:
-                raise Exception('The start value for variable %s must be a scalar value or a tuple (<value>, {<unit>|<display_unit>}) but was "%s".' % (variable.name, value))
+                raise Exception(f'The start value for variable {variable.name} must be a scalar value or a'
+                                f' tuple (<value>, {{<unit>|<display_unit>}}) but was "{value}".')
             value, unit = value
         else:
             unit = None
@@ -459,21 +463,14 @@ def apply_start_values(fmu, model_description, start_values, apply_default_start
             elif variable.declaredType is not None:
                 base_unit = variable.declaredType.unit
             else:
-                raise Exception('Variable %s has no unit but the unit "%s" was specified for its start value.' % (variable.name, unit))
+                raise Exception(f'Variable {variable.name} has no unit but the unit "{unit}"'
+                                ' was specified for its start value.')
 
             if unit not in unit_definitions[base_unit]:
-                raise Exception('The unit "%s" of the start value for variable %s is not defined.' % (unit, variable.name))
+                raise Exception(f'The unit "{unit}" of the start value for variable {variable.name} is not defined.')
 
             display_unit = unit_definitions[base_unit][unit]
             value = (value - display_unit.offset) / display_unit.factor
-
-        if validate:  # check if start value can be set
-
-            if variable.variability == 'constant':
-                raise Exception(f'Variable "{variable.name}" is a constant and cannot be set.')
-
-            if variable.initial not in ['approx', 'exact']:
-                raise Exception(f'Variable "{variable.name}" has inital={variable.initial} and cannot be set.')
 
         vr = variable.valueReference
 
@@ -490,8 +487,8 @@ def apply_start_values(fmu, model_description, start_values, apply_default_start
         if variable.type == 'Boolean':
             if isinstance(value, str):
                 if value.lower() not in ['true', 'false']:
-                    raise Exception('The start value "%s" for variable "%s" could not be converted to Boolean' %
-                                    (value, variable.name))
+                    raise Exception(f'The start value "{value}" for variable "{variable.name}"'
+                                    ' could not be converted to Boolean')
                 else:
                     value = value.lower() == 'true'
 
@@ -501,16 +498,14 @@ def apply_start_values(fmu, model_description, start_values, apply_default_start
                 value = value.split()
             value = list(map(lambda e: variable._python_type(e), value))
             if len(value) != np.prod(variable.shape):
-                raise ArgumentError('The start value for variable "%s" must have %d elements but has %d.' %
-                                    (variable.name, np.prod(variable.shape), len(value)))
+                raise ArgumentError(f'The start value for variable "{variable.name}" must have'
+                                    f' {np.prod(variable.shape)} elements but has {len(value)}.')
         else:
             value = [variable._python_type(value)]
 
         setter([vr], value)
 
-    if len(start_values) > 0:
-        raise Exception("The start values for the following variables could not be set because they don't exist: " +
-                        ', '.join(start_values.keys()))
+    return start_values
 
 
 class ForwardEuler(object):
@@ -629,7 +624,7 @@ def simulate_fmu(filename,
 
     from fmpy import supported_platforms
     from fmpy.model_description import read_model_description
-    from fmpy.util import has_wine64, has_wsl, can_simulate
+    from fmpy.util import can_simulate
 
     platforms = supported_platforms(filename)
 
@@ -812,6 +807,20 @@ def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, d
     return fmu
 
 
+def has_start_value(variable):
+    return variable.start is not None
+
+
+def settable_in_instantiated(variable):
+    return variable.variability != 'constant' and variable.initial in {'approx', 'exact'}
+
+
+def settable_in_initialization_mode(variable):
+    return variable.causality == 'input' \
+           or (variable.causality != 'parameter' and variable.variability == 'tunable') \
+           or (variable.variability != 'constant' and variable.initial == 'exact')
+
+
 def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_size, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, record_events, timeout, step_finished, validate):
 
     if relative_tolerance is None:
@@ -846,10 +855,9 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
     input = Input(fmu, model_description, input_signals)
 
-    apply_start_values(fmu, model_description, start_values, apply_default_start_values, validate)
-
     # initialize
     if is_fmi1:
+        start_values = apply_start_values(fmu, model_description, start_values, settable=has_start_value)
 
         input.apply(time)
 
@@ -865,15 +873,20 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
     elif is_fmi2:
 
+        start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_instantiated)
+
         fmu.enterInitializationMode()
+
+        start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_initialization_mode)
+
         input.apply(time)
+
         fmu.exitInitializationMode()
 
         newDiscreteStatesNeeded = True
         terminateSimulation = False
 
         while newDiscreteStatesNeeded and not terminateSimulation:
-            # update discrete states
             (newDiscreteStatesNeeded,
              terminateSimulation,
              nominalsOfContinuousStatesChanged,
@@ -888,8 +901,14 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
     elif is_fmi3:
 
+        start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_instantiated)
+
         fmu.enterInitializationMode(startTime=start_time, stopTime=stop_time)
+
         input.apply(time)
+
+        start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_initialization_mode)
+
         fmu.exitInitializationMode()
 
         discreteStatesNeedUpdate = True
@@ -905,6 +924,10 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
              nextEventTime) = fmu.updateDiscreteStates()
 
         fmu.enterContinuousTimeMode()
+
+    if validate and len(start_values) > 0:
+        raise Exception("The start values for the following variables could not be set: " +
+                        ', '.join(start_values.keys()))
 
     # common solver constructor arguments
     solver_args = {
@@ -1115,18 +1138,21 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
 
     time = start_time
 
-    apply_start_values(fmu, model_description, start_values, apply_default_start_values, validate)
-
     # initialize the model
     if is_fmi1:
+        start_values = apply_start_values(fmu, model_description, start_values, settable=has_start_value)
         input.apply(time)
         fmu.initialize(tStart=time, stopTime=stop_time)
     elif is_fmi2:
+        start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_instantiated)
         fmu.enterInitializationMode()
+        start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_initialization_mode)
         input.apply(time)
         fmu.exitInitializationMode()
     else:
+        start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_instantiated)
         fmu.enterInitializationMode(tolerance=relative_tolerance, startTime=start_time, stopTime=stop_time)
+        start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_initialization_mode)
         input.apply(time)
         fmu.exitInitializationMode()
 
@@ -1141,6 +1167,10 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
                 raise Exception("The FMU requested to terminate the simulation during initialization.")
 
             fmu.enterStepMode()
+
+    if validate and len(start_values) > 0:
+        raise Exception("The start values for the following variables could not be set: " +
+                        ', '.join(start_values.keys()))
 
     recorder = Recorder(fmu=fmu, modelDescription=model_description, variableNames=output, interval=output_interval)
 

@@ -49,7 +49,7 @@ class ValidationTest(unittest.TestCase):
         with self.assertRaises(Exception) as context:
             simulate_fmu(filename, start_values={'clutch1.sa': 0.0})
 
-        self.assertTrue('Variable "clutch1.sa" has inital=calculated and cannot be set.' == str(context.exception))
+        self.assertEqual('The start values for the following variables could not be set: clutch1.sa', str(context.exception))
 
 
 if __name__ == '__main__':

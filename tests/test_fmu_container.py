@@ -6,14 +6,14 @@ from fmpy.validation import validate_fmu
 import numpy as np
 
 
-@unittest.skipIf('SSP_STANDARD_DEV' not in os.environ, "Environment variable SSP_STANDARD_DEV must point to the clone of https://github.com/modelica/ssp-standard-dev")
 class FMUContainerTest(unittest.TestCase):
 
     def test_create_fmu_container(self):
 
-        examples = os.path.join(os.environ['SSP_STANDARD_DEV'], 'SystemStructureDescription', 'examples')
+        resources = os.path.join(os.path.dirname(__file__), 'resources')
 
         configuration = Configuration(
+            parallelDoStep=True,
             description="A controlled drivetrain",
             variableNamingConvention='structured',
             unitDefinitions=[
@@ -55,11 +55,11 @@ class FMUContainerTest(unittest.TestCase):
                 ],
             components=[
                     Component(
-                        filename=os.path.join(examples, 'Controller.fmu'),
+                        filename=os.path.join(resources, 'Controller.fmu'),
                         name='controller'
                     ),
                     Component(
-                        filename=os.path.join(examples, 'Drivetrain.fmu'),
+                        filename=os.path.join(resources, 'Drivetrain.fmu'),
                         name='drivetrain',
                     )
                 ],
@@ -81,4 +81,4 @@ class FMUContainerTest(unittest.TestCase):
 
         result = simulate_fmu(filename, start_values={'k': 20}, input=w_ref, output=['w_ref', 'w'], stop_time=4)
 
-        plot_result(result)
+        # plot_result(result)

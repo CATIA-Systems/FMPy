@@ -7,10 +7,12 @@
 #elif defined(__APPLE__)
 #include <libgen.h>
 #include <sys/syslimits.h>
+#include<pthread.h>
 #else
 #define _GNU_SOURCE
 #include <libgen.h>
 #include <linux/limits.h>
+#include<pthread.h>
 #endif
 
 #include <mpack.h>
@@ -43,12 +45,32 @@ typedef struct {
 
 typedef struct {
 
+    FMIInstance *instance;
+
+#ifdef _WIN32
+    HANDLE thread;
+    HANDLE mutex;
+#else
+    pthread_t thread;
+    pthread_mutex_t mutex;
+#endif
+
+    fmi2Real currentCommunicationPoint;
+    fmi2Real communicationStepSize;
+    fmi2Status status;
+    bool doStep;
+    bool terminate;
+
+} Component;
+
+typedef struct {
+
     fmi2String instanceName;
     fmi2CallbackLogger logger;
     fmi2ComponentEnvironment envrionment;
 
 	size_t nComponents;
-	FMIInstance **components;
+    Component **components;
 	
 	size_t nVariables;
 	VariableMapping *variables;
@@ -56,7 +78,57 @@ typedef struct {
 	size_t nConnections;
 	Connection *connections;
 
+    bool parallelDoStep;
+
 } System;
+
+#ifdef _WIN32
+DWORD WINAPI doStep(LPVOID lpParam) {
+
+    Component *c = (Component *)lpParam;
+
+    while (true) {
+
+        DWORD dwWaitResult = WaitForSingleObject(c->mutex, INFINITE);
+
+        if (c->terminate) {
+            return TRUE;
+        }
+
+        if (c->doStep) {
+            c->status = FMI2DoStep(c->instance, c->currentCommunicationPoint, c->communicationStepSize, fmi2True);
+            c->doStep = false;
+        }
+
+        BOOL success = ReleaseMutex(c->mutex);
+    }
+
+    return TRUE;
+}
+#else
+void* doStep(void *arg) {
+
+    Component *c = (Component *)arg;
+
+    while (true) {
+
+        pthread_mutex_lock(&c->mutex);
+
+        if (c->terminate) {
+            return NULL;
+        }
+
+        if (c->doStep) {
+            c->status = FMI2DoStep(c->instance, c->currentCommunicationPoint, c->communicationStepSize, fmi2True);
+            c->doStep = false;
+        }
+
+        pthread_mutex_unlock(&c->mutex);
+    }
+
+    return NULL;
+}
+#endif
 
 
 #define GET_SYSTEM \
@@ -68,9 +140,8 @@ typedef struct {
 
 #define NOT_IMPLEMENTED \
     if (c) { \
-        FMIInstance *m = (FMIInstance *)c; \
-        System *s = m->userData; \
-        s->logger(s->envrionment, s->instanceName, fmi2Error, "fmi2Error", "Function is not implemented."); \
+        System *system = (System *)c; \
+        system->logger(system->envrionment, system->instanceName, fmi2Error, "fmi2Error", "Function is not implemented."); \
     } \
     return fmi2Error;
 
@@ -79,16 +150,20 @@ Types for Common Functions
 ****************************************************/
 
 /* Inquire version numbers of header files and setting logging status */
-const char* fmi2GetTypesPlatform(void) { return fmi2TypesPlatform; }
+const char* fmi2GetTypesPlatform() {
+    return fmi2TypesPlatform;
+}
 
-const char* fmi2GetVersion(void) { return fmi2Version; }
+const char* fmi2GetVersion() { 
+    return fmi2Version; 
+}
 
 fmi2Status fmi2SetDebugLogging(fmi2Component c, fmi2Boolean loggingOn, size_t nCategories, const fmi2String categories[]) {
     
 	GET_SYSTEM
 
 	for (size_t i = 0; i < s->nComponents; i++) {
-        FMIInstance *m = s->components[i];
+        FMIInstance *m = s->components[i]->instance;
         CHECK_STATUS(FMI2SetDebugLogging(m, loggingOn, nCategories, categories));
 	}
 
@@ -146,12 +221,6 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
         return NULL;
     }
 
-	System *s = calloc(1, sizeof(System));
-
-    s->instanceName = strdup(instanceName);
-    s->logger       = functions->logger;
-    s->envrionment  = functions->componentEnvironment;
-
     char configFilename[4096] = "";
     char resourcesDir[4096]   = "";
 
@@ -167,6 +236,15 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	mpack_node_t root = mpack_tree_root(&tree);
 
 	//mpack_node_print_to_stdout(root);
+
+    mpack_node_t parallelDoStep = mpack_node_map_cstr(root, "parallelDoStep");
+
+    System *s = calloc(1, sizeof(System));
+
+    s->instanceName = strdup(instanceName);
+    s->logger = functions->logger;
+    s->envrionment = functions->componentEnvironment;
+    s->parallelDoStep = mpack_node_bool(parallelDoStep);
 
 	mpack_node_t components = mpack_node_map_cstr(root, "components");
 
@@ -216,7 +294,25 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
             return NULL;
         }
 
-        s->components[i] = m;
+        Component *c = calloc(1, sizeof(Component));
+
+        c->instance = m;
+
+        if (s->parallelDoStep) {
+            c->doStep = false;
+            c->terminate = false;
+#ifdef _WIN32
+            // TODO: check for invalid handles
+            c->mutex = CreateMutexA(NULL, FALSE, NULL);
+            c->thread = CreateThread(NULL, 0, doStep, c, 0, NULL);
+#else
+            // TODO: check return codes
+            pthread_mutex_init(&c->mutex, NULL);
+            pthread_create(&c->thread, NULL, &doStep, c);
+#endif
+        }
+
+        s->components[i] = c;
 	}
 
 	mpack_node_t connections = mpack_node_map_cstr(root, "connections");
@@ -280,7 +376,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
             if (hasStartValue) {
 
                 fmi2Status status;
-                FMIInstance *m = s->components[j];
+                FMIInstance *m = s->components[j]->instance;
 
                 switch (variableType) {
                 case mpack_type_double: {
@@ -332,16 +428,27 @@ void fmi2FreeInstance(fmi2Component c) {
 
 	if (!c) return;
 	
-	System *s = (System *)c;
+	System *system = (System *)c;
 
-	for (size_t i = 0; i < s->nComponents; i++) {
-		FMIInstance *m = s->components[i];
+	for (size_t i = 0; i < system->nComponents; i++) {
+        Component *component = system->components[i];
+		FMIInstance *m = component->instance;
 		FMI2FreeInstance(m);
         FMIFreeInstance(m);
+        if (system->parallelDoStep) {
+#ifdef _WIN32
+            CloseHandle(component->mutex);       
+            CloseHandle(component->thread);
+#else
+            pthread_mutex_destroy(&component->mutex);
+            pthread_join(component->thread, NULL);
+#endif
+        }
+        free(component);
 	}
 
-    free((void *)s->instanceName);
-	free(s);
+    free((void *)system->instanceName);
+	free(system);
 }
 
 /* Enter and exit initialization mode, terminate and reset */
@@ -355,7 +462,7 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
 	GET_SYSTEM
 
 	for (size_t i = 0; i < s->nComponents; i++) {
-        FMIInstance *m = s->components[i];
+        FMIInstance *m = s->components[i]->instance;
         CHECK_STATUS(FMI2SetupExperiment(m, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime));
 	}
 
@@ -368,8 +475,8 @@ fmi2Status fmi2EnterInitializationMode(fmi2Component c) {
 	GET_SYSTEM
 
 	for (size_t i = 0; i < s->nComponents; i++) {
-        FMIInstance *m = s->components[i];
-		CHECK_STATUS(FMI2EnterInitializationMode(m))
+        FMIInstance *m = s->components[i]->instance;
+		CHECK_STATUS(FMI2EnterInitializationMode(m));
 	}
 
 END:
@@ -381,8 +488,8 @@ fmi2Status fmi2ExitInitializationMode(fmi2Component c) {
 	GET_SYSTEM
 
 	for (size_t i = 0; i < s->nComponents; i++) {
-        FMIInstance *m = s->components[i];
-		CHECK_STATUS(FMI2ExitInitializationMode(m))
+        FMIInstance *m = s->components[i]->instance;
+        CHECK_STATUS(FMI2ExitInitializationMode(m));
 	}
 
 END:
@@ -394,9 +501,25 @@ fmi2Status fmi2Terminate(fmi2Component c) {
 	GET_SYSTEM
 
 	for (size_t i = 0; i < s->nComponents; i++) {
-        FMIInstance *m = s->components[i];
-		CHECK_STATUS(FMI2Terminate(m))
-	}
+        
+        Component *component = s->components[i];
+        
+        CHECK_STATUS(FMI2Terminate(component->instance));
+
+        if (s->parallelDoStep) {
+#ifdef _WIN32
+            WaitForSingleObject(component->mutex, INFINITE);
+            component->terminate = true;
+            ReleaseMutex(component->mutex);
+            WaitForSingleObject(component->thread, INFINITE);
+#else
+            pthread_mutex_lock(&component->mutex);
+            component->terminate = true;
+            pthread_mutex_unlock(&component->mutex);
+            pthread_join(component->thread, NULL);
+#endif
+        }
+    }
 
 END:
 	return status;
@@ -407,8 +530,8 @@ fmi2Status fmi2Reset(fmi2Component c) {
 	GET_SYSTEM
 
 		for (size_t i = 0; i < s->nComponents; i++) {
-            FMIInstance *m = s->components[i];
-			CHECK_STATUS(FMI2Reset(m))
+            FMIInstance *m = s->components[i]->instance;
+			CHECK_STATUS(FMI2Reset(m));
 		}
 
 END:
@@ -423,7 +546,7 @@ fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 	for (size_t i = 0; i < nvr; i++) {
 		if (vr[i] >= s->nVariables) return fmi2Error;
 		VariableMapping vm = s->variables[vr[i]];
-        FMIInstance *m = s->components[vm.ci[0]];
+        FMIInstance *m = s->components[vm.ci[0]]->instance;
 		CHECK_STATUS(FMI2GetReal(m, &(vm.vr[0]), 1, &value[i]))
 	}
 END:
@@ -437,7 +560,7 @@ fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 		for (size_t i = 0; i < nvr; i++) {
 			if (vr[i] >= s->nVariables) return fmi2Error;
 			VariableMapping vm = s->variables[vr[i]];
-            FMIInstance *m = s->components[vm.ci[0]];
+            FMIInstance *m = s->components[vm.ci[0]]->instance;
 			CHECK_STATUS(FMI2GetInteger(m, &(vm.vr[0]), 1, &value[i]))
 		}
 END:
@@ -451,7 +574,7 @@ fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 		for (size_t i = 0; i < nvr; i++) {
 			if (vr[i] >= s->nVariables) return fmi2Error;
 			VariableMapping vm = s->variables[vr[i]];
-            FMIInstance *m = s->components[vm.ci[0]];
+            FMIInstance *m = s->components[vm.ci[0]]->instance;
 			CHECK_STATUS(FMI2GetBoolean(m, &(vm.vr[0]), 1, &value[i]))
 		}
 END:
@@ -465,7 +588,7 @@ fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t 
 		for (size_t i = 0; i < nvr; i++) {
 			if (vr[i] >= s->nVariables) return fmi2Error;
 			VariableMapping vm = s->variables[vr[i]];
-            FMIInstance *m = s->components[vm.ci[0]];
+            FMIInstance *m = s->components[vm.ci[0]]->instance;
 			CHECK_STATUS(FMI2GetString(m, &(vm.vr[0]), 1, &value[i]))
 		}
 END:
@@ -480,7 +603,7 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 		if (vr[i] >= s->nVariables) return fmi2Error;
 		VariableMapping vm = s->variables[vr[i]];
         for (size_t j = 0; j < vm.size; j++) {
-            FMIInstance *m = s->components[vm.ci[j]];
+            FMIInstance *m = s->components[vm.ci[j]]->instance;
 		    CHECK_STATUS(FMI2SetReal(m, &(vm.vr[j]), 1, &value[i]))
         }
 	}
@@ -496,7 +619,7 @@ fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 		if (vr[i] >= s->nVariables) return fmi2Error;
 		VariableMapping vm = s->variables[vr[i]];
         for (size_t j = 0; j < vm.size; j++) {
-            FMIInstance *m = s->components[vm.ci[j]];
+            FMIInstance *m = s->components[vm.ci[j]]->instance;
             CHECK_STATUS(FMI2SetInteger(m, &(vm.vr[j]), 1, &value[i]))
         }
 	}
@@ -512,7 +635,7 @@ fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 		if (vr[i] >= s->nVariables) return fmi2Error;
 		VariableMapping vm = s->variables[vr[i]];
         for (size_t j = 0; j < vm.size; j++) {
-            FMIInstance *m = s->components[vm.ci[j]];
+            FMIInstance *m = s->components[vm.ci[j]]->instance;
             CHECK_STATUS(FMI2SetBoolean(m, &(vm.vr[j]), 1, &value[i]))
         }
 	}
@@ -528,7 +651,7 @@ fmi2Status fmi2SetString(fmi2Component c, const fmi2ValueReference vr[], size_t 
 		if (vr[i] >= s->nVariables) return fmi2Error;
 		VariableMapping vm = s->variables[vr[i]];
         for (size_t j = 0; j < vm.size; j++) {
-            FMIInstance *m = s->components[vm.ci[j]];
+            FMIInstance *m = s->components[vm.ci[j]]->instance;
             CHECK_STATUS(FMI2SetString(m, &(vm.vr[j]), 1, &value[i]))
         }
 	}
@@ -601,8 +724,8 @@ fmi2Status fmi2DoStep(fmi2Component c,
 		fmi2Integer integerValue;
 		fmi2Boolean booleanValue;
 		Connection *k = &(s->connections[i]);
-        FMIInstance *m1 = s->components[k->startComponent];
-        FMIInstance *m2 = s->components[k->endComponent];
+        FMIInstance *m1 = s->components[k->startComponent]->instance;
+        FMIInstance *m2 = s->components[k->endComponent]->instance;
 		fmi2ValueReference vr1 = k->startValueReference;
 		fmi2ValueReference vr2 = k->endValueReference;
 
@@ -623,10 +746,56 @@ fmi2Status fmi2DoStep(fmi2Component c,
 		
 	}
 
-	for (size_t i = 0; i < s->nComponents; i++) {
-        FMIInstance *m = s->components[i];
-		CHECK_STATUS(FMI2DoStep(m, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint))
-	}
+    if (s->parallelDoStep) {
+    
+        for (size_t i = 0; i < s->nComponents; i++) {
+            Component *component = s->components[i];
+#ifdef _WIN32
+            WaitForSingleObject(component->mutex, INFINITE);
+#else
+            pthread_mutex_lock(&component->mutex);
+#endif
+            component->currentCommunicationPoint = currentCommunicationPoint;
+            component->communicationStepSize = communicationStepSize;
+            component->doStep = true;
+#ifdef _WIN32
+            ReleaseMutex(component->mutex);
+#else
+            pthread_mutex_unlock(&component->mutex);
+#endif
+        }
+
+        for (size_t i = 0; i < s->nComponents; i++) {
+            Component *component = s->components[i];
+            bool waitForThread = true;
+            fmi2Status status;
+
+            while (waitForThread) {
+#ifdef _WIN32
+                WaitForSingleObject(component->mutex, INFINITE);
+#else
+                pthread_mutex_lock(&component->mutex);
+#endif
+                waitForThread = component->doStep;
+                status = component->status;
+#ifdef _WIN32
+                ReleaseMutex(component->mutex);
+#else
+                pthread_mutex_unlock(&component->mutex);
+#endif
+            }
+
+            CHECK_STATUS(status);
+        }
+
+    } else {
+
+        for (size_t i = 0; i < s->nComponents; i++) {
+            FMIInstance *m = s->components[i]->instance;
+        	CHECK_STATUS(FMI2DoStep(m, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint))
+        }
+
+    }
 
 END:
 	return status;

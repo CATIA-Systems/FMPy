@@ -187,7 +187,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                                     </xs:complexType>
                                 </xs:element>
                             </xs:sequence>
-                            <xs:attribute name="quantity" type="xs:normalizedString"/>
+                            <xs:attributeGroup ref="fmi3IntegerBaseAttributes"/>
+                            <xs:attributeGroup ref="fmi3EnumerationAttributes"/>
                         </xs:extension>
                     </xs:complexContent>
                 </xs:complexType>

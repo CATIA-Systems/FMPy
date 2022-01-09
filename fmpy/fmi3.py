@@ -1033,12 +1033,12 @@ class FMU3ScheduledExecution(_FMU3):
 
         resourcePath = os.path.join(self.unzipDirectory, 'resources') + os.path.sep
 
-        def noop():
+        def noop(*args):
             pass
 
         # save callbacks from GC
         self.printLogMessage = fmi3LogMessageCallback(printLogMessage)
-        self.intermediateUpdate = fmi3IntermediateUpdateCallback(intermediateUpdate)
+        self.clockUpdate = fmi3ClockUpdateCallback(noop)
         self.lockPreemption = fmi3LockPreemptionCallback(noop)
         self.unlockPreemption = fmi3UnlockPreemptionCallback(noop)
 
@@ -1048,10 +1048,9 @@ class FMU3ScheduledExecution(_FMU3):
             resourcePath.encode('utf-8'),
             fmi3Boolean(visible),
             fmi3Boolean(loggingOn),
-            None, 0,
             fmi3InstanceEnvironment(),
             self.printLogMessage,
-            self.intermediateUpdate,
+            self.clockUpdate,
             self.lockPreemption,
             self.unlockPreemption
         )

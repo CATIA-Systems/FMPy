@@ -171,9 +171,6 @@ class ScalarVariable(object):
     initial = attrib(type=str, default=None, repr=False)
     "One of 'exact', 'approx', 'calculated' or None"
 
-    interval = attrib(type=str, default=None, repr=False)
-    "One of 'constant', 'fixed', 'calculated', 'tunable', 'changing', 'countdown', 'triggered' or None"
-
     canHandleMultipleSetPerTimeInstant = attrib(type=bool, default=True, repr=False)
 
     intermediateUpdate = attrib(type=bool, default=False, repr=False)
@@ -228,16 +225,24 @@ class ScalarVariable(object):
     "Line number in the modelDescription.xml or None if unknown"
 
     # Clock attributes
-    # TODO: add type hints
-    canBeDeactivated = None
-    priority = None
-    interval = None
-    intervalDecimal = None
-    shiftDecimal = None
-    supportsFraction = None
-    resolution = None
-    intervalCounter = None
-    shiftCounter = None
+    canBeDeactivated = attrib(type=bool, default=False, repr=False)
+
+    priority = attrib(type=int, default=None, repr=False)
+
+    intervalVariability = attrib(type=str, default=None, repr=False)
+    "One of 'constant', 'fixed', 'calculated', 'tunable', 'changing', 'countdown', 'triggered' or None"
+
+    intervalDecimal = attrib(type=float, default=None, repr=False)
+
+    shiftDecimal = attrib(type=float, default=None, repr=False)
+
+    supportsFraction = attrib(type=bool, default=False, repr=False)
+
+    resolution = attrib(type=int, default=None, repr=False)
+
+    intervalCounter = attrib(type=int, default=None, repr=False)
+
+    shiftCounter = attrib(type=int, default=0, repr=False)
 
 
 @attrs(eq=False)
@@ -654,8 +659,6 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
         sv.causality = variable.get('causality', default='local')
         sv.variability = variable.get('variability')
         sv.initial = variable.get('initial')
-        sv.interval = variable.get('interval')
-        sv.clocks = variable.get('clocks')
         sv.sourceline = variable.sourceline
 
         if fmiVersion in ['1.0', '2.0']:
@@ -666,6 +669,8 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
                     break
         else:
             value = variable
+            sv.intervalVariability = variable.get('intervalVariability')
+            sv.clocks = variable.get('clocks')
 
         sv.type = value.tag
 

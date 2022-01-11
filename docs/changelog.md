@@ -1,3 +1,18 @@
+## v0.3.5 (2022-01-11)
+
+### Bug fixes
+
+- Convert return values of get*Status() functions to Python types (#352)
+- Handle fmi2Discard returned by fmi2DoStep() (#353)
+- Add fmi2SetDebugLogging() to client_sm.cpp (#355)
+- Allow setting start values in Initialization Mode (#356)
+- Suppress exceptions in GetLongPathName() (#217)
+
+### Enhancements
+
+- Update FMI headers to 3.0-beta.3
+- Add parallelDoStep option to FMU Containter (#205)
+
 ## v0.3.4 (2021-12-10)
 
 ### Bug fixes

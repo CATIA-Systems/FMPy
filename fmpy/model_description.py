@@ -33,29 +33,29 @@ class InterfaceType(object):
 @attrs(eq=False)
 class ModelExchange(InterfaceType):
 
-    completedIntegratorStepNotNeeded = attrib(type=bool, default=False, repr=False)
+    needsCompletedIntegratorStep = attrib(type=bool, default=False, repr=False)
+    providesEvaluateDiscreteStates = attrib(type=bool, default=False, repr=False)
 
 
 @attrs(eq=False)
 class CoSimulation(InterfaceType):
 
     canHandleVariableCommunicationStepSize = attrib(type=bool, default=False, repr=False)
-    canInterpolateInputs = attrib(type=bool, default=False, repr=False)
-    maxOutputDerivativeOrder = attrib(type=int, default=0, repr=False)
-    canRunAsynchronuously = attrib(type=bool, default=False, repr=False)
-    providesIntermediateUpdate = attrib(type=bool, default=False, repr=False)
-    recommendedIntermediateInputSmoothness = 0
-    canReturnEarlyAfterIntermediateUpdate = attrib(type=bool, default=False, repr=False)
     fixedInternalStepSize = attrib(type=float, default=None, repr=False)
+    maxOutputDerivativeOrder = attrib(type=int, default=0, repr=False)
+    recommendedIntermediateInputSmoothness = attrib(type=int, default=0, repr=False)
+    canInterpolateInputs = attrib(type=bool, default=False, repr=False)
+    providesIntermediateUpdate = attrib(type=bool, default=False, repr=False)
+    canReturnEarlyAfterIntermediateUpdate = attrib(type=bool, default=False, repr=False)
     hasEventMode = attrib(type=bool, default=False, repr=False)
+    providesEvaluateDiscreteStates = attrib(type=bool, default=False, repr=False)
+    canRunAsynchronuously = attrib(type=bool, default=False, repr=False)
 
 
 @attrs(eq=False)
 class ScheduledExecution(InterfaceType):
 
-    maxOutputDerivativeOrder = attrib(type=int, default=0, repr=False)
-    providesIntermediateUpdate = attrib(type=bool, default=False, repr=False)
-    recommendedIntermediateInputSmoothness = attrib(type=int, default=0, repr=False)
+    pass
 
 
 @attrs(auto_attribs=True, eq=False)
@@ -503,7 +503,6 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
             _copy_attributes(me, modelDescription.modelExchange,
                              ['modelIdentifier',
                               'needsExecutionTool',
-                              'completedIntegratorStepNotNeeded',
                               'canBeInstantiatedOnlyOncePerProcess',
                               'canNotUseMemoryManagementFunctions',
                               'canGetAndSetFMUstate',

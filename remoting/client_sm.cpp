@@ -61,23 +61,22 @@ const char* fmi2GetVersion() {
     return fmi2Version;
 }
 
-////static void forwardLogMessages(const list<LogMessage> &logMessages) {
-////	for (auto it = logMessages.begin(); it != logMessages.end(); it++) {
-////		auto &m = *it;
-////		s_logger(s_componentEnvironment, m.instanceName.c_str(), fmi2Status(m.status), m.category.c_str(), m.message.c_str());
-////	}
-////}
-////
-////static fmi2Status handleReturnValue(ReturnValue r) {
-////	forwardLogMessages(r.logMessages);
-////	return fmi2Status(r.status);
-////}
-//
-//fmi2Status fmi2SetDebugLogging(fmi2Component c, fmi2Boolean loggingOn,	size_t nCategories,	const fmi2String categories[]) {
-//	NOT_IMPLEMENTED
+//static void forwardLogMessages(const list<LogMessage> &logMessages) {
+//	for (auto it = logMessages.begin(); it != logMessages.end(); it++) {
+//		auto &m = *it;
+//		s_logger(s_componentEnvironment, m.instanceName.c_str(), fmi2Status(m.status), m.category.c_str(), m.message.c_str());
+//	}
 //}
 //
-//
+//static fmi2Status handleReturnValue(ReturnValue r) {
+//	forwardLogMessages(r.logMessages);
+//	return fmi2Status(r.status);
+//}
+
+fmi2Status fmi2SetDebugLogging(fmi2Component c, fmi2Boolean loggingOn,	size_t nCategories,	const fmi2String categories[]) {
+	NOT_IMPLEMENTED
+}
+
 //static void handleLogMessages(msgpack_object_array logMessages) {
 //
 //    for (int i = 0; i < logMessages.size; i++) {

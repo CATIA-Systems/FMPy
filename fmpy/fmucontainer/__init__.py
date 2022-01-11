@@ -38,6 +38,8 @@ class Connection(object):
 @attrs(eq=False)
 class Configuration(object):
 
+    parallelDoStep = attrib(type=bool, default=False, repr=False)
+
     description = attrib(type=str, default=None, repr=False)
     variableNamingConvention = attrib(type=str, default='flat', repr=False)
 
@@ -93,6 +95,7 @@ def create_fmu_container(configuration, output_filename):
     os.mkdir(os.path.join(unzipdir, 'resources'))
 
     data = {
+        'parallelDoStep': configuration.parallelDoStep,
         'components': [],
         'variables': [],
         'connections': []

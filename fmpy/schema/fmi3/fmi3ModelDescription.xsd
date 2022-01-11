@@ -102,7 +102,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 </xs:element>
                 <xs:element ref="Annotations" minOccurs="0"/>
             </xs:sequence>
-            <xs:attribute name="fmiVersion" fixed="3.0-beta.2" use="required"/>
+            <xs:attribute name="fmiVersion" fixed="3.0-beta.3" use="required"/>
             <xs:attribute name="modelName" type="xs:string" use="required"/>
             <xs:attribute name="instantiationToken" type="xs:normalizedString" use="required"/>
             <xs:attribute name="description" type="xs:string"/>

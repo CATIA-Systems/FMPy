@@ -2,7 +2,7 @@
 #define fmi3PlatformTypes_h
 
 /*
-This header file defines the data types of FMI 3.0-beta.2.
+This header file defines the data types of FMI 3.0-beta.3.
 It must be used by both FMU and FMI master.
 
 Copyright (C) 2008-2011 MODELISAR consortium,

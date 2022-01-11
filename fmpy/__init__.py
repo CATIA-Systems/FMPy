@@ -6,7 +6,7 @@ from ctypes import *
 import _ctypes
 from typing import Union, IO, List
 
-__version__ = '0.3.4'
+__version__ = '0.3.5'
 
 # experimental
 plot_library = 'matplotlib'  # 'plotly'
@@ -186,7 +186,9 @@ def extract(filename, unzipdir=None, include=None):
     # expand the 8.3 paths on windows
     if sys.platform.startswith('win') and '~' in unzipdir:
         import win32file
-        unzipdir = win32file.GetLongPathName(unzipdir)
+        from contextlib import suppress
+        with suppress(Exception):
+            unzipdir = win32file.GetLongPathName(unzipdir)
 
     with zipfile.ZipFile(filename, 'r') as zf:
 

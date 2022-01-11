@@ -90,10 +90,14 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <xs:attribute name="derivative" type="xs:unsignedInt"/>
         <xs:attribute name="reinit" type="xs:boolean" default="false"/>
     </xs:attributeGroup>
+    <xs:attributeGroup name="fmi3EnumerationAttributes">
+        <xs:attribute name="min" type="xs:long"/>
+        <xs:attribute name="max" type="xs:long"/>
+    </xs:attributeGroup>
     <xs:attributeGroup name="fmi3ClockAttributes">
         <xs:attribute name="canBeDeactivated" type="xs:boolean" default="false"/>
         <xs:attribute name="priority" type="xs:unsignedInt" use="optional"/>
-        <xs:attribute name="interval" use="required">
+        <xs:attribute name="intervalVariability" use="required">
             <xs:simpleType>
                 <xs:restriction base="xs:normalizedString">
                     <xs:enumeration value="constant"/>

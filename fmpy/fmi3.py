@@ -61,29 +61,26 @@ fmi3IntervalUnchanged   = 1
 fmi3IntervalChanged     = 2
 
 # callback functions
-fmi3CallbackLogMessageTYPE         = CFUNCTYPE(None, fmi3InstanceEnvironment, fmi3String, fmi3Status, fmi3String, fmi3String)
-fmi3CallbackIntermediateUpdateTYPE = CFUNCTYPE(None, fmi3InstanceEnvironment, fmi3Float64, fmi3Boolean, fmi3Boolean, fmi3Boolean, fmi3Boolean, fmi3Boolean, POINTER(fmi3Boolean), POINTER(fmi3Float64))
-fmi3CallbackLockPreemptionTYPE     = CFUNCTYPE(None)
-fmi3CallbackUnlockPreemptionTYPE   = CFUNCTYPE(None)
+fmi3LogMessageCallback         = CFUNCTYPE(None, fmi3InstanceEnvironment, fmi3String, fmi3Status, fmi3String, fmi3String)
+fmi3ClockUpdateCallback        = CFUNCTYPE(None, fmi3InstanceEnvironment)
+fmi3IntermediateUpdateCallback = CFUNCTYPE(None, fmi3InstanceEnvironment, fmi3Float64, fmi3Boolean, fmi3Boolean, fmi3Boolean, fmi3Boolean, POINTER(fmi3Boolean), POINTER(fmi3Float64))
+fmi3LockPreemptionCallback     = CFUNCTYPE(None)
+fmi3UnlockPreemptionCallback   = CFUNCTYPE(None)
 
 
 def intermediateUpdate(instanceEnvironment: fmi3InstanceEnvironment,
                        intermediateUpdateTime: fmi3Float64,
-                       clocksTicked: fmi3Boolean,
                        intermediateVariableSetRequested: fmi3Boolean,
                        intermediateVariableGetAllowed: fmi3Boolean,
                        intermediateStepFinished: fmi3Boolean,
                        canReturnEarly: fmi3Boolean,
                        earlyReturnRequested: POINTER(fmi3Boolean),
-                       earlyReturnTime: POINTER(fmi3Float64)) -> fmi3Status:
+                       earlyReturnTime: POINTER(fmi3Float64)) -> None:
 
     earlyReturnRequested.contents = fmi3False
 
-    return fmi3OK
-
 
 def printLogMessage(instanceEnvironment: fmi3InstanceEnvironment,
-                    instanceName: fmi3String,
                     status: fmi3Status,
                     category: fmi3Status,
                     message: fmi3Status) -> None:
@@ -115,43 +112,41 @@ class _FMU3(_FMU):
         ])
 
         self._fmi3Function('fmi3InstantiateModelExchange', [
-            (fmi3String,                         'instanceName'),
-            (fmi3String,                         'instantiationToken'),
-            (fmi3String,                         'resourcePath'),
-            (fmi3Boolean,                        'visible'),
-            (fmi3Boolean,                        'loggingOn'),
-            (fmi3InstanceEnvironment,            'instanceEnvironment'),
-            (fmi3CallbackLogMessageTYPE,         'logMessage')
+            (fmi3String,              'instanceName'),
+            (fmi3String,              'instantiationToken'),
+            (fmi3String,              'resourcePath'),
+            (fmi3Boolean,             'visible'),
+            (fmi3Boolean,             'loggingOn'),
+            (fmi3InstanceEnvironment, 'instanceEnvironment'),
+            (fmi3LogMessageCallback,  'logMessage')
         ], fmi3Instance)
 
         self._fmi3Function('fmi3InstantiateCoSimulation', [
-            (fmi3String,                         'instanceName'),
-            (fmi3String,                         'instantiationToken'),
-            (fmi3String,                         'resourcePath'),
-            (fmi3Boolean,                        'visible'),
-            (fmi3Boolean,                        'loggingOn'),
-            (fmi3Boolean,                        'eventModeUsed'),
-            (fmi3Boolean,                        'earlyReturnAllowed'),
-            (POINTER(fmi3ValueReference),        'requiredIntermediateVariables'),
-            (c_size_t,                           'nRequiredIntermediateVariables'),
-            (fmi3InstanceEnvironment,            'instanceEnvironment'),
-            (fmi3CallbackLogMessageTYPE,         'logMessage'),
-            (fmi3CallbackIntermediateUpdateTYPE, 'intermediateUpdate')
+            (fmi3String,                     'instanceName'),
+            (fmi3String,                     'instantiationToken'),
+            (fmi3String,                     'resourcePath'),
+            (fmi3Boolean,                    'visible'),
+            (fmi3Boolean,                    'loggingOn'),
+            (fmi3Boolean,                    'eventModeUsed'),
+            (fmi3Boolean,                    'earlyReturnAllowed'),
+            (POINTER(fmi3ValueReference),    'requiredIntermediateVariables'),
+            (c_size_t,                       'nRequiredIntermediateVariables'),
+            (fmi3InstanceEnvironment,        'instanceEnvironment'),
+            (fmi3LogMessageCallback,         'logMessage'),
+            (fmi3IntermediateUpdateCallback, 'intermediateUpdate')
         ], fmi3Instance)
 
         self._fmi3Function('fmi3InstantiateScheduledExecution', [
-            (fmi3String,                         'instanceName'),
-            (fmi3String,                         'instantiationToken'),
-            (fmi3String,                         'resourcePath'),
-            (fmi3Boolean,                        'visible'),
-            (fmi3Boolean,                        'loggingOn'),
-            (POINTER(fmi3ValueReference),        'requiredIntermediateVariables'),
-            (c_size_t,                           'nRequiredIntermediateVariables'),
-            (fmi3InstanceEnvironment,            'instanceEnvironment'),
-            (fmi3CallbackLogMessageTYPE,         'logMessage'),
-            (fmi3CallbackIntermediateUpdateTYPE, 'intermediateUpdate'),
-            (fmi3CallbackLockPreemptionTYPE,     'lockPreemption'),
-            (fmi3CallbackUnlockPreemptionTYPE,   'unlockPreemption'),
+            (fmi3String,                   'instanceName'),
+            (fmi3String,                   'instantiationToken'),
+            (fmi3String,                   'resourcePath'),
+            (fmi3Boolean,                  'visible'),
+            (fmi3Boolean,                  'loggingOn'),
+            (fmi3InstanceEnvironment,      'instanceEnvironment'),
+            (fmi3LogMessageCallback,       'logMessage'),
+            (fmi3ClockUpdateCallback,      'clockUpdate'),
+            (fmi3LockPreemptionCallback,   'lockPreemption'),
+            (fmi3UnlockPreemptionCallback, 'unlockPreemption'),
         ], fmi3Instance)
 
         self._fmi3Function('fmi3FreeInstance', [(fmi3Instance, 'instance')], None)
@@ -202,31 +197,45 @@ class _FMU3(_FMU):
 
             params = [
                 (fmi3Instance,                'instance'),
-                (POINTER(fmi3ValueReference), 'vr'),
-                (c_size_t,                    'nvr'),
-                (POINTER(_type),              'value'),
+                (POINTER(fmi3ValueReference), 'valueReferences'),
+                (c_size_t,                    'nValueReferences'),
+                (POINTER(_type),              'values'),
                 (c_size_t,                    'nValues')
             ]
 
-            self._fmi3Function('fmi3Get' + name, params)
-            self._fmi3Function('fmi3Set' + name, params)
+            self._fmi3Function(f'fmi3Get{name}', params)
+            self._fmi3Function(f'fmi3Set{name}', params)
 
         self._fmi3Function('fmi3GetBinary', [
             (fmi3Instance,                'instance'),
-            (POINTER(fmi3ValueReference), 'vr'),
-            (c_size_t,                    'nvr'),
-            (POINTER(c_size_t),           'size'),
-            (POINTER(fmi3Binary),         'value'),
+            (POINTER(fmi3ValueReference), 'valueReferences'),
+            (c_size_t,                    'nValueReferences'),
+            (POINTER(c_size_t),           'valueSizes'),
+            (POINTER(fmi3Binary),         'values'),
             (c_size_t,                    'nValues')
+        ])
+
+        self._fmi3Function('fmi3GetClock', [
+            (fmi3Instance,                'instance'),
+            (POINTER(fmi3ValueReference), 'valueReferences'),
+            (c_size_t,                    'nValueReferences'),
+            (POINTER(fmi3Clock),          'values')
         ])
 
         self._fmi3Function('fmi3SetBinary', [
             (fmi3Instance,                'instance'),
-            (POINTER(fmi3ValueReference), 'vr'),
-            (c_size_t,                    'nvr'),
-            (POINTER(c_size_t),           'size'),
-            (POINTER(fmi3Binary),         'value'),
+            (POINTER(fmi3ValueReference), 'valueReferences'),
+            (c_size_t,                    'nValueReferences'),
+            (POINTER(c_size_t),           'valueSizes'),
+            (POINTER(fmi3Binary),         'values'),
             (c_size_t,                    'nValues')
+        ])
+
+        self._fmi3Function('fmi3SetClock', [
+            (fmi3Instance,                'instance'),
+            (POINTER(fmi3ValueReference), 'valueReferences'),
+            (c_size_t,                    'nValueReferences'),
+            (POINTER(fmi3Clock),          'values')
         ])
 
         # Getting Variable Dependency Information
@@ -309,8 +318,7 @@ class _FMU3(_FMU):
             (POINTER(fmi3ValueReference),    'valueReferences'),
             (c_size_t,                       'nValueReferences'),
             (POINTER(fmi3Float64),           'intervals'),
-            (POINTER(fmi3IntervalQualifier), 'qualifiers'),
-            (c_size_t,                       'nIntervals'),
+            (POINTER(fmi3IntervalQualifier), 'qualifiers')
         ])
 
         self._fmi3Function('fmi3GetIntervalFraction', [
@@ -319,16 +327,14 @@ class _FMU3(_FMU):
             (c_size_t,                       'nValueReferences'),
             (POINTER(fmi3UInt64),            'intervalCounters'),
             (POINTER(fmi3UInt64),            'resolutions'),
-            (POINTER(fmi3IntervalQualifier), 'qualifiers'),
-            (c_size_t,                       'nIntervals')
+            (POINTER(fmi3IntervalQualifier), 'qualifiers')
         ])
 
         self._fmi3Function('fmi3GetShiftDecimal', [
             (fmi3Instance,                   'instance'),
             (POINTER(fmi3ValueReference),    'valueReferences'),
             (c_size_t,                       'nValueReferences'),
-            (POINTER(fmi3Float64),           'shifts'),
-            (c_size_t,                       'nShifts'),
+            (POINTER(fmi3Float64),           'shifts')
         ])
 
         self._fmi3Function('fmi3GetShiftFraction', [
@@ -336,16 +342,14 @@ class _FMU3(_FMU):
             (POINTER(fmi3ValueReference),    'valueReferences'),
             (c_size_t,                       'nValueReferences'),
             (POINTER(fmi3UInt64),            'shiftCounters'),
-            (POINTER(fmi3UInt64),            'resolutions'),
-            (c_size_t,                       'nShifts')
+            (POINTER(fmi3UInt64),            'resolutions')
         ])
 
         self._fmi3Function('fmi3SetIntervalDecimal', [
             (fmi3Instance,                'instance'),
             (POINTER(fmi3ValueReference), 'valueReferences'),
             (c_size_t,                    'nValueReferences'),
-            (POINTER(fmi3Float64),        'intervals'),
-            (c_size_t,                    'nIntervals')
+            (POINTER(fmi3Float64),        'intervals')
         ])
 
         self._fmi3Function('fmi3SetIntervalFraction', [
@@ -353,8 +357,7 @@ class _FMU3(_FMU):
             (POINTER(fmi3ValueReference), 'valueReferences'),
             (c_size_t,                    'nValueReferences'),
             (POINTER(fmi3UInt64),         'intervalCounters'),
-            (POINTER(fmi3UInt64),         'resolutions'),
-            (c_size_t,                    'nIntervals')
+            (POINTER(fmi3UInt64),         'resolutions')
         ])
 
         self._fmi3Function('fmi3EvaluateDiscreteStates', [
@@ -406,7 +409,7 @@ class _FMU3(_FMU):
         self._fmi3Function('fmi3GetEventIndicators', [
             (fmi3Instance,         'instance'),
             (POINTER(fmi3Float64), 'eventIndicators'),
-            (c_size_t,             'ni')
+            (c_size_t,             'nEventIndicators')
         ])
 
         self._fmi3Function('fmi3GetContinuousStates', [
@@ -451,7 +454,7 @@ class _FMU3(_FMU):
             (fmi3Float64, 'currentCommunicationPoint'),
             (fmi3Float64, 'communicationStepSize'),
             (fmi3Boolean, 'noSetFMUStatePriorToCurrentPoint'),
-            (POINTER(fmi3Boolean), 'eventEncountered'),
+            (POINTER(fmi3Boolean), 'eventHandlingNeeded'),
             (POINTER(fmi3Boolean), 'terminateSimulation'),
             (POINTER(fmi3Boolean), 'earlyReturn'),
             (POINTER(fmi3Float64), 'lastSuccessfulTime')
@@ -460,7 +463,6 @@ class _FMU3(_FMU):
         self._fmi3Function('fmi3ActivateModelPartition', [
             (fmi3Instance, 'instance'),
             (fmi3ValueReference, 'clockReference'),
-            (c_size_t, 'clockElementIndex'),
             (fmi3Float64, 'activationTime')
         ])
 
@@ -894,7 +896,7 @@ class FMU3Model(_FMU3):
         resourcePath = os.path.join(self.unzipDirectory, 'resources') + os.path.sep
 
         # save callbacks from GC
-        self.printLogMessage = fmi3CallbackLogMessageTYPE(printLogMessage)
+        self.printLogMessage = fmi3LogMessageCallback(printLogMessage)
 
         self.component = self.fmi3InstantiateModelExchange(
             self.instanceName.encode('utf-8'),
@@ -954,8 +956,8 @@ class FMU3Slave(_FMU3):
     def instantiate(self, visible=False, loggingOn=False, eventModeUsed=False, earlyReturnAllowed=False):
 
         # save callbacks from GC
-        self.printLogMessage = fmi3CallbackLogMessageTYPE(printLogMessage)
-        self.intermediateUpdate = fmi3CallbackIntermediateUpdateTYPE(intermediateUpdate)
+        self.printLogMessage = fmi3LogMessageCallback(printLogMessage)
+        self.intermediateUpdate = fmi3IntermediateUpdateCallback(intermediateUpdate)
 
         resourcePath = os.path.join(self.unzipDirectory, 'resources') + os.path.sep
 
@@ -1031,14 +1033,14 @@ class FMU3ScheduledExecution(_FMU3):
 
         resourcePath = os.path.join(self.unzipDirectory, 'resources') + os.path.sep
 
-        def noop():
+        def noop(*args):
             pass
 
         # save callbacks from GC
-        self.printLogMessage = fmi3CallbackLogMessageTYPE(printLogMessage)
-        self.intermediateUpdate = fmi3CallbackIntermediateUpdateTYPE(intermediateUpdate)
-        self.lockPreemption = fmi3CallbackLockPreemptionTYPE(noop)
-        self.unlockPreemption = fmi3CallbackUnlockPreemptionTYPE(noop)
+        self.printLogMessage = fmi3LogMessageCallback(printLogMessage)
+        self.clockUpdate = fmi3ClockUpdateCallback(noop)
+        self.lockPreemption = fmi3LockPreemptionCallback(noop)
+        self.unlockPreemption = fmi3UnlockPreemptionCallback(noop)
 
         self.component = self.fmi3InstantiateScheduledExecution(
             self.instanceName.encode('utf-8'),
@@ -1046,10 +1048,9 @@ class FMU3ScheduledExecution(_FMU3):
             resourcePath.encode('utf-8'),
             fmi3Boolean(visible),
             fmi3Boolean(loggingOn),
-            None, 0,
             fmi3InstanceEnvironment(),
             self.printLogMessage,
-            self.intermediateUpdate,
+            self.clockUpdate,
             self.lockPreemption,
             self.unlockPreemption
         )

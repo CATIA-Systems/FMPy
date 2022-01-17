@@ -56,6 +56,7 @@ def main():
     parser.add_argument('--show-plot', action='store_true', help="plot the results")
     parser.add_argument('--cmake-project-dir', help="Directory for the CMake project")
     parser.add_argument('--target-platform', help="The target platform to compile the binary for")
+    parser.add_argument('--compiler-options', help="Options used when compiling the platform binary")
 
     args = parser.parse_args()
 
@@ -84,7 +85,9 @@ def main():
     elif args.command == 'compile':
 
         from fmpy.util import compile_platform_binary
-        compile_platform_binary(args.fmu_filename, target_platform=args.target_platform)
+        compile_platform_binary(filename=args.fmu_filename,
+                                target_platform=args.target_platform,
+                                compiler_options=args.compiler_options)
 
     elif args.command == 'add-cswrapper':
 

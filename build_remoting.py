@@ -58,7 +58,7 @@ if os.name == 'nt':
             '-B', rpclib_dir + '/' + bitness,
             '-D', 'RPCLIB_MSVC_STATIC_RUNTIME=ON',
             '-D', 'CMAKE_INSTALL_PREFIX=' + os.path.join(rpclib_dir, bitness, 'install'),
-            '-G', 'Visual Studio 16 2019',
+            '-G', 'Visual Studio 17 2022',
             '-A', architecture,
             rpclib_dir
         ])
@@ -75,7 +75,7 @@ if os.name == 'nt':
         check_call(args=[
             'cmake',
             '-B', 'remoting/' + bitness,
-            '-G', 'Visual Studio 16 2019',
+            '-G', 'Visual Studio 17 2022',
             '-A', architecture,
             '-D', 'RPCLIB=' + os.path.join(rpclib_dir, bitness, 'install'),
             '-B', 'remoting/' + bitness,

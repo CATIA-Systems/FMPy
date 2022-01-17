@@ -19,11 +19,17 @@ class CCodeTest(unittest.TestCase):
     def test_compile(self):
         """ Compile the platform binary """
 
+        # add debug info
+        if os.name == 'nt':
+            compiler_options = '/LDd /Zi'
+        else:
+            compiler_options = '-g -fPIC'
+
         for fmu in self.fmus:
 
             filename = download_file(self.url + fmu)
 
-            compile_platform_binary(filename)
+            compile_platform_binary(filename, compiler_options=compiler_options)
 
             result = simulate_fmu(filename=filename)
             self.assertIsNotNone(result)

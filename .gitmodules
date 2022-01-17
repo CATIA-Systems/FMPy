@@ -1,0 +1,6 @@
+[submodule "thirdparty/mpack"]
+	path = thirdparty/mpack
+	url = https://github.com/ludocode/mpack.git
+[submodule "thirdparty/Reference-FMUs"]
+	path = thirdparty/Reference-FMUs
+	url = https://github.com/modelica/Reference-FMUs.git

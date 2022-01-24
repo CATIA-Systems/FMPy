@@ -863,24 +863,29 @@ class _FMU3(_FMU):
 
         return list(sensitivity)
 
-    def getAdjointDerivative(self, unknowns, knowns, seed, sensitivity):
+    def getAdjointDerivative(self, unknowns, knowns, seed, nSensitivity=None):
         """ Get adjoint derivatives
 
         Parameters:
             unknowns     list of value references of the unknowns
             knowns       list of value references of the knowns
             seed         list of delta values (one per known)
+            nSensitivity length of sensitivity (if different from len(unknowns))
 
         Returns:
-            sensitivity  list of the partial derivatives (one per unknown)
+            sensitivity  list of the partial derivatives
         """
+
+        if nSensitivity is None:
+            nSensitivity = len(unknowns)
 
         unknowns    = (fmi3ValueReference * len(unknowns))(*unknowns)
         knowns      = (fmi3ValueReference * len(knowns))(*knowns)
         seed        = (fmi3Float64 * len(seed))(*seed)
-        sensitivity = (fmi3Float64 * len(sensitivity))()
+        sensitivity = (fmi3Float64 * nSensitivity)()
 
-        self.fmi3GetAdjointDerivative(self.component, unknowns, len(unknowns), knowns, len(knowns), seed, sensitivity)
+        self.fmi3GetAdjointDerivative(self.component, unknowns, len(unknowns), knowns, len(knowns), seed, len(seed),
+                                      sensitivity, len(sensitivity))
 
         return list(sensitivity)
 

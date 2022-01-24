@@ -61,7 +61,7 @@ fmi3IntervalUnchanged   = 1
 fmi3IntervalChanged     = 2
 
 # callback functions
-fmi3LogMessageCallback         = CFUNCTYPE(None, fmi3InstanceEnvironment, fmi3String, fmi3Status, fmi3String, fmi3String)
+fmi3LogMessageCallback         = CFUNCTYPE(None, fmi3InstanceEnvironment, fmi3Status, fmi3String, fmi3String)
 fmi3ClockUpdateCallback        = CFUNCTYPE(None, fmi3InstanceEnvironment)
 fmi3IntermediateUpdateCallback = CFUNCTYPE(None, fmi3InstanceEnvironment, fmi3Float64, fmi3Boolean, fmi3Boolean, fmi3Boolean, fmi3Boolean, POINTER(fmi3Boolean), POINTER(fmi3Float64))
 fmi3LockPreemptionCallback     = CFUNCTYPE(None)
@@ -82,8 +82,8 @@ def intermediateUpdate(instanceEnvironment: fmi3InstanceEnvironment,
 
 def printLogMessage(instanceEnvironment: fmi3InstanceEnvironment,
                     status: fmi3Status,
-                    category: fmi3Status,
-                    message: fmi3Status) -> None:
+                    category: fmi3String,
+                    message: fmi3String) -> None:
     """ Print the FMU's log messages to the command line """
 
     label = ['OK', 'WARNING', 'DISCARD', 'ERROR', 'FATAL', 'PENDING'][status]

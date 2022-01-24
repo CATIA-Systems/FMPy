@@ -35,7 +35,11 @@ class SimulationThread(QThread):
     def stop(self):
         self.stopped = True
 
-    def logFMUMessage(self, componentEnvironment, instanceName, status, category, message):
+    def logFMUMessage(self, *args):
+        # works with FMI 1.0, 2.0, and 3.0
+
+        status = args[-3]
+        message = args[-1]
 
         if status == fmi2Warning:
             level = 'warning'

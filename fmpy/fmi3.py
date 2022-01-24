@@ -891,12 +891,12 @@ class FMU3Model(_FMU3):
     def __init__(self, **kwargs):
         super(FMU3Model, self).__init__(**kwargs)
 
-    def instantiate(self, visible=False, loggingOn=False):
+    def instantiate(self, visible=False, loggingOn=False, logMessage=None):
 
         resourcePath = os.path.join(self.unzipDirectory, 'resources') + os.path.sep
 
         # save callbacks from GC
-        self.printLogMessage = fmi3LogMessageCallback(printLogMessage)
+        self.logMessage = fmi3LogMessageCallback(printLogMessage if logMessage is None else logMessage)
 
         self.component = self.fmi3InstantiateModelExchange(
             self.instanceName.encode('utf-8'),
@@ -905,7 +905,7 @@ class FMU3Model(_FMU3):
             fmi3Boolean(visible),
             fmi3Boolean(loggingOn),
             fmi3InstanceEnvironment(),
-            self.printLogMessage)
+            self.logMessage)
 
         if not self.component:
             raise Exception("Failed to instantiate FMU")
@@ -953,10 +953,10 @@ class FMU3Slave(_FMU3):
 
         super(FMU3Slave, self).__init__(**kwargs)
 
-    def instantiate(self, visible=False, loggingOn=False, eventModeUsed=False, earlyReturnAllowed=False):
+    def instantiate(self, visible=False, loggingOn=False, eventModeUsed=False, earlyReturnAllowed=False, logMessage=None):
 
         # save callbacks from GC
-        self.printLogMessage = fmi3LogMessageCallback(printLogMessage)
+        self.logMessage = fmi3LogMessageCallback(printLogMessage if logMessage is None else logMessage)
         self.intermediateUpdate = fmi3IntermediateUpdateCallback(intermediateUpdate)
 
         resourcePath = os.path.join(self.unzipDirectory, 'resources') + os.path.sep
@@ -971,7 +971,7 @@ class FMU3Slave(_FMU3):
             fmi3Boolean(earlyReturnAllowed),
             None, 0,
             fmi3InstanceEnvironment(),
-            self.printLogMessage,
+            self.logMessage,
             self.intermediateUpdate)
 
         if not self.component:
@@ -1029,7 +1029,7 @@ class FMU3ScheduledExecution(_FMU3):
             (fmi3Float64, 'activationTime'),
         ])
 
-    def instantiate(self, visible=False, loggingOn=False):
+    def instantiate(self, visible=False, loggingOn=False, logMessage=None):
 
         resourcePath = os.path.join(self.unzipDirectory, 'resources') + os.path.sep
 
@@ -1037,7 +1037,7 @@ class FMU3ScheduledExecution(_FMU3):
             pass
 
         # save callbacks from GC
-        self.printLogMessage = fmi3LogMessageCallback(printLogMessage)
+        self.logMessage = fmi3LogMessageCallback(printLogMessage if logMessage is None else logMessage)
         self.clockUpdate = fmi3ClockUpdateCallback(noop)
         self.lockPreemption = fmi3LockPreemptionCallback(noop)
         self.unlockPreemption = fmi3UnlockPreemptionCallback(noop)
@@ -1049,7 +1049,7 @@ class FMU3ScheduledExecution(_FMU3):
             fmi3Boolean(visible),
             fmi3Boolean(loggingOn),
             fmi3InstanceEnvironment(),
-            self.printLogMessage,
+            self.logMessage,
             self.clockUpdate,
             self.lockPreemption,
             self.unlockPreemption

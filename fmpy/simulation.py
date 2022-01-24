@@ -738,21 +738,18 @@ def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, d
     if library_path:
         fmu_args['libraryPath'] = library_path
 
-    if logger is None:
-        logger = printLogMessage
-
     is_fmi1 = model_description.fmiVersion == '1.0'
     is_fmi2 = model_description.fmiVersion == '2.0'
 
     if is_fmi1:
         callbacks = fmi1CallbackFunctions()
-        callbacks.logger         = fmi1CallbackLoggerTYPE(logger)
+        callbacks.logger         = fmi1CallbackLoggerTYPE(printLogMessage if logger is None else logger)
         callbacks.allocateMemory = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
         callbacks.freeMemory     = fmi1CallbackFreeMemoryTYPE(freeMemory)
         callbacks.stepFinished   = None
     elif is_fmi2:
         callbacks = fmi2CallbackFunctions()
-        callbacks.logger         = fmi2CallbackLoggerTYPE(logger)
+        callbacks.logger         = fmi2CallbackLoggerTYPE(printLogMessage if logger is None else logger)
         callbacks.allocateMemory = fmi2CallbackAllocateMemoryTYPE(allocateMemory)
         callbacks.freeMemory     = fmi2CallbackFreeMemoryTYPE(freeMemory)
     else:
@@ -778,7 +775,8 @@ def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, d
             fmu.instantiate(visible=visible, callbacks=callbacks, loggingOn=debug_logging)
         else:
             fmu = fmi3.FMU3Slave(**fmu_args)
-            fmu.instantiate(visible=visible, loggingOn=debug_logging, eventModeUsed=event_mode_used, earlyReturnAllowed=early_return_allowed)
+            fmu.instantiate(visible=visible, loggingOn=debug_logging, eventModeUsed=event_mode_used,
+                            earlyReturnAllowed=early_return_allowed, logMessage=logger)
 
     elif fmi_type in [None, 'ModelExchange'] and model_description.modelExchange is not None:
 
@@ -792,13 +790,13 @@ def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, d
             fmu.instantiate(visible=visible, callbacks=callbacks, loggingOn=debug_logging)
         else:
             fmu = fmi3.FMU3Model(**fmu_args)
-            fmu.instantiate(visible=visible, loggingOn=debug_logging)
+            fmu.instantiate(visible=visible, loggingOn=debug_logging, logMessage=logger)
 
     elif fmi_type in [None, 'ScheduledExecution'] and model_description.scheduledExecution is not None:
 
         fmu_args['modelIdentifier'] = model_description.scheduledExecution.modelIdentifier
         fmu = fmi3.FMU3ScheduledExecution(**fmu_args)
-        fmu.instantiate(visible=visible, loggingOn=debug_logging)
+        fmu.instantiate(visible=visible, loggingOn=debug_logging, logMessage=logger)
 
     else:
 

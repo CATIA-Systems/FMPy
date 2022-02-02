@@ -2,7 +2,7 @@
 
 import os
 from ctypes import *
-from typing import Tuple
+from typing import Tuple, Sequence, List
 
 from . import sharedLibraryExtension, platform_tuple
 from .fmi1 import _FMU, FMICallException, printLogMessage
@@ -842,13 +842,14 @@ class _FMU3(_FMU):
 
     # Getting partial derivatives
 
-    def getDirectionalDerivative(self, unknowns, knowns, seed, sensitivity):
+    def getDirectionalDerivative(self, unknowns: Sequence[int], knowns: Sequence[int], seed: Sequence[float], nSensitivity: int) -> List[float]:
         """ Get the directional derivatives
 
         Parameters:
-            unknowns     list of value references of the unknowns
-            knowns       list of value references of the knowns
-            seed         list of delta values (one per known)
+            unknowns      list of value references of the unknowns
+            knowns        list of value references of the knowns
+            seed          list of delta values (one per known)
+            nSensitivity  length of sensitivity
 
         Returns:
             sensitivity  list of the partial derivatives (one per unknown)
@@ -857,27 +858,25 @@ class _FMU3(_FMU):
         unknowns    = (fmi3ValueReference * len(unknowns))(*unknowns)
         knowns      = (fmi3ValueReference * len(knowns))(*knowns)
         seed        = (fmi3Float64 * len(seed))(*seed)
-        sensitivity = (fmi3Float64 * len(sensitivity))()
+        sensitivity = (fmi3Float64 * nSensitivity)()
 
-        self.fmi3GetDirectionalDerivative(self.component, unknowns, len(unknowns), knowns, len(knowns), seed, sensitivity)
+        self.fmi3GetDirectionalDerivative(self.component, unknowns, len(unknowns), knowns, len(knowns), seed, len(seed),
+                                          sensitivity, len(sensitivity))
 
         return list(sensitivity)
 
-    def getAdjointDerivative(self, unknowns, knowns, seed, nSensitivity=None):
+    def getAdjointDerivative(self, unknowns: Sequence[int], knowns: Sequence[int], seed: Sequence[float], nSensitivity: int) -> List[float]:
         """ Get adjoint derivatives
 
         Parameters:
-            unknowns     list of value references of the unknowns
-            knowns       list of value references of the knowns
-            seed         list of delta values (one per known)
-            nSensitivity length of sensitivity (if different from len(unknowns))
+            unknowns      list of value references of the unknowns
+            knowns        list of value references of the knowns
+            seed          list of delta values (one per known)
+            nSensitivity  length of sensitivity
 
         Returns:
-            sensitivity  list of the partial derivatives
+            sensitivity   list of the partial derivatives
         """
-
-        if nSensitivity is None:
-            nSensitivity = len(unknowns)
 
         unknowns    = (fmi3ValueReference * len(unknowns))(*unknowns)
         knowns      = (fmi3ValueReference * len(knowns))(*knowns)

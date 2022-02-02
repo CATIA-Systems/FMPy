@@ -7,11 +7,11 @@ from subprocess import check_call
 
 
 if os.name == 'nt':
-    generator = 'Visual Studio 15 2017 Win64'
+    generator = ['-G', 'Visual Studio 16 2019', '-A', 'x64']
     sl_prefix = ''
     sl_suffix = sharedLibraryExtension
 else:
-    generator = 'Unix Makefiles'
+    generator = ['-G', 'Unix Makefiles']
     sl_prefix = 'lib'
     sl_suffix = sharedLibraryExtension
 
@@ -51,10 +51,9 @@ check_call([
     '-DCMAKE_INSTALL_PREFIX=sundials-5.3.0/static/install',
     '-DCMAKE_USER_MAKE_RULES_OVERRIDE=../OverrideMSVCFlags.cmake',
     '-DEXAMPLES_ENABLE_C=OFF',
-    '-G', generator,
     '-S', 'sundials-5.3.0',
     '-B', 'sundials-5.3.0/static'
-])
+] + generator)
 
 check_call(['cmake', '--build', 'sundials-5.3.0/static', '--target', 'install', '--config', 'Release'])
 
@@ -70,10 +69,9 @@ check_call([
     '-DEXAMPLES_ENABLE_C=OFF',
     '-DCMAKE_INSTALL_PREFIX=sundials-5.3.0/dynamic/install',
     '-DCMAKE_USER_MAKE_RULES_OVERRIDE=../OverrideMSVCFlags.cmake',
-    '-G', generator,
     '-S', 'sundials-5.3.0',
     '-B', 'sundials-5.3.0/dynamic'
-])
+] + generator)
 
 check_call(['cmake', '--build', 'sundials-5.3.0/dynamic', '--target', 'install', '--config', 'Release'])
 
@@ -92,10 +90,9 @@ os.mkdir('cswrapper/build')
 check_call([
     'cmake',
     '-DCVODE_INSTALL_DIR=../sundials-5.3.0/static/install',
-    '-G', generator,
     '-S', 'cswrapper',
     '-B', 'cswrapper/build'
-])
+] + generator)
 
 check_call(['cmake', '--build', 'cswrapper/build', '--config', 'Release'])
 
@@ -104,9 +101,8 @@ os.mkdir('fmpy/logging/build')
 
 check_call([
     'cmake',
-    '-G', generator,
     '-S', 'fmpy/logging',
     '-B', 'fmpy/logging/build'
-])
+] + generator)
 
 check_call(['cmake', '--build', 'fmpy/logging/build', '--config', 'Release'])

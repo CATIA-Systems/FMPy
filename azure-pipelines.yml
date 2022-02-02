@@ -115,9 +115,9 @@ jobs:
       artifact: 'macosx'
 
 - job: windows
-  displayName: 'Windows 2016'
+  displayName: 'Windows Server 2019'
   pool:
-    vmImage: 'vs2017-win2016'
+    vmImage: 'windows-2019'
 
   steps:
 

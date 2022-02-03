@@ -682,21 +682,28 @@ Model Info
     return '\n'.join(l)
 
 
-def visual_studio_installation_path():
-    """ Get the VisualStudio 2017 installation path """
+def visual_studio_installation_paths(only_latest=False):
+    """ Get the installation paths for Visual Studio 2017+ """
+
+    paths = []
 
     try:
         from subprocess import Popen, PIPE
         import os
-        vswhere = '"' + os.environ['ProgramFiles(x86)'] + r'\Microsoft Visual Studio\Installer\vswhere.exe"'
-        command = vswhere +  ' -latest -products * -requires Microsoft.Component.MSBuild -property installationPath'
+        vswhere = rf'{os.environ["ProgramFiles(x86)"]}\Microsoft Visual Studio\Installer\vswhere.exe'
+        command = f'"{vswhere}" -requires Microsoft.Component.MSBuild -property installationPath'
+        if only_latest:
+            command += ' -latest'
         proc = Popen(command, stdout=PIPE)
         output, _ = proc.communicate()
-        return output.decode('utf-8').strip()
+        for line in output.decode('utf-8').split('\n'):
+            line = line.strip()
+            if line:
+                paths.append(line)
     except Exception as e:
         pass  # do noting
 
-    return None
+    return paths
 
 
 def visual_c_versions():
@@ -705,21 +712,23 @@ def visual_c_versions():
     Returns: a sorted list of detected Visual C versions e.g. [90, 120, 140]
     """
 
-    versions = []
+    versions = set()
 
     # up to Visual Studio 2015
     for key in os.environ.keys():
         if key.upper().startswith('VS') and key.upper().endswith('COMNTOOLS'):
-            versions.append(int(key[len('VS'):-len('COMNTOOLS')]))
+            versions.add(int(key[len('VS'):-len('COMNTOOLS')]))
 
-    # Visual Studio 2017
-    installation_path = visual_studio_installation_path()
+    # Visual Studio from 2017
+    installation_paths = visual_studio_installation_paths()
 
-    if installation_path is not None:
+    for installation_path in installation_paths:
         if '2017' in installation_path:
-            versions.append(150)
-        if '2019' in installation_path:
-            versions.append(160)
+            versions.add(150)
+        elif '2019' in installation_path:
+            versions.add(160)
+        elif '2022' in installation_path:
+            versions.add(170)
 
     return sorted(versions)
 
@@ -800,9 +809,9 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
         vc_version = vc_versions[-1]
 
         if vc_version < 150:
-            command = rf'call "%%VS{vc_version}COMNTOOLS%%\..\..\VC\vcvarsall.bat" {toolset}'
+            command = rf'call "%VS{vc_version}COMNTOOLS%\..\..\VC\vcvarsall.bat" {toolset}'
         else:
-            installation_path = visual_studio_installation_path()
+            installation_path, = visual_studio_installation_paths(only_latest=True)
             command = rf'call "{installation_path}\VC\Auxiliary\Build\vcvarsall.bat" {toolset}'
 
         command += f' && cl {compiler_options} /I. /I"{include_dir}" {definitions} /Fe{model_identifier} shlwapi.lib {sources}'

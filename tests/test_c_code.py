@@ -64,7 +64,9 @@ class CCodeTest(unittest.TestCase):
             vc_versions = visual_c_versions()
 
             if os.name == 'nt':
-                if 160 in vc_versions:
+                if 170 in vc_versions:
+                    cmake_args += ['-G', 'Visual Studio 17 2022', '-A', 'x64']
+                elif 160 in vc_versions:
                     cmake_args += ['-G', 'Visual Studio 16 2019', '-A', 'x64']
                 elif 150 in vc_versions:
                     cmake_args += ['-G', 'Visual Studio 15 2017 Win64']

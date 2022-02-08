@@ -53,8 +53,7 @@ def add_cswrapper(filename, outfilename=None):
 
     licenses_dir = os.path.join(unzipdir, 'documentation', 'licenses')
 
-    if not os.path.isdir(licenses_dir):
-        os.mkdir(licenses_dir)
+    os.makedirs(licenses_dir, exist_ok=True)
 
     copyfile(src=shared_library, dst=os.path.join(unzipdir, 'binaries', platform, model_identifier + sharedLibraryExtension))
     copyfile(license_file, os.path.join(unzipdir, 'documentation', 'licenses', 'fmpy-cswrapper.txt'))

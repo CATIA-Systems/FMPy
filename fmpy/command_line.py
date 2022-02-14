@@ -6,30 +6,40 @@ from __future__ import print_function
 def main():
 
     import argparse
-    import textwrap
+    import fmpy
+    import sys
+    import os
 
-    description = """\
-    Validate and simulate Functional Mock-up Units (FMUs)
+    description = f"""\
+Validate and simulate Functional Mock-up Units (FMUs)
 
-    Get information about an FMU:
-       
-        fmpy info Rectifier.fmu
-     
-    Simulate an FMU:
-     
-        fmpy simulate Rectifier.fmu --show-plot
-        
-    Compile a source code FMU:
+Get information about an FMU:
+   
+    fmpy info Rectifier.fmu
+ 
+Simulate an FMU:
+ 
+    fmpy simulate Rectifier.fmu --show-plot
     
-        fmpy compile Rectifier.fmu
-        
-    Create a Jupyter Notebook
-    
-        fmpy create-jupyter-notebook Rectifier.fmu
-    """
+Compile a source code FMU:
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
-                                     description=textwrap.dedent(description))
+    fmpy compile Rectifier.fmu
+    
+Create a Jupyter Notebook
+
+    fmpy create-jupyter-notebook Rectifier.fmu
+    
+
+About FMPy
+
+FMPy version:       {fmpy.__version__}
+FMI platform:       {fmpy.platform}
+Installation path:  {os.path.dirname(__file__)}  
+Python interpreter: {sys.executable}
+Python version:     {sys.version}
+"""
+
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=description)
 
     parser.add_argument('command', choices=['info', 'validate', 'simulate', 'compile', 'add-cswrapper', 'add-remoting',
                                             'create-cmake-project', 'create-jupyter-notebook'],

@@ -597,11 +597,11 @@ class _FMU3(_FMU):
 
         return self.fmi3EnterEventMode(
             self.component,
-            fmi3Boolean(stepEvent),
-            fmi3Boolean(stateEvent),
+            fmi3EventQualifier(stepEvent),
+            fmi3EventQualifier(stateEvent),
             rootsFound,
             len(rootsFound),
-            fmi3Boolean(timeEvent)
+            fmi3EventQualifier(timeEvent)
         )
 
     def updateDiscreteStates(self):

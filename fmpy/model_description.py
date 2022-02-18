@@ -230,7 +230,9 @@ class ScalarVariable(object):
     priority = attrib(type=int, default=None, repr=False)
 
     intervalVariability = attrib(type=str, default=None, repr=False)
-    "One of 'constant', 'fixed', 'calculated', 'tunable', 'changing', 'countdown', 'triggered' or None"
+    "One of 'constant', 'fixed', 'tunable', 'changing', 'countdown', 'triggered' or None"
+
+    computed = attrib(type=bool, default=False, repr=False)
 
     intervalDecimal = attrib(type=float, default=None, repr=False)
 

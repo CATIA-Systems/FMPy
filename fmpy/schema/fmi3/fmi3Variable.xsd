@@ -5,7 +5,7 @@
     <xs:annotation>
         <xs:documentation>
 Copyright(c) 2008-2011 MODELISAR consortium,
-             2012-2021 Modelica Association Project "FMI".
+             2012-2022 Modelica Association Project "FMI".
              All rights reserved.
 
 This file is licensed by the copyright holders under the 2-Clause BSD License
@@ -68,8 +68,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             </xs:simpleType>
         </xs:attribute>
         <xs:attribute name="canHandleMultipleSetPerTimeInstant" type="xs:boolean"/>
-        <xs:attribute name="intermediateUpdate" type="xs:boolean"/>
-        <xs:attribute name="previous" type="xs:unsignedInt"/>
         <xs:attribute name="clocks">
             <xs:simpleType>
                 <xs:list itemType="xs:unsignedInt"/>
@@ -87,6 +85,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         </xs:complexType>
                     </xs:element>
                 </xs:sequence>
+                <xs:attribute name="intermediateUpdate" type="xs:boolean"/>
+                <xs:attribute name="previous" type="xs:unsignedInt"/>
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
@@ -335,15 +335,15 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <xs:complexContent>
             <xs:extension base="fmi3InitializableVariable">
                 <xs:sequence>
+                    <xs:element name="Start" minOccurs="0" maxOccurs="unbounded">
+                        <xs:complexType>
+                            <xs:attribute name="value" type="xs:hexBinary"/>
+                        </xs:complexType>
+                    </xs:element>
                     <xs:element name="Alias" type="fmi3VariableAlias" minOccurs="0" maxOccurs="unbounded"/>
                 </xs:sequence>
                 <xs:attribute name="mimeType" type="xs:normalizedString" default="application/octet-stream"/>
                 <xs:attribute name="maxSize" type="xs:nonNegativeInteger"/>
-                <xs:attribute name="start">
-                    <xs:simpleType>
-                        <xs:list itemType="xs:hexBinary"/>
-                    </xs:simpleType>
-                </xs:attribute>
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>

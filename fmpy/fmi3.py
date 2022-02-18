@@ -60,6 +60,12 @@ fmi3IntervalNotYetKnown = 0
 fmi3IntervalUnchanged   = 1
 fmi3IntervalChanged     = 2
 
+# enum fmi3EventQualifier
+fmi3EventQualifier = c_int
+fmi3EventFalse     = 0
+fmi3EventTrue      = 1
+fmi3EventUnknown   = 2
+
 # callback functions
 fmi3LogMessageCallback         = CFUNCTYPE(None, fmi3InstanceEnvironment, fmi3Status, fmi3String, fmi3String)
 fmi3ClockUpdateCallback        = CFUNCTYPE(None, fmi3InstanceEnvironment)
@@ -165,11 +171,11 @@ class _FMU3(_FMU):
 
         self._fmi3Function('fmi3EnterEventMode', [
             (fmi3Instance,       'instance'),
-            (fmi3Boolean,        'stepEvent'),
-            (fmi3Boolean,        'stateEvent'),
+            (fmi3EventQualifier, 'stepEvent'),
+            (fmi3EventQualifier, 'stateEvent'),
             (POINTER(fmi3Int32), 'rootsFound'),
             (c_size_t,           'nEventIndicators'),
-            (fmi3Boolean,        'timeEvent'),
+            (fmi3EventQualifier, 'timeEvent'),
         ])
 
         self._fmi3Function('fmi3Terminate', [(fmi3Instance, 'instance')])
@@ -357,6 +363,21 @@ class _FMU3(_FMU):
             (POINTER(fmi3ValueReference), 'valueReferences'),
             (c_size_t,                    'nValueReferences'),
             (POINTER(fmi3UInt64),         'intervalCounters'),
+            (POINTER(fmi3UInt64),         'resolutions')
+        ])
+
+        self._fmi3Function('fmi3SetShiftDecimal', [
+            (fmi3Instance,                'instance'),
+            (POINTER(fmi3ValueReference), 'valueReferences'),
+            (c_size_t,                    'nValueReferences'),
+            (POINTER(fmi3Float64),        'shifts'),
+        ])
+
+        self._fmi3Function('fmi3SetShiftFraction', [
+            (fmi3Instance,                'instance'),
+            (POINTER(fmi3ValueReference), 'valueReferences'),
+            (c_size_t,                    'nValueReferences'),
+            (POINTER(fmi3UInt64),         'shiftCounters'),
             (POINTER(fmi3UInt64),         'resolutions')
         ])
 

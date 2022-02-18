@@ -675,9 +675,11 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
 
         sv.type = value.tag
 
-        if variable.tag == 'String':
-            # handle <Start> element of String variables in FMI 3
-            sv.start = variable.find('Start').get('value')
+        if variable.tag in {'Binary', 'String'}:
+            # handle <Start> element of Binary and String variables in FMI 3
+            start = variable.find('Start')
+            if start is not None:
+                sv.start = start.get('value')
         else:
             sv.start = value.get('start')
 

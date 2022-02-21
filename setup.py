@@ -48,9 +48,6 @@ package_data = {
         'fmucontainer/binaries/win32/FMUContainer.dll',
         'fmucontainer/binaries/win64/FMUContainer.dll',
         'fmucontainer/documentation/LICENSE.txt',
-        'fmucontainer/sources/FMUContainer.c',
-        'fmucontainer/sources/mpack.c',
-        'fmucontainer/sources/mpack.h',
         'remoting/linux64/client_sm.so',
         'remoting/linux64/client_tcp.so',
         'remoting/linux64/server_sm',
@@ -97,7 +94,7 @@ extras_require = {
 extras_require['complete'] = sorted(set(sum(extras_require.values(), [])))
 
 setup(name='FMPy',
-      version='0.3.5',
+      version='0.3.6',
       description="Simulate Functional Mock-up Units (FMUs) in Python",
       long_description=long_description,
       author="Torsten Sommer",

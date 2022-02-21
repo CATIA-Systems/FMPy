@@ -682,21 +682,28 @@ Model Info
     return '\n'.join(l)
 
 
-def visual_studio_installation_path():
-    """ Get the VisualStudio 2017 installation path """
+def visual_studio_installation_paths(only_latest=False):
+    """ Get the installation paths for Visual Studio 2017+ """
+
+    paths = []
 
     try:
         from subprocess import Popen, PIPE
         import os
-        vswhere = '"' + os.environ['ProgramFiles(x86)'] + r'\Microsoft Visual Studio\Installer\vswhere.exe"'
-        command = vswhere +  ' -latest -products * -requires Microsoft.Component.MSBuild -property installationPath'
+        vswhere = rf'{os.environ["ProgramFiles(x86)"]}\Microsoft Visual Studio\Installer\vswhere.exe'
+        command = f'"{vswhere}" -requires Microsoft.Component.MSBuild -property installationPath'
+        if only_latest:
+            command += ' -latest'
         proc = Popen(command, stdout=PIPE)
         output, _ = proc.communicate()
-        return output.decode('utf-8').strip()
+        for line in output.decode('utf-8').split('\n'):
+            line = line.strip()
+            if line:
+                paths.append(line)
     except Exception as e:
         pass  # do noting
 
-    return None
+    return paths
 
 
 def visual_c_versions():
@@ -705,32 +712,35 @@ def visual_c_versions():
     Returns: a sorted list of detected Visual C versions e.g. [90, 120, 140]
     """
 
-    versions = []
+    versions = set()
 
     # up to Visual Studio 2015
     for key in os.environ.keys():
         if key.upper().startswith('VS') and key.upper().endswith('COMNTOOLS'):
-            versions.append(int(key[len('VS'):-len('COMNTOOLS')]))
+            versions.add(int(key[len('VS'):-len('COMNTOOLS')]))
 
-    # Visual Studio 2017
-    installation_path = visual_studio_installation_path()
+    # Visual Studio from 2017
+    installation_paths = visual_studio_installation_paths()
 
-    if installation_path is not None:
+    for installation_path in installation_paths:
         if '2017' in installation_path:
-            versions.append(150)
-        if '2019' in installation_path:
-            versions.append(160)
+            versions.add(150)
+        elif '2019' in installation_path:
+            versions.add(160)
+        elif '2022' in installation_path:
+            versions.add(170)
 
     return sorted(versions)
 
 
-def compile_dll(model_description, sources_dir, compiler=None, target_platform=None):
+def compile_dll(model_description, sources_dir, compiler=None, target_platform=None, compiler_options=None):
     """ Compile the shared library
 
     Parameters:
-        sources_dir    directory that contains the FMU's source code
-        compiler       compiler to use (None: use Visual C on Windows, GCC otherwise)
-        platform       platform to compile for the binary for
+        sources_dir       directory that contains the FMU's source code
+        compiler          compiler to use (None: use Visual C on Windows, GCC otherwise)
+        platform          platform to compile for the binary for
+        compiler_options  custom compiler options
     """
 
     from . import platform, system
@@ -789,6 +799,9 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
 
         definitions = ' '.join(f' /D{d}' for d in preprocessor_definitions)
 
+        if compiler_options is None:
+            compiler_options = '/Oy /Ob1 /Oi /LD'
+
         if len(vc_versions) == 0:
             raise Exception("No VisualStudio found")
 
@@ -796,12 +809,12 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
         vc_version = vc_versions[-1]
 
         if vc_version < 150:
-            command = rf'call "%%VS{vc_version}COMNTOOLS%%\..\..\VC\vcvarsall.bat" {toolset}'
+            command = rf'call "%VS{vc_version}COMNTOOLS%\..\..\VC\vcvarsall.bat" {toolset}'
         else:
-            installation_path = visual_studio_installation_path()
+            installation_path, = visual_studio_installation_paths(only_latest=True)
             command = rf'call "{installation_path}\VC\Auxiliary\Build\vcvarsall.bat" {toolset}'
 
-        command += f' && cl /LD /I. /I"{include_dir}" {definitions} /Fe{model_identifier} shlwapi.lib {sources}'
+        command += f' && cl {compiler_options} /I. /I"{include_dir}" {definitions} /Fe{model_identifier} shlwapi.lib {sources}'
 
     elif compiler == 'gcc':
 
@@ -812,19 +825,25 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
             cc = 'gcc'
             target = model_identifier + '.so'
 
+            if compiler_options is None:
+                compiler_options = '-fPIC'
+
             if system == 'windows':
                 cc = 'wsl ' + cc
                 output = subprocess.check_output(f"wsl wslpath -a '{include_dir}'")
                 include_dir = output.decode('utf-8').strip()
 
-            command = f'{cc} -c -I. -I{include_dir} -fPIC {definitions} {sources}'
+            command = f'{cc} -c {compiler_options} -I. -I{include_dir} {definitions} {sources}'
             command += f' && {cc} -static-libgcc -shared -o{target} *.o -lm'
 
         elif target_platform in ['darwin64', 'x86_64-darwin']:
 
             target = model_identifier + '.dylib'
 
-            command = f'gcc -c -I. -I{include_dir} {definitions} {sources}'
+            if compiler_options is None:
+                compiler_options = ''
+
+            command = f'gcc -c {compiler_options} -I. -I{include_dir} {definitions} {sources}'
             command += f' && gcc -shared -o{target} *.o -lm'
 
         else:
@@ -832,13 +851,13 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
     else:
         raise Exception("Unsupported compiler: '%s'" % compiler)
 
+    print(sources_dir)
+    print(command)
+
     cur_dir = os.getcwd()
     os.chdir(sources_dir)
     status = os.system(command)
     os.chdir(cur_dir)
-
-    print(sources_dir)
-    print(command)
 
     dll_path = os.path.join(sources_dir, target)
 
@@ -848,17 +867,19 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
     return str(dll_path)
 
 
-def compile_platform_binary(filename, output_filename=None, target_platform=None):
+def compile_platform_binary(filename, output_filename=None, target_platform=None, compiler_options=None):
     """ Compile the binary of an FMU for the current platform and add it to the FMU
 
     Parameters:
-        filename:         filename of the source code FMU
-        output_filename:  filename of the FMU with the compiled binary (None: overwrite existing FMU)
+        filename:          filename of the source code FMU
+        output_filename:   filename of the FMU with the compiled binary (None: overwrite existing FMU)
+        compiler_options:  custom compiler options
     """
 
     from . import read_model_description, extract, platform, platform_tuple
     import zipfile
     from shutil import copyfile, rmtree
+    from os.path import join, basename, relpath, exists, normpath, isfile, splitext
 
     unzipdir = extract(filename)
 
@@ -868,32 +889,38 @@ def compile_platform_binary(filename, output_filename=None, target_platform=None
         target_platform = platform if model_description.fmiVersion in ['1.0', '2.0'] else platform_tuple
 
     binary = compile_dll(model_description=model_description,
-                         sources_dir=os.path.join(unzipdir, 'sources'),
-                         target_platform=target_platform)
+                         sources_dir=join(unzipdir, 'sources'),
+                         target_platform=target_platform,
+                         compiler_options=compiler_options)
 
     unzipdir2 = extract(filename)
 
-    target_platform_dir = os.path.join(unzipdir2, 'binaries', target_platform)
+    target_platform_dir = join(unzipdir2, 'binaries', target_platform)
 
-    if not os.path.exists(target_platform_dir):
+    if not exists(target_platform_dir):
         os.makedirs(target_platform_dir)
 
-    copyfile(src=binary, dst=os.path.join(target_platform_dir, os.path.basename(binary)))
+    copyfile(src=binary, dst=join(target_platform_dir, basename(binary)))
+
+    debug_database = splitext(binary)[0] + '.pdb'
+
+    if isfile(debug_database):
+        copyfile(src=debug_database, dst=join(target_platform_dir, basename(debug_database)))
 
     if output_filename is None:
         output_filename = filename  # overwrite the existing archive
 
     # create a new archive from the existing files + compiled binary
     with zipfile.ZipFile(output_filename, 'w', zipfile.ZIP_DEFLATED) as zf:
-        base_path = os.path.normpath(unzipdir2)
+        base_path = normpath(unzipdir2)
         for dirpath, dirnames, filenames in os.walk(unzipdir2):
             for name in sorted(dirnames):
-                path = os.path.normpath(os.path.join(dirpath, name))
-                zf.write(path, os.path.relpath(path, base_path))
+                path = normpath(join(dirpath, name))
+                zf.write(path, relpath(path, base_path))
             for name in filenames:
-                path = os.path.normpath(os.path.join(dirpath, name))
-                if os.path.isfile(path):
-                    zf.write(path, os.path.relpath(path, base_path))
+                path = normpath(join(dirpath, name))
+                if isfile(path):
+                    zf.write(path, relpath(path, base_path))
 
     # clean up
     rmtree(unzipdir, ignore_errors=True)

@@ -1,3 +1,21 @@
+## v0.3.6 (2022-02-21)
+
+### Bug fixes
+
+- Fix FMI logging of Integer arrays (#359)
+- Remove instanceName from fmi3LogMessageCallback() and fix type hints in printLogMessage() (#365)
+- Add logMessage parameter to FMI 3.0 constructors (#366)
+- Fix getDirectionalDerivative() and getAdjointDerivative() (#367)
+- Create documentation directory in add_cswrapper() if it does not exist (#369)
+
+### Enhancements
+
+- Add --compiler-options switch to fmpy command (#232)
+- Allow FMU compilation with Visual Studio 2022 (#371)
+- Add version info to command line help text (#376)
+- Allow Model Exchange FMU in FMU Container (#373, #375)
+- Update FMI headers to v3.0-beta.4
+
 ## v0.3.5 (2022-01-11)
 
 ### Bug fixes

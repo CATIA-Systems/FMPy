@@ -1,3 +1,5 @@
+from os import PathLike
+
 from tempfile import mkdtemp
 from typing import List, Tuple
 from attr import attrs, attrib, Factory
@@ -10,6 +12,7 @@ class Variable(object):
     type: str = None
     variability: str = None
     causality: str = None
+    initial: str = None
     name: str = None
     start: str = None
     description: str = None
@@ -22,8 +25,9 @@ class Variable(object):
 @attrs(eq=False, auto_attribs=True)
 class Component(object):
 
-    filename: str
+    filename: PathLike
     name: str
+    interfaceType: str
 
 
 @attrs(eq=False, auto_attribs=True)
@@ -89,7 +93,7 @@ def create_fmu_container(configuration, output_filename):
 
     basedir = os.path.dirname(__file__)
 
-    for directory in ['binaries', 'documentation', 'sources']:
+    for directory in ['binaries', 'documentation']:
         shutil.copytree(os.path.join(basedir, directory), os.path.join(unzipdir, directory))
 
     os.mkdir(os.path.join(unzipdir, 'resources'))
@@ -105,15 +109,30 @@ def create_fmu_container(configuration, output_filename):
 
     for i, component in enumerate(configuration.components):
         model_description = read_model_description(component.filename)
-        model_identifier = model_description.coSimulation.modelIdentifier
+        if component.interfaceType == 'CoSimulation':
+            model_identifier = model_description.coSimulation.modelIdentifier
+        else:
+            model_identifier = model_description.modelExchange.modelIdentifier
         extract(component.filename, os.path.join(unzipdir, 'resources', model_identifier))
         variables = dict((v.name, v) for v in model_description.modelVariables)
         component_map[component.name] = (i, variables)
-        data['components'].append({
+
+        c = {
             'name': component.name,
             'guid': model_description.guid,
             'modelIdentifier': model_identifier,
-        })
+        }
+
+        if component.interfaceType == 'ModelExchange':
+            c['interfaceType'] = 0
+            c['nx'] = model_description.numberOfContinuousStates
+            c['nz'] = model_description.numberOfEventIndicators
+        else:
+            c['interfaceType'] = 1
+            c['nx'] = 0
+            c['nz'] = 0
+
+        data['components'].append(c)
 
     variables_map = {}
 
@@ -172,6 +191,7 @@ def create_fmu_container(configuration, output_filename):
 
     mv = ''  # model variables
     mo = ''  # model outputs
+    iu = ''  # initial unknowns
 
     for i, v in enumerate(configuration.variables):
 
@@ -204,7 +224,10 @@ def create_fmu_container(configuration, output_filename):
 
         # modelDescription.xml
         start = f' start="{ v.start }"' if v.start else ''
-        mv += f'\n    <ScalarVariable name="{ xml_encode(v.name) }" valueReference="{ i }" variability="{ v.variability }" causality="{ v.causality }" description="{ xml_encode(v.description) }">'
+        mv += f'\n    <ScalarVariable name="{ xml_encode(v.name) }" valueReference="{ i }" variability="{ v.variability }" causality="{ v.causality }"'
+        if v.initial:
+            mv += f' initial="{ v.initial }"'
+        mv += f' description="{ xml_encode(v.description) }">'
         mv += f'\n      <{v.type}{ start }'
         if v.declaredType:
             mv += f' declaredType="{v.declaredType}"'
@@ -217,6 +240,10 @@ def create_fmu_container(configuration, output_filename):
 
         if v.causality == 'output':
             mo += f'\n      <Unknown index="{ i + 1 }"/>'
+
+        if (v.causality == 'output' and v.initial in {'approx', 'calculated'}) or v.causality == 'calculatedParameter':
+            iu += f'\n      <Unknown index="{ i + 1 }"/>'
+
 
     xml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
@@ -245,8 +272,15 @@ def create_fmu_container(configuration, output_filename):
   <ModelStructure>
     <Outputs>{mo}
     </Outputs>
-    <InitialUnknowns>{ mo }
+'''
+
+    if iu:
+        xml += f'''
+    <InitialUnknowns>{ iu }
     </InitialUnknowns>
+'''
+
+    xml += '''
   </ModelStructure>
 
 </fmiModelDescription>

@@ -1,7 +1,9 @@
-import shutil
 import unittest
+from os.path import dirname, join, isfile
 from unittest import skipIf
-from fmpy import platform, supported_platforms, simulate_fmu, extract
+
+import fmpy
+from fmpy import platform, supported_platforms, simulate_fmu
 from fmpy.util import add_remoting, download_file, has_wsl, has_wine64
 
 
@@ -43,6 +45,9 @@ class RemotingTest(unittest.TestCase):
 
     @skipIf(not has_wsl(), "Requires Windows 64-bit and WSL")
     def test_remoting_linux64_on_win64(self):
+
+        if not isfile(join(dirname(fmpy.__file__), 'remoting', 'linux64', 'server_tcp')):
+            return  # Linux binary is missing
 
         filename = download_file(
             'https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/linux64/MapleSim/2021.1/Rectifier/Rectifier.fmu',

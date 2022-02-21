@@ -6,30 +6,40 @@ from __future__ import print_function
 def main():
 
     import argparse
-    import textwrap
+    import fmpy
+    import sys
+    import os
 
-    description = """\
-    Validate and simulate Functional Mock-up Units (FMUs)
+    description = f"""\
+Validate and simulate Functional Mock-up Units (FMUs)
 
-    Get information about an FMU:
-       
-        fmpy info Rectifier.fmu
-     
-    Simulate an FMU:
-     
-        fmpy simulate Rectifier.fmu --show-plot
-        
-    Compile a source code FMU:
+Get information about an FMU:
+   
+    fmpy info Rectifier.fmu
+ 
+Simulate an FMU:
+ 
+    fmpy simulate Rectifier.fmu --show-plot
     
-        fmpy compile Rectifier.fmu
-        
-    Create a Jupyter Notebook
-    
-        fmpy create-jupyter-notebook Rectifier.fmu
-    """
+Compile a source code FMU:
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
-                                     description=textwrap.dedent(description))
+    fmpy compile Rectifier.fmu
+    
+Create a Jupyter Notebook
+
+    fmpy create-jupyter-notebook Rectifier.fmu
+    
+
+About FMPy
+
+FMPy version:       {fmpy.__version__}
+FMI platform:       {fmpy.platform}
+Installation path:  {os.path.dirname(__file__)}  
+Python interpreter: {sys.executable}
+Python version:     {sys.version}
+"""
+
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=description)
 
     parser.add_argument('command', choices=['info', 'validate', 'simulate', 'compile', 'add-cswrapper', 'add-remoting',
                                             'create-cmake-project', 'create-jupyter-notebook'],
@@ -56,6 +66,7 @@ def main():
     parser.add_argument('--show-plot', action='store_true', help="plot the results")
     parser.add_argument('--cmake-project-dir', help="Directory for the CMake project")
     parser.add_argument('--target-platform', help="The target platform to compile the binary for")
+    parser.add_argument('--compiler-options', help="Options used when compiling the platform binary")
 
     args = parser.parse_args()
 
@@ -84,7 +95,9 @@ def main():
     elif args.command == 'compile':
 
         from fmpy.util import compile_platform_binary
-        compile_platform_binary(args.fmu_filename, target_platform=args.target_platform)
+        compile_platform_binary(filename=args.fmu_filename,
+                                target_platform=args.target_platform,
+                                compiler_options=args.compiler_options)
 
     elif args.command == 'add-cswrapper':
 

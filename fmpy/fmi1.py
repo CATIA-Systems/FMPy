@@ -209,7 +209,9 @@ class _FMU(object):
                         # except for fmi3DoStep
                         v_ = cast(v, POINTER(c_double))
                         a += str(str(v_.contents.value))
-
+            elif t == POINTER(c_int) and hasattr(v, '__len__'):
+                # c_long_Array_N
+                a += '[' + ', '.join(map(str, v)) + ']'
             elif hasattr(v, '_obj'):
                 # byref object
                 if hasattr(v._obj, 'value'):

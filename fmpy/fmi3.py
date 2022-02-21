@@ -2,7 +2,7 @@
 
 import os
 from ctypes import *
-from typing import Tuple
+from typing import Tuple, Sequence, List
 
 from . import sharedLibraryExtension, platform_tuple
 from .fmi1 import _FMU, FMICallException, printLogMessage
@@ -60,8 +60,14 @@ fmi3IntervalNotYetKnown = 0
 fmi3IntervalUnchanged   = 1
 fmi3IntervalChanged     = 2
 
+# enum fmi3EventQualifier
+fmi3EventQualifier = c_int
+fmi3EventFalse     = 0
+fmi3EventTrue      = 1
+fmi3EventUnknown   = 2
+
 # callback functions
-fmi3LogMessageCallback         = CFUNCTYPE(None, fmi3InstanceEnvironment, fmi3String, fmi3Status, fmi3String, fmi3String)
+fmi3LogMessageCallback         = CFUNCTYPE(None, fmi3InstanceEnvironment, fmi3Status, fmi3String, fmi3String)
 fmi3ClockUpdateCallback        = CFUNCTYPE(None, fmi3InstanceEnvironment)
 fmi3IntermediateUpdateCallback = CFUNCTYPE(None, fmi3InstanceEnvironment, fmi3Float64, fmi3Boolean, fmi3Boolean, fmi3Boolean, fmi3Boolean, POINTER(fmi3Boolean), POINTER(fmi3Float64))
 fmi3LockPreemptionCallback     = CFUNCTYPE(None)
@@ -82,8 +88,8 @@ def intermediateUpdate(instanceEnvironment: fmi3InstanceEnvironment,
 
 def printLogMessage(instanceEnvironment: fmi3InstanceEnvironment,
                     status: fmi3Status,
-                    category: fmi3Status,
-                    message: fmi3Status) -> None:
+                    category: fmi3String,
+                    message: fmi3String) -> None:
     """ Print the FMU's log messages to the command line """
 
     label = ['OK', 'WARNING', 'DISCARD', 'ERROR', 'FATAL', 'PENDING'][status]
@@ -165,11 +171,11 @@ class _FMU3(_FMU):
 
         self._fmi3Function('fmi3EnterEventMode', [
             (fmi3Instance,       'instance'),
-            (fmi3Boolean,        'stepEvent'),
-            (fmi3Boolean,        'stateEvent'),
+            (fmi3EventQualifier, 'stepEvent'),
+            (fmi3EventQualifier, 'stateEvent'),
             (POINTER(fmi3Int32), 'rootsFound'),
             (c_size_t,           'nEventIndicators'),
-            (fmi3Boolean,        'timeEvent'),
+            (fmi3EventQualifier, 'timeEvent'),
         ])
 
         self._fmi3Function('fmi3Terminate', [(fmi3Instance, 'instance')])
@@ -357,6 +363,21 @@ class _FMU3(_FMU):
             (POINTER(fmi3ValueReference), 'valueReferences'),
             (c_size_t,                    'nValueReferences'),
             (POINTER(fmi3UInt64),         'intervalCounters'),
+            (POINTER(fmi3UInt64),         'resolutions')
+        ])
+
+        self._fmi3Function('fmi3SetShiftDecimal', [
+            (fmi3Instance,                'instance'),
+            (POINTER(fmi3ValueReference), 'valueReferences'),
+            (c_size_t,                    'nValueReferences'),
+            (POINTER(fmi3Float64),        'shifts'),
+        ])
+
+        self._fmi3Function('fmi3SetShiftFraction', [
+            (fmi3Instance,                'instance'),
+            (POINTER(fmi3ValueReference), 'valueReferences'),
+            (c_size_t,                    'nValueReferences'),
+            (POINTER(fmi3UInt64),         'shiftCounters'),
             (POINTER(fmi3UInt64),         'resolutions')
         ])
 
@@ -576,11 +597,11 @@ class _FMU3(_FMU):
 
         return self.fmi3EnterEventMode(
             self.component,
-            fmi3Boolean(stepEvent),
-            fmi3Boolean(stateEvent),
+            fmi3EventQualifier(stepEvent),
+            fmi3EventQualifier(stateEvent),
             rootsFound,
             len(rootsFound),
-            fmi3Boolean(timeEvent)
+            fmi3EventQualifier(timeEvent)
         )
 
     def updateDiscreteStates(self):
@@ -842,13 +863,14 @@ class _FMU3(_FMU):
 
     # Getting partial derivatives
 
-    def getDirectionalDerivative(self, unknowns, knowns, seed, sensitivity):
+    def getDirectionalDerivative(self, unknowns: Sequence[int], knowns: Sequence[int], seed: Sequence[float], nSensitivity: int) -> List[float]:
         """ Get the directional derivatives
 
         Parameters:
-            unknowns     list of value references of the unknowns
-            knowns       list of value references of the knowns
-            seed         list of delta values (one per known)
+            unknowns      list of value references of the unknowns
+            knowns        list of value references of the knowns
+            seed          list of delta values (one per known)
+            nSensitivity  length of sensitivity
 
         Returns:
             sensitivity  list of the partial derivatives (one per unknown)
@@ -857,30 +879,33 @@ class _FMU3(_FMU):
         unknowns    = (fmi3ValueReference * len(unknowns))(*unknowns)
         knowns      = (fmi3ValueReference * len(knowns))(*knowns)
         seed        = (fmi3Float64 * len(seed))(*seed)
-        sensitivity = (fmi3Float64 * len(sensitivity))()
+        sensitivity = (fmi3Float64 * nSensitivity)()
 
-        self.fmi3GetDirectionalDerivative(self.component, unknowns, len(unknowns), knowns, len(knowns), seed, sensitivity)
+        self.fmi3GetDirectionalDerivative(self.component, unknowns, len(unknowns), knowns, len(knowns), seed, len(seed),
+                                          sensitivity, len(sensitivity))
 
         return list(sensitivity)
 
-    def getAdjointDerivative(self, unknowns, knowns, seed, sensitivity):
+    def getAdjointDerivative(self, unknowns: Sequence[int], knowns: Sequence[int], seed: Sequence[float], nSensitivity: int) -> List[float]:
         """ Get adjoint derivatives
 
         Parameters:
-            unknowns     list of value references of the unknowns
-            knowns       list of value references of the knowns
-            seed         list of delta values (one per known)
+            unknowns      list of value references of the unknowns
+            knowns        list of value references of the knowns
+            seed          list of delta values (one per known)
+            nSensitivity  length of sensitivity
 
         Returns:
-            sensitivity  list of the partial derivatives (one per unknown)
+            sensitivity   list of the partial derivatives
         """
 
         unknowns    = (fmi3ValueReference * len(unknowns))(*unknowns)
         knowns      = (fmi3ValueReference * len(knowns))(*knowns)
         seed        = (fmi3Float64 * len(seed))(*seed)
-        sensitivity = (fmi3Float64 * len(sensitivity))()
+        sensitivity = (fmi3Float64 * nSensitivity)()
 
-        self.fmi3GetAdjointDerivative(self.component, unknowns, len(unknowns), knowns, len(knowns), seed, sensitivity)
+        self.fmi3GetAdjointDerivative(self.component, unknowns, len(unknowns), knowns, len(knowns), seed, len(seed),
+                                      sensitivity, len(sensitivity))
 
         return list(sensitivity)
 
@@ -891,12 +916,12 @@ class FMU3Model(_FMU3):
     def __init__(self, **kwargs):
         super(FMU3Model, self).__init__(**kwargs)
 
-    def instantiate(self, visible=False, loggingOn=False):
+    def instantiate(self, visible=False, loggingOn=False, logMessage=None):
 
         resourcePath = os.path.join(self.unzipDirectory, 'resources') + os.path.sep
 
         # save callbacks from GC
-        self.printLogMessage = fmi3LogMessageCallback(printLogMessage)
+        self.logMessage = fmi3LogMessageCallback(printLogMessage if logMessage is None else logMessage)
 
         self.component = self.fmi3InstantiateModelExchange(
             self.instanceName.encode('utf-8'),
@@ -905,7 +930,7 @@ class FMU3Model(_FMU3):
             fmi3Boolean(visible),
             fmi3Boolean(loggingOn),
             fmi3InstanceEnvironment(),
-            self.printLogMessage)
+            self.logMessage)
 
         if not self.component:
             raise Exception("Failed to instantiate FMU")
@@ -953,10 +978,10 @@ class FMU3Slave(_FMU3):
 
         super(FMU3Slave, self).__init__(**kwargs)
 
-    def instantiate(self, visible=False, loggingOn=False, eventModeUsed=False, earlyReturnAllowed=False):
+    def instantiate(self, visible=False, loggingOn=False, eventModeUsed=False, earlyReturnAllowed=False, logMessage=None):
 
         # save callbacks from GC
-        self.printLogMessage = fmi3LogMessageCallback(printLogMessage)
+        self.logMessage = fmi3LogMessageCallback(printLogMessage if logMessage is None else logMessage)
         self.intermediateUpdate = fmi3IntermediateUpdateCallback(intermediateUpdate)
 
         resourcePath = os.path.join(self.unzipDirectory, 'resources') + os.path.sep
@@ -971,7 +996,7 @@ class FMU3Slave(_FMU3):
             fmi3Boolean(earlyReturnAllowed),
             None, 0,
             fmi3InstanceEnvironment(),
-            self.printLogMessage,
+            self.logMessage,
             self.intermediateUpdate)
 
         if not self.component:
@@ -1029,7 +1054,7 @@ class FMU3ScheduledExecution(_FMU3):
             (fmi3Float64, 'activationTime'),
         ])
 
-    def instantiate(self, visible=False, loggingOn=False):
+    def instantiate(self, visible=False, loggingOn=False, logMessage=None):
 
         resourcePath = os.path.join(self.unzipDirectory, 'resources') + os.path.sep
 
@@ -1037,7 +1062,7 @@ class FMU3ScheduledExecution(_FMU3):
             pass
 
         # save callbacks from GC
-        self.printLogMessage = fmi3LogMessageCallback(printLogMessage)
+        self.logMessage = fmi3LogMessageCallback(printLogMessage if logMessage is None else logMessage)
         self.clockUpdate = fmi3ClockUpdateCallback(noop)
         self.lockPreemption = fmi3LockPreemptionCallback(noop)
         self.unlockPreemption = fmi3UnlockPreemptionCallback(noop)
@@ -1049,7 +1074,7 @@ class FMU3ScheduledExecution(_FMU3):
             fmi3Boolean(visible),
             fmi3Boolean(loggingOn),
             fmi3InstanceEnvironment(),
-            self.printLogMessage,
+            self.logMessage,
             self.clockUpdate,
             self.lockPreemption,
             self.unlockPreemption

@@ -46,7 +46,7 @@ if not os.path.isdir(rpclib_dir):
 
 if os.name == 'nt':
 
-    for bitness, generator in [('win32', 'Visual Studio 15 2017'), ('win64', 'Visual Studio 15 2017 Win64')]:
+    for bitness, architecture in [('win32', 'Win32'), ('win64', 'x64')]:
 
         # clean up
         shutil.rmtree(os.path.join(basedir, 'remoting', bitness), ignore_errors=True)
@@ -58,7 +58,8 @@ if os.name == 'nt':
             '-B', rpclib_dir + '/' + bitness,
             '-D', 'RPCLIB_MSVC_STATIC_RUNTIME=ON',
             '-D', 'CMAKE_INSTALL_PREFIX=' + os.path.join(rpclib_dir, bitness, 'install'),
-            '-G', generator,
+            '-G', 'Visual Studio 17 2022',
+            '-A', architecture,
             rpclib_dir
         ])
 
@@ -74,7 +75,8 @@ if os.name == 'nt':
         check_call(args=[
             'cmake',
             '-B', 'remoting/' + bitness,
-            '-G', generator,
+            '-G', 'Visual Studio 17 2022',
+            '-A', architecture,
             '-D', 'RPCLIB=' + os.path.join(rpclib_dir, bitness, 'install'),
             '-B', 'remoting/' + bitness,
             'remoting'

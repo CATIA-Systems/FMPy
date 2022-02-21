@@ -19,11 +19,17 @@ class CCodeTest(unittest.TestCase):
     def test_compile(self):
         """ Compile the platform binary """
 
+        # add debug info
+        if os.name == 'nt':
+            compiler_options = '/LDd /Zi'
+        else:
+            compiler_options = '-g -fPIC'
+
         for fmu in self.fmus:
 
             filename = download_file(self.url + fmu)
 
-            compile_platform_binary(filename)
+            compile_platform_binary(filename, compiler_options=compiler_options)
 
             result = simulate_fmu(filename=filename)
             self.assertIsNotNone(result)
@@ -64,7 +70,9 @@ class CCodeTest(unittest.TestCase):
             vc_versions = visual_c_versions()
 
             if os.name == 'nt':
-                if 160 in vc_versions:
+                if 170 in vc_versions:
+                    cmake_args += ['-G', 'Visual Studio 17 2022', '-A', 'x64']
+                elif 160 in vc_versions:
                     cmake_args += ['-G', 'Visual Studio 16 2019', '-A', 'x64']
                 elif 150 in vc_versions:
                     cmake_args += ['-G', 'Visual Studio 15 2017 Win64']

@@ -566,7 +566,7 @@ def simulate_fmu(filename,
                  validate: bool = True,
                  start_time: Union[float, str] = None,
                  stop_time: Union[float, str] = None,
-                 solver: str ='CVode',
+                 solver: str = 'CVode',
                  step_size: Union[float, str] = None,
                  relative_tolerance: Union[float, str] = None,
                  output_interval: Union[float, str] = None,
@@ -587,7 +587,10 @@ def simulate_fmu(filename,
                  set_input_derivatives: bool = False,
                  remote_platform: str = 'auto',
                  early_return_allowed: bool = False,
-                 use_event_mode: bool = False) -> SimulationResult:
+                 use_event_mode: bool = False,
+                 initialize: bool = True,
+                 terminate: bool = True,
+                 fmu_state: Union[bytes, c_void_p] = None) -> SimulationResult:
     """ Simulate an FMU
 
     Parameters:
@@ -618,6 +621,9 @@ def simulate_fmu(filename,
                                is not supported, None: no remoting; experimental)
         early_return_allowed   allow early return in FMI 3.0 Co-Simulation
         use_event_mode         use event mode in FMI 3.0 Co-Simulation if the FMU supports it
+        initialize             initialize the FMU
+        terminate              terminate the FMU
+        fmu_state              the FMU state or serialized FMU state to initialize the FMU
     Returns:
         result                 a structured numpy array that contains the result
     """
@@ -649,6 +655,12 @@ def simulate_fmu(filename,
 
     if fmi_type not in ['ModelExchange', 'CoSimulation']:
         raise Exception('fmi_type must be one of "ModelExchange" or "CoSimulation"')
+
+    if initialize is False:
+        if fmi_type != 'CoSimulation':
+            raise Exception("If initialize is False, the interface type must be 'CoSimulation'.")
+        if fmu_instance is None and fmu_state is None:
+            raise Exception("If initialize is False, fmu_instance or fmu_state must be provided.")
 
     experiment = model_description.defaultExperiment
 
@@ -706,11 +718,23 @@ def simulate_fmu(filename,
     else:
         fmu = fmu_instance
 
+    if fmu_state is not None:
+        if model_description.fmiVersion == '2.0' or model_description.fmiVersion.startswith('3.0'):
+            if isinstance(fmu_state, bytes):
+                fmu_state = fmu.deSerializeFMUState(fmu_state)
+                fmu.setFMUState(fmu_state)
+                fmu.freeFMUState(fmu_state)
+            else:
+                fmu.setFMUState(fmu_state)
+        else:
+            raise Exception(f"Setting the FMU state is not supported for FMI version {model_description.fmiVersion}.")
+        initialize = False
+
     # simulate_fmu the FMU
     if fmi_type == 'ModelExchange':
         result = simulateME(model_description, fmu, start_time, stop_time, solver, step_size, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, record_events, timeout, step_finished, validate)
     elif fmi_type == 'CoSimulation':
-        result = simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, timeout, step_finished, set_input_derivatives, use_event_mode, early_return_allowed, validate)
+        result = simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, timeout, step_finished, set_input_derivatives, use_event_mode, early_return_allowed, validate, initialize, terminate)
 
     if fmu_instance is None:
         fmu.freeInstance()
@@ -862,11 +886,11 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
         (iterationConverged,
          stateValueReferencesChanged,
          stateValuesChanged,
-         terminateSimulation,
+         terminate_simulation,
          nextEventTimeDefined,
          nextEventTime) = fmu.initialize()
 
-        if terminateSimulation:
+        if terminate_simulation:
             raise Exception('Model requested termination during initial event update.')
 
     elif is_fmi2:
@@ -882,17 +906,17 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
         fmu.exitInitializationMode()
 
         newDiscreteStatesNeeded = True
-        terminateSimulation = False
+        terminate_simulation = False
 
-        while newDiscreteStatesNeeded and not terminateSimulation:
+        while newDiscreteStatesNeeded and not terminate_simulation:
             (newDiscreteStatesNeeded,
-             terminateSimulation,
+             terminate_simulation,
              nominalsOfContinuousStatesChanged,
              valuesOfContinuousStatesChanged,
              nextEventTimeDefined,
              nextEventTime) = fmu.newDiscreteStates()
 
-        if terminateSimulation:
+        if terminate_simulation:
             raise Exception('Model requested termination during initial event update.')
 
         fmu.enterContinuousTimeMode()
@@ -910,12 +934,12 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
         fmu.exitInitializationMode()
 
         discreteStatesNeedUpdate = True
-        terminateSimulation = False
+        terminate_simulation = False
 
-        while discreteStatesNeedUpdate and not terminateSimulation:
+        while discreteStatesNeedUpdate and not terminate_simulation:
             # update discrete states
             (discreteStatesNeedUpdate,
-             terminateSimulation,
+             terminate_simulation,
              nominalsOfContinuousStatesChanged,
              valuesOfContinuousStatesChanged,
              nextEventTimeDefined,
@@ -1039,15 +1063,15 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                 iterationConverged = False
 
                 # update discrete states
-                while not iterationConverged and not terminateSimulation:
+                while not iterationConverged and not terminate_simulation:
                     (iterationConverged,
                      stateValueReferencesChanged,
                      stateValuesChanged,
-                     terminateSimulation,
+                     terminate_simulation,
                      nextEventTimeDefined,
                      nextEventTime) = fmu.eventUpdate()
 
-                if terminateSimulation:
+                if terminate_simulation:
                     break
 
             elif is_fmi2:
@@ -1060,15 +1084,15 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                 newDiscreteStatesNeeded = True
 
                 # update discrete states
-                while newDiscreteStatesNeeded and not terminateSimulation:
+                while newDiscreteStatesNeeded and not terminate_simulation:
                     (newDiscreteStatesNeeded,
-                     terminateSimulation,
+                     terminate_simulation,
                      nominalsOfContinuousStatesChanged,
                      valuesOfContinuousStatesChanged,
                      nextEventTimeDefined,
                      nextEventTime) = fmu.newDiscreteStates()
 
-                if terminateSimulation:
+                if terminate_simulation:
                     break
 
                 fmu.enterContinuousTimeMode()
@@ -1083,15 +1107,15 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                 newDiscreteStatesNeeded = True
 
                 # update discrete states
-                while newDiscreteStatesNeeded and not terminateSimulation:
+                while newDiscreteStatesNeeded and not terminate_simulation:
                     (newDiscreteStatesNeeded,
-                     terminateSimulation,
+                     terminate_simulation,
                      nominalsOfContinuousStatesChanged,
                      valuesOfContinuousStatesChanged,
                      nextEventTimeDefined,
                      nextEventTime) = fmu.updateDiscreteStates()
 
-                if terminateSimulation:
+                if terminate_simulation:
                     break
 
                 fmu.enterContinuousTimeMode()
@@ -1116,7 +1140,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
     return recorder.result()
 
 
-def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, timeout, step_finished, set_input_derivatives, use_event_mode, early_return_allowed, validate):
+def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, timeout, step_finished, set_input_derivatives, use_event_mode, early_return_allowed, validate, initialize, terminate):
 
     if set_input_derivatives and not model_description.coSimulation.canInterpolateInputs:
         raise Exception("Parameter set_input_derivatives is True but the FMU cannot interpolate inputs.")
@@ -1129,42 +1153,44 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
     is_fmi1 = model_description.fmiVersion == '1.0'
     is_fmi2 = model_description.fmiVersion == '2.0'
 
-    if is_fmi2:
-        fmu.setupExperiment(tolerance=relative_tolerance, startTime=start_time, stopTime=stop_time)
-
     input = Input(fmu=fmu, modelDescription=model_description, signals=input_signals, set_input_derivatives=set_input_derivatives)
 
     time = start_time
 
-    # initialize the model
-    if is_fmi1:
-        start_values = apply_start_values(fmu, model_description, start_values, settable=has_start_value)
-        input.apply(time)
-        fmu.initialize(tStart=time, stopTime=stop_time)
-    elif is_fmi2:
-        start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_instantiated)
-        fmu.enterInitializationMode()
-        start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_initialization_mode)
-        input.apply(time)
-        fmu.exitInitializationMode()
-    else:
-        start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_instantiated)
-        fmu.enterInitializationMode(tolerance=relative_tolerance, startTime=start_time, stopTime=stop_time)
-        start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_initialization_mode)
-        input.apply(time)
-        fmu.exitInitializationMode()
+    if initialize:
 
-        if use_event_mode:
+        if is_fmi2:
+            fmu.setupExperiment(tolerance=relative_tolerance, startTime=time, stopTime=stop_time)
 
-            update_discrete_states = True
+        # initialize the model
+        if is_fmi1:
+            start_values = apply_start_values(fmu, model_description, start_values, settable=has_start_value)
+            input.apply(time)
+            fmu.initialize(tStart=time, stopTime=stop_time)
+        elif is_fmi2:
+            start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_instantiated)
+            fmu.enterInitializationMode()
+            start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_initialization_mode)
+            input.apply(time)
+            fmu.exitInitializationMode()
+        else:
+            start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_instantiated)
+            fmu.enterInitializationMode(tolerance=relative_tolerance, startTime=time, stopTime=stop_time)
+            start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_initialization_mode)
+            input.apply(time)
+            fmu.exitInitializationMode()
 
-            while update_discrete_states:
-                update_discrete_states, terminate, _, _, _, _ = fmu.updateDiscreteStates()
+            if use_event_mode:
 
-            if terminate:
-                raise Exception("The FMU requested to terminate the simulation during initialization.")
+                update_discrete_states = True
 
-            fmu.enterStepMode()
+                while update_discrete_states:
+                    update_discrete_states, terminate_simulation, _, _, _, _ = fmu.updateDiscreteStates()
+
+                if terminate_simulation:
+                    raise Exception("The FMU requested to terminate the simulation during initialization.")
+
+                fmu.enterStepMode()
 
     if validate and len(start_values) > 0:
         raise Exception("The start values for the following variables could not be set: " +
@@ -1174,9 +1200,7 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
 
     n_steps = time / output_interval
 
-    terminate = False
-
-    time = start_time
+    terminate_simulation = False
 
     # simulation loop
     while True:
@@ -1186,7 +1210,7 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
         if timeout is not None and (current_time() - sim_start) > timeout:
             break
 
-        if terminate or time >= stop_time:
+        if terminate_simulation or time >= stop_time:
             break
 
         input.apply(time)
@@ -1230,7 +1254,7 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
 
             step_size = t_input_event - time if input_event else t_next - time
 
-            event_encountered, terminate, early_return, last_successful_time = fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
+            event_encountered, terminate_simulation, early_return, last_successful_time = fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
 
             if early_return and not early_return_allowed:
                 raise Exception("FMU returned early from doStep() but Early Return is not allowed.")
@@ -1251,17 +1275,19 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
 
                 update_discrete_states = True
 
-                while update_discrete_states and not terminate:
-                    update_discrete_states, terminate, _, _, _, _ = fmu.updateDiscreteStates()
+                while update_discrete_states and not terminate_simulation:
+                    update_discrete_states, terminate_simulation, _, _, _, _ = fmu.updateDiscreteStates()
 
-                if terminate:
+                if terminate_simulation:
                     break
 
                 fmu.enterStepMode()
 
         if step_finished is not None and not step_finished(time, recorder):
+            recorder.sample(time, force=True)
             break
 
-    fmu.terminate()
+    if terminate:
+        fmu.terminate()
 
     return recorder.result()

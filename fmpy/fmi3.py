@@ -850,16 +850,18 @@ class _FMU3(_FMU):
         self.fmi3SerializeFMUState(self.component, state, serializedState, size)
         return serializedState.raw
 
-    def deSerializeFMUState(self, serializedState, state):
+    def deSerializeFMUState(self, serializedState, state=None):
         """ De-serialize an FMU state
 
         Parameters:
             serializedState   the serialized state as a byte string
             state             the FMU state
         """
-
-        buffer = create_string_buffer(serializedState)
+        if state is None:
+            state = fmi3FMUState()
+        buffer = create_string_buffer(serializedState, size=len(serializedState))
         self.fmi3DeSerializeFMUState(self.component, buffer, len(buffer), byref(state))
+        return state
 
     # Getting partial derivatives
 

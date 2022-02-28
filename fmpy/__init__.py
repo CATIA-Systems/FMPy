@@ -184,7 +184,7 @@ def extract(filename, unzipdir=None, include=None):
         unzipdir = mkdtemp()
 
     # expand the 8.3 paths on windows
-    if sys.platform.startswith('win') and '~' in unzipdir:
+    if sys.platform.startswith('win') and isinstance(unzipdir, str) and '~' in unzipdir:
         import win32file
         from contextlib import suppress
         with suppress(Exception):

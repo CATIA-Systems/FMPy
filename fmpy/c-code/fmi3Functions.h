@@ -2,7 +2,7 @@
 #define fmi3Functions_h
 
 /*
-This header file declares the functions of FMI 3.0-beta.4.
+This header file declares the functions of FMI 3.0-beta.5.
 It must be used when compiling an FMU.
 
 In order to have unique function names even if several FMUs
@@ -82,7 +82,7 @@ This definition has been changed to add no prefix.
   #define fmi3FullName(name) name
 
 /* FMI version */
-#define fmi3Version "3.0-beta.4"
+#define fmi3Version "3.0-beta.5"
 
 /***************************************************
 Common Functions
@@ -145,7 +145,7 @@ Common Functions
 #define fmi3FreeFMUState             fmi3FullName(fmi3FreeFMUState)
 #define fmi3SerializedFMUStateSize   fmi3FullName(fmi3SerializedFMUStateSize)
 #define fmi3SerializeFMUState        fmi3FullName(fmi3SerializeFMUState)
-#define fmi3DeSerializeFMUState      fmi3FullName(fmi3DeSerializeFMUState)
+#define fmi3DeserializeFMUState      fmi3FullName(fmi3DeserializeFMUState)
 
 /* Getting partial derivatives */
 #define fmi3GetDirectionalDerivative fmi3FullName(fmi3GetDirectionalDerivative)
@@ -257,7 +257,7 @@ FMI3_Export fmi3SetFMUStateTYPE            fmi3SetFMUState;
 FMI3_Export fmi3FreeFMUStateTYPE           fmi3FreeFMUState;
 FMI3_Export fmi3SerializedFMUStateSizeTYPE fmi3SerializedFMUStateSize;
 FMI3_Export fmi3SerializeFMUStateTYPE      fmi3SerializeFMUState;
-FMI3_Export fmi3DeSerializeFMUStateTYPE    fmi3DeSerializeFMUState;
+FMI3_Export fmi3DeserializeFMUStateTYPE    fmi3DeserializeFMUState;
 
 /* Getting partial derivatives */
 FMI3_Export fmi3GetDirectionalDerivativeTYPE fmi3GetDirectionalDerivative;
@@ -274,6 +274,8 @@ FMI3_Export fmi3GetShiftDecimalTYPE        fmi3GetShiftDecimal;
 FMI3_Export fmi3GetShiftFractionTYPE       fmi3GetShiftFraction;
 FMI3_Export fmi3SetIntervalDecimalTYPE     fmi3SetIntervalDecimal;
 FMI3_Export fmi3SetIntervalFractionTYPE    fmi3SetIntervalFraction;
+FMI3_Export fmi3SetShiftDecimalTYPE        fmi3SetShiftDecimal;
+FMI3_Export fmi3SetShiftFractionTYPE       fmi3SetShiftFraction;
 FMI3_Export fmi3EvaluateDiscreteStatesTYPE fmi3EvaluateDiscreteStates;
 FMI3_Export fmi3UpdateDiscreteStatesTYPE   fmi3UpdateDiscreteStates;
 

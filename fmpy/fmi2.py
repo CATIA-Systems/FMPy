@@ -391,7 +391,7 @@ class _FMU2(_FMU):
         self.fmi2DeSerializeFMUstate(self.component, buffer, len(buffer), byref(state))
         return state
 
-    deSerializeFMUState = deSerializeFMUstate
+    deserializeFMUState = deSerializeFMUstate
 
     # Getting partial derivatives
 

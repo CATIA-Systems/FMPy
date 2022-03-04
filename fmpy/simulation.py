@@ -721,7 +721,7 @@ def simulate_fmu(filename,
     if fmu_state is not None:
         if model_description.fmiVersion == '2.0' or model_description.fmiVersion.startswith('3.0'):
             if isinstance(fmu_state, bytes):
-                fmu_state = fmu.deSerializeFMUState(fmu_state)
+                fmu_state = fmu.deserializeFMUState(fmu_state)
                 fmu.setFMUState(fmu_state)
                 fmu.freeFMUState(fmu_state)
             else:

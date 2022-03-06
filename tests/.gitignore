@@ -1,4 +1,3 @@
 # test resources
-Reference-FMUs-dist/
-Reference-FMUs-repo/
+Reference-FMUs-*/
 *.ipynb

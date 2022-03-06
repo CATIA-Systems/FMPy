@@ -1,3 +1,14 @@
+## v0.3.7 (2022-03-06)
+
+### Bug fixes
+
+- Search for explicit versions in visual_studio_installation_paths() (#381)
+
+### Enhancements
+
+- Update to FMI 3.0-beta.5
+- Add initialize, terminate, and fmu_state parameters to simulate_fmu() to allow pausing and continuing simulations (#283)
+
 ## v0.3.6 (2022-02-21)
 
 ### Bug fixes

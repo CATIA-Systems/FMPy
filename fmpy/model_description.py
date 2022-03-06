@@ -232,8 +232,6 @@ class ScalarVariable(object):
     intervalVariability = attrib(type=str, default=None, repr=False)
     "One of 'constant', 'fixed', 'tunable', 'changing', 'countdown', 'triggered' or None"
 
-    computed = attrib(type=bool, default=False, repr=False)
-
     intervalDecimal = attrib(type=float, default=None, repr=False)
 
     shiftDecimal = attrib(type=float, default=None, repr=False)

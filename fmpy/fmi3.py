@@ -281,7 +281,7 @@ class _FMU3(_FMU):
             (c_size_t,          'size')
         ])
 
-        self._fmi3Function('fmi3DeSerializeFMUState', [
+        self._fmi3Function('fmi3DeserializeFMUState', [
             (fmi3Instance,          'instance'),
             (POINTER(fmi3Byte),     'serializedState'),
             (c_size_t,              'size'),
@@ -331,7 +331,7 @@ class _FMU3(_FMU):
             (fmi3Instance,                   'instance'),
             (POINTER(fmi3ValueReference),    'valueReferences'),
             (c_size_t,                       'nValueReferences'),
-            (POINTER(fmi3UInt64),            'intervalCounters'),
+            (POINTER(fmi3UInt64),            'counters'),
             (POINTER(fmi3UInt64),            'resolutions'),
             (POINTER(fmi3IntervalQualifier), 'qualifiers')
         ])
@@ -347,7 +347,7 @@ class _FMU3(_FMU):
             (fmi3Instance,                   'instance'),
             (POINTER(fmi3ValueReference),    'valueReferences'),
             (c_size_t,                       'nValueReferences'),
-            (POINTER(fmi3UInt64),            'shiftCounters'),
+            (POINTER(fmi3UInt64),            'counters'),
             (POINTER(fmi3UInt64),            'resolutions')
         ])
 
@@ -362,7 +362,7 @@ class _FMU3(_FMU):
             (fmi3Instance,                'instance'),
             (POINTER(fmi3ValueReference), 'valueReferences'),
             (c_size_t,                    'nValueReferences'),
-            (POINTER(fmi3UInt64),         'intervalCounters'),
+            (POINTER(fmi3UInt64),         'counters'),
             (POINTER(fmi3UInt64),         'resolutions')
         ])
 
@@ -377,7 +377,7 @@ class _FMU3(_FMU):
             (fmi3Instance,                'instance'),
             (POINTER(fmi3ValueReference), 'valueReferences'),
             (c_size_t,                    'nValueReferences'),
-            (POINTER(fmi3UInt64),         'shiftCounters'),
+            (POINTER(fmi3UInt64),         'counters'),
             (POINTER(fmi3UInt64),         'resolutions')
         ])
 
@@ -850,16 +850,18 @@ class _FMU3(_FMU):
         self.fmi3SerializeFMUState(self.component, state, serializedState, size)
         return serializedState.raw
 
-    def deSerializeFMUState(self, serializedState, state):
+    def deserializeFMUState(self, serializedState, state=None):
         """ De-serialize an FMU state
 
         Parameters:
             serializedState   the serialized state as a byte string
             state             the FMU state
         """
-
-        buffer = create_string_buffer(serializedState)
-        self.fmi3DeSerializeFMUState(self.component, buffer, len(buffer), byref(state))
+        if state is None:
+            state = fmi3FMUState()
+        buffer = create_string_buffer(serializedState, size=len(serializedState))
+        self.fmi3DeserializeFMUState(self.component, buffer, len(buffer), byref(state))
+        return state
 
     # Getting partial derivatives
 

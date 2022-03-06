@@ -345,11 +345,17 @@ class _FMU2(_FMU):
         self.fmi2GetFMUstate(self.component, byref(state))
         return state
 
+    getFMUState = getFMUstate  # alias for the FMI 3.0 name
+
     def setFMUstate(self, state):
         self.fmi2SetFMUstate(self.component, state)
 
+    setFMUState = setFMUstate
+
     def freeFMUstate(self, state):
         self.fmi2FreeFMUstate(self.component, byref(state))
+
+    freeFMUState = freeFMUstate
 
     def serializeFMUstate(self, state):
         """ Serialize an FMU state
@@ -367,6 +373,8 @@ class _FMU2(_FMU):
         self.fmi2SerializeFMUstate(self.component, state, serializedState, size)
         return serializedState.raw
 
+    serializeFMUState = serializeFMUstate
+
     def deSerializeFMUstate(self, serializedState, state=None):
         """ De-serialize an FMU state
 
@@ -382,6 +390,8 @@ class _FMU2(_FMU):
         buffer = create_string_buffer(serializedState, size=len(serializedState))
         self.fmi2DeSerializeFMUstate(self.component, buffer, len(buffer), byref(state))
         return state
+
+    deserializeFMUState = deSerializeFMUstate
 
     # Getting partial derivatives
 

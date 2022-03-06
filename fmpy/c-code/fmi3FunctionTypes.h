@@ -4,7 +4,7 @@
 #include "fmi3PlatformTypes.h"
 
 /*
-This header file defines the data and function types of FMI 3.0-beta.4.
+This header file defines the data and function types of FMI 3.0-beta.5.
 It must be used when compiling an FMU or an FMI importer.
 
 Copyright (C) 2011 MODELISAR consortium,
@@ -425,12 +425,12 @@ typedef fmi3Status fmi3SerializeFMUStateTYPE     (fmi3Instance instance,
                                                   size_t size);
 /* end::SerializeFMUState[] */
 
-/* tag::DeSerializeFMUState[] */
-typedef fmi3Status fmi3DeSerializeFMUStateTYPE   (fmi3Instance instance,
+/* tag::DeserializeFMUState[] */
+typedef fmi3Status fmi3DeserializeFMUStateTYPE   (fmi3Instance instance,
                                                   const fmi3Byte serializedState[],
                                                   size_t size,
                                                   fmi3FMUState* FMUState);
-/* end::DeSerializeFMUState[] */
+/* end::DeserializeFMUState[] */
 
 /* Getting partial derivatives */
 /* tag::GetDirectionalDerivative[] */
@@ -479,7 +479,7 @@ typedef fmi3Status fmi3GetIntervalDecimalTYPE(fmi3Instance instance,
 typedef fmi3Status fmi3GetIntervalFractionTYPE(fmi3Instance instance,
                                                const fmi3ValueReference valueReferences[],
                                                size_t nValueReferences,
-                                               fmi3UInt64 intervalCounters[],
+                                               fmi3UInt64 counters[],
                                                fmi3UInt64 resolutions[],
                                                fmi3IntervalQualifier qualifiers[]);
 /* end::GetIntervalFraction[] */
@@ -495,7 +495,7 @@ typedef fmi3Status fmi3GetShiftDecimalTYPE(fmi3Instance instance,
 typedef fmi3Status fmi3GetShiftFractionTYPE(fmi3Instance instance,
                                             const fmi3ValueReference valueReferences[],
                                             size_t nValueReferences,
-                                            fmi3UInt64 shiftCounters[],
+                                            fmi3UInt64 counters[],
                                             fmi3UInt64 resolutions[]);
 /* end::GetShiftFraction[] */
 
@@ -510,7 +510,7 @@ typedef fmi3Status fmi3SetIntervalDecimalTYPE(fmi3Instance instance,
 typedef fmi3Status fmi3SetIntervalFractionTYPE(fmi3Instance instance,
                                                const fmi3ValueReference valueReferences[],
                                                size_t nValueReferences,
-                                               const fmi3UInt64 intervalCounters[],
+                                               const fmi3UInt64 counters[],
                                                const fmi3UInt64 resolutions[]);
 /* end::SetIntervalFraction[] */
 
@@ -525,7 +525,7 @@ typedef fmi3Status fmi3SetShiftDecimalTYPE(fmi3Instance instance,
 typedef fmi3Status fmi3SetShiftFractionTYPE(fmi3Instance instance,
                                             const fmi3ValueReference valueReferences[],
                                             size_t nValueReferences,
-                                            const fmi3UInt64 shiftCounters[],
+                                            const fmi3UInt64 counters[],
                                             const fmi3UInt64 resolutions[]);
 /* end::SetShiftFraction[] */
 

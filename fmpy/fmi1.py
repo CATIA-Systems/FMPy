@@ -196,22 +196,23 @@ class _FMU(object):
                     a += 'NULL'
                 else:
                     a += '[' + ', '.join(map(str, v)) + ']'
-            elif t == POINTER(c_double):
-                if hasattr(v, '__len__'):
-                    # c_double_Array_N
-                    a += '[' + ', '.join(map(str, v)) + ']'
-                else:
-                    if len(args) > i + 1:
-                        # double pointers are always flowed by the size of the array
-                        arr = v[:args[i + 1]]
-                        a += '[' + ', '.join(map(str, arr)) + ']'
-                    else:
-                        # except for fmi3DoStep
-                        v_ = cast(v, POINTER(c_double))
-                        a += str(str(v_.contents.value))
-            elif t == POINTER(c_int) and hasattr(v, '__len__'):
-                # c_long_Array_N
+            elif t in [POINTER(c_float), POINTER(c_double),
+                       POINTER(c_int8), POINTER(c_uint8),
+                       POINTER(c_int16), POINTER(c_uint16),
+                       POINTER(c_int32), POINTER(c_uint32),
+                       POINTER(c_int64), POINTER(c_uint64),
+                       POINTER(c_bool)] and hasattr(v, '__len__'):
+                # c_*_Array_N
                 a += '[' + ', '.join(map(str, v)) + ']'
+            elif t == POINTER(c_double) and not hasattr(v, '__len__'):
+                if len(args) > i + 1:
+                    # double pointers are always flowed by the size of the array
+                    arr = v[:args[i + 1]]
+                    a += '[' + ', '.join(map(str, arr)) + ']'
+                else:
+                    # except for fmi3DoStep
+                    v_ = cast(v, POINTER(c_double))
+                    a += str(str(v_.contents.value))
             elif hasattr(v, '_obj'):
                 # byref object
                 if hasattr(v._obj, 'value'):

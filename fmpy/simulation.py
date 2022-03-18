@@ -786,27 +786,26 @@ def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, d
     is_fmi1 = model_description.fmiVersion == '1.0'
     is_fmi2 = model_description.fmiVersion == '2.0'
 
-    if is_fmi1:
-        callbacks = fmi1CallbackFunctions()
-        callbacks.logger         = fmi1CallbackLoggerTYPE(printLogMessage if logger is None else logger)
-        callbacks.allocateMemory = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
-        callbacks.freeMemory     = fmi1CallbackFreeMemoryTYPE(freeMemory)
-        callbacks.stepFinished   = None
-    elif is_fmi2:
-        callbacks = fmi2CallbackFunctions()
-        callbacks.logger         = fmi2CallbackLoggerTYPE(printLogMessage if logger is None else logger)
-        callbacks.allocateMemory = fmi2CallbackAllocateMemoryTYPE(allocateMemory)
-        callbacks.freeMemory     = fmi2CallbackFreeMemoryTYPE(freeMemory)
-    else:
-        callbacks = None
+    if logger is not None:
+        if is_fmi1:
+            callbacks = fmi1CallbackFunctions()
+            callbacks.logger         = fmi1CallbackLoggerTYPE(logger)
+            callbacks.allocateMemory = fmi1CallbackAllocateMemoryTYPE(calloc)
+            callbacks.freeMemory     = fmi1CallbackFreeMemoryTYPE(free)
+            callbacks.stepFinished   = None
+        elif is_fmi2:
+            callbacks = fmi2CallbackFunctions()
+            callbacks.logger         = fmi2CallbackLoggerTYPE(logger)
+            callbacks.allocateMemory = fmi2CallbackAllocateMemoryTYPE(calloc)
+            callbacks.freeMemory     = fmi2CallbackFreeMemoryTYPE(free)
 
-    if model_description.fmiVersion in ['1.0', '2.0']:
-        # add native proxy function that processes variadic arguments
         try:
             from .logging import addLoggerProxy
             addLoggerProxy(byref(callbacks))
         except Exception as e:
             print("Failed to add logger proxy function. %s" % e)
+    else:
+        callbacks = None
 
     if fmi_type in [None, 'CoSimulation'] and model_description.coSimulation is not None:
 

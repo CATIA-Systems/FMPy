@@ -88,16 +88,17 @@ def printLogMessage(component, instanceName, status, category, message):
     print("[%s] %s" % (label, message.decode("utf-8")))
 
 
-def allocateMemory(nobj, size):
-    return calloc(nobj, size)
+defaultCallbacks = fmi1CallbackFunctions()
+defaultCallbacks.logger = fmi1CallbackLoggerTYPE(printLogMessage)
+defaultCallbacks.allocateMemory = fmi1CallbackAllocateMemoryTYPE(calloc)
+defaultCallbacks.freeMemory = fmi1CallbackFreeMemoryTYPE(free)
+defaultCallbacks.stepFinished = None
 
-
-def freeMemory(obj):
-    free(obj)
-
-
-def stepFinished(componentEnvironment, status):
-    pass
+try:
+    from .logging import addLoggerProxy
+    addLoggerProxy(byref(defaultCallbacks))
+except Exception as e:
+    print(f"Failed to add logger proxy function. {e}")
 
 
 class FMICallException(Exception):
@@ -466,13 +467,7 @@ class FMU1Slave(_FMU1):
         fmuLocation = pathlib.Path(self.unzipDirectory).as_uri()
 
         if functions is None:
-            functions = fmi1CallbackFunctions()
-            functions.logger = fmi1CallbackLoggerTYPE(printLogMessage)
-            functions.allocateMemory = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
-            functions.freeMemory = fmi1CallbackFreeMemoryTYPE(freeMemory)
-            functions.stepFinished = None
-
-        self.callbacks = functions
+            functions = defaultCallbacks
 
         self.component = self.fmi1InstantiateSlave(self.instanceName.encode('UTF-8'),
                                                    self.guid.encode('UTF-8'),
@@ -623,17 +618,11 @@ class FMU1Model(_FMU1):
     def instantiate(self, functions=None, loggingOn=False):
 
         if functions is None:
-            functions = fmi1CallbackFunctions()
-            functions.logger = fmi1CallbackLoggerTYPE(printLogMessage)
-            functions.allocateMemory = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
-            functions.freeMemory = fmi1CallbackFreeMemoryTYPE(freeMemory)
-            functions.stepFinished = None
-
-        self.callbacks = functions
+            functions = defaultCallbacks
 
         self.component = self.fmi1InstantiateModel(self.instanceName.encode('UTF-8'),
                                                    self.guid.encode('UTF-8'),
-                                                   self.callbacks,
+                                                   functions,
                                                    fmi1True if loggingOn else fmi1False)
 
         if self.component is None:

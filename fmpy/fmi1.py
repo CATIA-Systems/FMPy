@@ -466,8 +466,7 @@ class FMU1Slave(_FMU1):
 
         fmuLocation = pathlib.Path(self.unzipDirectory).as_uri()
 
-        if functions is None:
-            functions = defaultCallbacks
+        self.callbacks = defaultCallbacks if functions is None else functions
 
         self.component = self.fmi1InstantiateSlave(self.instanceName.encode('UTF-8'),
                                                    self.guid.encode('UTF-8'),
@@ -476,7 +475,7 @@ class FMU1Slave(_FMU1):
                                                    timeout,
                                                    visible,
                                                    interactive,
-                                                   functions,
+                                                   self.callbacks,
                                                    fmi1True if loggingOn else fmi1False)
 
     # Inquire version numbers of header files
@@ -617,12 +616,11 @@ class FMU1Model(_FMU1):
 
     def instantiate(self, functions=None, loggingOn=False):
 
-        if functions is None:
-            functions = defaultCallbacks
+        self.callbacks = defaultCallbacks if functions is None else functions
 
         self.component = self.fmi1InstantiateModel(self.instanceName.encode('UTF-8'),
                                                    self.guid.encode('UTF-8'),
-                                                   functions,
+                                                   self.callbacks,
                                                    fmi1True if loggingOn else fmi1False)
 
         if self.component is None:

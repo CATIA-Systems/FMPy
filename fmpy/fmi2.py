@@ -240,14 +240,13 @@ class _FMU2(_FMU):
         kind = fmi2ModelExchange if isinstance(self, FMU2Model) else fmi2CoSimulation
         resourceLocation = pathlib.Path(self.unzipDirectory, 'resources').as_uri()
 
-        if callbacks is None:
-            callbacks = defaultCallbacks
+        self.callbacks = defaultCallbacks if callbacks is None else callbacks
 
         self.component = self.fmi2Instantiate(self.instanceName.encode('utf-8'),
                                               kind,
                                               self.guid.encode('utf-8'),
                                               resourceLocation.encode('utf-8'),
-                                              byref(callbacks),
+                                              byref(self.callbacks),
                                               fmi2True if visible else fmi2False,
                                               fmi2True if loggingOn else fmi2False)
 

@@ -1119,7 +1119,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
             else:
 
-                fmu.enterEventMode(stepEvent=step_event, rootsFound=roots_found, timeEvent=time_event)
+                fmu.enterEventMode()
 
                 if input_event:
                     input.apply(time=time, after_event=True)

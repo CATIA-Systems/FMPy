@@ -4,7 +4,7 @@
 #include "fmi3PlatformTypes.h"
 
 /*
-This header file defines the data and function types of FMI 3.0-beta.5.
+This header file defines the data and function types of FMI 3.0-rc.2.
 It must be used when compiling an FMU or an FMI importer.
 
 Copyright (C) 2011 MODELISAR consortium,
@@ -77,14 +77,6 @@ typedef enum {
     fmi3IntervalChanged
 } fmi3IntervalQualifier;
 /* end::IntervalQualifier[] */
-
-/* tag::EventQualifier[] */
-typedef enum {
-    fmi3EventFalse,
-    fmi3EventTrue,
-    fmi3EventUnknown
-} fmi3EventQualifier;
-/* end::EventQualifier[] */
 
 /* tag::CallbackLogMessage[] */
 typedef void  (*fmi3LogMessageCallback) (fmi3InstanceEnvironment instanceEnvironment,
@@ -190,12 +182,7 @@ typedef fmi3Status fmi3ExitInitializationModeTYPE(fmi3Instance instance);
 /* end::ExitInitializationMode[] */
 
 /* tag::EnterEventMode[] */
-typedef fmi3Status fmi3EnterEventModeTYPE(fmi3Instance instance,
-                                          fmi3EventQualifier stepEvent,
-                                          fmi3EventQualifier stateEvent,
-                                          const fmi3Int32 rootsFound[],
-                                          size_t nEventIndicators,
-                                          fmi3EventQualifier timeEvent);
+typedef fmi3Status fmi3EnterEventModeTYPE(fmi3Instance instance);
 /* end::EnterEventMode[] */
 
 /* tag::Terminate[] */

@@ -88,16 +88,17 @@ def printLogMessage(component, instanceName, status, category, message):
     print("[%s] %s" % (label, message.decode("utf-8")))
 
 
-def allocateMemory(nobj, size):
-    return calloc(nobj, size)
+defaultCallbacks = fmi1CallbackFunctions()
+defaultCallbacks.logger = fmi1CallbackLoggerTYPE(printLogMessage)
+defaultCallbacks.allocateMemory = fmi1CallbackAllocateMemoryTYPE(calloc)
+defaultCallbacks.freeMemory = fmi1CallbackFreeMemoryTYPE(free)
+defaultCallbacks.stepFinished = None
 
-
-def freeMemory(obj):
-    free(obj)
-
-
-def stepFinished(componentEnvironment, status):
-    pass
+try:
+    from .logging import addLoggerProxy
+    addLoggerProxy(byref(defaultCallbacks))
+except Exception as e:
+    print(f"Failed to add logger proxy function. {e}")
 
 
 class FMICallException(Exception):
@@ -196,22 +197,23 @@ class _FMU(object):
                     a += 'NULL'
                 else:
                     a += '[' + ', '.join(map(str, v)) + ']'
-            elif t == POINTER(c_double):
-                if hasattr(v, '__len__'):
-                    # c_double_Array_N
-                    a += '[' + ', '.join(map(str, v)) + ']'
-                else:
-                    if len(args) > i + 1:
-                        # double pointers are always flowed by the size of the array
-                        arr = v[:args[i + 1]]
-                        a += '[' + ', '.join(map(str, arr)) + ']'
-                    else:
-                        # except for fmi3DoStep
-                        v_ = cast(v, POINTER(c_double))
-                        a += str(str(v_.contents.value))
-            elif t == POINTER(c_int) and hasattr(v, '__len__'):
-                # c_long_Array_N
+            elif t in [POINTER(c_float), POINTER(c_double),
+                       POINTER(c_int8), POINTER(c_uint8),
+                       POINTER(c_int16), POINTER(c_uint16),
+                       POINTER(c_int32), POINTER(c_uint32),
+                       POINTER(c_int64), POINTER(c_uint64),
+                       POINTER(c_bool)] and hasattr(v, '__len__'):
+                # c_*_Array_N
                 a += '[' + ', '.join(map(str, v)) + ']'
+            elif t == POINTER(c_double) and not hasattr(v, '__len__'):
+                if len(args) > i + 1:
+                    # double pointers are always flowed by the size of the array
+                    arr = v[:args[i + 1]]
+                    a += '[' + ', '.join(map(str, arr)) + ']'
+                else:
+                    # except for fmi3DoStep
+                    v_ = cast(v, POINTER(c_double))
+                    a += str(str(v_.contents.value))
             elif hasattr(v, '_obj'):
                 # byref object
                 if hasattr(v._obj, 'value'):
@@ -464,14 +466,7 @@ class FMU1Slave(_FMU1):
 
         fmuLocation = pathlib.Path(self.unzipDirectory).as_uri()
 
-        if functions is None:
-            functions = fmi1CallbackFunctions()
-            functions.logger = fmi1CallbackLoggerTYPE(printLogMessage)
-            functions.allocateMemory = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
-            functions.freeMemory = fmi1CallbackFreeMemoryTYPE(freeMemory)
-            functions.stepFinished = None
-
-        self.callbacks = functions
+        self.callbacks = defaultCallbacks if functions is None else functions
 
         self.component = self.fmi1InstantiateSlave(self.instanceName.encode('UTF-8'),
                                                    self.guid.encode('UTF-8'),
@@ -480,7 +475,7 @@ class FMU1Slave(_FMU1):
                                                    timeout,
                                                    visible,
                                                    interactive,
-                                                   functions,
+                                                   self.callbacks,
                                                    fmi1True if loggingOn else fmi1False)
 
     # Inquire version numbers of header files
@@ -621,14 +616,7 @@ class FMU1Model(_FMU1):
 
     def instantiate(self, functions=None, loggingOn=False):
 
-        if functions is None:
-            functions = fmi1CallbackFunctions()
-            functions.logger = fmi1CallbackLoggerTYPE(printLogMessage)
-            functions.allocateMemory = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
-            functions.freeMemory = fmi1CallbackFreeMemoryTYPE(freeMemory)
-            functions.stepFinished = None
-
-        self.callbacks = functions
+        self.callbacks = defaultCallbacks if functions is None else functions
 
         self.component = self.fmi1InstantiateModel(self.instanceName.encode('UTF-8'),
                                                    self.guid.encode('UTF-8'),

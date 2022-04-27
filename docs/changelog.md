@@ -1,3 +1,14 @@
+## v0.3.8 (2022-04-27)
+
+### Bug fixes
+
+- Handle FMI 3.0 Integer types in logging and Recorder
+- Add default callbacks for FMI 1.0 and 2.0 (#384)
+
+### Enhancements
+
+- Update FMI 3.0 headers and schema to v3.0-rc.2
+
 ## v0.3.7 (2022-03-06)
 
 ### Bug fixes

@@ -60,12 +60,6 @@ fmi3IntervalNotYetKnown = 0
 fmi3IntervalUnchanged   = 1
 fmi3IntervalChanged     = 2
 
-# enum fmi3EventQualifier
-fmi3EventQualifier = c_int
-fmi3EventFalse     = 0
-fmi3EventTrue      = 1
-fmi3EventUnknown   = 2
-
 # callback functions
 fmi3LogMessageCallback         = CFUNCTYPE(None, fmi3InstanceEnvironment, fmi3Status, fmi3String, fmi3String)
 fmi3ClockUpdateCallback        = CFUNCTYPE(None, fmi3InstanceEnvironment)
@@ -169,14 +163,7 @@ class _FMU3(_FMU):
 
         self._fmi3Function('fmi3ExitInitializationMode', [(fmi3Instance, 'instance')])
 
-        self._fmi3Function('fmi3EnterEventMode', [
-            (fmi3Instance,       'instance'),
-            (fmi3EventQualifier, 'stepEvent'),
-            (fmi3EventQualifier, 'stateEvent'),
-            (POINTER(fmi3Int32), 'rootsFound'),
-            (c_size_t,           'nEventIndicators'),
-            (fmi3EventQualifier, 'timeEvent'),
-        ])
+        self._fmi3Function('fmi3EnterEventMode', [(fmi3Instance, 'instance')])
 
         self._fmi3Function('fmi3Terminate', [(fmi3Instance, 'instance')])
 
@@ -591,18 +578,8 @@ class _FMU3(_FMU):
     def setIntervalFraction(self, valueReferences, intervalCounters, resolutions):
         self.fmi3SetIntervalFraction(self.component, valueReferences, len(valueReferences), intervalCounters, resolutions, len(intervalCounters))
 
-    def enterEventMode(self, stepEvent=False, stateEvent=False, rootsFound=[], timeEvent=False):
-
-        rootsFound = (fmi3Int32 * len(rootsFound))(*rootsFound)
-
-        return self.fmi3EnterEventMode(
-            self.component,
-            fmi3EventQualifier(stepEvent),
-            fmi3EventQualifier(stateEvent),
-            rootsFound,
-            len(rootsFound),
-            fmi3EventQualifier(timeEvent)
-        )
+    def enterEventMode(self):
+        self.fmi3EnterEventMode(self.component)
 
     def updateDiscreteStates(self):
 

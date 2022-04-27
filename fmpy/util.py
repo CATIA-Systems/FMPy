@@ -754,7 +754,6 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
             compiler = 'gcc'
 
     include_dir = os.path.join(os.path.dirname(__file__), 'c-code')
-    preprocessor_definitions = []
 
     source_files = []
 
@@ -769,6 +768,12 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
     source_file_set = build_configuration.sourceFileSets[0]
 
     source_files += source_file_set.sourceFiles
+
+    preprocessor_definitions = []
+
+    if model_description.fmiVersion.startswith('3.0'):
+        preprocessor_definitions.append('FMI3_OVERRIDE_FUNCTION_PREFIX')
+        preprocessor_definitions.append('FMI3_FUNCTION_PREFIX=""')
 
     for definition in source_file_set.preprocessorDefinitions:
         literal = definition.name

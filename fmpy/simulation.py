@@ -112,7 +112,19 @@ class Recorder(object):
         if modelDescription.fmiVersion in ['1.0', '2.0']:
             types = [('Real', np.float64), ('Integer', np.int32), ('Boolean', np.bool_)]
         else:
-            types = [('Float64', np.float64), ('Int32', np.int32), ('UInt64', np.uint64), ('Boolean', np.bool_)]
+            types = [
+                ('Float32', np.float32),
+                ('Float64', np.float64),
+                ('Int8', np.int8),
+                ('UInt8', np.uint8),
+                ('Int16', np.int16),
+                ('UInt16', np.uint16),
+                ('Int32', np.int32),
+                ('UInt32', np.uint32),
+                ('Int64', np.int64),
+                ('UInt64', np.uint64),
+                ('Boolean', np.bool_),
+            ]
 
         # collect the columns
         for t, dt in types:
@@ -226,8 +238,16 @@ class Input(object):
             setters['Integer'] = (fmu.fmi2SetInteger, fmi2Integer)
             setters['Boolean'] = (fmu.fmi2SetBoolean, fmi2Boolean)
         else:
+            setters['Float32'] = (fmu.fmi3SetFloat32, fmi3.fmi3Float32)
             setters['Float64'] = (fmu.fmi3SetFloat64, fmi3.fmi3Float64)
+            setters['Int8']    = (fmu.fmi3SetInt8,    fmi3.fmi3Int8)
+            setters['UInt8']   = (fmu.fmi3SetUInt8,   fmi3.fmi3UInt8)
+            setters['Int16']   = (fmu.fmi3SetInt16,   fmi3.fmi3Int16)
+            setters['UInt16']  = (fmu.fmi3SetUInt16,  fmi3.fmi3UInt16)
             setters['Int32']   = (fmu.fmi3SetInt32,   fmi3.fmi3Int32)
+            setters['UInt32']  = (fmu.fmi3SetUInt32,  fmi3.fmi3UInt32)
+            setters['Int64']   = (fmu.fmi3SetInt64,   fmi3.fmi3Int64)
+            setters['UInt64']  = (fmu.fmi3SetUInt64,  fmi3.fmi3UInt64)
             setters['Boolean'] = (fmu.fmi3SetBoolean, fmi3.fmi3Boolean)
 
         from collections import defaultdict
@@ -289,6 +309,7 @@ class Input(object):
         if self.t is None:
             return
 
+        is_fmi1 = isinstance(self.fmu, _FMU1)
         is_fmi3 = isinstance(self.fmu, fmi3._FMU3)
 
         # continuous
@@ -308,7 +329,7 @@ class Input(object):
             for vrs, values, table, setter in self.discrete:
                 values[:], der_values = self.interpolate(time=time, t=self.t, table=table, discrete=True, after_event=after_event)
 
-                if values._type_ == c_int8:
+                if is_fmi1 and values._type_ == c_int8:
                     # special treatment for fmi1Boolean
                     setter(self.fmu.component, vrs, len(vrs), cast(values, POINTER(c_char)))
                 else:
@@ -765,27 +786,26 @@ def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, d
     is_fmi1 = model_description.fmiVersion == '1.0'
     is_fmi2 = model_description.fmiVersion == '2.0'
 
-    if is_fmi1:
-        callbacks = fmi1CallbackFunctions()
-        callbacks.logger         = fmi1CallbackLoggerTYPE(printLogMessage if logger is None else logger)
-        callbacks.allocateMemory = fmi1CallbackAllocateMemoryTYPE(allocateMemory)
-        callbacks.freeMemory     = fmi1CallbackFreeMemoryTYPE(freeMemory)
-        callbacks.stepFinished   = None
-    elif is_fmi2:
-        callbacks = fmi2CallbackFunctions()
-        callbacks.logger         = fmi2CallbackLoggerTYPE(printLogMessage if logger is None else logger)
-        callbacks.allocateMemory = fmi2CallbackAllocateMemoryTYPE(allocateMemory)
-        callbacks.freeMemory     = fmi2CallbackFreeMemoryTYPE(freeMemory)
-    else:
-        callbacks = None
+    if logger is not None:
+        if is_fmi1:
+            callbacks = fmi1CallbackFunctions()
+            callbacks.logger         = fmi1CallbackLoggerTYPE(logger)
+            callbacks.allocateMemory = fmi1CallbackAllocateMemoryTYPE(calloc)
+            callbacks.freeMemory     = fmi1CallbackFreeMemoryTYPE(free)
+            callbacks.stepFinished   = None
+        elif is_fmi2:
+            callbacks = fmi2CallbackFunctions()
+            callbacks.logger         = fmi2CallbackLoggerTYPE(logger)
+            callbacks.allocateMemory = fmi2CallbackAllocateMemoryTYPE(calloc)
+            callbacks.freeMemory     = fmi2CallbackFreeMemoryTYPE(free)
 
-    if model_description.fmiVersion in ['1.0', '2.0']:
-        # add native proxy function that processes variadic arguments
         try:
             from .logging import addLoggerProxy
             addLoggerProxy(byref(callbacks))
         except Exception as e:
             print("Failed to add logger proxy function. %s" % e)
+    else:
+        callbacks = None
 
     if fmi_type in [None, 'CoSimulation'] and model_description.coSimulation is not None:
 
@@ -1099,7 +1119,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
             else:
 
-                fmu.enterEventMode(stepEvent=step_event, rootsFound=roots_found, timeEvent=time_event)
+                fmu.enterEventMode()
 
                 if input_event:
                     input.apply(time=time, after_event=True)

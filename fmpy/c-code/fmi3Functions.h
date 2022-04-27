@@ -2,7 +2,7 @@
 #define fmi3Functions_h
 
 /*
-This header file declares the functions of FMI 3.0-beta.5.
+This header file declares the functions of FMI 3.0-rc.2.
 It must be used when compiling an FMU.
 
 In order to have unique function names even if several FMUs
@@ -61,9 +61,23 @@ extern "C" {
 #include <stdlib.h>
 
 /*
-Export FMI3 API functions on Windows and under GCC.
-This definition has been changed to always export the symbols.
+Allow override of FMI3_FUNCTION_PREFIX: If FMI3_OVERRIDE_FUNCTION_PREFIX
+is defined, then FMI3_ACTUAL_FUNCTION_PREFIX will be used, if defined,
+or no prefix if undefined. Otherwise FMI3_FUNCTION_PREFIX will be used,
+if defined.
 */
+#if !defined(FMI3_OVERRIDE_FUNCTION_PREFIX) && defined(FMI3_FUNCTION_PREFIX)
+  #define FMI3_ACTUAL_FUNCTION_PREFIX FMI3_FUNCTION_PREFIX
+#endif
+
+/*
+Export FMI3 API functions on Windows and under GCC.
+If custom linking is desired then the FMI3_Export must be
+defined before including this file. For instance,
+it may be set to __declspec(dllimport).
+*/
+#if !defined(FMI3_Export)
+  #if !defined(FMI3_ACTUAL_FUNCTION_PREFIX)
     #if defined _WIN32 || defined __CYGWIN__
      /* Note: both gcc & MSVC on Windows support this syntax. */
         #define FMI3_Export __declspec(dllexport)
@@ -74,15 +88,22 @@ This definition has been changed to always export the symbols.
         #define FMI3_Export
       #endif
     #endif
+  #else
+    #define FMI3_Export
+  #endif
+#endif
 
-/*
-Macro to construct the real function name.
-This definition has been changed to add no prefix.
-*/
+/* Macros to construct the real function name (prepend function name by FMI3_FUNCTION_PREFIX) */
+#if defined(FMI3_ACTUAL_FUNCTION_PREFIX)
+  #define fmi3Paste(a,b)     a ## b
+  #define fmi3PasteB(a,b)    fmi3Paste(a,b)
+  #define fmi3FullName(name) fmi3PasteB(FMI3_ACTUAL_FUNCTION_PREFIX, name)
+#else
   #define fmi3FullName(name) name
+#endif
 
 /* FMI version */
-#define fmi3Version "3.0-beta.5"
+#define fmi3Version "3.0-rc.2"
 
 /***************************************************
 Common Functions

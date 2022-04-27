@@ -46,18 +46,6 @@ fmi2LastSuccessfulTime = 2
 fmi2Terminated         = 3
 
 
-def allocateMemory(nobj, size):
-    return calloc(nobj, size)
-
-
-def freeMemory(obj):
-    free(obj)
-
-
-def stepFinished(componentEnvironment, status):
-    pass
-
-
 class fmi2CallbackFunctions(Structure):
 
     _fields_ = [('logger',               fmi2CallbackLoggerTYPE),
@@ -75,6 +63,18 @@ class fmi2EventInfo(Structure):
                 ('valuesOfContinuousStatesChanged',   fmi2Boolean),
                 ('nextEventTimeDefined',              fmi2Boolean),
                 ('nextEventTime',                     fmi2Real)]
+
+
+defaultCallbacks                = fmi2CallbackFunctions()
+defaultCallbacks.logger         = fmi2CallbackLoggerTYPE(printLogMessage)
+defaultCallbacks.allocateMemory = fmi2CallbackAllocateMemoryTYPE(calloc)
+defaultCallbacks.freeMemory     = fmi2CallbackFreeMemoryTYPE(free)
+
+try:
+    from .logging import addLoggerProxy
+    addLoggerProxy(byref(defaultCallbacks))
+except Exception as e:
+    print(f"Failed to add logger proxy function. {e}")
 
 
 class _FMU2(_FMU):
@@ -240,13 +240,7 @@ class _FMU2(_FMU):
         kind = fmi2ModelExchange if isinstance(self, FMU2Model) else fmi2CoSimulation
         resourceLocation = pathlib.Path(self.unzipDirectory, 'resources').as_uri()
 
-        if callbacks is None:
-            callbacks = fmi2CallbackFunctions()
-            callbacks.logger = fmi2CallbackLoggerTYPE(printLogMessage)
-            callbacks.allocateMemory = fmi2CallbackAllocateMemoryTYPE(allocateMemory)
-            callbacks.freeMemory = fmi2CallbackFreeMemoryTYPE(freeMemory)
-
-        self.callbacks = callbacks
+        self.callbacks = defaultCallbacks if callbacks is None else callbacks
 
         self.component = self.fmi2Instantiate(self.instanceName.encode('utf-8'),
                                               kind,

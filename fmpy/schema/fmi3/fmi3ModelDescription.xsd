@@ -102,7 +102,13 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 </xs:element>
                 <xs:element ref="Annotations" minOccurs="0"/>
             </xs:sequence>
-            <xs:attribute name="fmiVersion" fixed="3.0-rc.2" use="required"/>
+            <xs:attribute name="fmiVersion" use="required">
+                <xs:simpleType>
+                    <xs:restriction base="xs:normalizedString">
+                        <xs:pattern value="3[.](0|[1-9][0-9]*)([.](0|[1-9][0-9]*))?(-.+)?"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
             <xs:attribute name="modelName" type="xs:string" use="required"/>
             <xs:attribute name="instantiationToken" type="xs:normalizedString" use="required"/>
             <xs:attribute name="description" type="xs:string"/>

@@ -13,8 +13,8 @@ def resources_dir():
 @pytest.fixture(scope='session')
 def reference_fmus_dist_dir(resources_dir):
 
-    version = '0.0.15'
-    checksum = '845a065c5dff16fee59211d52e63f1207c728fce478876aa9e50a6ba2ec15fcb'
+    version = '0.0.16'
+    checksum = '9817c0ee19c8648ae681a4529bac805542743c29ab81f643165e2c828eb2beed'
 
     zip_file = download_file(
         url=f'https://github.com/modelica/Reference-FMUs/releases/download/v{version}/Reference-FMUs-{version}.zip',

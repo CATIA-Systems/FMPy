@@ -1,3 +1,9 @@
+## v0.3.9 (2022-05-11)
+
+### Enhancements
+
+- Update FMI API to v3.0
+
 ## v0.3.8 (2022-04-27)
 
 ### Bug fixes

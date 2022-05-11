@@ -439,7 +439,7 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
 
     is_fmi1 = fmiVersion == '1.0'
     is_fmi2 = fmiVersion == '2.0'
-    is_fmi3 = fmiVersion.startswith('3.0')
+    is_fmi3 = fmiVersion.startswith('3.')
 
     if not is_fmi1 and not is_fmi2 and not is_fmi3:
         raise Exception("Unsupported FMI version: %s" % fmiVersion)

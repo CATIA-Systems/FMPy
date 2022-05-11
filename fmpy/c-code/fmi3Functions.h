@@ -2,7 +2,7 @@
 #define fmi3Functions_h
 
 /*
-This header file declares the functions of FMI 3.0-rc.2.
+This header file declares the functions of FMI 3.0.
 It must be used when compiling an FMU.
 
 In order to have unique function names even if several FMUs
@@ -103,7 +103,7 @@ it may be set to __declspec(dllimport).
 #endif
 
 /* FMI version */
-#define fmi3Version "3.0-rc.2"
+#define fmi3Version "3.0"
 
 /***************************************************
 Common Functions

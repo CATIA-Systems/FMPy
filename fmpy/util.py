@@ -848,8 +848,8 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
             if compiler_options is None:
                 compiler_options = ''
 
-            command = f'gcc -c {compiler_options} -I. -I{include_dir} {definitions} {sources}'
-            command += f' && gcc -shared -o{target} *.o -lm'
+            command = f'cc -c {compiler_options} -arch x86_64 -arch arm64 -I. -I{include_dir} {definitions} {sources}'
+            command += f' && cc -shared -arch x86_64 -arch arm64 -o{target} *.o -lm'
 
         else:
             raise Exception("Unsupported target platform for selected compiler: '%s'" % compiler)

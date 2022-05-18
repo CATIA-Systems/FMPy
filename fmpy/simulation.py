@@ -786,14 +786,15 @@ def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, d
     is_fmi1 = model_description.fmiVersion == '1.0'
     is_fmi2 = model_description.fmiVersion == '2.0'
 
-    if logger is not None:
+    if logger is not None and (is_fmi1 or is_fmi2):
+
         if is_fmi1:
             callbacks = fmi1CallbackFunctions()
             callbacks.logger         = fmi1CallbackLoggerTYPE(logger)
             callbacks.allocateMemory = fmi1CallbackAllocateMemoryTYPE(calloc)
             callbacks.freeMemory     = fmi1CallbackFreeMemoryTYPE(free)
             callbacks.stepFinished   = None
-        elif is_fmi2:
+        else:
             callbacks = fmi2CallbackFunctions()
             callbacks.logger         = fmi2CallbackLoggerTYPE(logger)
             callbacks.allocateMemory = fmi2CallbackAllocateMemoryTYPE(calloc)
@@ -803,7 +804,7 @@ def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, d
             from .logging import addLoggerProxy
             addLoggerProxy(byref(callbacks))
         except Exception as e:
-            print("Failed to add logger proxy function. %s" % e)
+            print(f"Failed to add logger proxy function. {e}")
     else:
         callbacks = None
 

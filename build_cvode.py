@@ -47,6 +47,7 @@ for platform, cmake_options, platform_tuple in generators:
         '-D', f'CMAKE_INSTALL_PREFIX=sundials-5.3.0/{platform}/static/install',
         '-D', 'CMAKE_USER_MAKE_RULES_OVERRIDE=../OverrideMSVCFlags.cmake',
         '-D', 'EXAMPLES_ENABLE_C=OFF',
+        '-D', 'CMAKE_OSX_ARCHITECTURES=arm64;x86_64',
         '-S', 'sundials-5.3.0',
         '-B', f'sundials-5.3.0/{platform}/static'
     ] + cmake_options)
@@ -67,6 +68,7 @@ for platform, cmake_options, platform_tuple in generators:
         '-D', 'EXAMPLES_ENABLE_C=OFF',
         '-D', f'CMAKE_INSTALL_PREFIX=sundials-5.3.0/{platform}/dynamic/install',
         '-D', 'CMAKE_USER_MAKE_RULES_OVERRIDE=../OverrideMSVCFlags.cmake',
+        '-D', 'CMAKE_OSX_ARCHITECTURES=arm64;x86_64',
         '-S', 'sundials-5.3.0',
         '-B', f'sundials-5.3.0/{platform}/dynamic'
     ] + cmake_options)

@@ -29,6 +29,7 @@ for platform, cmake_options, platform_tuple in generators:
     check_call([
         'cmake',
         '-D', f'CVODE_INSTALL_DIR=../sundials-5.3.0/{platform}/static/install',
+        '-D', 'CMAKE_OSX_ARCHITECTURES=arm64;x86_64',
         '-S', 'src',
         '-B', build_dir
     ] + cmake_options)

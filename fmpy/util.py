@@ -754,6 +754,8 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
     if compiler is None:
         if target_platform in ['win32', 'win64', 'x86_64-windows']:
             compiler = 'vc'
+        elif target_platform in ['darwin64', 'x86_64-darwin', 'aarch64-darwin']:
+            compiler = 'clang'
         else:
             compiler = 'gcc'
 
@@ -841,20 +843,28 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
             command = f'{cc} -c {compiler_options} -I. -I{include_dir} {definitions} {sources}'
             command += f' && {cc} -static-libgcc -shared -o{target} *.o -lm'
 
-        elif target_platform in ['darwin64', 'x86_64-darwin']:
+        else:
+            raise Exception(f'The target platform "{target_platform}" is not supported for the gcc compiler.')
 
-            target = model_identifier + '.dylib'
+    elif compiler == 'clang':
+
+        definitions = ' '.join(f' -D{d}' for d in preprocessor_definitions)
+
+        if target_platform in ['darwin64', 'x86_64-darwin']:
+
+            target = f'{model_identifier}.dylib'
 
             if compiler_options is None:
-                compiler_options = ''
+                compiler_options = '-arch x86_64 -arch arm64'
 
-            command = f'cc -c {compiler_options} -arch x86_64 -arch arm64 -I. -I{include_dir} {definitions} {sources}'
-            command += f' && cc -shared -arch x86_64 -arch arm64 -o{target} *.o -lm'
+            command = f'clang -c {compiler_options} -I. -I{include_dir} {definitions} {sources}'
+            command += f' && clang -shared -arch x86_64 -arch arm64 -o{target} *.o -lm'
 
         else:
-            raise Exception("Unsupported target platform for selected compiler: '%s'" % compiler)
+            raise Exception(f'The target platform "{target_platform}" is not supported for the clang compiler.')
+
     else:
-        raise Exception("Unsupported compiler: '%s'" % compiler)
+        raise Exception(f'The compiler "{compiler}" is not supported.')
 
     print(sources_dir)
     print(command)

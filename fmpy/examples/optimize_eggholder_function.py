@@ -9,7 +9,7 @@ velocities and a plot is created in which the different solution paths can be tr
 from builtins import ValueError
 
 import psutil
-from scipy.optimize import differential_evolution, brute, shgo, dual_annealing
+from scipy.optimize import differential_evolution, shgo, dual_annealing
 from math import sin, sqrt
 import numpy as np
 import matplotlib.pyplot as plt
@@ -58,7 +58,7 @@ def optimize_eggholder(method='differential_evolution', use_fmu=True):
     """ Optimizes the Eggholder function and returns the optimization results.
 
     Inputs:
-        - method:   Select optimization algorithm. Selection options are: 'differential_evolution', 'brute', 'shgo' and
+        - method:   Select optimization algorithm. Selection options are: 'differential_evolution', 'shgo' and
                     'dual_annealing'.
         - use_fmu:  Select whether the FMU or the pure Python implementation should be used for the optimization.
     """
@@ -88,22 +88,6 @@ def optimize_eggholder(method='differential_evolution', use_fmu=True):
                                          polish=True,
                                          workers=workers,
                                          updating='deferred')
-    elif method == 'brute':
-        if use_fmu:
-            res = brute(func=simulate_eggholder_fmu,
-                        ranges=bounds,
-                        args=(unzipdir, model_description),
-                        Ns=200,
-                        full_output=True,
-                        finish=None,
-                        workers=workers)
-        else:
-            res = brute(func=eggholder,
-                        ranges=bounds,
-                        Ns=200,
-                        full_output=True,
-                        finish=None,
-                        workers=workers)
     elif method == 'shgo':
         if use_fmu:
             res = shgo(func=simulate_eggholder_fmu,
@@ -228,28 +212,11 @@ def toc():
 if __name__ == "__main__":
     print(f"Global minimum of eggholder function is {eggholder([512, 404.2319])} at [512, 404.2319].\n")
 
-    tic()
-    res = optimize_eggholder(method='differential_evolution', use_fmu=True)
-    print(f"Optimization method 'differential_evolution' returns {res.fun} at {res.x}.")
-    toc()
-    print('')
-
-    tic()
-    res = optimize_eggholder(method='brute', use_fmu=True)
-    print(f"Optimization method 'brute' returns {res[1]} at {res[0]}.")
-    toc()
-    print('')
-
-    tic()
-    res = optimize_eggholder(method='shgo', use_fmu=True)
-    print(f"Optimization method 'shgo' returns {res.fun} at {res.x}.")
-    toc()
-    print('')
-
-    tic()
-    res = optimize_eggholder(method='dual_annealing', use_fmu=True)
-    print(f"Optimization method 'dual_annealing' returns {res.fun} at {res.x}.")
-    toc()
-    print('')
+    for method in ['differential_evolution', 'shgo', 'dual_annealing']:
+        tic()
+        res = optimize_eggholder(method=method, use_fmu=True)
+        print(f"Optimization method {method} returns {res.fun} at {res.x}.")
+        toc()
+        print('')
 
     plot_eggholder(trace_de=True, trace_shgo=True, trace_da=True)

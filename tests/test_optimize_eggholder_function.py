@@ -20,9 +20,6 @@ class TestOptimizeEggholderFunction(unittest.TestCase):
         res = example.optimize_eggholder(method='differential_evolution', use_fmu=True)
         self.assertEqual(res.fun, -959.640662720845)
 
-        res = example.optimize_eggholder(method='brute', use_fmu=True)
-        self.assertEqual(res[1], -959.5438520986913)
-
         res = example.optimize_eggholder(method='shgo', use_fmu=True)
         self.assertEqual(res.fun, -959.6406627208441)
 
@@ -31,9 +28,6 @@ class TestOptimizeEggholderFunction(unittest.TestCase):
 
         res = example.optimize_eggholder(method='differential_evolution', use_fmu=False)
         self.assertEqual(res.fun, -959.640662720845)
-
-        res = example.optimize_eggholder(method='brute', use_fmu=False)
-        self.assertEqual(res[1], -959.5438520986913)
 
         res = example.optimize_eggholder(method='shgo', use_fmu=False)
         self.assertEqual(res.fun, -959.6406627208441)

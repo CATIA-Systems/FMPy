@@ -1,8 +1,7 @@
 """This example shows the usage of a FMU in parameter optimizations.
 
-The global minimum of the Eggholder function is searched for. The Eggholder function is a test function for optimization
-algorithms. It is implemented in two ways, in Python and in form of a FMU (written in Modelica, compiled with
-Dymola 2023).
+The global minimum of the Eggholder function is searched for. It is implemented in two ways, in Python and in form of a
+FMU (written in Modelica, compiled with Dymola 2023).
 
 Different optimization algorithms from the scipy.optimize package are compared with respect to their convergence
 velocities and a plot is created in which the different solution paths can be traced."""
@@ -11,7 +10,6 @@ from builtins import ValueError
 
 import psutil
 from scipy.optimize import differential_evolution, brute, shgo, dual_annealing
-from scipy import optimize
 from math import sin, sqrt
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,6 +17,7 @@ from matplotlib import cm
 import fmpy
 from fmpy import read_model_description, instantiate_fmu
 from time import time
+import os
 
 
 workers = psutil.cpu_count(logical=False)
@@ -65,7 +64,8 @@ def optimize_eggholder(method='differential_evolution', use_fmu=True):
     """
 
     if use_fmu:
-        unzipdir = fmpy.extract('../../tests/resources/eggholder.fmu')
+        #unzipdir = fmpy.extract('../../tests/resources/eggholder.fmu')
+        unzipdir = fmpy.extract(os.path.join(os.path.dirname(__file__), '..', '..', 'tests', 'resources', 'eggholder.fmu'))
         model_description = read_model_description(unzipdir)
 
     if method == 'differential_evolution':
@@ -132,11 +132,11 @@ def optimize_eggholder(method='differential_evolution', use_fmu=True):
     return res
 
 
-_x_path = list()
+_x_trace = list()
 
 
 def _callback(x, convergence=None, f=None, context=None):
-    _x_path.append(x)
+    _x_trace.append(x)
 
 
 def plot_eggholder(trace_de=False, trace_shgo=False, trace_da=False):
@@ -173,37 +173,38 @@ def plot_eggholder(trace_de=False, trace_shgo=False, trace_da=False):
                                callback=_callback,
                                workers=workers,
                                updating='deferred')
-        plt.plot([i[0] for i in _x_path],
-                 [i[1] for i in _x_path],
+        plt.plot([i[0] for i in _x_trace],
+                 [i[1] for i in _x_trace],
                  marker='x',
                  color='dodgerblue',
                  label='differential_evolution')
-        _x_path.clear()
+        _x_trace.clear()
 
     if trace_shgo:
         shgo(func=eggholder,
              bounds=bounds,
              n=64,
              sampling_method='sobol',
-             callback=_callback)
-        plt.plot([i[0] for i in _x_path],
-                 [i[1] for i in _x_path],
+             callback=_callback,
+             minimizer_kwargs={'disp': False})
+        plt.plot([i[0] for i in _x_trace],
+                 [i[1] for i in _x_trace],
                  marker='x',
                  color='orange',
                  label='shgo')
-        _x_path.clear()
+        _x_trace.clear()
 
     if trace_da:
         dual_annealing(func=eggholder,
                        bounds=bounds,
                        seed=4,
                        callback=_callback)
-        plt.plot([i[0] for i in _x_path],
-                 [i[1] for i in _x_path],
+        plt.plot([i[0] for i in _x_trace],
+                 [i[1] for i in _x_trace],
                  marker='x',
                  color='orchid',
                  label='dual_annealing')
-        _x_path.clear()
+        _x_trace.clear()
 
     plt.plot(512, 404.2319, marker='o', color='r', label='global minimum')
     plt.legend()

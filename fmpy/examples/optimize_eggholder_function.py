@@ -64,7 +64,6 @@ def optimize_eggholder(method='differential_evolution', use_fmu=True):
     """
 
     if use_fmu:
-        #unzipdir = fmpy.extract('../../tests/resources/eggholder.fmu')
         unzipdir = fmpy.extract(os.path.join(os.path.dirname(__file__), '..', '..', 'tests', 'resources', 'eggholder.fmu'))
         model_description = read_model_description(unzipdir)
 

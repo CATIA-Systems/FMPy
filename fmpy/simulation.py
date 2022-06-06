@@ -767,7 +767,7 @@ def simulate_fmu(filename,
     return result
 
 
-def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, debug_logging=False, logger=None, fmi_call_logger=None, library_path=None, early_return_allowed=False, event_mode_used=False):
+def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, debug_logging=False, logger=None, fmi_call_logger=None, library_path=None, early_return_allowed=False, event_mode_used=False, intermediate_update=None):
     """
     Create an instance of fmpy.fmi1._FMU (see simulate_fmu() for documentation of the parameters).
     """
@@ -821,7 +821,8 @@ def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, d
         else:
             fmu = fmi3.FMU3Slave(**fmu_args)
             fmu.instantiate(visible=visible, loggingOn=debug_logging, eventModeUsed=event_mode_used,
-                            earlyReturnAllowed=early_return_allowed, logMessage=logger)
+                            earlyReturnAllowed=early_return_allowed, logMessage=logger,
+                            intermediateUpdate=intermediate_update)
 
     elif fmi_type in [None, 'ModelExchange'] and model_description.modelExchange is not None:
 

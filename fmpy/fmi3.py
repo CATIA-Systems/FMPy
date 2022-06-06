@@ -68,18 +68,6 @@ fmi3LockPreemptionCallback     = CFUNCTYPE(None)
 fmi3UnlockPreemptionCallback   = CFUNCTYPE(None)
 
 
-def intermediateUpdate(instanceEnvironment: fmi3InstanceEnvironment,
-                       intermediateUpdateTime: fmi3Float64,
-                       intermediateVariableSetRequested: fmi3Boolean,
-                       intermediateVariableGetAllowed: fmi3Boolean,
-                       intermediateStepFinished: fmi3Boolean,
-                       canReturnEarly: fmi3Boolean,
-                       earlyReturnRequested: POINTER(fmi3Boolean),
-                       earlyReturnTime: POINTER(fmi3Float64)) -> None:
-
-    earlyReturnRequested.contents = fmi3False
-
-
 def printLogMessage(instanceEnvironment: fmi3InstanceEnvironment,
                     status: fmi3Status,
                     category: fmi3String,
@@ -957,11 +945,15 @@ class FMU3Slave(_FMU3):
 
         super(FMU3Slave, self).__init__(**kwargs)
 
-    def instantiate(self, visible=False, loggingOn=False, eventModeUsed=False, earlyReturnAllowed=False, logMessage=None):
+    def instantiate(self, visible=False, loggingOn=False, eventModeUsed=False, earlyReturnAllowed=False, logMessage=None, intermediateUpdate=None):
 
         # save callbacks from GC
         self.logMessage = fmi3LogMessageCallback(printLogMessage if logMessage is None else logMessage)
-        self.intermediateUpdate = fmi3IntermediateUpdateCallback(intermediateUpdate)
+
+        if intermediateUpdate is None:
+            self.intermediateUpdate = fmi3IntermediateUpdateCallback()
+        else:
+            self.intermediateUpdate = fmi3IntermediateUpdateCallback(intermediateUpdate)
 
         resourcePath = os.path.join(self.unzipDirectory, 'resources') + os.path.sep
 

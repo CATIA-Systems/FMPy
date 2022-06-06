@@ -229,7 +229,7 @@ def validate_result(result, reference, stop_time=None):
     return rel_out
 
 
-def create_plotly_figure(result, names=None, events=False, time_unit=None):
+def create_plotly_figure(result, names=None, events=False, time_unit=None, markers=False):
 
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
@@ -311,15 +311,21 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None):
             y = y * display_unit.factor + display_unit.offset
             unit = display_unit.name
 
-        line = dict(color='#636efa', width=1)
+        args = dict(
+            x=time,
+            name=name,
+            line=dict(color='#636efa', width=1),
+            mode='lines+markers' if markers else None,
+            marker=dict(color='#636efa', size=5)
+        )
 
         if y.dtype in [np.float32, np.float64]:
-            trace = go.Scatter(x=time, y=y, name=name, line=line)
+            trace = go.Scatter(y=y, **args)
         elif y.dtype == bool:
-            trace = go.Scatter(x=time, y=y.astype(int), name=name, line=line, fill='tozeroy', fillcolor='rgba(0,0,255,0.1)', line_shape='hv')
+            trace = go.Scatter(y=y.astype(int), fill='tozeroy', fillcolor='rgba(0,0,255,0.1)', line_shape='hv', **args)
             fig['layout'][f'yaxis{i + 1}'].update(tickvals=[0, 1], ticktext=['false', 'true'], range=[-0.1, 1.1], fixedrange=True)
         else:
-            trace = go.Scatter(x=time, y=y, name=name, line=line, line_shape='hv')
+            trace = go.Scatter(y=y, line_shape='hv', **args)
 
         fig.add_trace(trace, row=i + 1, col=1)
 
@@ -330,22 +336,19 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None):
             fig.add_vline(x=t_event, line={'color': '#fbe424', 'width': 1})
 
     fig['layout']['height'] = 160 * len(names) + 30 * max(0, 5 - len(names))
-    fig['layout']['margin']['t'] = 30
-    fig['layout']['margin']['b'] = 0
-    fig['layout']['margin']['r'] = 30
-    fig['layout']['plot_bgcolor'] = 'rgba(0,0,0,0)'
     fig['layout'][f'xaxis{len(names)}'].update(title=f'time [{time_unit}]')
 
-    axes_attrs = dict(showgrid=True, gridwidth=1, ticklen=0, gridcolor='LightGrey', linecolor='black', showline=True, zerolinewidth=1, zerolinecolor='LightGrey')
-    fig.update_xaxes(zeroline=True, **axes_attrs)
+    axes_attrs = dict(showgrid=True, gridwidth=1, ticklen=0, gridcolor='LightGrey', linecolor='black', showline=True,
+                      zerolinewidth=1, zerolinecolor='LightGrey')
+    fig.update_xaxes(range=(time[0], time[-1]), **axes_attrs)
     fig.update_yaxes(**axes_attrs)
 
-    fig.update_layout(showlegend=False)
+    fig.update_layout(showlegend=False, margin=dict(t=30, b=0, r=30), plot_bgcolor='rgba(0,0,0,0)')
 
     return fig
 
 
-def plot_result(result, reference=None, names=None, filename=None, window_title=None, events=False):
+def plot_result(result, reference=None, names=None, filename=None, window_title=None, events=False, markers=False):
     """ Plot a collection of time series.
 
     Parameters:
@@ -355,12 +358,13 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
         filename:     when provided the plot is saved as `filename` instead of showing the figure
         window_title: title for the figure window
         events:       draw vertical lines at events
+        markers:      show markers
     """
 
     from . import plot_library
 
     if plot_library == 'plotly':
-        figure = create_plotly_figure(result, names=names, events=events)
+        figure = create_plotly_figure(result, names=names, events=events, markers=markers)
         if filename is None:
             figure.show()
         else:

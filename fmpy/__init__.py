@@ -8,8 +8,8 @@ from typing import Union, IO, List
 
 __version__ = '0.3.9'
 
-# experimental
-plot_library = 'matplotlib'  # 'plotly'
+# library to use in plot_result()
+plot_library = 'plotly'  # or 'matplotlib'
 
 
 # determine the platform

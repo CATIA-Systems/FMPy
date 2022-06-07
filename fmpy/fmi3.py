@@ -68,18 +68,6 @@ fmi3LockPreemptionCallback     = CFUNCTYPE(None)
 fmi3UnlockPreemptionCallback   = CFUNCTYPE(None)
 
 
-def intermediateUpdate(instanceEnvironment: fmi3InstanceEnvironment,
-                       intermediateUpdateTime: fmi3Float64,
-                       intermediateVariableSetRequested: fmi3Boolean,
-                       intermediateVariableGetAllowed: fmi3Boolean,
-                       intermediateStepFinished: fmi3Boolean,
-                       canReturnEarly: fmi3Boolean,
-                       earlyReturnRequested: POINTER(fmi3Boolean),
-                       earlyReturnTime: POINTER(fmi3Float64)) -> None:
-
-    earlyReturnRequested.contents = fmi3False
-
-
 def printLogMessage(instanceEnvironment: fmi3InstanceEnvironment,
                     status: fmi3Status,
                     category: fmi3String,
@@ -842,7 +830,7 @@ class _FMU3(_FMU):
 
     # Getting partial derivatives
 
-    def getDirectionalDerivative(self, unknowns: Sequence[int], knowns: Sequence[int], seed: Sequence[float], nSensitivity: int) -> List[float]:
+    def getDirectionalDerivative(self, unknowns: Sequence[int], knowns: Sequence[int], seed: Sequence[float], nSensitivity: int = None) -> List[float]:
         """ Get the directional derivatives
 
         Parameters:
@@ -858,6 +846,10 @@ class _FMU3(_FMU):
         unknowns    = (fmi3ValueReference * len(unknowns))(*unknowns)
         knowns      = (fmi3ValueReference * len(knowns))(*knowns)
         seed        = (fmi3Float64 * len(seed))(*seed)
+
+        if nSensitivity is None:
+            nSensitivity = len(unknowns)
+
         sensitivity = (fmi3Float64 * nSensitivity)()
 
         self.fmi3GetDirectionalDerivative(self.component, unknowns, len(unknowns), knowns, len(knowns), seed, len(seed),
@@ -865,7 +857,7 @@ class _FMU3(_FMU):
 
         return list(sensitivity)
 
-    def getAdjointDerivative(self, unknowns: Sequence[int], knowns: Sequence[int], seed: Sequence[float], nSensitivity: int) -> List[float]:
+    def getAdjointDerivative(self, unknowns: Sequence[int], knowns: Sequence[int], seed: Sequence[float], nSensitivity: int = None) -> List[float]:
         """ Get adjoint derivatives
 
         Parameters:
@@ -881,6 +873,10 @@ class _FMU3(_FMU):
         unknowns    = (fmi3ValueReference * len(unknowns))(*unknowns)
         knowns      = (fmi3ValueReference * len(knowns))(*knowns)
         seed        = (fmi3Float64 * len(seed))(*seed)
+
+        if nSensitivity is None:
+            nSensitivity = len(unknowns)
+
         sensitivity = (fmi3Float64 * nSensitivity)()
 
         self.fmi3GetAdjointDerivative(self.component, unknowns, len(unknowns), knowns, len(knowns), seed, len(seed),
@@ -957,11 +953,15 @@ class FMU3Slave(_FMU3):
 
         super(FMU3Slave, self).__init__(**kwargs)
 
-    def instantiate(self, visible=False, loggingOn=False, eventModeUsed=False, earlyReturnAllowed=False, logMessage=None):
+    def instantiate(self, visible=False, loggingOn=False, eventModeUsed=False, earlyReturnAllowed=False, logMessage=None, intermediateUpdate=None):
 
         # save callbacks from GC
         self.logMessage = fmi3LogMessageCallback(printLogMessage if logMessage is None else logMessage)
-        self.intermediateUpdate = fmi3IntermediateUpdateCallback(intermediateUpdate)
+
+        if intermediateUpdate is None:
+            self.intermediateUpdate = fmi3IntermediateUpdateCallback()
+        else:
+            self.intermediateUpdate = fmi3IntermediateUpdateCallback(intermediateUpdate)
 
         resourcePath = os.path.join(self.unzipDirectory, 'resources') + os.path.sep
 

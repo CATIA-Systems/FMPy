@@ -57,7 +57,7 @@ if sys.maxsize > 2**32:
     architecture = 'x86_64'
 else:
     platform += '32'
-    architecture = 'i686'
+    architecture = 'x86'
 
 platform_tuple = architecture + '-' + system
 

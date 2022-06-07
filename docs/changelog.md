@@ -1,3 +1,17 @@
+## v0.3.10 (2022-06-07)
+
+### Bug fixes
+
+- Fix architecture for 32-bit x86 in __init__.py (#398)
+- Enable compilation of FMI 3.0 FMUs in GUI (#396)
+
+### Enhancements
+
+- Use Plotly as default in plot_result()
+- Add markers option to plot_result()
+- Add parameter intermediate_update to instantiate_fmu()
+- Build macOS binaries as universal 2
+
 ## v0.3.9 (2022-05-11)
 
 ### Enhancements

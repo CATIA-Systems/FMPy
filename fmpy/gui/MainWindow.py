@@ -449,7 +449,7 @@ class MainWindow(QMainWindow):
         # actions
         self.ui.actionValidateFMU.setEnabled(True)
 
-        can_compile = md.fmiVersion == '2.0' and 'c-code' in platforms
+        can_compile = md.fmiVersion != '1.0' and 'c-code' in platforms
 
         self.ui.actionCompileDarwinBinary.setEnabled(can_compile and fmpy.system == 'darwin')
         self.ui.actionCompileLinuxBinary.setEnabled(can_compile and fmpy.system in ['linux', 'windows'])

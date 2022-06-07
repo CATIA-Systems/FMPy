@@ -830,7 +830,7 @@ class _FMU3(_FMU):
 
     # Getting partial derivatives
 
-    def getDirectionalDerivative(self, unknowns: Sequence[int], knowns: Sequence[int], seed: Sequence[float], nSensitivity: int) -> List[float]:
+    def getDirectionalDerivative(self, unknowns: Sequence[int], knowns: Sequence[int], seed: Sequence[float], nSensitivity: int = None) -> List[float]:
         """ Get the directional derivatives
 
         Parameters:
@@ -846,6 +846,10 @@ class _FMU3(_FMU):
         unknowns    = (fmi3ValueReference * len(unknowns))(*unknowns)
         knowns      = (fmi3ValueReference * len(knowns))(*knowns)
         seed        = (fmi3Float64 * len(seed))(*seed)
+
+        if nSensitivity is None:
+            nSensitivity = len(unknowns)
+
         sensitivity = (fmi3Float64 * nSensitivity)()
 
         self.fmi3GetDirectionalDerivative(self.component, unknowns, len(unknowns), knowns, len(knowns), seed, len(seed),
@@ -853,7 +857,7 @@ class _FMU3(_FMU):
 
         return list(sensitivity)
 
-    def getAdjointDerivative(self, unknowns: Sequence[int], knowns: Sequence[int], seed: Sequence[float], nSensitivity: int) -> List[float]:
+    def getAdjointDerivative(self, unknowns: Sequence[int], knowns: Sequence[int], seed: Sequence[float], nSensitivity: int = None) -> List[float]:
         """ Get adjoint derivatives
 
         Parameters:
@@ -869,6 +873,10 @@ class _FMU3(_FMU):
         unknowns    = (fmi3ValueReference * len(unknowns))(*unknowns)
         knowns      = (fmi3ValueReference * len(knowns))(*knowns)
         seed        = (fmi3Float64 * len(seed))(*seed)
+
+        if nSensitivity is None:
+            nSensitivity = len(unknowns)
+
         sensitivity = (fmi3Float64 * nSensitivity)()
 
         self.fmi3GetAdjointDerivative(self.component, unknowns, len(unknowns), knowns, len(knowns), seed, len(seed),

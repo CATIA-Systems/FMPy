@@ -17,25 +17,25 @@ model @=modelIdentifier=@
   parameter Real communicationStepSize = @=communicationStepSize=@;
 @@ for variable in parameters @@
 
-  parameter @=variable.type=@ @=variable.name=@ = @=variable.start=@ "@=variable.description=@";
+  parameter @=variable.type=@ '@=variable.name=@' = @=start_value(variable)=@@@ if variable.description @@ "@=variable.description=@" @@ endif @@;
 @@ endfor @@
 @@ for variable in inputs @@
 
-  parameter @=variable.type=@ @=variable.name=@_start = @=variable.start=@;
+  parameter @=variable.type=@ '@=variable.name=@_start' = @=start_value(variable)=@;
 @@ endfor @@
 @@ for variable in inputs @@
 
-  Modelica.Blocks.Interfaces.@=variable.type=@Input @=variable.name=@(start=@=variable.name=@_start) @=annotations[variable.name]=@;
+  Modelica.Blocks.Interfaces.@=variable.type=@Input '@=variable.name=@'(start='@=variable.name=@_start') @=annotations[variable.name]=@;
 @@ endfor @@
 @@ for variable in outputs @@
 
-  Modelica.Blocks.Interfaces.@=variable.type=@Output @=variable.name=@ @=annotations[variable.name]=@;
+  Modelica.Blocks.Interfaces.@=variable.type=@Output '@=variable.name=@' @=annotations[variable.name]=@;
 @@ endfor @@
 
 protected
 
   FMI.ExternalFMU instance = FMI.ExternalFMU(FMI.ModelicaFunctions(),
-    Modelica.Utilities.Files.loadResource("modelica://FMITest/Resources/FMUs/@=modelIdentifier=@"),
+    Modelica.Utilities.Files.loadResource("modelica://@=package=@/Resources/FMUs/@=modelIdentifier=@"),
     "@=modelIdentifier=@",
     1,
     "@=instantiationToken=@",
@@ -45,14 +45,14 @@ protected
 initial algorithm
 
 @@ for variable in parameters @@
-  FMI2SetReal(instance, {@=variable.valueReference=@}, 1, {@=variable.name=@});
+  FMI2Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@'});
 @@ endfor @@
 
   FMI2SetupExperiment(instance, tolerance > 0.0, tolerance, startTime, stopTime < Modelica.Constants.inf, stopTime);
   FMI2EnterInitializationMode(instance);
 
 @@ for variable in real_inputs @@
-  FMI2SetReal(instance, {@=variable.valueReference=@}, 1, {@=variable.name=@_start});
+  FMI2SetReal(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@_start'});
 @@ endfor @@
 
   FMI2ExitInitializationMode(instance);
@@ -62,13 +62,13 @@ algorithm
   when sample(startTime, communicationStepSize) then
 
 @@ for variable in inputs @@
-    FMI2Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {@=variable.name=@});
+    FMI2Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@'});
 @@ endfor @@
 
     FMI2DoStep(instance, time, communicationStepSize, true);
 
 @@ for variable in outputs @@
-    @=variable.name=@ = FMI2Get@=variable.type=@Scalar(instance, @=variable.valueReference=@);
+    '@=variable.name=@' = FMI2Get@=variable.type=@Scalar(instance, @=variable.valueReference=@);
 @@ endfor @@
 
   end when;

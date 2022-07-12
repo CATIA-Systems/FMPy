@@ -31,7 +31,10 @@ def import_fmu_to_modelica(fmu_path, interface_type, package_dir, model_name=Non
 
     extract(filename=fmu_path, unzipdir=unzipdir)
 
-    package = 'Test'
+    package_root = package_dir
+
+    while (package_root.parent / 'package.order').is_file():
+        package_root = package_root.parent
 
     loader = jinja2.FileSystemLoader(searchpath=Path(__file__).parent / 'templates')
 
@@ -91,12 +94,19 @@ def import_fmu_to_modelica(fmu_path, interface_type, package_dir, model_name=Non
         else:
             return f'fill({default}, 0)'
 
+    def start_value(variable):
+        if variable.type == 'Boolean':
+            return 'true' if variable.start in ['true', '1'] else 'false'
+        else:
+            return str(variable.start)
+
     template.globals.update({
-        'as_array': as_array
+        'as_array': as_array,
+        'start_value': start_value
     })
 
     class_text = template.render(
-        package=package,
+        package=package_root.name,
         modelIdentifier=modelIdentifier,
         instanceName=model_description.modelName,
         instantiationToken=model_description.guid,

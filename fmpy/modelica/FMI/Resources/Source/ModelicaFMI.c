@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "ModelicaFMI.h"
 #include "ModelicaUtilities.h"
 #include "FMI2.h"

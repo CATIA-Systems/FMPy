@@ -1,4 +1,5 @@
 """ Entry point for the graphical user interface """
+from os.path import dirname
 
 try:
     from . import compile_resources
@@ -270,6 +271,7 @@ class MainWindow(QMainWindow):
         self.ui.actionAddWindows32Remoting.triggered.connect(lambda: self.addRemotingBinaries('win64', 'win32'))
         self.ui.actionAddLinux64Remoting.triggered.connect(lambda: self.addRemotingBinaries('linux64', 'win64'))
         self.ui.actionAddCoSimulationWrapper.triggered.connect(self.addCoSimulationWrapper)
+        self.ui.actionImportToModelica.triggered.connect(self.importToModelica)
 
         # help menu
         self.ui.actionOpenFMI1SpecCS.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://fmi-standard.org/assets/releases/FMI_for_CoSimulation_v1.0.1.pdf')))
@@ -1306,3 +1308,27 @@ class MainWindow(QMainWindow):
                                 "Failed to add Co-Simulation Wrapper %s. %s" % (self.filename, e))
 
         self.load(self.filename)
+
+
+    def importToModelica(self):
+
+        from os.path import dirname
+        from ..modelica import import_fmu_to_modelica
+
+        directory = QFileDialog.getExistingDirectory(caption="Select Modelica package directory",
+                                                     directory=dirname(self.filename))
+
+        if directory:
+
+            interface_type = self.fmiTypeComboBox.currentText()
+
+            if interface_type == 'Co-Simulation':
+                model_identifier = self.modelDescription.coSimulation.modelIdentifier
+            else:
+                model_identifier = self.modelDescription.modelExchange.modelIdentifier
+
+            try:
+                import_fmu_to_modelica(fmu_path=self.filename, interface_type=interface_type,
+                                       package_dir=directory, model_name=model_identifier)
+            except Exception as e:
+                QMessageBox.critical(self, "Failed create Modelica model", str(e))

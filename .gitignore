@@ -28,6 +28,9 @@ rpclib-*/
 *.egg-info
 .pytest_cache/
 
+# Dymola artefacts
+*.bak-mo
+
 # test artifacts
 tests/IntegerNetwork1/
 tests/Rectifier/

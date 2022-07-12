@@ -109,6 +109,7 @@ def import_fmu_to_modelica(fmu_path, interface_type, package_dir, model_name=Non
         package=package_root.name,
         modelIdentifier=modelIdentifier,
         instanceName=model_description.modelName,
+        interfaceType=0 if interface_type == 'Model Exchange' else 1,
         instantiationToken=model_description.guid,
         nx=model_description.numberOfContinuousStates,
         nz=model_description.numberOfEventIndicators,

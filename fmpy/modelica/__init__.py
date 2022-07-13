@@ -94,6 +94,12 @@ def import_fmu_to_modelica(fmu_path, interface_type, package_dir, model_name=Non
         else:
             return f'fill({default}, 0)'
 
+    def as_quoted_array(values, default):
+        if len(values) > 0:
+            return '{ ' + ', '.join(map(lambda v: f"'{v}'", values)) + ' }'
+        else:
+            return f'fill({default}, 0)'
+
     def start_value(variable):
         if variable.type == 'Boolean':
             return 'true' if variable.start in ['true', '1'] else 'false'
@@ -102,6 +108,7 @@ def import_fmu_to_modelica(fmu_path, interface_type, package_dir, model_name=Non
 
     template.globals.update({
         'as_array': as_array,
+        'as_quoted_array': as_quoted_array,
         'start_value': start_value
     })
 

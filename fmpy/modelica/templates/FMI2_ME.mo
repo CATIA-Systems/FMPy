@@ -73,8 +73,19 @@
 initial algorithm
 
   FMI2SetupExperiment(instance, tolerance > 0.0, tolerance, startTime, stopTime < Modelica.Constants.inf, stopTime);
+
+@@ for variable in parameters @@
+  FMI2Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@'});
+@@ endfor @@
+
   FMI2EnterInitializationMode(instance);
+
+@@ for variable in inputs @@
+  FMI2Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@_start'});
+@@ endfor @@
+
   FMI2ExitInitializationMode(instance);
+
   FMI2NewDiscreteStates(instance);
   FMI2EnterContinuousTimeMode(instance);
   x := FMI2GetContinuousStates(instance, nx);
@@ -86,13 +97,13 @@ equation
 
   der(x) = getDerivatives(instance, dummyTime);
 
-  z = getEventIndicators(instance, dummyTime, @=as_array(realInputs, '0.0')=@, @=as_array(integerInputs, '0')=@, @=as_array(booleanInputs, 'false')=@);
+  z = getEventIndicators(instance, dummyTime, @=as_quoted_array(realInputs, '0.0')=@, @=as_quoted_array(integerInputs, '0')=@, @=as_quoted_array(booleanInputs, 'false')=@);
 
   for i in 1:size(z, 1) loop
     z_positive[i] = z[i] > 0;
   end for;
 
-  inputEvent = setInputs(instance, @=as_array(integerInputs, '0')=@, @=as_array(booleanInputs, 'false')=@);
+  inputEvent = setInputs(instance, @=as_quoted_array(integerInputs, '0')=@, @=as_quoted_array(booleanInputs, 'false')=@);
 
   when cat(1, change(z_positive), {inputEvent}) then
 @@ if nx > 0 @@

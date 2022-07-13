@@ -3,15 +3,16 @@
 
 initial algorithm
 
+  FMI2SetupExperiment(instance, tolerance > 0.0, tolerance, startTime, stopTime < Modelica.Constants.inf, stopTime);
+
 @@ for variable in parameters @@
   FMI2Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@'});
 @@ endfor @@
 
-  FMI2SetupExperiment(instance, tolerance > 0.0, tolerance, startTime, stopTime < Modelica.Constants.inf, stopTime);
   FMI2EnterInitializationMode(instance);
 
-@@ for variable in real_inputs @@
-  FMI2SetReal(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@_start'});
+@@ for variable in inputs @@
+  FMI2Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@_start'});
 @@ endfor @@
 
   FMI2ExitInitializationMode(instance);

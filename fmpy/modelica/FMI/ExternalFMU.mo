@@ -6,13 +6,14 @@ class ExternalFMU
       input FMI.ModelicaFunctions callbacks;
       input String unzipdir;
       input String modelIdentifier;
+      input String instanceName;
       input Integer interfaceType;
       input String instantiationToken;
       input Boolean visible;
       input Boolean loggingOn;
       output ExternalFMU externalFMU;
   external"C" externalFMU =
-        FMU_load(callbacks, unzipdir, modelIdentifier, interfaceType, instantiationToken, visible, loggingOn) annotation (Library="ModelicaFMI");
+        FMU_load(callbacks, unzipdir, modelIdentifier, instanceName, interfaceType, instantiationToken, visible, loggingOn) annotation (Library="ModelicaFMI");
 
   end constructor;
 

@@ -2,8 +2,6 @@ model @=modelIdentifier=@
 
   import FMI.FMI2.*;
 
-  parameter String instanceName = "@=instanceName=@";
-
   parameter Real startTime = 0.0;
 
   parameter Real stopTime = Modelica.Constants.inf;
@@ -37,6 +35,7 @@ protected
   FMI.ExternalFMU instance = FMI.ExternalFMU(FMI.ModelicaFunctions(),
     Modelica.Utilities.Files.loadResource("modelica://@=package=@/Resources/FMUs/@=modelIdentifier=@"),
     "@=modelIdentifier=@",
+    getInstanceName(),
     @=interfaceType=@,
     "@=instantiationToken=@",
     visible,

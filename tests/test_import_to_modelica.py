@@ -11,7 +11,7 @@ def pymola_available():
         return False
 
 
-@pytest.skip(pymola_available(), "Pymola was not found")
+@pytest.mark.skipif(pymola_available())
 def test_import_fmu_to_modelica(dymola, root_dir, resources_dir):
 
     for interface_type, suffix in [('Co-Simulation', 'CS'), ('Model Exchange', 'ME')]:

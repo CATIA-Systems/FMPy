@@ -121,6 +121,7 @@ def import_fmu_to_modelica(fmu_path, interface_type, package_dir, model_name=Non
 
     class_text = template.render(
         package=package_root.name,
+        description=model_description.description,
         modelIdentifier=modelIdentifier,
         interfaceType=0 if interface_type == 'Model Exchange' else 1,
         instantiationToken=model_description.guid,

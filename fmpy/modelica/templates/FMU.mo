@@ -1,4 +1,7 @@
 model @=modelIdentifier=@
+@@ if description @@
+  "@=description=@"
+@@ endif @@
 
   import FMI.FMI2.*;
 

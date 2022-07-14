@@ -106,10 +106,17 @@ def import_fmu_to_modelica(fmu_path, interface_type, package_dir, model_name=Non
         else:
             return str(variable.start)
 
+    def modelica_type(variable):
+        if variable.declaredType is not None and variable.declaredType.name.startswith('Modelica.'):
+            return variable.declaredType.name
+        else:
+            return variable.type
+
     template.globals.update({
         'as_array': as_array,
         'as_quoted_array': as_quoted_array,
-        'start_value': start_value
+        'start_value': start_value,
+        'modelica_type': modelica_type
     })
 
     class_text = template.render(

@@ -2,9 +2,9 @@ model @=modelIdentifier=@
 
   import FMI.FMI2.*;
 
-  parameter Real startTime = 0.0;
+  parameter Modelica.Units.SI.Time startTime = 0.0;
 
-  parameter Real stopTime = Modelica.Constants.inf;
+  parameter Modelica.Units.SI.Time stopTime = Modelica.Constants.inf;
 
   parameter Real tolerance = 0.0;
 
@@ -12,10 +12,10 @@ model @=modelIdentifier=@
 
   parameter Boolean loggingOn = false;
 
-  parameter Real communicationStepSize = @=communicationStepSize=@;
+  parameter Modelica.Units.SI.Time communicationStepSize = @=communicationStepSize=@;
 @@ for variable in parameters @@
 
-  parameter @=variable.type=@ '@=variable.name=@' = @=start_value(variable)=@@@ if variable.description @@ "@=variable.description=@" @@ endif @@;
+  parameter @=modelica_type(variable)=@ '@=variable.name=@' = @=start_value(variable)=@@@ if variable.description @@ "@=variable.description=@" @@ endif @@;
 @@ endfor @@
 @@ for variable in inputs @@
 

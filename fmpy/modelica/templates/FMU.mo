@@ -1,4 +1,4 @@
-model @=modelIdentifier=@
+model @=modelName=@
 @@ if description @@
   "@=description=@"
 @@ endif @@
@@ -62,4 +62,4 @@ protected
     ),
     Diagram(coordinateSystem(preserveAspectRatio=false, extent={{@=x0=@,@=y0=@}, {@=x1=@,@=y1=@}}))
   );
-end @=modelIdentifier=@;
+end @=modelName=@;

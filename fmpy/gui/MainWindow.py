@@ -1312,23 +1312,23 @@ class MainWindow(QMainWindow):
 
     def importToModelica(self):
 
-        from os.path import dirname
+        from os.path import dirname, join
         from ..modelica import import_fmu_to_modelica
 
-        directory = QFileDialog.getExistingDirectory(caption="Select Modelica package directory",
-                                                     directory=dirname(self.filename))
+        interface_type = self.fmiTypeComboBox.currentText()
 
-        if directory:
+        if interface_type == 'Co-Simulation':
+            model_identifier = self.modelDescription.coSimulation.modelIdentifier
+        else:
+            model_identifier = self.modelDescription.modelExchange.modelIdentifier
 
-            interface_type = self.fmiTypeComboBox.currentText()
+        filename, _ = QFileDialog.getSaveFileName(self,
+                                                caption="Save Modelica Model",
+                                                directory=join(dirname(self.filename), model_identifier + '.mo'),
+                                                filter='Modelica Model (*.mo)')
 
-            if interface_type == 'Co-Simulation':
-                model_identifier = self.modelDescription.coSimulation.modelIdentifier
-            else:
-                model_identifier = self.modelDescription.modelExchange.modelIdentifier
-
+        if filename:
             try:
-                import_fmu_to_modelica(fmu_path=self.filename, interface_type=interface_type,
-                                       package_dir=directory, model_name=model_identifier)
+                import_fmu_to_modelica(fmu_path=self.filename, model_path=filename, interface_type=interface_type)
             except Exception as e:
                 QMessageBox.critical(self, "Failed create Modelica model", str(e))

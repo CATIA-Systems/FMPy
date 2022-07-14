@@ -1,4 +1,4 @@
-def import_fmu_to_modelica(fmu_path, interface_type, package_dir, model_name=None):
+def import_fmu_to_modelica(fmu_path, model_path, interface_type):
 
     from os import makedirs
     from pathlib import Path
@@ -7,34 +7,36 @@ def import_fmu_to_modelica(fmu_path, interface_type, package_dir, model_name=Non
     from fmpy import extract, read_model_description
 
     fmu_path = Path(fmu_path)
+    model_path = Path(model_path)
+    model_name = model_path.stem
 
-    package_dir = Path(package_dir)
+    package_dir = Path(model_path).parent
 
     if not (package_dir / 'package.order').is_file():
         raise Exception(f"{package_dir} is not a package of a Modelica library.")
 
-    communicationStepSize = 1e-2
-
     model_description = read_model_description(fmu_path)
 
-    if interface_type == 'Model Exchange':
-        modelIdentifier = model_description.modelExchange.modelIdentifier
+    if model_description.defaultExperiment is not None and model_description.defaultExperiment.stepSize is not None:
+        communicationStepSize = model_description.defaultExperiment.stepSize
     else:
-        modelIdentifier = model_description.coSimulation.modelIdentifier
+        communicationStepSize = '1e-2'
 
-    if not model_name:
-        model_name = modelIdentifier
-
-    unzipdir = package_dir / 'Resources' / 'FMUs' / modelIdentifier
-
-    makedirs(unzipdir, exist_ok=True)
-
-    extract(filename=fmu_path, unzipdir=unzipdir)
+    if interface_type == 'Model Exchange':
+        model_identifier = model_description.modelExchange.modelIdentifier
+    else:
+        model_identifier = model_description.coSimulation.modelIdentifier
 
     package_root = package_dir
 
     while (package_root.parent / 'package.order').is_file():
         package_root = package_root.parent
+
+    unzipdir = package_root / 'Resources' / 'FMUs' / model_identifier
+
+    makedirs(unzipdir, exist_ok=True)
+
+    extract(filename=fmu_path, unzipdir=unzipdir)
 
     loader = jinja2.FileSystemLoader(searchpath=Path(__file__).parent / 'templates')
 
@@ -122,7 +124,8 @@ def import_fmu_to_modelica(fmu_path, interface_type, package_dir, model_name=Non
     class_text = template.render(
         package=package_root.name,
         description=model_description.description,
-        modelIdentifier=modelIdentifier,
+        modelName=model_name,
+        modelIdentifier=model_identifier,
         interfaceType=0 if interface_type == 'Model Exchange' else 1,
         instantiationToken=model_description.guid,
         nx=model_description.numberOfContinuousStates,
@@ -145,8 +148,12 @@ def import_fmu_to_modelica(fmu_path, interface_type, package_dir, model_name=Non
         booleanInputs=[v.name for v in inputs if v.type == 'Boolean'],
     )
 
-    with open(package_dir / f'{modelIdentifier}.mo', 'w') as f:
+    with open(model_path, 'w') as f:
         f.write(class_text)
 
-    with open(package_dir / 'package.order', 'a') as f:
-        f.write(modelIdentifier + '\n')
+    with open(package_dir / 'package.order', 'r') as f:
+        package_order = list(map(lambda l: l.strip(), f.readlines()))
+
+    if model_name not in package_order:
+        with open(package_dir / 'package.order', 'a') as f:
+            f.write(model_name + '\n')

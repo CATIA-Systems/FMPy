@@ -12,7 +12,7 @@
 Common Functions
 ****************************************************/
 
-EXPORT void* FMU_load(ModelicaUtilityFunctions_t* callbacks, const char* unzipdir, const char* modelIdentifier, const char* instanceName, int interfaceType, const char* instantiationToken, int visible, int loggingOn);
+EXPORT void* FMU_load(ModelicaUtilityFunctions_t* callbacks, const char* unzipdir, const char* modelIdentifier, const char* instanceName, int interfaceType, const char* instantiationToken, int visible, int loggingOn, int logFMICalls);
 
 EXPORT void FMU_free(void* instance);
 

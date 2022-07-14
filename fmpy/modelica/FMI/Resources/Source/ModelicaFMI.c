@@ -78,7 +78,7 @@ static void logFunctionCall(FMIInstance* instance, FMIStatus status, const char*
 Common Functions
 ****************************************************/
 
-void* FMU_load(ModelicaUtilityFunctions_t* callbacks, const char* unzipdir, const char* modelIdentifier, const char* instanceName, int interfaceType, const char* instantiationToken, int visible, int loggingOn) {
+void* FMU_load(ModelicaUtilityFunctions_t* callbacks, const char* unzipdir, const char* modelIdentifier, const char* instanceName, int interfaceType, const char* instantiationToken, int visible, int loggingOn, int logFMICalls) {
 
     setModelicaUtilityFunctions(callbacks);
 
@@ -86,7 +86,7 @@ void* FMU_load(ModelicaUtilityFunctions_t* callbacks, const char* unzipdir, cons
 
     FMIPlatformBinaryPath(unzipdir, modelIdentifier, FMIVersion2, platformBinaryPath, 2048);
 
-    FMIInstance* S = FMICreateInstance(instanceName, platformBinaryPath, logMessage, logFunctionCall);
+    FMIInstance* S = FMICreateInstance(instanceName, platformBinaryPath, logMessage, logFMICalls ? logFunctionCall : NULL);
 
     if (!S) {
         ModelicaFormatError("Failed to load platform binary %s.", platformBinaryPath);

@@ -14,6 +14,8 @@ model @=modelIdentifier=@
   parameter Boolean visible = false annotation(Dialog(tab="FMI", group="Parameters")));
 
   parameter Boolean loggingOn = false annotation(Dialog(tab="FMI", group="Parameters")));
+
+  parameter Boolean logFMICalls = false annotation(Dialog(tab="FMI", group="Parameters")));
 @@ block parameters @@
 @@ endblock @@
 @@ for variable in parameters @@
@@ -42,7 +44,8 @@ protected
     @=interfaceType=@,
     "@=instantiationToken=@",
     visible,
-    loggingOn);
+    loggingOn,
+    logFMICalls);
 
 @@ block equations @@
 @@ endblock @@

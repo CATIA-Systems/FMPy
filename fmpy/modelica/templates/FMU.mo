@@ -5,20 +5,20 @@ model @=modelIdentifier=@
 
   import FMI.FMI2.*;
 
-  parameter Modelica.Units.SI.Time startTime = 0.0;
+  parameter Modelica.Units.SI.Time startTime = 0.0 annotation(Dialog(tab="FMI", group="Parameters"));
 
-  parameter Modelica.Units.SI.Time stopTime = Modelica.Constants.inf;
+  parameter Modelica.Units.SI.Time stopTime = Modelica.Constants.inf annotation(Dialog(tab="FMI", group="Parameters")));
 
-  parameter Real tolerance = 0.0;
+  parameter Real tolerance = 0.0 annotation(Dialog(tab="FMI", group="Parameters")));
 
-  parameter Boolean visible = false;
+  parameter Boolean visible = false annotation(Dialog(tab="FMI", group="Parameters")));
 
-  parameter Boolean loggingOn = false;
-
-  parameter Modelica.Units.SI.Time communicationStepSize = @=communicationStepSize=@;
+  parameter Boolean loggingOn = false annotation(Dialog(tab="FMI", group="Parameters")));
+@@ block parameters @@
+@@ endblock @@
 @@ for variable in parameters @@
 
-  parameter @=modelica_type(variable)=@ '@=variable.name=@' = @=start_value(variable)=@@@ if variable.description @@ "@=variable.description=@" @@ endif @@;
+  parameter @=modelica_type(variable)=@ '@=variable.name=@' = @=start_value(variable)=@@@ if variable.description @@ "@=variable.description=@"@@ endif @@;
 @@ endfor @@
 @@ for variable in inputs @@
 

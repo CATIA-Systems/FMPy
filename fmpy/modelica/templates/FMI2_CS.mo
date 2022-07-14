@@ -1,4 +1,8 @@
 @@ extends "FMU.mo" @@
+@@ block parameters @@
+
+  parameter Modelica.Units.SI.Time communicationStepSize = @=communicationStepSize=@ annotation(Dialog(tab="FMI", group="Parameters"));
+@@ endblock @@
 @@ block equations @@
 
 initial algorithm

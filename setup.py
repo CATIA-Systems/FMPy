@@ -48,6 +48,10 @@ package_data = {
         'fmucontainer/binaries/win32/FMUContainer.dll',
         'fmucontainer/binaries/win64/FMUContainer.dll',
         'fmucontainer/documentation/LICENSE.txt',
+        'modelica/FMI/Resources/Library/darwin64/ModelicaFMI.dylib',
+        'modelica/FMI/Resources/Library/linux64/ModelicaFMI.so',
+        'modelica/FMI/Resources/Library/win32/ModelicaFMI.dll',
+        'modelica/FMI/Resources/Library/win64/ModelicaFMI.dll',
         'remoting/linux64/client_sm.so',
         'remoting/linux64/client_tcp.so',
         'remoting/linux64/server_sm',
@@ -75,6 +79,7 @@ package_data = {
 
 install_requires = [
     'attrs',
+    'Jinja2',
     'lark-parser',
     'lxml',
     'msgpack',

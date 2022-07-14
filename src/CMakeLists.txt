@@ -127,5 +127,5 @@ target_include_directories(ModelicaFMI PRIVATE
 
 add_custom_command(TARGET ModelicaFMI POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
   "$<TARGET_FILE:ModelicaFMI>"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/modelica/FMI/Resources/Library/win64"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/modelica/FMI/Resources/Library/${FMI_PLATFORM}"
 )

@@ -1,6 +1,17 @@
+import pytest
+
 from fmpy.modelica import import_fmu_to_modelica
 
 
+def pymola_available():
+    try:
+        import pymola
+        return True
+    except:
+        return False
+
+
+@pytest.skip(pymola_available())
 def test_import_fmu_to_modelica(dymola, root_dir, resources_dir):
 
     for interface_type, suffix in [('Co-Simulation', 'CS'), ('Model Exchange', 'ME')]:

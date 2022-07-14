@@ -64,7 +64,10 @@ def reference_fmus_repo_dir(resources_dir):
 @pytest.fixture(scope='session')
 def executable(request):
 
-    from pymola import findDymolaExecutables
+    try:
+        from pymola import findDymolaExecutables
+    except:
+        yield None
 
     executable = request.config.getoption('--executable')
 
@@ -78,8 +81,11 @@ def executable(request):
 @pytest.fixture(scope='module')
 def dymola(executable, work_dir):
 
-    from pymola import Dymola
-
+    try:
+        from pymola import findDymolaExecutables
+    except:
+        yield None
+        
     if work_dir.exists():
         rmtree(work_dir)
 

@@ -5,13 +5,13 @@ from fmpy.modelica import import_fmu_to_modelica
 
 def pymola_available():
     try:
-        import pymola
+        import pymolaa
         return True
     except:
         return False
 
 
-@pytest.mark.skipif(pymola_available(), reason="Pymola was not found")
+@pytest.mark.skipif(not pymola_available(), reason="Pymola was not found")
 def test_import_fmu_to_modelica(dymola, root_dir, resources_dir):
 
     for interface_type, suffix in [('Co-Simulation', 'CS'), ('Model Exchange', 'ME')]:

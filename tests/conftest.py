@@ -64,38 +64,31 @@ def reference_fmus_repo_dir(resources_dir):
 @pytest.fixture(scope='session')
 def executable(request):
 
-    try:
-        from pymola import findDymolaExecutables
+    from pymola import findDymolaExecutables
 
-        executable = request.config.getoption('--executable')
+    executable = request.config.getoption('--executable')
 
-        if executable is None:
-            executables = findDymolaExecutables()
-            executable = executables[-1]
+    if executable is None:
+        executables = findDymolaExecutables()
+        executable = executables[-1]
 
-        yield executable
-    except:
-        yield None
+    yield executable
 
 
 @pytest.fixture(scope='module')
 def dymola(executable, work_dir):
 
-    try:
-        from pymola import Dymola
+    from pymola import Dymola
 
-        if work_dir.exists():
-            rmtree(work_dir)
+    if work_dir.exists():
+        rmtree(work_dir)
 
-        makedirs(work_dir)
+    makedirs(work_dir)
 
-        with Dymola(executable=executable, showWindow=True, debug=False) as dymola:
-            dymola.cd(work_dir)
+    with Dymola(executable=executable, showWindow=True, debug=False) as dymola:
+        dymola.cd(work_dir)
 
-            # ensure, that MSL is loaded, as functions like exportSSP do not trigger demand loading
-            dymola.openModelFile('Modelica')
+        # ensure, that MSL is loaded, as functions like exportSSP do not trigger demand loading
+        dymola.openModelFile('Modelica')
 
-            yield dymola
-    except:
-        yield None
-
+        yield dymola

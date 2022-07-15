@@ -46,7 +46,6 @@ protected
     visible,
     loggingOn,
     logFMICalls);
-
 @@ block equations @@
 @@ endblock @@
 

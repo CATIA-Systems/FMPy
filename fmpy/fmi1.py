@@ -181,11 +181,43 @@ class _FMU(object):
 
         l = []
 
+        def struct_to_str(s):
+
+            a = []
+
+            for n, t in s._fields_:
+
+                if t == c_char:
+                    v = int.from_bytes(s.iterationConverged, 'little')
+                else:
+                    v = str(getattr(s, n))
+
+                    prefix = '<CFunctionType object at '
+
+                    if v.startswith(prefix) and v.endswith('>'):
+                        v = v[len(prefix):-1]
+                    elif v == 'None':
+                        v = '0x0'
+
+                a.append(f'{n}={v}')
+
+            return f'{type(s).__name__}(' + ', '.join(a) + ')'
+
         for i, (n, t, v) in enumerate(zip(argnames, argtypes, args)):
 
             a = n + '='
 
-            if t == c_void_p:
+            if fname == 'fmi2Instantiate' and n == 'callbacks':
+                from .fmi2 import fmi2CallbackFunctions
+                a += struct_to_str(cast(v, POINTER(fmi2CallbackFunctions)).contents)
+            elif fname in ['fmiInstantiateModel', 'fmiInstantiateSlave'] and n == 'functions':
+                a += struct_to_str(v)
+            elif fname in ['fmiInitialize', 'fmiEventUpdate'] and n == 'eventInfo':
+                a += struct_to_str(cast(v, POINTER(fmi1EventInfo)).contents)
+            elif fname == 'fmi2NewDiscreteStates' and n == 'eventInfo':
+                from .fmi2 import fmi2EventInfo
+                a += struct_to_str(cast(v, POINTER(fmi2EventInfo)).contents)
+            elif t == c_void_p:
                 if isinstance(v, c_void_p):
                     v = v.value
                 a += hex(0 if v is None else v)

@@ -67,6 +67,7 @@ Python version:     {sys.version}
     parser.add_argument('--cmake-project-dir', help="Directory for the CMake project")
     parser.add_argument('--target-platform', help="The target platform to compile the binary for")
     parser.add_argument('--compiler-options', help="Options used when compiling the platform binary")
+    parser.add_argument('--interface-type', help='Interface type ("ModelExchange" or "CoSimulation")')
 
     args = parser.parse_args()
 
@@ -166,7 +167,7 @@ Python version:     {sys.version}
                               relative_tolerance=args.relative_tolerance,
                               output_interval=args.output_interval,
                               record_events=not args.dont_record_events,
-                              fmi_type=None,
+                              fmi_type=args.interface_type,
                               start_values=start_values,
                               apply_default_start_values=args.apply_default_start_values,
                               input=input,

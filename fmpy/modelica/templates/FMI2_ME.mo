@@ -15,6 +15,8 @@
   Real dummyTime;
   Boolean z_positive[nz];
   Boolean inputEvent;
+  Boolean valuesOfContinuousStatesChanged;
+  Real nextEventTime;
 
   function setTimeAndStates
     input FMI.ExternalFMU instance;
@@ -51,12 +53,12 @@
 
   function updateDiscreteStates
     input FMI.ExternalFMU instance;
-    output Real x[nx];
+    output Boolean valuesOfContinuousStatesChanged;
+    output Real nextEventTime;
   algorithm
     FMI2EnterEventMode(instance);
-    FMI2NewDiscreteStates(instance);
+    (valuesOfContinuousStatesChanged, nextEventTime) := FMI2NewDiscreteStates(instance);
     FMI2EnterContinuousTimeMode(instance);
-    x := FMI2GetContinuousStates(instance, size(x, 1));
   end updateDiscreteStates;
 
   function setInputs
@@ -86,10 +88,10 @@ initial algorithm
 
   FMI2ExitInitializationMode(instance);
 
-  FMI2NewDiscreteStates(instance);
+  (valuesOfContinuousStatesChanged, nextEventTime) := FMI2NewDiscreteStates(instance);
   FMI2EnterContinuousTimeMode(instance);
   x := FMI2GetContinuousStates(instance, nx);
-  dummyStartTime :=time;
+  dummyStartTime := time;
 
 equation
 
@@ -105,13 +107,15 @@ equation
 
   inputEvent = setInputs(instance, @=as_quoted_array(integerInputs, '0')=@, @=as_quoted_array(booleanInputs, 'false')=@);
 
-  when cat(1, change(z_positive), {inputEvent}) then
-@@ if nx > 0 @@
-    reinit(x, updateDiscreteStates(instance));
-@@ else @@
-    updateDiscreteStates(instance);
-@@ endif @@
+  when cat(1, {time >= pre(nextEventTime)}, change(z_positive), {inputEvent}) then
+    (valuesOfContinuousStatesChanged, nextEventTime) = updateDiscreteStates(instance);
   end when;
+@@ if nx > 0 @@
+
+  when valuesOfContinuousStatesChanged then
+    reinit(x, FMI2GetContinuousStates(instance, nx));
+  end when;
+@@ endif @@
 
   if initial() then
 @@ for variable in outputs @@

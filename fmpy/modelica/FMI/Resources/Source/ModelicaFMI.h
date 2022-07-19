@@ -47,7 +47,7 @@ Model Exchange
 
 EXPORT void FMU_FMI2EnterEventMode(void* instance);
 
-EXPORT void FMU_FMI2NewDiscreteStates(void* instance);
+EXPORT void FMU_FMI2NewDiscreteStates(void* instance, int* valuesOfContinuousStatesChanged, double* nextEventTime);
 
 EXPORT void FMU_FMI2EnterContinuousTimeMode(void* instance);
 

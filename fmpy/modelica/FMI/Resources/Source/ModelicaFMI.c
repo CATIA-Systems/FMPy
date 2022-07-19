@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 
 #include "ModelicaFMI.h"
 #include "ModelicaUtilities.h"
@@ -161,11 +162,16 @@ void FMU_FMI2EnterEventMode(void* instance) {
     CALL(FMI2EnterEventMode((FMIInstance*)instance));
 }
 
-void FMU_FMI2NewDiscreteStates(void* instance) {
+void FMU_FMI2NewDiscreteStates(void* instance, int* valuesOfContinuousStatesChanged, double* nextEventTime) {
+    
     fmi2EventInfo eventInfo;
+    
     do {
         CALL(FMI2NewDiscreteStates((FMIInstance*)instance, &eventInfo));
     } while (eventInfo.newDiscreteStatesNeeded);
+
+    *nextEventTime = eventInfo.nextEventTimeDefined ? eventInfo.nextEventTime : INFINITY;
+    *valuesOfContinuousStatesChanged = eventInfo.valuesOfContinuousStatesChanged;
 }
 
 void FMU_FMI2EnterContinuousTimeMode(void* instance) {

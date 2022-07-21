@@ -10,29 +10,7 @@
 
 
 static void logMessage(FMIInstance* instance, FMIStatus status, const char* category, const char* message) {
-
-    switch (status) {
-    case FMIOK:
-        printf("[OK] ");
-        break;
-    case FMIWarning:
-        printf("[Warning] ");
-        break;
-    case FMIDiscard:
-        printf("[Discard] ");
-        break;
-    case FMIError:
-        printf("[Error] ");
-        break;
-    case FMIFatal:
-        printf("[Fatal] ");
-        break;
-    case FMIPending:
-        printf("[Pending] ");
-        break;
-    }
-
-    puts(message);
+    ModelicaFormatMessage("%s\n", message);
 }
 
 static void logFunctionCall(FMIInstance* instance, FMIStatus status, const char* message, ...) {

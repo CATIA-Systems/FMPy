@@ -8,11 +8,11 @@
   final constant Integer integerInputVRs[@=integerInputVRs|length=@] = @=as_array(integerInputVRs, '0')=@;
   final constant Integer booleanInputVRs[@=booleanInputVRs|length=@] = @=as_array(booleanInputVRs, '0')=@;
 
-  parameter Real dummyStartTime(fixed=false);
+  parameter Real instanceStartTime(fixed=false);
 
   Real x[nx];
   Real z[nz];
-  Real dummyTime;
+  Real instanceTime;
   Boolean z_positive[nz];
   Boolean inputEvent;
   Boolean valuesOfContinuousStatesChanged;
@@ -22,16 +22,16 @@
     input FMI.ExternalFMU instance;
     input Real t;
     input Real x[:];
-    output Real dummyTime;
+    output Real instanceTime;
   algorithm
     FMI2SetTime(instance, t);
     FMI2SetContinuousStates(instance, x, size(x, 1));
-    dummyTime := t;
+    instanceTime := t;
   end setTimeAndStates;
 
   function getDerivatives
     input FMI.ExternalFMU instance;
-    input Real dummyTime;
+    input Real instanceTime;
     output Real dx[nx];
   algorithm
     dx := FMI2GetDerivatives(instance, size(dx, 1));
@@ -39,7 +39,7 @@
 
   function getEventIndicators
     input FMI.ExternalFMU instance;
-    input Real dummyTime;
+    input Real instanceTime;
     input Real realInputs[:];
     input Integer integerInputs[:];
     input Boolean booleanInputs[:];
@@ -91,15 +91,15 @@ initial algorithm
   (valuesOfContinuousStatesChanged, nextEventTime) := FMI2NewDiscreteStates(instance);
   FMI2EnterContinuousTimeMode(instance);
   x := FMI2GetContinuousStates(instance, nx);
-  dummyStartTime := time;
+  instanceStartTime := time;
 
 equation
 
-  dummyTime = setTimeAndStates(instance, time, x);
+  instanceTime = setTimeAndStates(instance, time, x);
 
-  der(x) = getDerivatives(instance, dummyTime);
+  der(x) = getDerivatives(instance, instanceTime);
 
-  z = getEventIndicators(instance, dummyTime, @=as_quoted_array(realInputs, '0.0')=@, @=as_quoted_array(integerInputs, '0')=@, @=as_quoted_array(booleanInputs, 'false')=@);
+  z = getEventIndicators(instance, instanceTime, @=as_quoted_array(realInputs, '0.0')=@, @=as_quoted_array(integerInputs, '0')=@, @=as_quoted_array(booleanInputs, 'false')=@);
 
   for i in 1:size(z, 1) loop
     z_positive[i] = z[i] > 0;
@@ -120,20 +120,20 @@ equation
   if initial() then
 @@ for variable in outputs @@
 @@ if variable.type == 'Real' @@
-    '@=variable.name=@' = FMI2GetRealScalar(instance, @=variable.valueReference=@, dummyStartTime);
+    '@=variable.name=@' = FMI2GetRealScalar(instance, @=variable.valueReference=@, instanceStartTime);
 @@ endif @@
 @@ endfor @@
   else
 @@ for variable in outputs @@
 @@ if variable.type == 'Real' @@
-    '@=variable.name=@' = FMI2GetRealScalar(instance, @=variable.valueReference=@, dummyTime);
+    '@=variable.name=@' = FMI2GetRealScalar(instance, @=variable.valueReference=@, instanceTime);
 @@ endif @@
 @@ endfor @@
   end if;
 
 algorithm
   if initial() then
-    FMI2SetTime(instance, dummyStartTime);
+    FMI2SetTime(instance, instanceStartTime);
 @@ for variable in inputs @@
 @@ if variable.type != 'Real' @@
     // FMI2Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@'});
@@ -145,7 +145,7 @@ algorithm
 @@ endif @@
 @@ endfor @@
   else
-    FMI2SetTime(instance, dummyTime);
+    FMI2SetTime(instance, instanceTime);
 @@ for variable in inputs @@
 @@ if variable.type != 'Real' @@
     // FMI2Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@'});

@@ -16,8 +16,13 @@ jobs:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
 
-  - bash: $(create_environment) cmake
+  - bash: conda create --yes --name py37 -c conda-forge python=3.7
     displayName: Create Anaconda environment
+
+  - bash: |
+      source activate py37
+      conda install -c conda-forge --yes attrs dask ipython=7 jinja2 lark-parser lxml matplotlib notebook numpy plotly pyqt pyqtgraph pytest-cov requests scipy cmake
+    displayName: Install conda packages
 
   - bash: |
       source activate py37

@@ -749,10 +749,10 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
         target_platform = platform
 
     if model_description.fmiVersion == '1.0':
-        raise Exception("FMI 1.0 source FMUs are currently not supported")
+        raise Exception("FMI 1.0 source code FMUs are not supported.")
 
     if compiler is None:
-        if target_platform in ['win32', 'win64', 'x86_64-windows']:
+        if target_platform in ['win32', 'win64', 'x86-windows', 'x86_64-windows']:
             compiler = 'vc'
         elif target_platform in ['darwin64', 'x86_64-darwin', 'aarch64-darwin']:
             compiler = 'clang'

@@ -109,7 +109,7 @@ def supported_platforms(filename: Union[str, IO]):
                 break
 
     # check for *.dll on Windows
-    for bitness, architecture in [('32', 'i686'), ('64', 'x86_64')]:
+    for bitness, architecture in [('32', 'x86'), ('64', 'x86_64')]:
         for name in names:
             head, tail = os.path.split(name)
             if head in {'binaries/win' + bitness, 'binaries/' + architecture + '-windows'} and tail.endswith('.dll'):

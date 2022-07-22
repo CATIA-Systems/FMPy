@@ -1219,6 +1219,17 @@ class MainWindow(QMainWindow):
             if button == QMessageBox.No:
                 return
 
+        if self.modelDescription.fmiVersion == '3.0':
+
+            platform_map = {
+                'darwin64': 'x86_64-darwin',
+                'linux64': 'x86_64-linux',
+                'win32': 'x86-windows',
+                'win64': 'x86_64-windows',
+            }
+            
+            target_platform = platform_map[target_platform]
+
         try:
             compile_platform_binary(self.filename, target_platform=target_platform)
         except Exception as e:

@@ -1198,6 +1198,8 @@ def create_cmake_project(filename, project_dir):
     if model_description.modelExchange is not None:
         definitions.append('MODEL_EXCHANGE')
 
+    definitions.append('FMI3_OVERRIDE_FUNCTION_PREFIX')
+
     with ZipFile(filename, 'r') as archive:
         # don't add the current directory
         resources = list(filter(lambda n: not n.startswith('.'), archive.namelist()))
@@ -1209,9 +1211,13 @@ def create_cmake_project(filename, project_dir):
     build_configuration = model_description.buildConfigurations[0]
     source_file_set = build_configuration.sourceFileSets[0]
 
+    for definition in source_file_set.preprocessorDefinitions:
+        definitions.append(f'{definition.name}={definition.value}' if definition.value else definition.name)
+
     sources = ['sources/' + file for file in source_file_set.sourceFiles]
 
     # substitute the variables
+    txt = txt.replace('%FMI_VERSION%', model_description.fmiVersion[0])
     txt = txt.replace('%MODEL_NAME%', model_description.modelName)
     txt = txt.replace('%MODEL_IDENTIFIER%', build_configuration.modelIdentifier)
     txt = txt.replace('%DEFINITIONS%', ' '.join(definitions))

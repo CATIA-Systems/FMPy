@@ -120,6 +120,8 @@ add_library(ModelicaFMI SHARED
   ../fmpy/modelica/FMI/Resources/Include/ModelicaUtilityFunctions.h
 )
 
+set_target_properties(ModelicaFMI PROPERTIES PREFIX "")
+
 target_include_directories(ModelicaFMI PRIVATE
   ../fmpy/modelica/FMI/Resources/Include
   ../fmpy/modelica/FMI/Resources/Source

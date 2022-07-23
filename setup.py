@@ -19,17 +19,20 @@ FMPy is a free Python library to simulate `Functional Mock-up Units (FMUs) <http
 - compiles C code FMUs and generates CMake projects for debugging 
 """
 
-packages = ['fmpy',
-            'fmpy.cross_check',
-            'fmpy.cswrapper',
-            'fmpy.examples',
-            'fmpy.fmucontainer',
-            'fmpy.logging',
-            'fmpy.gui',
-            'fmpy.gui.generated',
-            'fmpy.ssp',
-            'fmpy.sundials',
-            'fmpy.webapp']
+packages = [
+    'fmpy',
+    'fmpy.cross_check',
+    'fmpy.cswrapper',
+    'fmpy.examples',
+    'fmpy.fmucontainer',
+    'fmpy.gui',
+    'fmpy.gui.generated',
+    'fmpy.logging',
+    'fmpy.modelica',
+    'fmpy.ssp',
+    'fmpy.sundials',
+    'fmpy.webapp'
+]
 
 package_data = {
     'fmpy': [
@@ -48,6 +51,17 @@ package_data = {
         'fmucontainer/binaries/win32/FMUContainer.dll',
         'fmucontainer/binaries/win64/FMUContainer.dll',
         'fmucontainer/documentation/LICENSE.txt',
+        'modelica/FMI/package.order',
+        'modelica/FMI/*.mo',
+        'modelica/FMI/FMI2/package.order',
+        'modelica/FMI/FMI2/*.mo',
+        'modelica/FMI/Resources/Library/darwin64/ModelicaFMI.dylib',
+        'modelica/FMI/Resources/Library/linux64/ModelicaFMI.so',
+        'modelica/FMI/Resources/Library/win32/ModelicaFMI.dll',
+        'modelica/FMI/Resources/Library/win64/ModelicaFMI.dll',
+        'modelica/templates/FMI2_CS.mo',
+        'modelica/templates/FMI2_ME.mo',
+        'modelica/templates/FMU.mo',
         'remoting/linux64/client_sm.so',
         'remoting/linux64/client_tcp.so',
         'remoting/linux64/server_sm',
@@ -75,6 +89,7 @@ package_data = {
 
 install_requires = [
     'attrs',
+    'Jinja2',
     'lark-parser',
     'lxml',
     'msgpack',

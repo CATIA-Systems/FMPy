@@ -104,3 +104,28 @@ add_custom_command(TARGET cswrapper POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
   "$<TARGET_FILE:cswrapper>"
   "${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/cswrapper"
 )
+
+add_library(ModelicaFMI SHARED
+  ../fmpy/modelica/FMI/Resources/Source/fmi2Functions.h
+  ../fmpy/modelica/FMI/Resources/Source/fmi2FunctionTypes.h
+  ../fmpy/modelica/FMI/Resources/Source/fmi2TypesPlatform.h
+  ../fmpy/modelica/FMI/Resources/Source/FMI.h
+  ../fmpy/modelica/FMI/Resources/Source/FMI2.h
+  ../fmpy/modelica/FMI/Resources/Source/FMI.c
+  ../fmpy/modelica/FMI/Resources/Source/FMI2.c
+  ../fmpy/modelica/FMI/Resources/Source/ModelicaFMI.h
+  ../fmpy/modelica/FMI/Resources/Source/ModelicaFMI.c
+  ../fmpy/modelica/FMI/Resources/Source/ModelicaUtilities.h
+  ../fmpy/modelica/FMI/Resources/Source/ModelicaUtilities.c
+  ../fmpy/modelica/FMI/Resources/Include/ModelicaUtilityFunctions.h
+)
+
+target_include_directories(ModelicaFMI PRIVATE
+  ../fmpy/modelica/FMI/Resources/Include
+  ../fmpy/modelica/FMI/Resources/Source
+)
+
+add_custom_command(TARGET ModelicaFMI POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+  "$<TARGET_FILE:ModelicaFMI>"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/modelica/FMI/Resources/Library/${FMI_PLATFORM}"
+)

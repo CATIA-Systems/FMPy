@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MODELICA_UTILITY_FUNCTIONS_H
+#define MODELICA_UTILITY_FUNCTIONS_H
 
 #include <stdarg.h>
 
@@ -16,5 +17,6 @@ typedef struct {
 
 } ModelicaUtilityFunctions_t;
 
-
 void setModelicaUtilityFunctions(ModelicaUtilityFunctions_t *callbacks);
+
+#endif /* MODELICA_UTILITY_FUNCTIONS_H */

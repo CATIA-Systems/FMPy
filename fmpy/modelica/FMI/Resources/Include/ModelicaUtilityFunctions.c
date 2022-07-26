@@ -24,7 +24,7 @@ void * ModelicaUtilityFunctions_getModelicaUtilityFunctions() {
 
 
 void ModelicaUtilityFunctions_freeModelicaUtilityFunctions(void *functions) {
-	// nothing to do
+	/* nothing to do */
 }
 
-#endif // MODELICA_UTILITY_FUNCTIONS_C
+#endif /* MODELICA_UTILITY_FUNCTIONS_C */

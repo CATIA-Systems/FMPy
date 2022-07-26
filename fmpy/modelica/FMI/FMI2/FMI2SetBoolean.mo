@@ -1,5 +1,5 @@
 within FMI.FMI2;
-function FMI2SetBoolean
+impure function FMI2SetBoolean
     input ExternalFMU externalFMU;
     input Integer vr[nvr];
     input Integer nvr;

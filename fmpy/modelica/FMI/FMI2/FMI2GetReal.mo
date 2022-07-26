@@ -1,5 +1,5 @@
 within FMI.FMI2;
-function FMI2GetReal
+impure function FMI2GetReal
     input ExternalFMU externalFMU;
     input Integer vr[nvr];
     input Integer nvr;

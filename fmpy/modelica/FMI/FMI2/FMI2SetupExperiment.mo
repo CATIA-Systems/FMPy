@@ -1,5 +1,5 @@
 within FMI.FMI2;
-function FMI2SetupExperiment
+impure function FMI2SetupExperiment
     input ExternalFMU externalFMU;
     input Boolean toleranceDefined;
     input Real tolerance;

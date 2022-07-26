@@ -1,5 +1,5 @@
 within FMI.FMI2;
-function FMI2SetContinuousStates
+impure function FMI2SetContinuousStates
     input ExternalFMU instance;
     input Real x[nx];
     input Integer nx;

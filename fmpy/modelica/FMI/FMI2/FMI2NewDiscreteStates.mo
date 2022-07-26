@@ -1,5 +1,5 @@
 within FMI.FMI2;
-function FMI2NewDiscreteStates
+impure function FMI2NewDiscreteStates
     input ExternalFMU externalFMU;
     output Boolean valuesOfContinuousStatesChanged;
     output Real nextEventTime;

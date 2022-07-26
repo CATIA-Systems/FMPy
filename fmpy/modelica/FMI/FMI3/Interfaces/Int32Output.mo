@@ -1,4 +1,4 @@
-within FMI.FMI3;
+within FMI.FMI3.Interfaces;
 connector Int32Output =   output Integer "'output Integer' as connector"
   annotation (
   defaultComponentName="y",

@@ -1,4 +1,4 @@
-within FMI.FMI3;
+within FMI.FMI3.Interfaces;
 connector Int32Input =   input Integer "'input Integer' as connector"
   annotation (
   defaultComponentName="u",

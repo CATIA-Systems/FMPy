@@ -1,4 +1,7 @@
 @@ extends "FMU.mo" @@
+@@ block imports @@
+  import FMI.FMI2.*;
+@@ endblock @@
 @@ block equations @@
 
   final constant Integer nx = @=nx=@;

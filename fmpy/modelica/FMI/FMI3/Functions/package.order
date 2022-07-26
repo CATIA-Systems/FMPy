@@ -1,0 +1,12 @@
+FMI3EnterInitializationMode
+FMI3ExitInitializationMode
+FMI3DoStep
+FMI3GetFloat64
+FMI3GetFloat64Scalar
+FMI3GetInt32
+FMI3GetInt32Scalar
+FMI3GetBoolean
+FMI3GetBooleanScalar
+FMI3SetFloat64
+FMI3SetInt32
+FMI3SetBoolean

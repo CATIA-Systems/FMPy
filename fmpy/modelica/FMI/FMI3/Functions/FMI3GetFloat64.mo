@@ -1,4 +1,4 @@
-within FMI.FMI3;
+within FMI.FMI3.Functions;
 impure function FMI3GetFloat64
   input Internal.ExternalFMU externalFMU;
     input Integer valueReferences[nValueReferences];

@@ -1,4 +1,4 @@
-within FMI.FMI3;
+within FMI.FMI3.Interfaces;
 connector Float64Output =
                        output Real "'output Real' as connector" annotation (
   defaultComponentName="y",

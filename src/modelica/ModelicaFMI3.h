@@ -22,7 +22,15 @@ EXPORT void FMU_FMI3ExitInitializationMode(void* instance);
 
 EXPORT void FMU_FMI3GetFloat64(void* instance, const int valueReferences[], int nValueReferences, double values[]);
 
+EXPORT void FMU_FMI3GetInt32(void* instance, const int valueReferences[], int nValueReferences, int values[]);
+
+EXPORT void FMU_FMI3GetBoolean(void* instance, const int valueReferences[], int nValueReferences, int values[]);
+
 EXPORT void FMU_FMI3SetFloat64(void* instance, const int valueReferences[], int nValueReferences, const double values[]);
+
+EXPORT void FMU_FMI3SetInt32(void* instance, const int valueReferences[], int nValueReferences, const int values[]);
+
+EXPORT void FMU_FMI3SetInt32(void* instance, const int valueReferences[], int nValueReferences, const int values[]);
 
 /***************************************************
 Functions for Co-Simulation

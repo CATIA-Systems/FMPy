@@ -1,4 +1,5 @@
 within FMI;
 package FMI3
-  extends Modelica.Icons.FunctionsPackage;
+  extends Modelica.Icons.Package;
+
 end FMI3;

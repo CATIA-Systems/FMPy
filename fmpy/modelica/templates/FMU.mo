@@ -5,8 +5,9 @@ model @=modelName=@
   "@=description=@"
 @@ endif @@
 
-  import FMI.FMI@=fmiMajorVersion=@.*;
   import Modelica.Blocks.Interfaces.*;
+@@ block imports @@
+@@ endblock @@
 
   parameter Modelica.Units.SI.Time startTime = 0.0 annotation(Dialog(tab="FMI", group="Parameters"));
 

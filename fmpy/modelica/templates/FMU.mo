@@ -7,15 +7,15 @@ model @=modelName=@
 
   parameter Modelica.Units.SI.Time startTime = 0.0 annotation(Dialog(tab="FMI", group="Parameters"));
 
-  parameter Modelica.Units.SI.Time stopTime = Modelica.Constants.inf annotation(Dialog(tab="FMI", group="Parameters")));
+  parameter Modelica.Units.SI.Time stopTime = Modelica.Constants.inf annotation(Dialog(tab="FMI", group="Parameters"));
 
-  parameter Real tolerance = 0.0 annotation(Dialog(tab="FMI", group="Parameters")));
+  parameter Real tolerance = 0.0 annotation(Dialog(tab="FMI", group="Parameters"));
 
-  parameter Boolean visible = false annotation(Dialog(tab="FMI", group="Parameters")));
+  parameter Boolean visible = false annotation(Dialog(tab="FMI", group="Parameters"));
 
-  parameter Boolean loggingOn = false annotation(Dialog(tab="FMI", group="Parameters")));
+  parameter Boolean loggingOn = false annotation(Dialog(tab="FMI", group="Parameters"));
 
-  parameter Boolean logFMICalls = false annotation(Dialog(tab="FMI", group="Parameters")));
+  parameter Boolean logFMICalls = false annotation(Dialog(tab="FMI", group="Parameters"));
 @@ block parameters @@
 @@ endblock @@
 @@ for variable in parameters @@

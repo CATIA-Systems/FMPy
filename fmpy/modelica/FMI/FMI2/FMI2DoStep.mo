@@ -1,5 +1,5 @@
 within FMI.FMI2;
-function FMI2DoStep
+impure function FMI2DoStep
     input ExternalFMU externalFMU;
     input Real currentCommunicationPoint;
     input Real communicationStepSize;

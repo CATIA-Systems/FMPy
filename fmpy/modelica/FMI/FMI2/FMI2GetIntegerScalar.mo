@@ -1,5 +1,5 @@
 within FMI.FMI2;
-function FMI2GetIntegerScalar
+impure function FMI2GetIntegerScalar
     input ExternalFMU externalFMU;
     input Integer vr;
     output Integer value;

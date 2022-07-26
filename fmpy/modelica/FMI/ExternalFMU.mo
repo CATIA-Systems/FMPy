@@ -2,7 +2,7 @@ within FMI;
 class ExternalFMU
   extends ExternalObject;
 
-  function constructor
+  impure function constructor
       input FMI.ModelicaFunctions callbacks;
       input String unzipdir;
       input String modelIdentifier;
@@ -18,7 +18,7 @@ class ExternalFMU
 
   end constructor;
 
-  function destructor
+  impure function destructor
     input ExternalFMU externalFMU;
   external"C" FMU_free(externalFMU) annotation (Library="ModelicaFMI");
   end destructor;

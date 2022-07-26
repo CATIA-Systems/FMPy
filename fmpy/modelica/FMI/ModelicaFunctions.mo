@@ -2,7 +2,7 @@ within FMI;
 class ModelicaFunctions
   extends ExternalObject;
 
-  function constructor "Function that call the external constructor"
+  impure function constructor
     output ModelicaFunctions functions;
 
     external "C" functions = ModelicaUtilityFunctions_getModelicaUtilityFunctions() annotation (
@@ -10,7 +10,7 @@ class ModelicaFunctions
       IncludeDirectory="modelica://FMI/Resources/Include");
   end constructor;
 
-  function destructor
+  impure function destructor
     input ModelicaFunctions functions;
   external "C" ModelicaUtilityFunctions_freeModelicaUtilityFunctions(functions) annotation (
       Include = "#include \"ModelicaUtilityFunctions.c\"",

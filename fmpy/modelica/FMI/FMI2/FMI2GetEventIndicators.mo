@@ -1,5 +1,5 @@
 within FMI.FMI2;
-function FMI2GetEventIndicators
+impure function FMI2GetEventIndicators
   input ExternalFMU instance;
   input Integer ni;
   output Real eventIndicators[ni];

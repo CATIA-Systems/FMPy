@@ -1,5 +1,5 @@
 within FMI.FMI2;
-function FMI2GetBooleanScalar
+impure function FMI2GetBooleanScalar
     input ExternalFMU externalFMU;
     input Integer vr;
     output Boolean value;

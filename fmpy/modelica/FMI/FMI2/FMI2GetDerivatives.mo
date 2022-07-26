@@ -1,5 +1,5 @@
 within FMI.FMI2;
-function FMI2GetDerivatives
+impure function FMI2GetDerivatives
   input ExternalFMU instance;
   input Integer nx;
   output Real derivatives[nx];

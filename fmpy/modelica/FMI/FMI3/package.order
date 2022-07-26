@@ -1,0 +1,11 @@
+FMI3EnterInitializationMode
+FMI3ExitInitializationMode
+FMI3DoStep
+FMI3GetFloat64
+FMI3GetFloat64Scalar
+FMI3SetFloat64
+Float64Output
+Float64
+Float64Input
+Int32Input
+Int32Output

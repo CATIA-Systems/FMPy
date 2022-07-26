@@ -7,6 +7,7 @@ package Internal
     impure function constructor
       input FMI.Internal.ModelicaFunctions callbacks;
         input String unzipdir;
+        input Integer fmiVersion;
         input String modelIdentifier;
         input String instanceName;
         input Integer interfaceType;
@@ -16,7 +17,7 @@ package Internal
         input Boolean logFMICalls;
         output ExternalFMU externalFMU;
     external"C" externalFMU =
-          FMU_load(callbacks, unzipdir, modelIdentifier, instanceName, interfaceType, instantiationToken, visible, loggingOn, logFMICalls) annotation (Library="ModelicaFMI");
+          FMU_load(callbacks, unzipdir, fmiVersion, modelIdentifier, instanceName, interfaceType, instantiationToken, visible, loggingOn, logFMICalls) annotation (Library="ModelicaFMI");
 
     end constructor;
 

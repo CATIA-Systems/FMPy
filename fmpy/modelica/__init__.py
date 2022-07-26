@@ -24,8 +24,10 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
 
     if interface_type == 'Model Exchange':
         model_identifier = model_description.modelExchange.modelIdentifier
+        IT = 'ME'
     else:
         model_identifier = model_description.coSimulation.modelIdentifier
+        IT = 'CS'
 
     package_root = package_dir
 
@@ -46,10 +48,9 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
     environment = jinja2.Environment(loader=loader, trim_blocks=True, block_start_string='@@',
                                      block_end_string='@@', variable_start_string='@=', variable_end_string='=@')
 
-    if interface_type == 'Co-Simulation':
-        template = environment.get_template(f'FMI2_CS.mo')
-    else:
-        template = environment.get_template(f'FMI2_ME.mo')
+    fmiMajorVersion = int(model_description.fmiVersion[0])
+
+    template = environment.get_template(f'FMI{fmiMajorVersion}_{IT}.mo')
 
     parameters = []
 
@@ -66,7 +67,7 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
 
     for variable in model_description.modelVariables:
 
-        if variable.type not in {'Real', 'Integer', 'Boolean'}:
+        if variable.type not in {'Float64', 'Int32', 'Real', 'Integer', 'Boolean'}:
             continue
 
         if variable.causality == 'parameter':
@@ -81,17 +82,13 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
 
     for i, variable in enumerate(inputs):
         y = y1 - (i + 1) * (height / (1 + len(inputs)))
-        annotations[
-            variable.name] = f'annotation (Placement(transformation(extent={{ {{ {x0 - 40}, {y - 20} }}, {{ {x0}, {y + 20} }} }}), iconTransformation(extent={{ {{ {x0 - 40}, {y - 20} }}, {{ {x0}, {y + 20} }} }})))'
-        labels.append(
-            f', Text(extent={{ {{ {x0 + 10}, {y - 10} }}, {{ -10, {y + 10} }} }}, textColor={{0,0,0}}, textString="{variable.name}", horizontalAlignment=TextAlignment.Left)')
+        annotations[variable.name] = f'annotation (Placement(transformation(extent={{ {{ {x0 - 40}, {y - 20} }}, {{ {x0}, {y + 20} }} }}), iconTransformation(extent={{ {{ {x0 - 40}, {y - 20} }}, {{ {x0}, {y + 20} }} }})))'
+        labels.append(f', Text(extent={{ {{ {x0 + 10}, {y - 10} }}, {{ -10, {y + 10} }} }}, textColor={{0,0,0}}, textString="{variable.name}", horizontalAlignment=TextAlignment.Left)')
 
     for i, variable in enumerate(outputs):
         y = y1 - (i + 1) * (height / (1 + len(outputs)))
-        annotations[
-            variable.name] = f'annotation (Placement(transformation(extent={{ {{ {x1}, {y - 10} }}, {{ {x1 + 20}, {y + 10} }} }}), iconTransformation(extent={{ {{ {x1}, {y - 10} }}, {{ {x1 + 20}, {y + 10} }} }})))'
-        labels.append(
-            f', Text(extent={{ {{ 10, {y - 10} }}, {{ {x1 - 10}, {y + 10} }} }}, textColor={{0,0,0}}, textString="{variable.name}", horizontalAlignment=TextAlignment.Right)')
+        annotations[variable.name] = f'annotation (Placement(transformation(extent={{ {{ {x1}, {y - 10} }}, {{ {x1 + 20}, {y + 10} }} }}), iconTransformation(extent={{ {{ {x1}, {y - 10} }}, {{ {x1 + 20}, {y + 10} }} }})))'
+        labels.append(f', Text(extent={{ {{ 10, {y - 10} }}, {{ {x1 - 10}, {y + 10} }} }}, textColor={{0,0,0}}, textString="{variable.name}", horizontalAlignment=TextAlignment.Right)')
 
     def as_array(values, default):
         if len(values) > 0:
@@ -127,6 +124,7 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
     class_text = template.render(
         package=package,
         description=model_description.description,
+        fmiMajorVersion=fmiMajorVersion,
         modelName=model_name,
         modelIdentifier=model_identifier,
         interfaceType=0 if interface_type == 'Model Exchange' else 1,

@@ -12,7 +12,6 @@ void setModelicaUtilityFunctions(ModelicaUtilityFunctions_t *callbacks) {
 	s_callbacks = *callbacks;
 }
 
-
 void ModelicaMessage(const char *string) {
 
 	if (s_callbacks.ModelicaMessage) {
@@ -21,7 +20,6 @@ void ModelicaMessage(const char *string) {
 		printf(string);
 	}
 }
-
 
 void ModelicaFormatMessage(const char *string, ...) {
 
@@ -37,7 +35,6 @@ void ModelicaFormatMessage(const char *string, ...) {
 	va_end(vl);
 }
 
-
 void ModelicaVFormatMessage(const char *string, va_list vl) {
 
 	if (s_callbacks.ModelicaVFormatMessage) {
@@ -47,7 +44,6 @@ void ModelicaVFormatMessage(const char *string, va_list vl) {
 	}
 }
 
-
 void ModelicaError(const char *string) {
 
 	if (s_callbacks.ModelicaError) {
@@ -56,7 +52,6 @@ void ModelicaError(const char *string) {
 		printf(string);
 	}
 }
-
 
 void ModelicaFormatError(const char *string, ...) {
 
@@ -73,7 +68,6 @@ void ModelicaFormatError(const char *string, ...) {
 	va_end(vl);
 }
 
-
 void ModelicaVFormatError(const char *string, va_list vl) {
 
 	if (s_callbacks.ModelicaVFormatError) {
@@ -84,11 +78,9 @@ void ModelicaVFormatError(const char *string, va_list vl) {
 	}
 }
 
-
 char* ModelicaAllocateString(size_t len) {
 	return (char*)malloc(len); 
 }
-
 
 char* ModelicaAllocateStringWithErrorReturn(size_t len) { 
 	return (char*)malloc(len);

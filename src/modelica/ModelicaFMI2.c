@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <math.h>
 
 #include "ModelicaFMI.h"
@@ -9,83 +8,9 @@
 #define CALL(f) do { if (f > FMIWarning) { ModelicaFormatError("The FMU reported an error."); } } while (0)
 
 
-static void logMessage(FMIInstance* instance, FMIStatus status, const char* category, const char* message) {
-    ModelicaFormatMessage("%s\n", message);
-}
-
-static void logFunctionCall(FMIInstance* instance, FMIStatus status, const char* message, ...) {
-
-    //if (!logFile) {
-    //    return;
-    //}
-
-    va_list args;
-    va_start(args, message);
-
-    //vfprintf(logFile, message, args);
-
-    ModelicaVFormatMessage(message, args);
-
-    switch (status) {
-    case FMIOK:
-        ModelicaFormatMessage(" -> OK\n");
-        break;
-    case FMIWarning:
-        ModelicaFormatMessage(" -> Warning\n");
-        break;
-    case FMIDiscard:
-        ModelicaFormatMessage(" -> Discard\n");
-        break;
-    case FMIError:
-        ModelicaFormatMessage(" -> Error\n");
-        break;
-    case FMIFatal:
-        ModelicaFormatMessage(" -> Fatal\n");
-        break;
-    case FMIPending:
-        ModelicaFormatMessage(" -> Pending\n");
-        break;
-    default:
-        ModelicaFormatMessage(" -> Unknown status (%d)\n", status);
-        break;
-    }
-
-    va_end(args);
-}
-
 /***************************************************
 Common Functions
 ****************************************************/
-
-void* FMU_load(ModelicaUtilityFunctions_t* callbacks, const char* unzipdir, const char* modelIdentifier, const char* instanceName, int interfaceType, const char* instantiationToken, int visible, int loggingOn, int logFMICalls) {
-
-    setModelicaUtilityFunctions(callbacks);
-
-    char platformBinaryPath[2048] = "";
-
-    FMIPlatformBinaryPath(unzipdir, modelIdentifier, FMIVersion2, platformBinaryPath, 2048);
-
-    FMIInstance* S = FMICreateInstance(instanceName, platformBinaryPath, logMessage, logFMICalls ? logFunctionCall : NULL);
-
-    if (!S) {
-        ModelicaFormatError("Failed to load platform binary %s.", platformBinaryPath);
-    }
-
-    char resourceURI[2048] = "";
-
-    FMIPathToURI(unzipdir, resourceURI, 2048);
-
-    if (FMI2Instantiate(S, resourceURI, (fmi2Type)interfaceType, instantiationToken, visible, loggingOn) > fmi2OK) {
-        ModelicaFormatError("Failed to instantiate FMU.", platformBinaryPath);
-    }
-	
-	return S;
-}
-
-void FMU_free(void* instance) {
-    FMIInstance* S = (FMIInstance*)instance;
-    FMIFreeInstance(S);
-}
 
 void FMU_FMI2GetReal(void* instance, const int vr[], int nvr, double value[]) {
     CALL(FMI2GetReal((FMIInstance*)instance, vr, nvr, value));
@@ -141,9 +66,9 @@ void FMU_FMI2EnterEventMode(void* instance) {
 }
 
 void FMU_FMI2NewDiscreteStates(void* instance, int* valuesOfContinuousStatesChanged, double* nextEventTime) {
-    
+
     fmi2EventInfo eventInfo;
-    
+
     do {
         CALL(FMI2NewDiscreteStates((FMIInstance*)instance, &eventInfo));
     } while (eventInfo.newDiscreteStatesNeeded);

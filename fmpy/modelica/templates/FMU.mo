@@ -5,7 +5,8 @@ model @=modelName=@
   "@=description=@"
 @@ endif @@
 
-  import FMI.FMI2.*;
+  import FMI.FMI@=fmiMajorVersion=@.*;
+  import Modelica.Blocks.Interfaces.*;
 
   parameter Modelica.Units.SI.Time startTime = 0.0 annotation(Dialog(tab="FMI", group="Parameters"));
 
@@ -30,11 +31,11 @@ model @=modelName=@
 @@ endfor @@
 @@ for variable in inputs @@
 
-  Modelica.Blocks.Interfaces.@=variable.type=@Input '@=variable.name=@'(start='@=variable.name=@_start') @=annotations[variable.name]=@;
+  @=variable.type=@Input '@=variable.name=@'(start='@=variable.name=@_start') @=annotations[variable.name]=@;
 @@ endfor @@
 @@ for variable in outputs @@
 
-  Modelica.Blocks.Interfaces.@=variable.type=@Output '@=variable.name=@' @=annotations[variable.name]=@;
+  @=variable.type=@Output '@=variable.name=@' @=annotations[variable.name]=@;
 @@ endfor @@
 
 protected
@@ -44,6 +45,7 @@ protected
   FMI.Internal.ExternalFMU instance = FMI.Internal.ExternalFMU(
     callbacks,
     Modelica.Utilities.Files.loadResource("modelica://@=package=@/Resources/FMUs/@=modelIdentifier=@"),
+    @=fmiMajorVersion-1=@,
     "@=modelIdentifier=@",
     getInstanceName(),
     @=interfaceType=@,

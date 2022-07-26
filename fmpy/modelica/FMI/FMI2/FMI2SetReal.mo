@@ -1,6 +1,6 @@
 within FMI.FMI2;
 impure function FMI2SetReal
-    input ExternalFMU externalFMU;
+  input Internal.ExternalFMU externalFMU;
     input Integer vr[nvr];
     input Integer nvr;
     input Real value[nvr];

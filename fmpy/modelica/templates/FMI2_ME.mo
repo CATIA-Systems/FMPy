@@ -19,7 +19,7 @@
   Real nextEventTime;
 
   function setTimeAndStates
-    input FMI.ExternalFMU instance;
+    input FMI.Internal.ExternalFMU instance;
     input Real t;
     input Real x[:];
     output Real instanceTime;
@@ -30,7 +30,7 @@
   end setTimeAndStates;
 
   function getDerivatives
-    input FMI.ExternalFMU instance;
+    input FMI.Internal.ExternalFMU instance;
     input Real instanceTime;
     output Real dx[nx];
   algorithm
@@ -38,7 +38,7 @@
   end getDerivatives;
 
   function getEventIndicators
-    input FMI.ExternalFMU instance;
+    input FMI.Internal.ExternalFMU instance;
     input Real instanceTime;
     input Real realInputs[:];
     input Integer integerInputs[:];
@@ -52,7 +52,7 @@
   end getEventIndicators;
 
   function updateDiscreteStates
-    input FMI.ExternalFMU instance;
+    input FMI.Internal.ExternalFMU instance;
     output Boolean valuesOfContinuousStatesChanged;
     output Real nextEventTime;
   algorithm
@@ -62,7 +62,7 @@
   end updateDiscreteStates;
 
   function setInputs
-    input FMI.ExternalFMU instance;
+    input FMI.Internal.ExternalFMU instance;
     input Integer[:] integerInputs;
     input Boolean[:] booleanInputs;
     output Boolean inputEvent;

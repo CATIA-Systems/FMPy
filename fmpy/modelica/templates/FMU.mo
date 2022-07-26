@@ -37,9 +37,9 @@ model @=modelName=@
 
 protected
 
-  FMI.ModelicaFunctions callbacks = FMI.ModelicaFunctions();
+  FMI.Internal.ModelicaFunctions callbacks = FMI.Internal.ModelicaFunctions();
 
-  FMI.ExternalFMU instance = FMI.ExternalFMU(
+  FMI.Internal.ExternalFMU instance = FMI.Internal.ExternalFMU(
     callbacks,
     Modelica.Utilities.Files.loadResource("modelica://@=package=@/Resources/FMUs/@=modelIdentifier=@"),
     "@=modelIdentifier=@",

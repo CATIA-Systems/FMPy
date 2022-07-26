@@ -1,6 +1,6 @@
 within FMI.FMI2;
 impure function FMI2GetRealScalar
-    input ExternalFMU externalFMU;
+  input Internal.ExternalFMU externalFMU;
     input Integer vr;
     input Real dummyTime = 0.0;
     output Real value;

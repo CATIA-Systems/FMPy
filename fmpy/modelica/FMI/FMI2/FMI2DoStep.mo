@@ -1,6 +1,6 @@
 within FMI.FMI2;
 impure function FMI2DoStep
-    input ExternalFMU externalFMU;
+  input Internal.ExternalFMU externalFMU;
     input Real currentCommunicationPoint;
     input Real communicationStepSize;
     input Boolean noSetFMUStatePriorToCurrentPoint;

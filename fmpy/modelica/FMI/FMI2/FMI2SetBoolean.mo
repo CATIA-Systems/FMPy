@@ -1,6 +1,6 @@
 within FMI.FMI2;
 impure function FMI2SetBoolean
-    input ExternalFMU externalFMU;
+  input Internal.ExternalFMU externalFMU;
     input Integer vr[nvr];
     input Integer nvr;
     input Boolean value[nvr];

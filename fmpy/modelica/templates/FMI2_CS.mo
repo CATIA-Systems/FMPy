@@ -32,7 +32,7 @@ algorithm
     FMI2DoStep(instance, time, communicationStepSize, true);
 
 @@ for variable in outputs @@
-    '@=variable.name=@' = FMI2Get@=variable.type=@Scalar(instance, @=variable.valueReference=@);
+    '@=variable.name=@' := FMI2Get@=variable.type=@Scalar(instance, @=variable.valueReference=@);
 @@ endfor @@
 
   end when;

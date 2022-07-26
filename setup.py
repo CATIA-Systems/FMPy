@@ -55,6 +55,8 @@ package_data = {
         'modelica/FMI/*.mo',
         'modelica/FMI/FMI2/package.order',
         'modelica/FMI/FMI2/*.mo',
+        'modelica/FMI/Resources/Include/ModelicaUtilityFunctions.c',
+        'modelica/FMI/Resources/Include/ModelicaUtilityFunctions.h',
         'modelica/FMI/Resources/Library/darwin64/ModelicaFMI.dylib',
         'modelica/FMI/Resources/Library/linux64/ModelicaFMI.so',
         'modelica/FMI/Resources/Library/win32/ModelicaFMI.dll',

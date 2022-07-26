@@ -29,8 +29,11 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
 
     package_root = package_dir
 
+    package = package_root.name
+
     while (package_root.parent / 'package.order').is_file():
         package_root = package_root.parent
+        package = package_root.name + '.' + package
 
     unzipdir = package_root / 'Resources' / 'FMUs' / model_identifier
 
@@ -122,7 +125,7 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
     })
 
     class_text = template.render(
-        package=package_root.name,
+        package=package,
         description=model_description.description,
         modelName=model_name,
         modelIdentifier=model_identifier,

@@ -1,3 +1,5 @@
+within @=package=@;
+
 model @=modelName=@
 @@ if description @@
   "@=description=@"

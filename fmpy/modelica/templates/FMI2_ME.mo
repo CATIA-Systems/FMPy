@@ -49,8 +49,8 @@
     output Real z[nz];
   algorithm
     FMI2SetReal(instance, realInputVRs, size(realInputs, 1), realInputs);
-    FMI2SetInteger(instance, integerInputVRs, size(integerInputs, 1), integerInputs);
-    FMI2SetBoolean(instance, booleanInputVRs, size(booleanInputs, 1), booleanInputs);
+    // FMI2SetInteger(instance, integerInputVRs, size(integerInputs, 1), integerInputs);
+    // FMI2SetBoolean(instance, booleanInputVRs, size(booleanInputs, 1), booleanInputs);
     z := FMI2GetEventIndicators(instance, size(z, 1));
   end getEventIndicators;
 

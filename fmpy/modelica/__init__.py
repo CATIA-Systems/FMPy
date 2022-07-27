@@ -22,7 +22,7 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
     else:
         communicationStepSize = '1e-2'
 
-    if interface_type == 'Model Exchange':
+    if interface_type == 'ModelExchange':
         model_identifier = model_description.modelExchange.modelIdentifier
         IT = 'ME'
     else:
@@ -130,7 +130,7 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
         fmiMajorVersion=fmiMajorVersion,
         modelName=model_name,
         modelIdentifier=model_identifier,
-        interfaceType=0 if interface_type == 'Model Exchange' else 1,
+        interfaceType=0 if interface_type == 'ModelExchange' else 1,
         instantiationToken=model_description.guid,
         nx=model_description.numberOfContinuousStates,
         nz=model_description.numberOfEventIndicators,

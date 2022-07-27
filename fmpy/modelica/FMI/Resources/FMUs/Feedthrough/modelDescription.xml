@@ -1,92 +1,111 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<fmiModelDescription
-  fmiVersion="2.0"
-  modelName="Feedthrough"
-  description="A model to test different variable types, causalities and variabilities"
-  generationTool="Reference FMUs (development build)"
-  guid="{8c4e810f-3df3-4a00-8276-176fa3c9f004}"
-  numberOfEventIndicators="0">
+<fmiModelDescription fmiVersion="3.0" modelName="Feedthrough" generationTool="Reference FMUs (2301568)" instantiationToken="{8c4e810f-3df3-4a00-8276-176fa3c9f004}">
 
   <ModelExchange
     modelIdentifier="Feedthrough"
-    canNotUseMemoryManagementFunctions="true"
-    canGetAndSetFMUstate="true"
-    canSerializeFMUstate="true">
-    <SourceFiles>
-      <File name="all.c"/>
-    </SourceFiles>
-  </ModelExchange>
+    canGetAndSetFMUState="true"
+    canSerializeFMUState="true"/>
 
   <CoSimulation
     modelIdentifier="Feedthrough"
+    canGetAndSetFMUState="true"
+    canSerializeFMUState="true"
     canHandleVariableCommunicationStepSize="true"
-    canNotUseMemoryManagementFunctions="true"
-    canGetAndSetFMUstate="true"
-    canSerializeFMUstate="true">
-    <SourceFiles>
-      <File name="all.c"/>
-    </SourceFiles>
-  </CoSimulation>
+    providesIntermediateUpdate="true"
+    canReturnEarlyAfterIntermediateUpdate="true"
+    fixedInternalStepSize="0.1"
+    hasEventMode="true"/>
 
   <LogCategories>
     <Category name="logEvents" description="Log events"/>
     <Category name="logStatusError" description="Log error messages"/>
   </LogCategories>
 
-  <DefaultExperiment stopTime="2"/>
+  <DefaultExperiment startTime="0" stopTime="2"/>
 
   <ModelVariables>
-    <ScalarVariable name="time" valueReference="0" causality="independent" variability="continuous">
-      <Real/>
-    </ScalarVariable>
-    <ScalarVariable name="Float64_fixed_parameter" valueReference="5" causality="parameter" variability="fixed">
-      <Real start="0"/>
-    </ScalarVariable>
-    <ScalarVariable name="Float64_tunable_parameter" valueReference="6" causality="parameter" variability="tunable">
-      <Real start="0"/>
-    </ScalarVariable>
-    <ScalarVariable name="Float64_continuous_input" valueReference="7" causality="input">
-      <Real start="0"/>
-    </ScalarVariable>
-    <ScalarVariable name="Float64_continuous_output" valueReference="8" causality="output" initial="calculated">
-      <Real/>
-    </ScalarVariable>
-    <ScalarVariable name="Float64_discrete_input" valueReference="9" causality="input" variability="discrete">
-      <Real start="0"/>
-    </ScalarVariable>
-    <ScalarVariable name="Float64_discrete_output" valueReference="10" causality="output" variability="discrete" initial="calculated">
-      <Real/>
-    </ScalarVariable>
-    <ScalarVariable name="Int32_input" valueReference="19" causality="input" variability="discrete">
-      <Integer start="0"/>
-    </ScalarVariable>
-    <ScalarVariable name="Int32_output" valueReference="20" causality="output" variability="discrete" initial="calculated">
-      <Integer/>
-    </ScalarVariable>
-    <ScalarVariable name="Boolean_input" valueReference="27" causality="input" variability="discrete">
-      <Boolean start="false"/>
-    </ScalarVariable>
-    <ScalarVariable name="Boolean_output" valueReference="28" causality="output" variability="discrete" initial="calculated">
-      <Boolean/>
-    </ScalarVariable>
-    <ScalarVariable name="String_parameter" valueReference="29" causality="parameter" variability="fixed">
-      <String start="Set me!"/>
-    </ScalarVariable>
+
+    <Float64 name="time" valueReference="0" causality="independent" variability="continuous"/>
+
+    <Float32 name="Float32_continuous_input"  valueReference="1" causality="input" start="0"/>
+    <Float32 name="Float32_continuous_output" valueReference="2" causality="output"/>
+    <Float32 name="Float32_discrete_input"    valueReference="3" causality="input" start="0"/>
+    <Float32 name="Float32_discrete_output"   valueReference="4" causality="output"/>
+
+    <Float64 name="Float64_fixed_parameter" valueReference="5" causality="parameter" variability="fixed" start="0"/>
+    <Float64 name="Float64_tunable_parameter" valueReference="6" causality="parameter" variability="tunable" start="0"/>
+    <Float64 name="Float64_continuous_input" valueReference="7" causality="input" start="0"/>
+    <Float64 name="Float64_continuous_output" valueReference="8" causality="output" initial="calculated"/>
+    <Float64 name="Float64_discrete_input" valueReference="9" causality="input" variability="discrete" start="0"/>
+    <Float64 name="Float64_discrete_output" valueReference="10" causality="output" variability="discrete" initial="calculated"/>
+
+    <Int8 name="Int8_input" valueReference="11" causality="input" start="0"/>
+    <Int8 name="Int8_output" valueReference="12" causality="output"/>
+
+    <UInt8 name="UInt8_input" valueReference="13" causality="input" start="0"/>
+    <UInt8 name="UInt8_output" valueReference="14" causality="output"/>
+
+    <Int16 name="Int16_input" valueReference="15" causality="input" start="0"/>
+    <Int16 name="Int16_output" valueReference="16" causality="output"/>
+
+    <UInt16 name="UInt16_input" valueReference="17" causality="input" start="0"/>
+    <UInt16 name="UInt16_output" valueReference="18" causality="output"/>
+
+    <Int32 name="Int32_input" valueReference="19" causality="input" start="0"/>
+    <Int32 name="Int32_output" valueReference="20" causality="output"/>
+
+    <UInt32 name="UInt32_input" valueReference="21" causality="input" start="0"/>
+    <UInt32 name="UInt32_output" valueReference="22" causality="output"/>
+
+    <Int64 name="Int64_input" valueReference="23" causality="input" start="0"/>
+    <Int64 name="Int64_output" valueReference="24" causality="output"/>
+
+    <UInt64 name="UInt64_input" valueReference="25" causality="input" start="0"/>
+    <UInt64 name="UInt64_output" valueReference="26" causality="output"/>
+
+    <Boolean name="Boolean_input" valueReference="27" causality="input" start="false"/>
+    <Boolean name="Boolean_output" valueReference="28" causality="output" initial="calculated"/>
+
+    <String name="String_parameter" valueReference="29" causality="parameter" variability="fixed">
+        <Start value="Set me!"/>
+    </String>
+
+    <Binary name="Binary_input" valueReference="30" causality="input">
+        <Start value="666f6f"/>
+    </Binary>
+    <Binary name="Binary_output" valueReference="31" causality="output"/>
+
   </ModelVariables>
 
   <ModelStructure>
-    <Outputs>
-      <Unknown index="5" dependencies="2 3 4" dependenciesKind="constant constant constant"/>
-      <Unknown index="7" dependencies="6" dependenciesKind="constant"/>
-      <Unknown index="9" dependencies="8" dependenciesKind="constant"/>
-      <Unknown index="11" dependencies="10 12" dependenciesKind="constant constant"/>
-    </Outputs>
-    <InitialUnknowns>
-      <Unknown index="5" dependencies="2 3 4" dependenciesKind="constant constant constant"/>
-      <Unknown index="7" dependencies="6" dependenciesKind="constant"/>
-      <Unknown index="9" dependencies="8" dependenciesKind="constant"/>
-      <Unknown index="11" dependencies="10 12" dependenciesKind="constant constant"/>
-    </InitialUnknowns>
+    <Output valueReference="2" dependencies="1" dependenciesKind="constant"/>
+    <Output valueReference="4" dependencies="3" dependenciesKind="constant"/>
+    <Output valueReference="8" dependencies="7" dependenciesKind="constant"/>
+    <Output valueReference="10" dependencies="9" dependenciesKind="constant"/>
+    <Output valueReference="12" dependencies="11" dependenciesKind="constant"/>
+    <Output valueReference="14" dependencies="13" dependenciesKind="constant"/>
+    <Output valueReference="16" dependencies="15" dependenciesKind="constant"/>
+    <Output valueReference="18" dependencies="17" dependenciesKind="constant"/>
+    <Output valueReference="20" dependencies="19" dependenciesKind="constant"/>
+    <Output valueReference="22" dependencies="21" dependenciesKind="constant"/>
+    <Output valueReference="24" dependencies="23" dependenciesKind="constant"/>
+    <Output valueReference="26" dependencies="25" dependenciesKind="constant"/>
+    <Output valueReference="28" dependencies="27" dependenciesKind="constant"/>
+    <Output valueReference="31" dependencies="30" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="2" dependencies="1" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="4" dependencies="3" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="8" dependencies="7" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="10" dependencies="9" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="12" dependencies="11" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="14" dependencies="13" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="16" dependencies="15" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="18" dependencies="17" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="20" dependencies="19" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="22" dependencies="21" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="24" dependencies="23" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="26" dependencies="25" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="28" dependencies="27" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="31" dependencies="30" dependenciesKind="constant"/>
   </ModelStructure>
 
 </fmiModelDescription>

@@ -66,38 +66,46 @@ void* FMU_load(ModelicaUtilityFunctions_t* callbacks, const char* unzipdir, int 
         ModelicaFormatError("Failed to load platform binary %s.", platformBinaryPath);
     }
 
-    char resourceURI[2048] = "";
+    char resourcePath[4096] = "";
 
-    FMIPathToURI(unzipdir, resourceURI, 2048);
+    strcpy(resourcePath, unzipdir);
+
+#ifdef _WIN32
+    strcat(resourcePath, "\\resources\\");
+    _fullpath(resourcePath, resourcePath, sizeof(resourcePath));
+#else
+    strcat(resourcePath, "/resources/");
+    realpath(resourcePath, resourcePath);
+    strcat(path, "/");
+#endif
 
     FMIStatus status = FMIFatal;
 
-    switch (fmiVersion) {
-    case FMIVersion2:
+    if (fmiVersion == FMIVersion2) {
+        char resourceURI[4096] = "";
+        FMIPathToURI(resourcePath, resourceURI, 4096);
         status = FMI2Instantiate(S, resourceURI, (fmi2Type)interfaceType, instantiationToken, visible, loggingOn);
-        break;
-    case FMIVersion3:
+    } else {
         status = interfaceType == FMIModelExchange ?
             FMI3InstantiateModelExchange(
                 S,                  // instance,
                 instantiationToken, // instantiationToken,
-                "",                 // resourcePath,
+                resourcePath,       // resourcePath,
                 visible,            // visible,
                 loggingOn           // loggingOn
             ) :
             FMI3InstantiateCoSimulation(
-                S,            // instance,
+                S,                  // instance,
                 instantiationToken, // instantiationToken,
-                "",           // resourcePath,
-                visible,      // visible,
-                loggingOn,    // loggingOn,
-                fmi3False,    // eventModeUsed,
-                fmi3False,    // earlyReturnAllowed,
-                NULL,         // requiredIntermediateVariables[],
-                0,            // nRequiredIntermediateVariables,
-                NULL          // intermediateUpdate
+                resourcePath,       // resourcePath,
+                visible,            // visible,
+                loggingOn,          // loggingOn,
+                fmi3False,          // eventModeUsed,
+                fmi3False,          // earlyReturnAllowed,
+                NULL,               // requiredIntermediateVariables[],
+                0,                  // nRequiredIntermediateVariables,
+                NULL                // intermediateUpdate
             );
-        break;
     }
 
     if (status > FMIOK) {

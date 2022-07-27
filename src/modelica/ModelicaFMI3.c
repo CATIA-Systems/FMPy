@@ -38,27 +38,27 @@ void FMU_FMI3EnterEventMode(void* instance) {
 }
 
 void FMU_FMI3GetFloat64(void* instance, const int valueReferences[], int nValueReferences, double values[]) {
-    CALL(FMI3GetFloat64((FMIInstance*)instance, valueReferences, nValueReferences, values, nValueReferences));
+    if (nValueReferences > 0) CALL(FMI3GetFloat64((FMIInstance*)instance, valueReferences, nValueReferences, values, nValueReferences));
 }
 
 void FMU_FMI3GetInt32(void* instance, const int valueReferences[], int nValueReferences, int values[]) {
-    CALL(FMI3GetInt32((FMIInstance*)instance, valueReferences, nValueReferences, values, nValueReferences));
+    if (nValueReferences > 0) CALL(FMI3GetInt32((FMIInstance*)instance, valueReferences, nValueReferences, values, nValueReferences));
 }
 
 void FMU_FMI3GetBoolean(void* instance, const int valueReferences[], int nValueReferences, int values[]) {
-    CALL(FMI3GetBoolean((FMIInstance*)instance, valueReferences, nValueReferences, (fmi3Boolean*)values, nValueReferences));
+    if (nValueReferences > 0) CALL(FMI3GetBoolean((FMIInstance*)instance, valueReferences, nValueReferences, (fmi3Boolean*)values, nValueReferences));
 }
 
 void FMU_FMI3SetFloat64(void* instance, const int valueReferences[], int nValueReferences, const double values[]) {
-    CALL(FMI3SetFloat64((FMIInstance*)instance, valueReferences, nValueReferences, values, nValueReferences));
+    if (nValueReferences > 0) CALL(FMI3SetFloat64((FMIInstance*)instance, valueReferences, nValueReferences, values, nValueReferences));
 }
 
 void FMU_FMI3SetInt32(void* instance, const int valueReferences[], int nValueReferences, const int values[]) {
-    CALL(FMI3SetInt32((FMIInstance*)instance, valueReferences, nValueReferences, values, nValueReferences));
+    if (nValueReferences > 0) CALL(FMI3SetInt32((FMIInstance*)instance, valueReferences, nValueReferences, values, nValueReferences));
 }
 
 void FMU_FMI3SetBoolean(void* instance, const int valueReferences[], int nValueReferences, const int values[]) {
-    CALL(FMI3SetBoolean((FMIInstance*)instance, valueReferences, nValueReferences, (fmi3Boolean*)values, nValueReferences));
+    if (nValueReferences > 0) CALL(FMI3SetBoolean((FMIInstance*)instance, valueReferences, nValueReferences, (fmi3Boolean*)values, nValueReferences));
 }
 
 void FMU_FMI3UpdateDiscreteStates(void* instance, int* valuesOfContinuousStatesChanged, double* nextEventTime) {
@@ -99,19 +99,19 @@ void FMU_FMI3SetTime(void* instance, double time) {
 }
 
 void FMU_FMI3SetContinuousStates(void* instance, const double continuousStates[], size_t nContinuousStates) {
-    CALL(FMI3SetContinuousStates((FMIInstance*)instance, continuousStates, nContinuousStates));
+    if (nContinuousStates > 0) CALL(FMI3SetContinuousStates((FMIInstance*)instance, continuousStates, nContinuousStates));
 }
 
 void FMU_FMI3GetContinuousStateDerivatives(void* instance, double derivatives[], size_t nContinuousStates) {
-    CALL(FMI3GetContinuousStateDerivatives((FMIInstance*)instance, derivatives, nContinuousStates));
+    if (nContinuousStates > 0) CALL(FMI3GetContinuousStateDerivatives((FMIInstance*)instance, derivatives, nContinuousStates));
 }
 
 void FMU_FMI3GetEventIndicators(void* instance, double eventIndicators[], size_t nEventIndicators) {
-    CALL(FMI3GetEventIndicators((FMIInstance*)instance, eventIndicators, nEventIndicators));
+    if (nEventIndicators > 0) CALL(FMI3GetEventIndicators((FMIInstance*)instance, eventIndicators, nEventIndicators));
 }
 
 void FMU_FMI3GetContinuousStates(void* instance, double continuousStates[], size_t nContinuousStates) {
-    CALL(FMI3GetContinuousStates((FMIInstance*)instance, continuousStates, nContinuousStates));
+    if (nContinuousStates > 0) CALL(FMI3GetContinuousStates((FMIInstance*)instance, continuousStates, nContinuousStates));
 }
 
 /***************************************************

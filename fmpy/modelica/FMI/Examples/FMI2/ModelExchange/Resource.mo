@@ -1,15 +1,47 @@
-@@ extends "FMU.mo" @@
-@@ block imports @@
+within FMI.Examples.FMI2.ModelExchange;
+
+model Resource
+  "This model loads data from a resource file"
+
+  import Modelica.Blocks.Interfaces.*;
   import FMI.FMI2.*;
-@@ endblock @@
-@@ block equations @@
 
-  final constant Integer nx = @=nx=@;
-  final constant Integer nz = @=nz=@;
+  parameter Modelica.Units.SI.Time startTime = 0.0 annotation(Dialog(tab="FMI", group="Parameters"));
 
-  final constant Integer realInputVRs[@=realInputVRs|length=@] = @=as_array(realInputVRs, '0')=@;
-  final constant Integer integerInputVRs[@=integerInputVRs|length=@] = @=as_array(integerInputVRs, '0')=@;
-  final constant Integer booleanInputVRs[@=booleanInputVRs|length=@] = @=as_array(booleanInputVRs, '0')=@;
+  parameter Modelica.Units.SI.Time stopTime = Modelica.Constants.inf annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter Real tolerance = 0.0 annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter Boolean visible = false annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter Boolean loggingOn = false annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter Boolean logFMICalls = false annotation(Dialog(tab="FMI", group="Parameters"));
+
+  IntegerOutput 'y' annotation (Placement(transformation(extent={ { 200, -10.0 }, { 220, 10.0 } }), iconTransformation(extent={ { 200, -10.0 }, { 220, 10.0 } })));
+
+protected
+
+  FMI.Internal.ModelicaFunctions callbacks = FMI.Internal.ModelicaFunctions();
+
+  FMI.Internal.ExternalFMU instance = FMI.Internal.ExternalFMU(
+    callbacks,
+    Modelica.Utilities.Files.loadResource("modelica://FMI/Resources/FMUs/Resource"),
+    1,
+    "Resource",
+    getInstanceName(),
+    0,
+    "{7b9c2114-2ce5-4076-a138-2cbc69e069e5}",
+    visible,
+    loggingOn,
+    logFMICalls);
+
+  final constant Integer nx = 0;
+  final constant Integer nz = 0;
+
+  final constant Integer realInputVRs[0] = fill(0, 0);
+  final constant Integer integerInputVRs[0] = fill(0, 0);
+  final constant Integer booleanInputVRs[0] = fill(0, 0);
 
   parameter Real instanceStartTime(fixed=false);
 
@@ -79,15 +111,9 @@ initial algorithm
 
   FMI2SetupExperiment(instance, tolerance > 0.0, tolerance, startTime, stopTime < Modelica.Constants.inf, stopTime);
 
-@@ for variable in parameters @@
-  FMI2Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@'});
-@@ endfor @@
 
   FMI2EnterInitializationMode(instance);
 
-@@ for variable in inputs @@
-  FMI2Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@_start'});
-@@ endfor @@
 
   FMI2ExitInitializationMode(instance);
 
@@ -102,61 +128,42 @@ equation
 
   der(x) = getDerivatives(instance, instanceTime);
 
-  z = getEventIndicators(instance, instanceTime, @=as_quoted_array(realInputs, '0.0')=@, @=as_quoted_array(integerInputs, '0')=@, @=as_quoted_array(booleanInputs, 'false')=@);
+  z = getEventIndicators(instance, instanceTime, fill(0.0, 0), fill(0, 0), fill(false, 0));
 
   for i in 1:size(z, 1) loop
     z_positive[i] = z[i] > 0;
   end for;
 
-  inputEvent = setInputs(instance, @=as_quoted_array(integerInputs, '0')=@, @=as_quoted_array(booleanInputs, 'false')=@);
+  inputEvent = setInputs(instance, fill(0, 0), fill(false, 0));
 
   when cat(1, {time >= pre(nextEventTime)}, change(z_positive), {inputEvent}) then
     (valuesOfContinuousStatesChanged, nextEventTime) = updateDiscreteStates(instance);
   end when;
-@@ if nx > 0 @@
-
-  when valuesOfContinuousStatesChanged then
-    reinit(x, FMI2GetContinuousStates(instance, nx));
-  end when;
-@@ endif @@
 
   if initial() then
-@@ for variable in outputs @@
-@@ if variable.type == 'Real' @@
-    '@=variable.name=@' = FMI2GetRealScalar(instance, @=variable.valueReference=@, instanceStartTime);
-@@ endif @@
-@@ endfor @@
   else
-@@ for variable in outputs @@
-@@ if variable.type == 'Real' @@
-    '@=variable.name=@' = FMI2GetRealScalar(instance, @=variable.valueReference=@, instanceTime);
-@@ endif @@
-@@ endfor @@
   end if;
 
 algorithm
   if initial() then
     FMI2SetTime(instance, instanceStartTime);
-@@ for variable in inputs @@
-@@ if variable.type != 'Real' @@
-    // FMI2Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@'});
-@@ endif @@
-@@ endfor @@
-@@ for variable in outputs @@
-@@ if variable.type != 'Real' @@
-    '@=variable.name=@' := FMI2Get@=variable.type=@Scalar(instance, @=variable.valueReference=@);
-@@ endif @@
-@@ endfor @@
+    'y' := FMI2GetIntegerScalar(instance, 1);
   else
     FMI2SetTime(instance, instanceTime);
-@@ for variable in inputs @@
-@@ if variable.type != 'Real' @@
-    // FMI2Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@'});
-@@ endif @@
-@@ endfor @@
-@@ for variable in outputs @@
-@@ if variable.type != 'Real' @@
-    '@=variable.name=@' := FMI2Get@=variable.type=@Scalar(instance, @=variable.valueReference=@);
-@@ endif @@
-@@ endfor @@  end if;
-@@ endblock @@
+    'y' := FMI2GetIntegerScalar(instance, 1);
+  end if;
+
+  annotation (
+    Icon(coordinateSystem(
+      preserveAspectRatio=false,
+      extent={{-200,-100}, {200,100}}),
+      graphics={
+        Text(extent={{-200,110}, {200,150}}, lineColor={0,0,255}, textString="%name"),
+        Rectangle(extent={{-200,-100},{200,100}}, lineColor={95,95,95}, fillColor={255,255,255}, fillPattern=FillPattern.Solid)
+        , Text(extent={ { 10, -10.0 }, { 190, 10.0 } }, textColor={0,0,0}, textString="y", horizontalAlignment=TextAlignment.Right)
+      }
+    ),
+    Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-200,-100}, {200,100}})),
+    experiment(StopTime=1.0)
+  );
+end Resource;

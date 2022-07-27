@@ -13,7 +13,7 @@ Common Functions
 ****************************************************/
 
 void FMU_FMI2GetReal(void* instance, const int vr[], int nvr, double value[]) {
-    CALL(FMI2GetReal((FMIInstance*)instance, vr, nvr, value));
+    if (nvr > 0) CALL(FMI2GetReal((FMIInstance*)instance, vr, nvr, value));
 }
 
 void FMU_FMI2GetRealScalar(void* instance, int vr, double* value) {
@@ -29,15 +29,15 @@ void FMU_FMI2GetBooleanScalar(void* instance, int vr, int* value) {
 }
 
 void FMU_FMI2SetReal(void* instance, const int vr[], int nvr, const double value[]) {
-    CALL(FMI2SetReal((FMIInstance*)instance, vr, nvr, value));
+    if (nvr > 0) CALL(FMI2SetReal((FMIInstance*)instance, vr, nvr, value));
 }
 
 void FMU_FMI2SetInteger(void* instance, const int vr[], int nvr, const int value[]) {
-    CALL(FMI2SetInteger((FMIInstance*)instance, vr, nvr, value));
+    if (nvr > 0) CALL(FMI2SetInteger((FMIInstance*)instance, vr, nvr, value));
 }
 
 void FMU_FMI2SetBoolean(void* instance, const int vr[], int nvr, const int value[]) {
-    CALL(FMI2SetBoolean((FMIInstance*)instance, vr, nvr, value));
+    if (nvr > 0) CALL(FMI2SetBoolean((FMIInstance*)instance, vr, nvr, value));
 }
 
 void FMU_FMI2SetupExperiment(void* instance,
@@ -86,19 +86,19 @@ void FMU_FMI2SetTime(void* instance, double time) {
 }
 
 void FMU_FMI2SetContinuousStates(void* instance, const double x[], int nx) {
-    CALL(FMI2SetContinuousStates((FMIInstance*)instance, x, nx));
+    if (nx > 0) CALL(FMI2SetContinuousStates((FMIInstance*)instance, x, nx));
 }
 
 void FMU_FMI2GetDerivatives(void* instance, double derivatives[], int nx) {
-    CALL(FMI2GetDerivatives((FMIInstance*)instance, derivatives, nx));
+    if (nx > 0) CALL(FMI2GetDerivatives((FMIInstance*)instance, derivatives, nx));
 }
 
 void FMU_FMI2GetEventIndicators(void* instance, double eventIndicators[], int ni) {
-    CALL(FMI2GetEventIndicators((FMIInstance*)instance, eventIndicators, ni));
+    if (ni > 0) CALL(FMI2GetEventIndicators((FMIInstance*)instance, eventIndicators, ni));
 }
 
 void FMU_FMI2GetContinuousStates(void* instance, double x[], int nx) {
-    CALL(FMI2GetContinuousStates((FMIInstance*)instance, x, nx));
+    if (nx > 0) CALL(FMI2GetContinuousStates((FMIInstance*)instance, x, nx));
 }
 
 /***************************************************

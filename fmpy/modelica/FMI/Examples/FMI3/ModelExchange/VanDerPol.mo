@@ -1,17 +1,52 @@
-@@ extends "FMU.mo" @@
-@@ block imports @@
+within FMI.Examples.FMI3.ModelExchange;
+
+model VanDerPol
+
+  import Modelica.Blocks.Interfaces.*;
   import FMI.FMI3.Types.*;
   import FMI.FMI3.Interfaces.*;
   import FMI.FMI3.Functions.*;
-@@ endblock @@
-@@ block equations @@
 
-  final constant Integer nx = @=nx=@;
-  final constant Integer nz = @=nz=@;
+  parameter Modelica.Units.SI.Time startTime = 0.0 annotation(Dialog(tab="FMI", group="Parameters"));
 
-  final constant Integer float64InputVRs[@=float64InputVRs|length=@] = @=as_array(float64InputVRs, '0')=@;
-  final constant Integer int32InputVRs[@=int32InputVRs|length=@] = @=as_array(int32InputVRs, '0')=@;
-  final constant Integer booleanInputVRs[@=booleanInputVRs|length=@] = @=as_array(booleanInputVRs, '0')=@;
+  parameter Modelica.Units.SI.Time stopTime = Modelica.Constants.inf annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter Real tolerance = 0.0 annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter Boolean visible = false annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter Boolean loggingOn = false annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter Boolean logFMICalls = false annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter Float64 'mu' = 1;
+
+  Float64Output 'x0' annotation (Placement(transformation(extent={ { 200, 23.33333333333333 }, { 220, 43.33333333333333 } }), iconTransformation(extent={ { 200, 23.33333333333333 }, { 220, 43.33333333333333 } })));
+
+  Float64Output 'x1' annotation (Placement(transformation(extent={ { 200, -43.33333333333334 }, { 220, -23.333333333333343 } }), iconTransformation(extent={ { 200, -43.33333333333334 }, { 220, -23.333333333333343 } })));
+
+protected
+
+  FMI.Internal.ModelicaFunctions callbacks = FMI.Internal.ModelicaFunctions();
+
+  FMI.Internal.ExternalFMU instance = FMI.Internal.ExternalFMU(
+    callbacks,
+    Modelica.Utilities.Files.loadResource("modelica://FMI/Resources/FMUs/VanDerPol"),
+    2,
+    "VanDerPol",
+    getInstanceName(),
+    0,
+    "{8c4e810f-3da3-4a00-8276-176fa3c9f000}",
+    visible,
+    loggingOn,
+    logFMICalls);
+
+  final constant Integer nx = 2;
+  final constant Integer nz = 0;
+
+  final constant Integer float64InputVRs[0] = fill(0, 0);
+  final constant Integer int32InputVRs[0] = fill(0, 0);
+  final constant Integer booleanInputVRs[0] = fill(0, 0);
 
   parameter Real instanceStartTime(fixed=false);
 
@@ -79,15 +114,10 @@
 
 initial algorithm
 
-@@ for variable in parameters @@
-  FMI3Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@'});
-@@ endfor @@
+  FMI3SetFloat64(instance, {5}, 1, {'mu'});
 
   FMI3EnterInitializationMode(instance, tolerance > 0.0, tolerance, startTime, stopTime < Modelica.Constants.inf, stopTime);
 
-@@ for variable in inputs @@
-  FMI3Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@_start'});
-@@ endfor @@
 
   FMI3ExitInitializationMode(instance);
 
@@ -102,61 +132,48 @@ equation
 
   der(x) = getDerivatives(instance, instanceTime);
 
-  z = getEventIndicators(instance, instanceTime, @=as_quoted_array(float64Inputs, '0.0')=@, @=as_quoted_array(int32Inputs, '0')=@, @=as_quoted_array(booleanInputs, 'false')=@);
+  z = getEventIndicators(instance, instanceTime, fill(0.0, 0), fill(0, 0), fill(false, 0));
 
   for i in 1:size(z, 1) loop
     z_positive[i] = z[i] > 0;
   end for;
 
-  inputEvent = setInputs(instance, @=as_quoted_array(int32Inputs, '0')=@, @=as_quoted_array(booleanInputs, 'false')=@);
+  inputEvent = setInputs(instance, fill(0, 0), fill(false, 0));
 
   when cat(1, {time >= pre(nextEventTime)}, change(z_positive), {inputEvent}) then
     (valuesOfContinuousStatesChanged, nextEventTime) = updateDiscreteStates(instance);
   end when;
-@@ if nx > 0 @@
 
   when valuesOfContinuousStatesChanged then
     reinit(x, FMI3GetContinuousStates(instance, nx));
   end when;
-@@ endif @@
 
   if initial() then
-@@ for variable in outputs @@
-@@ if variable.type == 'Float64' @@
-    '@=variable.name=@' = FMI3GetFloat64Scalar(instance, @=variable.valueReference=@, instanceStartTime);
-@@ endif @@
-@@ endfor @@
+    'x0' = FMI3GetFloat64Scalar(instance, 1, instanceStartTime);
+    'x1' = FMI3GetFloat64Scalar(instance, 3, instanceStartTime);
   else
-@@ for variable in outputs @@
-@@ if variable.type == 'Float64' @@
-    '@=variable.name=@' = FMI3GetFloat64Scalar(instance, @=variable.valueReference=@, instanceTime);
-@@ endif @@
-@@ endfor @@
+    'x0' = FMI3GetFloat64Scalar(instance, 1, instanceTime);
+    'x1' = FMI3GetFloat64Scalar(instance, 3, instanceTime);
   end if;
 
 algorithm
   if initial() then
     FMI3SetTime(instance, instanceStartTime);
-@@ for variable in inputs @@
-@@ if variable.type != 'Float64' @@
-    // FMI3Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@'});
-@@ endif @@
-@@ endfor @@
-@@ for variable in outputs @@
-@@ if variable.type != 'Float64' @@
-    '@=variable.name=@' := FMI3Get@=variable.type=@Scalar(instance, @=variable.valueReference=@, instanceStartTime);
-@@ endif @@
-@@ endfor @@
   else
     FMI3SetTime(instance, instanceTime);
-@@ for variable in inputs @@
-@@ if variable.type != 'Float64' @@
-    // FMI3Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@'});
-@@ endif @@
-@@ endfor @@
-@@ for variable in outputs @@
-@@ if variable.type != 'Float64' @@
-    '@=variable.name=@' := FMI3Get@=variable.type=@Scalar(instance, @=variable.valueReference=@, instanceTime);
-@@ endif @@
-@@ endfor @@  end if;
-@@ endblock @@
+  end if;
+
+  annotation (
+    Icon(coordinateSystem(
+      preserveAspectRatio=false,
+      extent={{-200,-100}, {200,100}}),
+      graphics={
+        Text(extent={{-200,110}, {200,150}}, lineColor={0,0,255}, textString="%name"),
+        Rectangle(extent={{-200,-100},{200,100}}, lineColor={95,95,95}, fillColor={255,255,255}, fillPattern=FillPattern.Solid)
+        , Text(extent={ { 10, 23.33333333333333 }, { 190, 43.33333333333333 } }, textColor={0,0,0}, textString="x0", horizontalAlignment=TextAlignment.Right) , Text(extent={ { 10, -43.33333333333334 }, { 190, -23.333333333333343 } }, textColor={0,0,0}, textString="x1", horizontalAlignment=TextAlignment.Right)
+      }
+    ),
+    Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-200,-100}, {200,100}})),
+    experiment(StopTime=20.0)
+  );
+end VanDerPol;

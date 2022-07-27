@@ -1,0 +1,183 @@
+within FMI.Examples.FMI3.ModelExchange;
+
+model BouncingBall
+  "This model calculates the trajectory, over time, of a ball dropped from a height of 1 m."
+
+  import Modelica.Blocks.Interfaces.*;
+  import FMI.FMI3.Types.*;
+  import FMI.FMI3.Interfaces.*;
+  import FMI.FMI3.Functions.*;
+
+  parameter Modelica.Units.SI.Time startTime = 0.0 annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter Modelica.Units.SI.Time stopTime = Modelica.Constants.inf annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter Real tolerance = 0.0 annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter Boolean visible = false annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter Boolean loggingOn = false annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter Boolean logFMICalls = false annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter Float64 'g' = -9.81 "Gravity acting on the ball";
+
+  parameter Float64 'e' = 0.7 "Coefficient of restitution";
+
+  Float64Output 'h' annotation (Placement(transformation(extent={ { 200, 23.33333333333333 }, { 220, 43.33333333333333 } }), iconTransformation(extent={ { 200, 23.33333333333333 }, { 220, 43.33333333333333 } })));
+
+  Float64Output 'v' annotation (Placement(transformation(extent={ { 200, -43.33333333333334 }, { 220, -23.333333333333343 } }), iconTransformation(extent={ { 200, -43.33333333333334 }, { 220, -23.333333333333343 } })));
+
+protected
+
+  FMI.Internal.ModelicaFunctions callbacks = FMI.Internal.ModelicaFunctions();
+
+  FMI.Internal.ExternalFMU instance = FMI.Internal.ExternalFMU(
+    callbacks,
+    Modelica.Utilities.Files.loadResource("modelica://FMI/Resources/FMUs/BouncingBall"),
+    2,
+    "BouncingBall",
+    getInstanceName(),
+    0,
+    "{8c4e810f-3df3-4a00-8276-176fa3c9f003}",
+    visible,
+    loggingOn,
+    logFMICalls);
+
+  final constant Integer nx = 2;
+  final constant Integer nz = 1;
+
+  final constant Integer float64InputVRs[0] = fill(0, 0);
+  final constant Integer int32InputVRs[0] = fill(0, 0);
+  final constant Integer booleanInputVRs[0] = fill(0, 0);
+
+  parameter Real instanceStartTime(fixed=false);
+
+  Real x[nx];
+  Real z[nz];
+  Real instanceTime;
+  Boolean z_positive[nz];
+  Boolean inputEvent;
+  Boolean valuesOfContinuousStatesChanged;
+  Real nextEventTime;
+
+  impure function setTimeAndStates
+    input FMI.Internal.ExternalFMU instance;
+    input Real t;
+    input Real x[:];
+    output Real instanceTime;
+  algorithm
+    FMI3SetTime(instance, t);
+    FMI3SetContinuousStates(instance, x, size(x, 1));
+    instanceTime := t;
+  end setTimeAndStates;
+
+  impure function getDerivatives
+    input FMI.Internal.ExternalFMU instance;
+    input Real instanceTime;
+    output Real dx[nx];
+  algorithm
+    dx := FMI3GetContinuousStateDerivatives(instance, size(dx, 1));
+  end getDerivatives;
+
+  impure function getEventIndicators
+    input FMI.Internal.ExternalFMU instance;
+    input Real instanceTime;
+    input Real float64Inputs[:];
+    input Integer int32Inputs[:];
+    input Boolean booleanInputs[:];
+    output Real z[nz];
+  algorithm
+    FMI3SetFloat64(instance, float64InputVRs, size(float64Inputs, 1), float64Inputs);
+    // FMI3SetInt32(instance, int32InputVRs, size(int32Inputs, 1), int32Inputs);
+    // FMI3SetBoolean(instance, booleanInputVRs, size(booleanInputs, 1), booleanInputs);
+    z := FMI3GetEventIndicators(instance, size(z, 1));
+  end getEventIndicators;
+
+  impure function updateDiscreteStates
+    input FMI.Internal.ExternalFMU instance;
+    output Boolean valuesOfContinuousStatesChanged;
+    output Real nextEventTime;
+  algorithm
+    FMI3EnterEventMode(instance);
+    (valuesOfContinuousStatesChanged, nextEventTime) := FMI3UpdateDiscreteStates(instance);
+    FMI3EnterContinuousTimeMode(instance);
+  end updateDiscreteStates;
+
+  impure function setInputs
+    input FMI.Internal.ExternalFMU instance;
+    input Integer[:] int32Inputs;
+    input Boolean[:] booleanInputs;
+    output Boolean inputEvent;
+  algorithm
+    FMI3SetInt32(instance, int32InputVRs, size(int32Inputs, 1), int32Inputs);
+    FMI3SetBoolean(instance, booleanInputVRs, size(booleanInputs, 1), booleanInputs);
+    inputEvent :=true;
+  end setInputs;
+
+initial algorithm
+
+  FMI3SetFloat64(instance, {5}, 1, {'g'});
+  FMI3SetFloat64(instance, {6}, 1, {'e'});
+
+  FMI3EnterInitializationMode(instance, tolerance > 0.0, tolerance, startTime, stopTime < Modelica.Constants.inf, stopTime);
+
+
+  FMI3ExitInitializationMode(instance);
+
+  (valuesOfContinuousStatesChanged, nextEventTime) := FMI3UpdateDiscreteStates(instance);
+  FMI3EnterContinuousTimeMode(instance);
+  x := FMI3GetContinuousStates(instance, nx);
+  instanceStartTime := time;
+
+equation
+
+  instanceTime = setTimeAndStates(instance, time, x);
+
+  der(x) = getDerivatives(instance, instanceTime);
+
+  z = getEventIndicators(instance, instanceTime, fill(0.0, 0), fill(0, 0), fill(false, 0));
+
+  for i in 1:size(z, 1) loop
+    z_positive[i] = z[i] > 0;
+  end for;
+
+  inputEvent = setInputs(instance, fill(0, 0), fill(false, 0));
+
+  when cat(1, {time >= pre(nextEventTime)}, change(z_positive), {inputEvent}) then
+    (valuesOfContinuousStatesChanged, nextEventTime) = updateDiscreteStates(instance);
+  end when;
+
+  when valuesOfContinuousStatesChanged then
+    reinit(x, FMI3GetContinuousStates(instance, nx));
+  end when;
+
+  if initial() then
+    'h' = FMI3GetFloat64Scalar(instance, 1, instanceStartTime);
+    'v' = FMI3GetFloat64Scalar(instance, 3, instanceStartTime);
+  else
+    'h' = FMI3GetFloat64Scalar(instance, 1, instanceTime);
+    'v' = FMI3GetFloat64Scalar(instance, 3, instanceTime);
+  end if;
+
+algorithm
+  if initial() then
+    FMI3SetTime(instance, instanceStartTime);
+  else
+    FMI3SetTime(instance, instanceTime);
+  end if;
+
+  annotation (
+    Icon(coordinateSystem(
+      preserveAspectRatio=false,
+      extent={{-200,-100}, {200,100}}),
+      graphics={
+        Text(extent={{-200,110}, {200,150}}, lineColor={0,0,255}, textString="%name"),
+        Rectangle(extent={{-200,-100},{200,100}}, lineColor={95,95,95}, fillColor={255,255,255}, fillPattern=FillPattern.Solid)
+        , Text(extent={ { 10, 23.33333333333333 }, { 190, 43.33333333333333 } }, textColor={0,0,0}, textString="h", horizontalAlignment=TextAlignment.Right) , Text(extent={ { 10, -43.33333333333334 }, { 190, -23.333333333333343 } }, textColor={0,0,0}, textString="v", horizontalAlignment=TextAlignment.Right)
+      }
+    ),
+    Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-200,-100}, {200,100}})),
+    experiment(StopTime=3.0)
+  );
+end BouncingBall;

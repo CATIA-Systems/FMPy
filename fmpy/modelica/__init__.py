@@ -121,6 +121,8 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
         'modelica_type': modelica_type
     })
 
+    stopTime = getattr(model_description.defaultExperiment, 'stopTime', 1)
+
     class_text = template.render(
         package=package,
         description=model_description.description,
@@ -147,6 +149,7 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
         integerInputs=[v.name for v in inputs if v.type == 'Integer'],
         booleanInputVRs=[str(v.valueReference) for v in inputs if v.type == 'Boolean'],
         booleanInputs=[v.name for v in inputs if v.type == 'Boolean'],
+        stopTime=stopTime
     )
 
     with open(model_path, 'w') as f:

@@ -67,6 +67,7 @@ protected
         @=labels=@
       }
     ),
-    Diagram(coordinateSystem(preserveAspectRatio=false, extent={{@=x0=@,@=y0=@}, {@=x1=@,@=y1=@}}))
+    Diagram(coordinateSystem(preserveAspectRatio=false, extent={{@=x0=@,@=y0=@}, {@=x1=@,@=y1=@}})),
+    experiment(StopTime=@=stopTime=@));
   );
 end @=modelName=@;

@@ -57,14 +57,6 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
     inputs = []
     outputs = []
 
-    width = 400
-    height = 200
-
-    x0 = -int(width / 2)
-    x1 = int(width / 2)
-    y0 = -int(height / 2)
-    y1 = int(height / 2)
-
     for variable in model_description.modelVariables:
 
         if variable.type not in {'Float64', 'Int32', 'Real', 'Integer', 'Boolean'}:
@@ -77,18 +69,23 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
         elif variable.causality == 'output':
             outputs.append(variable)
 
-    labels = []
+    width = 1200
+    height = max(200, 100 * max(len(inputs), len(outputs)))
+
+    x0 = -int(width / 2)
+    x1 = int(width / 2)
+    y0 = -int(height / 2)
+    y1 = int(height / 2)
+
     annotations = dict()
 
     for i, variable in enumerate(inputs):
         y = y1 - (i + 1) * (height / (1 + len(inputs)))
         annotations[variable.name] = f'annotation (Placement(transformation(extent={{ {{ {x0 - 40}, {y - 20} }}, {{ {x0}, {y + 20} }} }}), iconTransformation(extent={{ {{ {x0 - 40}, {y - 20} }}, {{ {x0}, {y + 20} }} }})))'
-        labels.append(f', Text(extent={{ {{ {x0 + 10}, {y - 10} }}, {{ -10, {y + 10} }} }}, textColor={{0,0,0}}, textString="{variable.name}", horizontalAlignment=TextAlignment.Left)')
 
     for i, variable in enumerate(outputs):
         y = y1 - (i + 1) * (height / (1 + len(outputs)))
         annotations[variable.name] = f'annotation (Placement(transformation(extent={{ {{ {x1}, {y - 10} }}, {{ {x1 + 20}, {y + 10} }} }}), iconTransformation(extent={{ {{ {x1}, {y - 10} }}, {{ {x1 + 20}, {y + 10} }} }})))'
-        labels.append(f', Text(extent={{ {{ 10, {y - 10} }}, {{ {x1 - 10}, {y + 10} }} }}, textColor={{0,0,0}}, textString="{variable.name}", horizontalAlignment=TextAlignment.Right)')
 
     def as_array(values, default):
         if len(values) > 0:
@@ -140,7 +137,6 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
         x1=x1,
         y0=y0,
         y1=y1,
-        labels=' '.join(labels),
         inputs=inputs,
         outputs=outputs,
         annotations=annotations,

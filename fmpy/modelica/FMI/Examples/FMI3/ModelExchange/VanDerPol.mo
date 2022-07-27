@@ -2,7 +2,6 @@ within FMI.Examples.FMI3.ModelExchange;
 
 model VanDerPol
 
-  import Modelica.Blocks.Interfaces.*;
   import FMI.FMI3.Types.*;
   import FMI.FMI3.Interfaces.*;
   import FMI.FMI3.Functions.*;
@@ -21,9 +20,9 @@ model VanDerPol
 
   parameter Float64 'mu' = 1;
 
-  Float64Output 'x0' annotation (Placement(transformation(extent={ { 200, 23.33333333333333 }, { 220, 43.33333333333333 } }), iconTransformation(extent={ { 200, 23.33333333333333 }, { 220, 43.33333333333333 } })));
+  Float64Output 'x0' annotation (Placement(transformation(extent={ { 600, 23.33333333333333 }, { 620, 43.33333333333333 } }), iconTransformation(extent={ { 600, 23.33333333333333 }, { 620, 43.33333333333333 } })));
 
-  Float64Output 'x1' annotation (Placement(transformation(extent={ { 200, -43.33333333333334 }, { 220, -23.333333333333343 } }), iconTransformation(extent={ { 200, -43.33333333333334 }, { 220, -23.333333333333343 } })));
+  Float64Output 'x1' annotation (Placement(transformation(extent={ { 600, -43.33333333333334 }, { 620, -23.333333333333343 } }), iconTransformation(extent={ { 600, -43.33333333333334 }, { 620, -23.333333333333343 } })));
 
 protected
 
@@ -166,14 +165,13 @@ algorithm
   annotation (
     Icon(coordinateSystem(
       preserveAspectRatio=false,
-      extent={{-200,-100}, {200,100}}),
+      extent={{-600,-100}, {600,100}}),
       graphics={
-        Text(extent={{-200,110}, {200,150}}, lineColor={0,0,255}, textString="%name"),
-        Rectangle(extent={{-200,-100},{200,100}}, lineColor={95,95,95}, fillColor={255,255,255}, fillPattern=FillPattern.Solid)
-        , Text(extent={ { 10, 23.33333333333333 }, { 190, 43.33333333333333 } }, textColor={0,0,0}, textString="x0", horizontalAlignment=TextAlignment.Right) , Text(extent={ { 10, -43.33333333333334 }, { 190, -23.333333333333343 } }, textColor={0,0,0}, textString="x1", horizontalAlignment=TextAlignment.Right)
+        Text(extent={{-600,110}, {600,150}}, lineColor={0,0,255}, textString="%name"),
+        Rectangle(extent={{-600,-100},{600,100}}, lineColor={95,95,95}, fillColor={255,255,255}, fillPattern=FillPattern.Solid)
       }
     ),
-    Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-200,-100}, {200,100}})),
+    Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-600,-100}, {600,100}})),
     experiment(StopTime=20.0)
   );
 end VanDerPol;

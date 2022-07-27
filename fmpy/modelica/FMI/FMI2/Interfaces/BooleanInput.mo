@@ -1,11 +1,11 @@
-within FMI.FMI3.Interfaces;
-connector Int32Input =   input Integer "'input Integer' as connector"
+within FMI.FMI2.Interfaces;
+connector BooleanInput = input Boolean "'input Boolean' as connector"
   annotation (
   defaultComponentName="u",
   Icon(graphics={Polygon(
         points={{-100,100},{100,0},{-100,-100},{-100,100}},
-        lineColor={255,127,0},
-        fillColor={255,127,0},
+        lineColor={255,0,255},
+        fillColor={255,0,255},
         fillPattern=FillPattern.Solid),
     Text(
       textColor={0,0,0},
@@ -21,14 +21,14 @@ connector Int32Input =   input Integer "'input Integer' as connector"
       initialScale=0.2,
       extent={{-100,-100},{100,100}}), graphics={Polygon(
         points={{0,50},{100,0},{0,-50},{0,50}},
-        lineColor={255,127,0},
-        fillColor={255,127,0},
+        lineColor={255,0,255},
+        fillColor={255,0,255},
         fillPattern=FillPattern.Solid), Text(
         extent={{-10,85},{-10,60}},
-        textColor={255,127,0},
+        textColor={255,0,255},
         textString="%name")}),
   Documentation(info="<html>
 <p>
-Connector with one input signal of type Integer.
+Connector with one input signal of type Boolean.
 </p>
 </html>"));

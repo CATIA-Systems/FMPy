@@ -1,5 +1,5 @@
-within FMI.FMI3.Interfaces;
-connector Int32Input =   input Integer "'input Integer' as connector"
+within FMI.FMI2.Interfaces;
+connector IntegerInput = input Integer "'input Integer' as connector"
   annotation (
   defaultComponentName="u",
   Icon(graphics={Polygon(

@@ -2,7 +2,6 @@ within FMI.Examples.FMI3.CoSimulation;
 
 model Feedthrough
 
-  import Modelica.Blocks.Interfaces.*;
   import FMI.FMI3.Types.*;
   import FMI.FMI3.Interfaces.*;
   import FMI.FMI3.Functions.*;
@@ -33,21 +32,21 @@ model Feedthrough
 
   parameter Boolean 'Boolean_input_start' = false;
 
-  Float64Input 'Float64_continuous_input'(start='Float64_continuous_input_start') annotation (Placement(transformation(extent={ { -240, 40.0 }, { -200, 80.0 } }), iconTransformation(extent={ { -240, 40.0 }, { -200, 80.0 } })));
+  Float64Input 'Float64_continuous_input'(start='Float64_continuous_input_start') annotation (Placement(transformation(extent={ { -640, 100.0 }, { -600, 140.0 } }), iconTransformation(extent={ { -640, 100.0 }, { -600, 140.0 } })));
 
-  Float64Input 'Float64_discrete_input'(start='Float64_discrete_input_start') annotation (Placement(transformation(extent={ { -240, 0.0 }, { -200, 40.0 } }), iconTransformation(extent={ { -240, 0.0 }, { -200, 40.0 } })));
+  Float64Input 'Float64_discrete_input'(start='Float64_discrete_input_start') annotation (Placement(transformation(extent={ { -640, 20.0 }, { -600, 60.0 } }), iconTransformation(extent={ { -640, 20.0 }, { -600, 60.0 } })));
 
-  Int32Input 'Int32_input'(start='Int32_input_start') annotation (Placement(transformation(extent={ { -240, -40.0 }, { -200, 0.0 } }), iconTransformation(extent={ { -240, -40.0 }, { -200, 0.0 } })));
+  Int32Input 'Int32_input'(start='Int32_input_start') annotation (Placement(transformation(extent={ { -640, -60.0 }, { -600, -20.0 } }), iconTransformation(extent={ { -640, -60.0 }, { -600, -20.0 } })));
 
-  BooleanInput 'Boolean_input'(start='Boolean_input_start') annotation (Placement(transformation(extent={ { -240, -80.0 }, { -200, -40.0 } }), iconTransformation(extent={ { -240, -80.0 }, { -200, -40.0 } })));
+  BooleanInput 'Boolean_input'(start='Boolean_input_start') annotation (Placement(transformation(extent={ { -640, -140.0 }, { -600, -100.0 } }), iconTransformation(extent={ { -640, -140.0 }, { -600, -100.0 } })));
 
-  Float64Output 'Float64_continuous_output' annotation (Placement(transformation(extent={ { 200, 50.0 }, { 220, 70.0 } }), iconTransformation(extent={ { 200, 50.0 }, { 220, 70.0 } })));
+  Float64Output 'Float64_continuous_output' annotation (Placement(transformation(extent={ { 600, 110.0 }, { 620, 130.0 } }), iconTransformation(extent={ { 600, 110.0 }, { 620, 130.0 } })));
 
-  Float64Output 'Float64_discrete_output' annotation (Placement(transformation(extent={ { 200, 10.0 }, { 220, 30.0 } }), iconTransformation(extent={ { 200, 10.0 }, { 220, 30.0 } })));
+  Float64Output 'Float64_discrete_output' annotation (Placement(transformation(extent={ { 600, 30.0 }, { 620, 50.0 } }), iconTransformation(extent={ { 600, 30.0 }, { 620, 50.0 } })));
 
-  Int32Output 'Int32_output' annotation (Placement(transformation(extent={ { 200, -30.0 }, { 220, -10.0 } }), iconTransformation(extent={ { 200, -30.0 }, { 220, -10.0 } })));
+  Int32Output 'Int32_output' annotation (Placement(transformation(extent={ { 600, -50.0 }, { 620, -30.0 } }), iconTransformation(extent={ { 600, -50.0 }, { 620, -30.0 } })));
 
-  BooleanOutput 'Boolean_output' annotation (Placement(transformation(extent={ { 200, -70.0 }, { 220, -50.0 } }), iconTransformation(extent={ { 200, -70.0 }, { 220, -50.0 } })));
+  BooleanOutput 'Boolean_output' annotation (Placement(transformation(extent={ { 600, -130.0 }, { 620, -110.0 } }), iconTransformation(extent={ { 600, -130.0 }, { 620, -110.0 } })));
 
 protected
 
@@ -100,14 +99,13 @@ algorithm
   annotation (
     Icon(coordinateSystem(
       preserveAspectRatio=false,
-      extent={{-200,-100}, {200,100}}),
+      extent={{-600,-200}, {600,200}}),
       graphics={
-        Text(extent={{-200,110}, {200,150}}, lineColor={0,0,255}, textString="%name"),
-        Rectangle(extent={{-200,-100},{200,100}}, lineColor={95,95,95}, fillColor={255,255,255}, fillPattern=FillPattern.Solid)
-        , Text(extent={ { -190, 50.0 }, { -10, 70.0 } }, textColor={0,0,0}, textString="Float64_continuous_input", horizontalAlignment=TextAlignment.Left) , Text(extent={ { -190, 10.0 }, { -10, 30.0 } }, textColor={0,0,0}, textString="Float64_discrete_input", horizontalAlignment=TextAlignment.Left) , Text(extent={ { -190, -30.0 }, { -10, -10.0 } }, textColor={0,0,0}, textString="Int32_input", horizontalAlignment=TextAlignment.Left) , Text(extent={ { -190, -70.0 }, { -10, -50.0 } }, textColor={0,0,0}, textString="Boolean_input", horizontalAlignment=TextAlignment.Left) , Text(extent={ { 10, 50.0 }, { 190, 70.0 } }, textColor={0,0,0}, textString="Float64_continuous_output", horizontalAlignment=TextAlignment.Right) , Text(extent={ { 10, 10.0 }, { 190, 30.0 } }, textColor={0,0,0}, textString="Float64_discrete_output", horizontalAlignment=TextAlignment.Right) , Text(extent={ { 10, -30.0 }, { 190, -10.0 } }, textColor={0,0,0}, textString="Int32_output", horizontalAlignment=TextAlignment.Right) , Text(extent={ { 10, -70.0 }, { 190, -50.0 } }, textColor={0,0,0}, textString="Boolean_output", horizontalAlignment=TextAlignment.Right)
+        Text(extent={{-600,210}, {600,250}}, lineColor={0,0,255}, textString="%name"),
+        Rectangle(extent={{-600,-200},{600,200}}, lineColor={95,95,95}, fillColor={255,255,255}, fillPattern=FillPattern.Solid)
       }
     ),
-    Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-200,-100}, {200,100}})),
+    Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-600,-200}, {600,200}})),
     experiment(StopTime=2.0)
   );
 end Feedthrough;

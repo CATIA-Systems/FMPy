@@ -1,6 +1,5 @@
-within FMI.FMI3.Interfaces;
-connector Float64Input =
-                      input Real "'input Real' as connector" annotation (
+within FMI.FMI2.Interfaces;
+connector RealInput = input Real "'input Real' as connector" annotation (
   defaultComponentName="u",
   Icon(graphics={
     Polygon(

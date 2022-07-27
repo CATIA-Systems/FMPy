@@ -17,3 +17,4 @@ FMI2SetContinuousStates
 FMI2GetDerivatives
 FMI2GetEventIndicators
 FMI2GetContinuousStates
+Interfaces

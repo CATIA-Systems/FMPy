@@ -1,5 +1,5 @@
-within FMI.FMI3.Interfaces;
-connector Int32Output =   output Integer "'output Integer' as connector"
+within FMI.FMI2.Interfaces;
+connector IntegerOutput = output Integer "'output Integer' as connector"
   annotation (
   defaultComponentName="y",
   Icon(coordinateSystem(

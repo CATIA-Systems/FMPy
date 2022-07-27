@@ -3,7 +3,7 @@ within FMI.Examples.FMI2.ModelExchange;
 model Resource
   "This model loads data from a resource file"
 
-  import Modelica.Blocks.Interfaces.*;
+  import FMI.FMI2.Interfaces.*;
   import FMI.FMI2.*;
 
   parameter Modelica.Units.SI.Time startTime = 0.0 annotation(Dialog(tab="FMI", group="Parameters"));
@@ -18,7 +18,7 @@ model Resource
 
   parameter Boolean logFMICalls = false annotation(Dialog(tab="FMI", group="Parameters"));
 
-  IntegerOutput 'y' annotation (Placement(transformation(extent={ { 200, -10.0 }, { 220, 10.0 } }), iconTransformation(extent={ { 200, -10.0 }, { 220, 10.0 } })));
+  IntegerOutput 'y' annotation (Placement(transformation(extent={ { 600, -10.0 }, { 620, 10.0 } }), iconTransformation(extent={ { 600, -10.0 }, { 620, 10.0 } })));
 
 protected
 
@@ -156,14 +156,13 @@ algorithm
   annotation (
     Icon(coordinateSystem(
       preserveAspectRatio=false,
-      extent={{-200,-100}, {200,100}}),
+      extent={{-600,-100}, {600,100}}),
       graphics={
-        Text(extent={{-200,110}, {200,150}}, lineColor={0,0,255}, textString="%name"),
-        Rectangle(extent={{-200,-100},{200,100}}, lineColor={95,95,95}, fillColor={255,255,255}, fillPattern=FillPattern.Solid)
-        , Text(extent={ { 10, -10.0 }, { 190, 10.0 } }, textColor={0,0,0}, textString="y", horizontalAlignment=TextAlignment.Right)
+        Text(extent={{-600,110}, {600,150}}, lineColor={0,0,255}, textString="%name"),
+        Rectangle(extent={{-600,-100},{600,100}}, lineColor={95,95,95}, fillColor={255,255,255}, fillPattern=FillPattern.Solid)
       }
     ),
-    Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-200,-100}, {200,100}})),
+    Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-600,-100}, {600,100}})),
     experiment(StopTime=1.0)
   );
 end Resource;

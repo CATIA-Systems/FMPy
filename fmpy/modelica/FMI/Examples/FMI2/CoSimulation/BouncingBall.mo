@@ -3,7 +3,7 @@ within FMI.Examples.FMI2.CoSimulation;
 model BouncingBall
   "This model calculates the trajectory, over time, of a ball dropped from a height of 1 m."
 
-  import Modelica.Blocks.Interfaces.*;
+  import FMI.FMI2.Interfaces.*;
   import FMI.FMI2.*;
 
   parameter Modelica.Units.SI.Time startTime = 0.0 annotation(Dialog(tab="FMI", group="Parameters"));
@@ -24,9 +24,9 @@ model BouncingBall
 
   parameter Real 'e' = 0.7 "Coefficient of restitution";
 
-  RealOutput 'h' annotation (Placement(transformation(extent={ { 200, 23.33333333333333 }, { 220, 43.33333333333333 } }), iconTransformation(extent={ { 200, 23.33333333333333 }, { 220, 43.33333333333333 } })));
+  RealOutput 'h' annotation (Placement(transformation(extent={ { 600, 23.33333333333333 }, { 620, 43.33333333333333 } }), iconTransformation(extent={ { 600, 23.33333333333333 }, { 620, 43.33333333333333 } })));
 
-  RealOutput 'v' annotation (Placement(transformation(extent={ { 200, -43.33333333333334 }, { 220, -23.333333333333343 } }), iconTransformation(extent={ { 200, -43.33333333333334 }, { 220, -23.333333333333343 } })));
+  RealOutput 'v' annotation (Placement(transformation(extent={ { 600, -43.33333333333334 }, { 620, -23.333333333333343 } }), iconTransformation(extent={ { 600, -43.33333333333334 }, { 620, -23.333333333333343 } })));
 
 protected
 
@@ -71,14 +71,13 @@ algorithm
   annotation (
     Icon(coordinateSystem(
       preserveAspectRatio=false,
-      extent={{-200,-100}, {200,100}}),
+      extent={{-600,-100}, {600,100}}),
       graphics={
-        Text(extent={{-200,110}, {200,150}}, lineColor={0,0,255}, textString="%name"),
-        Rectangle(extent={{-200,-100},{200,100}}, lineColor={95,95,95}, fillColor={255,255,255}, fillPattern=FillPattern.Solid)
-        , Text(extent={ { 10, 23.33333333333333 }, { 190, 43.33333333333333 } }, textColor={0,0,0}, textString="h", horizontalAlignment=TextAlignment.Right) , Text(extent={ { 10, -43.33333333333334 }, { 190, -23.333333333333343 } }, textColor={0,0,0}, textString="v", horizontalAlignment=TextAlignment.Right)
+        Text(extent={{-600,110}, {600,150}}, lineColor={0,0,255}, textString="%name"),
+        Rectangle(extent={{-600,-100},{600,100}}, lineColor={95,95,95}, fillColor={255,255,255}, fillPattern=FillPattern.Solid)
       }
     ),
-    Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-200,-100}, {200,100}})),
+    Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-600,-100}, {600,100}})),
     experiment(StopTime=3.0)
   );
 end BouncingBall;

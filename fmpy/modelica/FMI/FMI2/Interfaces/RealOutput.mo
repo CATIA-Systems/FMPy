@@ -1,6 +1,5 @@
-within FMI.FMI3.Interfaces;
-connector Float64Output =
-                       output Real "'output Real' as connector" annotation (
+within FMI.FMI2.Interfaces;
+connector RealOutput = output Real "'output Real' as connector" annotation (
   defaultComponentName="y",
   Icon(
     coordinateSystem(preserveAspectRatio=true,

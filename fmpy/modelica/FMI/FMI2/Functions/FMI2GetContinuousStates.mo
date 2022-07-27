@@ -1,4 +1,4 @@
-within FMI.FMI2;
+within FMI.FMI2.Functions;
 impure function FMI2GetContinuousStates
   input Internal.ExternalFMU instance;
     output Real x[nx];

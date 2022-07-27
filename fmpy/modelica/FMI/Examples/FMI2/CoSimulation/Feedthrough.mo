@@ -4,7 +4,7 @@ model Feedthrough
   "A model to test different variable types, causalities and variabilities"
 
   import FMI.FMI2.Interfaces.*;
-  import FMI.FMI2.*;
+  import FMI.FMI2.Functions.*;
 
   parameter Modelica.Units.SI.Time startTime = 0.0 annotation(Dialog(tab="FMI", group="Parameters"));
 

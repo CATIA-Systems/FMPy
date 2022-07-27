@@ -1,4 +1,4 @@
-within FMI.FMI2;
+within FMI.FMI2.Functions;
 impure function FMI2GetRealScalar
   input Internal.ExternalFMU externalFMU;
     input Integer vr;

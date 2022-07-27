@@ -4,7 +4,7 @@ model BouncingBall
   "This model calculates the trajectory, over time, of a ball dropped from a height of 1 m."
 
   import FMI.FMI2.Interfaces.*;
-  import FMI.FMI2.*;
+  import FMI.FMI2.Functions.*;
 
   parameter Modelica.Units.SI.Time startTime = 0.0 annotation(Dialog(tab="FMI", group="Parameters"));
 

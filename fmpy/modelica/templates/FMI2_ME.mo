@@ -1,7 +1,7 @@
 @@ extends "FMU.mo" @@
 @@ block imports @@
   import FMI.FMI2.Interfaces.*;
-  import FMI.FMI2.*;
+  import FMI.FMI2.Functions.*;
 @@ endblock @@
 @@ block equations @@
 

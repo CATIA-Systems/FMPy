@@ -53,7 +53,7 @@ algorithm
 
     FMI3DoStep(instance, time, communicationStepSize);
 
-    'counter' := FMI3GetInt32Scalar(instance, 1, time);
+    'counter' := FMI3GetInt32Scalar(instance, 1);
 
   end when;
 

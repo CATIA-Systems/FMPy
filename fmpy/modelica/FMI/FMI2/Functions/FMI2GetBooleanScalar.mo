@@ -1,7 +1,9 @@
 within FMI.FMI2.Functions;
 impure function FMI2GetBooleanScalar
   input Internal.ExternalFMU externalFMU;
-    input Integer vr;
-    output Boolean value;
-    external"C" FMU_FMI2GetBooleanScalar(externalFMU, vr, value) annotation (Library="ModelicaFMI");
+  input Integer valueReference;
+  input Real t = 0;
+  output Boolean value;
+algorithm
+  value :=scalar(FMI2GetBoolean(externalFMU, {valueReference}, 1));
 end FMI2GetBooleanScalar;

@@ -89,10 +89,10 @@ algorithm
 
     FMI3DoStep(instance, time, communicationStepSize);
 
-    'Float64_continuous_output' := FMI3GetFloat64Scalar(instance, 8, time);
-    'Float64_discrete_output' := FMI3GetFloat64Scalar(instance, 10, time);
-    'Int32_output' := FMI3GetInt32Scalar(instance, 20, time);
-    'Boolean_output' := FMI3GetBooleanScalar(instance, 28, time);
+    'Float64_continuous_output' := FMI3GetFloat64Scalar(instance, 8);
+    'Float64_discrete_output' := FMI3GetFloat64Scalar(instance, 10);
+    'Int32_output' := FMI3GetInt32Scalar(instance, 20);
+    'Boolean_output' := FMI3GetBooleanScalar(instance, 28);
 
   end when;
 

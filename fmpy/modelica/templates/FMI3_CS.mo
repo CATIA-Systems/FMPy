@@ -35,7 +35,7 @@ algorithm
     FMI3DoStep(instance, time, communicationStepSize);
 
 @@ for variable in outputs @@
-    '@=variable.name=@' := FMI3Get@=variable.type=@Scalar(instance, @=variable.valueReference=@, time);
+    '@=variable.name=@' := FMI3Get@=variable.type=@Scalar(instance, @=variable.valueReference=@);
 @@ endfor @@
 
   end when;

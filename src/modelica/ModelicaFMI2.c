@@ -16,16 +16,12 @@ void FMU_FMI2GetReal(void* instance, const int vr[], int nvr, double value[]) {
     if (nvr > 0) CALL(FMI2GetReal((FMIInstance*)instance, vr, nvr, value));
 }
 
-void FMU_FMI2GetRealScalar(void* instance, int vr, double* value) {
-    CALL(FMI2GetReal((FMIInstance*)instance, &vr, 1, value));
+void FMU_FMI2GetInteger(void* instance, const int vr[], int nvr, int value[]) {
+    if (nvr > 0) CALL(FMI2GetInteger((FMIInstance*)instance, vr, nvr, value));
 }
 
-void FMU_FMI2GetIntegerScalar(void* instance, int vr, int* value) {
-    CALL(FMI2GetInteger((FMIInstance*)instance, &vr, 1, value));
-}
-
-void FMU_FMI2GetBooleanScalar(void* instance, int vr, int* value) {
-    CALL(FMI2GetBoolean((FMIInstance*)instance, &vr, 1, value));
+void FMU_FMI2GetBoolean(void* instance, const int vr[], int nvr, int value[]) {
+    if (nvr > 0) CALL(FMI2GetBoolean((FMIInstance*)instance, vr, nvr, value));
 }
 
 void FMU_FMI2SetReal(void* instance, const int vr[], int nvr, const double value[]) {

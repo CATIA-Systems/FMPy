@@ -1,7 +1,9 @@
 within FMI.FMI2.Functions;
 impure function FMI2GetIntegerScalar
   input Internal.ExternalFMU externalFMU;
-    input Integer vr;
-    output Integer value;
-    external"C" FMU_FMI2GetIntegerScalar(externalFMU, vr, value) annotation (Library="ModelicaFMI");
+  input Integer valueReference;
+  input Real t = 0;
+  output Integer value;
+algorithm
+  value :=scalar(FMI2GetInteger(externalFMU, {valueReference}, 1));
 end FMI2GetIntegerScalar;

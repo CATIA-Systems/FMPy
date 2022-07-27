@@ -62,8 +62,8 @@ algorithm
 
     FMI3DoStep(instance, time, communicationStepSize);
 
-    'h' := FMI3GetFloat64Scalar(instance, 1, time);
-    'v' := FMI3GetFloat64Scalar(instance, 3, time);
+    'h' := FMI3GetFloat64Scalar(instance, 1);
+    'v' := FMI3GetFloat64Scalar(instance, 3);
 
   end when;
 

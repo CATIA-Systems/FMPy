@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="2.0"
+  modelName="Feedthrough"
+  description="A model to test different variable types, causalities and variabilities"
+  generationTool="Reference FMUs (development build)"
+  guid="{8c4e810f-3df3-4a00-8276-176fa3c9f004}"
+  numberOfEventIndicators="0">
+
+  <ModelExchange
+    modelIdentifier="Feedthrough"
+    canNotUseMemoryManagementFunctions="true"
+    canGetAndSetFMUstate="true"
+    canSerializeFMUstate="true">
+    <SourceFiles>
+      <File name="all.c"/>
+    </SourceFiles>
+  </ModelExchange>
+
+  <CoSimulation
+    modelIdentifier="Feedthrough"
+    canHandleVariableCommunicationStepSize="true"
+    canNotUseMemoryManagementFunctions="true"
+    canGetAndSetFMUstate="true"
+    canSerializeFMUstate="true">
+    <SourceFiles>
+      <File name="all.c"/>
+    </SourceFiles>
+  </CoSimulation>
+
+  <LogCategories>
+    <Category name="logEvents" description="Log events"/>
+    <Category name="logStatusError" description="Log error messages"/>
+  </LogCategories>
+
+  <DefaultExperiment stopTime="2"/>
+
+  <ModelVariables>
+    <ScalarVariable name="time" valueReference="0" causality="independent" variability="continuous">
+      <Real/>
+    </ScalarVariable>
+    <ScalarVariable name="Float64_fixed_parameter" valueReference="5" causality="parameter" variability="fixed">
+      <Real start="0"/>
+    </ScalarVariable>
+    <ScalarVariable name="Float64_tunable_parameter" valueReference="6" causality="parameter" variability="tunable">
+      <Real start="0"/>
+    </ScalarVariable>
+    <ScalarVariable name="Float64_continuous_input" valueReference="7" causality="input">
+      <Real start="0"/>
+    </ScalarVariable>
+    <ScalarVariable name="Float64_continuous_output" valueReference="8" causality="output" initial="calculated">
+      <Real/>
+    </ScalarVariable>
+    <ScalarVariable name="Float64_discrete_input" valueReference="9" causality="input" variability="discrete">
+      <Real start="0"/>
+    </ScalarVariable>
+    <ScalarVariable name="Float64_discrete_output" valueReference="10" causality="output" variability="discrete" initial="calculated">
+      <Real/>
+    </ScalarVariable>
+    <ScalarVariable name="Int32_input" valueReference="19" causality="input" variability="discrete">
+      <Integer start="0"/>
+    </ScalarVariable>
+    <ScalarVariable name="Int32_output" valueReference="20" causality="output" variability="discrete" initial="calculated">
+      <Integer/>
+    </ScalarVariable>
+    <ScalarVariable name="Boolean_input" valueReference="27" causality="input" variability="discrete">
+      <Boolean start="false"/>
+    </ScalarVariable>
+    <ScalarVariable name="Boolean_output" valueReference="28" causality="output" variability="discrete" initial="calculated">
+      <Boolean/>
+    </ScalarVariable>
+    <ScalarVariable name="String_parameter" valueReference="29" causality="parameter" variability="fixed">
+      <String start="Set me!"/>
+    </ScalarVariable>
+  </ModelVariables>
+
+  <ModelStructure>
+    <Outputs>
+      <Unknown index="5" dependencies="2 3 4" dependenciesKind="constant constant constant"/>
+      <Unknown index="7" dependencies="6" dependenciesKind="constant"/>
+      <Unknown index="9" dependencies="8" dependenciesKind="constant"/>
+      <Unknown index="11" dependencies="10 12" dependenciesKind="constant constant"/>
+    </Outputs>
+    <InitialUnknowns>
+      <Unknown index="5" dependencies="2 3 4" dependenciesKind="constant constant constant"/>
+      <Unknown index="7" dependencies="6" dependenciesKind="constant"/>
+      <Unknown index="9" dependencies="8" dependenciesKind="constant"/>
+      <Unknown index="11" dependencies="10 12" dependenciesKind="constant constant"/>
+    </InitialUnknowns>
+  </ModelStructure>
+
+</fmiModelDescription>

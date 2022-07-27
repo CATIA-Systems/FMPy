@@ -124,6 +124,7 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
     stopTime = getattr(model_description.defaultExperiment, 'stopTime', 1)
 
     class_text = template.render(
+        rootPackage=package_root.name,
         package=package,
         description=model_description.description,
         fmiMajorVersion=fmiMajorVersion,

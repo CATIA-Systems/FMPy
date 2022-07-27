@@ -1,5 +1,6 @@
 FMI3EnterInitializationMode
 FMI3ExitInitializationMode
+FMI3EnterEventMode
 FMI3DoStep
 FMI3GetFloat64
 FMI3GetFloat64Scalar
@@ -10,3 +11,10 @@ FMI3GetBooleanScalar
 FMI3SetFloat64
 FMI3SetInt32
 FMI3SetBoolean
+FMI3UpdateDiscreteStates
+FMI3EnterContinuousTimeMode
+FMI3SetTime
+FMI3SetContinuousStates
+FMI3GetContinuousStateDerivatives
+FMI3GetEventIndicators
+FMI3GetContinuousStates

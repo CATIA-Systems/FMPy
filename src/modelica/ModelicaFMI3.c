@@ -33,6 +33,10 @@ void FMU_FMI3ExitInitializationMode(void* instance) {
     CALL(FMI3ExitInitializationMode((FMIInstance*)instance));
 }
 
+void FMU_FMI3EnterEventMode(void* instance) {
+    CALL(FMI3EnterEventMode((FMIInstance*)instance));
+}
+
 void FMU_FMI3GetFloat64(void* instance, const int valueReferences[], int nValueReferences, double values[]) {
     CALL(FMI3GetFloat64((FMIInstance*)instance, valueReferences, nValueReferences, values, nValueReferences));
 }
@@ -55,6 +59,59 @@ void FMU_FMI3SetInt32(void* instance, const int valueReferences[], int nValueRef
 
 void FMU_FMI3SetBoolean(void* instance, const int valueReferences[], int nValueReferences, const int values[]) {
     CALL(FMI3SetBoolean((FMIInstance*)instance, valueReferences, nValueReferences, (fmi3Boolean*)values, nValueReferences));
+}
+
+void FMU_FMI3UpdateDiscreteStates(void* instance, int* valuesOfContinuousStatesChanged, double* nextEventTime) {
+
+    fmi3Boolean _discreteStatesNeedUpdate;
+    fmi3Boolean _terminateSimulation;
+    fmi3Boolean _nominalsOfContinuousStatesChanged;
+    fmi3Boolean _valuesOfContinuousStatesChanged;
+    fmi3Boolean _nextEventTimeDefined;
+    fmi3Float64 _nextEventTime;
+
+    do {
+        CALL(FMI3UpdateDiscreteStates(
+            (FMIInstance*)instance,
+            &_discreteStatesNeedUpdate,
+            &_terminateSimulation,
+            &_nominalsOfContinuousStatesChanged,
+            &_valuesOfContinuousStatesChanged,
+            &_nextEventTimeDefined,
+            &_nextEventTime
+        ));
+    } while (_discreteStatesNeedUpdate);
+
+    *valuesOfContinuousStatesChanged = _valuesOfContinuousStatesChanged;
+    *nextEventTime = _nextEventTimeDefined ? _nextEventTime : INFINITY;
+}
+
+/***************************************************
+Functions for Model Exchange
+****************************************************/
+
+void FMU_FMI3EnterContinuousTimeMode(void* instance) {
+    CALL(FMI3EnterContinuousTimeMode((FMIInstance*)instance));
+}
+
+void FMU_FMI3SetTime(void* instance, double time) {
+    CALL(FMI3SetTime((FMIInstance*)instance, time));
+}
+
+void FMU_FMI3SetContinuousStates(void* instance, const double continuousStates[], size_t nContinuousStates) {
+    CALL(FMI3SetContinuousStates((FMIInstance*)instance, continuousStates, nContinuousStates));
+}
+
+void FMU_FMI3GetContinuousStateDerivatives(void* instance, double derivatives[], size_t nContinuousStates) {
+    CALL(FMI3GetContinuousStateDerivatives((FMIInstance*)instance, derivatives, nContinuousStates));
+}
+
+void FMU_FMI3GetEventIndicators(void* instance, double eventIndicators[], size_t nEventIndicators) {
+    CALL(FMI3GetEventIndicators((FMIInstance*)instance, eventIndicators, nEventIndicators));
+}
+
+void FMU_FMI3GetContinuousStates(void* instance, double continuousStates[], size_t nContinuousStates) {
+    CALL(FMI3GetContinuousStates((FMIInstance*)instance, continuousStates, nContinuousStates));
 }
 
 /***************************************************

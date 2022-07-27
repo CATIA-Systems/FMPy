@@ -77,19 +77,26 @@ void* FMU_load(ModelicaUtilityFunctions_t* callbacks, const char* unzipdir, int 
         status = FMI2Instantiate(S, resourceURI, (fmi2Type)interfaceType, instantiationToken, visible, loggingOn);
         break;
     case FMIVersion3:
-        status = FMI3InstantiateCoSimulation(
-            S,            // instance,
-            instantiationToken, // instantiationToken,
-            "",           // resourcePath,
-            visible,      // visible,
-            loggingOn,    // loggingOn,
-            fmi3False,    // eventModeUsed,
-            fmi3False,    // earlyReturnAllowed,
-            NULL,         // requiredIntermediateVariables[],
-            0,            // nRequiredIntermediateVariables,
-            NULL          // intermediateUpdate
-        );
-
+        status = interfaceType == FMIModelExchange ?
+            FMI3InstantiateModelExchange(
+                S,                  // instance,
+                instantiationToken, // instantiationToken,
+                "",                 // resourcePath,
+                visible,            // visible,
+                loggingOn           // loggingOn
+            ) :
+            FMI3InstantiateCoSimulation(
+                S,            // instance,
+                instantiationToken, // instantiationToken,
+                "",           // resourcePath,
+                visible,      // visible,
+                loggingOn,    // loggingOn,
+                fmi3False,    // eventModeUsed,
+                fmi3False,    // earlyReturnAllowed,
+                NULL,         // requiredIntermediateVariables[],
+                0,            // nRequiredIntermediateVariables,
+                NULL          // intermediateUpdate
+            );
         break;
     }
 

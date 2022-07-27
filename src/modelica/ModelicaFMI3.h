@@ -20,6 +20,8 @@ EXPORT void FMU_FMI3EnterInitializationMode(
 
 EXPORT void FMU_FMI3ExitInitializationMode(void* instance);
 
+EXPORT void FMU_FMI3EnterEventMode(void* instance);
+
 EXPORT void FMU_FMI3GetFloat64(void* instance, const int valueReferences[], int nValueReferences, double values[]);
 
 EXPORT void FMU_FMI3GetInt32(void* instance, const int valueReferences[], int nValueReferences, int values[]);
@@ -30,13 +32,28 @@ EXPORT void FMU_FMI3SetFloat64(void* instance, const int valueReferences[], int 
 
 EXPORT void FMU_FMI3SetInt32(void* instance, const int valueReferences[], int nValueReferences, const int values[]);
 
-EXPORT void FMU_FMI3SetInt32(void* instance, const int valueReferences[], int nValueReferences, const int values[]);
+EXPORT void FMU_FMI3SetBoolean(void* instance, const int valueReferences[], int nValueReferences, const int values[]);
+
+EXPORT void FMU_FMI3UpdateDiscreteStates(void* instance, int* valuesOfContinuousStatesChanged, double* nextEventTime);
+
+/***************************************************
+Functions for Model Exchange
+****************************************************/
+
+EXPORT void FMU_FMI3EnterContinuousTimeMode(void* instance);
+
+EXPORT void FMU_FMI3SetTime(void* instance, double time);
+
+EXPORT void FMU_FMI3SetContinuousStates(void* instance, const double continuousStates[], size_t nContinuousStates);
+
+EXPORT void FMU_FMI3GetContinuousStateDerivatives(void* instance, double derivatives[], size_t nContinuousStates);
+
+EXPORT void FMU_FMI3GetEventIndicators(void* instance, double eventIndicators[], size_t nEventIndicators);
+
+EXPORT void FMU_FMI3GetContinuousStates(void* instance, double continuousStates[], size_t nContinuousStates);
 
 /***************************************************
 Functions for Co-Simulation
 ****************************************************/
 
-EXPORT void FMU_FMI3DoStep(
-    void* instance,
-    double currentCommunicationPoint,
-    double communicationStepSize);
+EXPORT void FMU_FMI3DoStep(void* instance, double currentCommunicationPoint, double communicationStepSize);

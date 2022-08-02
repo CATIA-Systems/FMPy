@@ -376,7 +376,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
             if (hasStartValue) {
 
-                fmi2Status status;
+                fmi2Status status = fmi2OK;
                 FMIInstance *m = s->components[ci]->instance;
 
                 switch (variableType) {

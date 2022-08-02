@@ -130,20 +130,19 @@ void* doStep(void *arg) {
 }
 #endif
 
-
 #define GET_SYSTEM \
-	if (!c) return fmi2Error; \
-	System *s = (System *)c; \
-	fmi2Status status = fmi2OK;
+    fmi2Status status = fmi2OK; \
+    System *s = (System *)c; \
+    if (!s) return fmi2Error
 
-#define CHECK_STATUS(S) status = S; if (status > fmi2Warning) goto END;
+#define CHECK_STATUS(S) status = S; if (status > fmi2Warning) goto END
 
 #define NOT_IMPLEMENTED \
     if (c) { \
         System *system = (System *)c; \
         system->logger(system->envrionment, system->instanceName, fmi2Error, "fmi2Error", "Function is not implemented."); \
     } \
-    return fmi2Error;
+    return fmi2Error
 
 /***************************************************
 Types for Common Functions
@@ -160,7 +159,7 @@ const char* fmi2GetVersion() {
 
 fmi2Status fmi2SetDebugLogging(fmi2Component c, fmi2Boolean loggingOn, size_t nCategories, const fmi2String categories[]) {
     
-	GET_SYSTEM
+	GET_SYSTEM;
 
 	for (size_t i = 0; i < s->nComponents; i++) {
         FMIInstance *m = s->components[i]->instance;
@@ -461,7 +460,7 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
                                fmi2Boolean stopTimeDefined,
                                fmi2Real stopTime) {
     
-	GET_SYSTEM
+	GET_SYSTEM;
 
 	for (size_t i = 0; i < s->nComponents; i++) {
         FMIInstance *m = s->components[i]->instance;
@@ -474,7 +473,7 @@ END:
 
 fmi2Status fmi2EnterInitializationMode(fmi2Component c) {
 	
-	GET_SYSTEM
+	GET_SYSTEM;
 
 	for (size_t i = 0; i < s->nComponents; i++) {
         FMIInstance *m = s->components[i]->instance;
@@ -487,7 +486,7 @@ END:
 
 fmi2Status fmi2ExitInitializationMode(fmi2Component c) {
 	
-	GET_SYSTEM
+	GET_SYSTEM;
 
 	for (size_t i = 0; i < s->nComponents; i++) {
         
@@ -503,7 +502,7 @@ END:
 
 fmi2Status fmi2Terminate(fmi2Component c) {
 	
-	GET_SYSTEM
+	GET_SYSTEM;
 
 	for (size_t i = 0; i < s->nComponents; i++) {
         
@@ -532,13 +531,12 @@ END:
 
 fmi2Status fmi2Reset(fmi2Component c) {
 
-	GET_SYSTEM
+	GET_SYSTEM;
 
-		for (size_t i = 0; i < s->nComponents; i++) {
-            FMIInstance *m = s->components[i]->instance;
-			CHECK_STATUS(FMI2Reset(m));
-		}
-
+	for (size_t i = 0; i < s->nComponents; i++) {
+        FMIInstance *m = s->components[i]->instance;
+		CHECK_STATUS(FMI2Reset(m));
+	}
 END:
 	return status;
 }
@@ -546,13 +544,13 @@ END:
 /* Getting and setting variable values */
 fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Real value[]) {
     
-	GET_SYSTEM
+	GET_SYSTEM;
 
 	for (size_t i = 0; i < nvr; i++) {
 		if (vr[i] >= s->nVariables) return fmi2Error;
 		VariableMapping vm = s->variables[vr[i]];
         FMIInstance *m = s->components[vm.ci[0]]->instance;
-		CHECK_STATUS(FMI2GetReal(m, &(vm.vr[0]), 1, &value[i]))
+        CHECK_STATUS(FMI2GetReal(m, &(vm.vr[0]), 1, &value[i]));
 	}
 END:
 	return status;
@@ -560,56 +558,56 @@ END:
 
 fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Integer value[]) {
 
-	GET_SYSTEM
+	GET_SYSTEM;
 
-		for (size_t i = 0; i < nvr; i++) {
-			if (vr[i] >= s->nVariables) return fmi2Error;
-			VariableMapping vm = s->variables[vr[i]];
-            FMIInstance *m = s->components[vm.ci[0]]->instance;
-			CHECK_STATUS(FMI2GetInteger(m, &(vm.vr[0]), 1, &value[i]))
-		}
+	for (size_t i = 0; i < nvr; i++) {
+		if (vr[i] >= s->nVariables) return fmi2Error;
+		VariableMapping vm = s->variables[vr[i]];
+        FMIInstance *m = s->components[vm.ci[0]]->instance;
+        CHECK_STATUS(FMI2GetInteger(m, &(vm.vr[0]), 1, &value[i]));
+	}
 END:
 	return status;
 }
 
 fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Boolean value[]) {
 
-	GET_SYSTEM
+	GET_SYSTEM;
 
-		for (size_t i = 0; i < nvr; i++) {
-			if (vr[i] >= s->nVariables) return fmi2Error;
-			VariableMapping vm = s->variables[vr[i]];
-            FMIInstance *m = s->components[vm.ci[0]]->instance;
-			CHECK_STATUS(FMI2GetBoolean(m, &(vm.vr[0]), 1, &value[i]))
-		}
+	for (size_t i = 0; i < nvr; i++) {
+		if (vr[i] >= s->nVariables) return fmi2Error;
+		VariableMapping vm = s->variables[vr[i]];
+        FMIInstance *m = s->components[vm.ci[0]]->instance;
+        CHECK_STATUS(FMI2GetBoolean(m, &(vm.vr[0]), 1, &value[i]));
+	}
 END:
 	return status;
 }
 
 fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2String  value[]) {
 
-	GET_SYSTEM
+	GET_SYSTEM;
 
-		for (size_t i = 0; i < nvr; i++) {
-			if (vr[i] >= s->nVariables) return fmi2Error;
-			VariableMapping vm = s->variables[vr[i]];
-            FMIInstance *m = s->components[vm.ci[0]]->instance;
-			CHECK_STATUS(FMI2GetString(m, &(vm.vr[0]), 1, &value[i]))
-		}
+	for (size_t i = 0; i < nvr; i++) {
+		if (vr[i] >= s->nVariables) return fmi2Error;
+		VariableMapping vm = s->variables[vr[i]];
+        FMIInstance *m = s->components[vm.ci[0]]->instance;
+        CHECK_STATUS(FMI2GetString(m, &(vm.vr[0]), 1, &value[i]));
+	}
 END:
 	return status;
 }
 
 fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Real value[]) {
 	
-	GET_SYSTEM
+	GET_SYSTEM;
 
 	for (size_t i = 0; i < nvr; i++) {
 		if (vr[i] >= s->nVariables) return fmi2Error;
 		VariableMapping vm = s->variables[vr[i]];
         for (size_t j = 0; j < vm.size; j++) {
             FMIInstance *m = s->components[vm.ci[j]]->instance;
-		    CHECK_STATUS(FMI2SetReal(m, &(vm.vr[j]), 1, &value[i]))
+            CHECK_STATUS(FMI2SetReal(m, &(vm.vr[j]), 1, &value[i]));
         }
 	}
 END:
@@ -618,14 +616,14 @@ END:
 
 fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Integer value[]) {
 
-	GET_SYSTEM
+	GET_SYSTEM;
 
 	for (size_t i = 0; i < nvr; i++) {
 		if (vr[i] >= s->nVariables) return fmi2Error;
 		VariableMapping vm = s->variables[vr[i]];
         for (size_t j = 0; j < vm.size; j++) {
             FMIInstance *m = s->components[vm.ci[j]]->instance;
-            CHECK_STATUS(FMI2SetInteger(m, &(vm.vr[j]), 1, &value[i]))
+            CHECK_STATUS(FMI2SetInteger(m, &(vm.vr[j]), 1, &value[i]));
         }
 	}
 END:
@@ -634,14 +632,14 @@ END:
 
 fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Boolean value[]) {
 
-	GET_SYSTEM
+	GET_SYSTEM;
 
 	for (size_t i = 0; i < nvr; i++) {
 		if (vr[i] >= s->nVariables) return fmi2Error;
 		VariableMapping vm = s->variables[vr[i]];
         for (size_t j = 0; j < vm.size; j++) {
             FMIInstance *m = s->components[vm.ci[j]]->instance;
-            CHECK_STATUS(FMI2SetBoolean(m, &(vm.vr[j]), 1, &value[i]))
+            CHECK_STATUS(FMI2SetBoolean(m, &(vm.vr[j]), 1, &value[i]));
         }
 	}
 END:
@@ -650,14 +648,14 @@ END:
 
 fmi2Status fmi2SetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2String  value[]) {
 
-	GET_SYSTEM
+	GET_SYSTEM;
 
 	for (size_t i = 0; i < nvr; i++) {
 		if (vr[i] >= s->nVariables) return fmi2Error;
 		VariableMapping vm = s->variables[vr[i]];
         for (size_t j = 0; j < vm.size; j++) {
             FMIInstance *m = s->components[vm.ci[j]]->instance;
-            CHECK_STATUS(FMI2SetString(m, &(vm.vr[j]), 1, &value[i]))
+            CHECK_STATUS(FMI2SetString(m, &(vm.vr[j]), 1, &value[i]));
         }
 	}
 END:
@@ -666,27 +664,27 @@ END:
 
 /* Getting and setting the internal FMU state */
 fmi2Status fmi2GetFMUstate(fmi2Component c, fmi2FMUstate* FMUstate) {
-    NOT_IMPLEMENTED
+    NOT_IMPLEMENTED;
 }
 
 fmi2Status fmi2SetFMUstate(fmi2Component c, fmi2FMUstate  FMUstate) {
-    NOT_IMPLEMENTED
+    NOT_IMPLEMENTED;
 }
 
 fmi2Status fmi2FreeFMUstate(fmi2Component c, fmi2FMUstate* FMUstate) {
-    NOT_IMPLEMENTED
+    NOT_IMPLEMENTED;
 }
 
 fmi2Status fmi2SerializedFMUstateSize(fmi2Component c, fmi2FMUstate  FMUstate, size_t* size) {
-    NOT_IMPLEMENTED
+    NOT_IMPLEMENTED;
 }
 
 fmi2Status fmi2SerializeFMUstate(fmi2Component c, fmi2FMUstate  FMUstate, fmi2Byte serializedState[], size_t size) {
-    NOT_IMPLEMENTED
+    NOT_IMPLEMENTED;
 }
 
 fmi2Status fmi2DeSerializeFMUstate(fmi2Component c, const fmi2Byte serializedState[], size_t size, fmi2FMUstate* FMUstate) {
-    NOT_IMPLEMENTED
+    NOT_IMPLEMENTED;
 }
 
 /* Getting partial derivatives */
@@ -695,7 +693,7 @@ fmi2Status fmi2GetDirectionalDerivative(fmi2Component c,
                                         const fmi2ValueReference vKnown_ref[],   size_t nKnown,
                                         const fmi2Real dvKnown[],
                                         fmi2Real dvUnknown[]) {
-    NOT_IMPLEMENTED
+    NOT_IMPLEMENTED;
 }
 
 /***************************************************
@@ -707,14 +705,14 @@ fmi2Status fmi2SetRealInputDerivatives(fmi2Component c,
                                        const fmi2ValueReference vr[], size_t nvr,
                                        const fmi2Integer order[],
                                        const fmi2Real value[]) {
-    NOT_IMPLEMENTED
+    NOT_IMPLEMENTED;
 }
 
 fmi2Status fmi2GetRealOutputDerivatives(fmi2Component c,
                                         const fmi2ValueReference vr[], size_t nvr,
                                         const fmi2Integer order[],
                                         fmi2Real value[]) {
-    NOT_IMPLEMENTED
+    NOT_IMPLEMENTED;
 }
 
 fmi2Status fmi2DoStep(fmi2Component c,
@@ -806,26 +804,26 @@ END:
 }
 
 fmi2Status fmi2CancelStep(fmi2Component c) {
-    NOT_IMPLEMENTED
+    NOT_IMPLEMENTED;
 }
 
 /* Inquire slave status */
 fmi2Status fmi2GetStatus(fmi2Component c, const fmi2StatusKind s, fmi2Status*  value) {
-    NOT_IMPLEMENTED
+    NOT_IMPLEMENTED;
 }
 
 fmi2Status fmi2GetRealStatus(fmi2Component c, const fmi2StatusKind s, fmi2Real*    value) {
-    NOT_IMPLEMENTED
+    NOT_IMPLEMENTED;
 }
 
 fmi2Status fmi2GetIntegerStatus(fmi2Component c, const fmi2StatusKind s, fmi2Integer* value) {
-    NOT_IMPLEMENTED
+    NOT_IMPLEMENTED;
 }
 
 fmi2Status fmi2GetBooleanStatus(fmi2Component c, const fmi2StatusKind s, fmi2Boolean* value) {
-    NOT_IMPLEMENTED
+    NOT_IMPLEMENTED;
 }
 
 fmi2Status fmi2GetStringStatus(fmi2Component c, const fmi2StatusKind s, fmi2String*  value) {
-    NOT_IMPLEMENTED
+    NOT_IMPLEMENTED;
 }

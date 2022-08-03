@@ -331,7 +331,21 @@ def test_create_fmu_container_types(reference_fmus_dist_dir):
                 variability='continuous',
                 causality='output',
                 name='Float64_continuous_output',
-                mapping=[('instance1', 'Float64_continuous_output')]
+                mapping=[('instance2', 'Float64_continuous_output')]
+            ),
+            Variable(
+                type='Integer',
+                variability='discrete',
+                causality='output',
+                name='Int32_output',
+                mapping=[('instance2', 'Int32_output')]
+            ),
+            Variable(
+                type='Boolean',
+                variability='discrete',
+                causality='output',
+                name='Boolean_output',
+                mapping=[('instance2', 'Boolean_output')]
             ),
         ],
         components=[
@@ -339,8 +353,16 @@ def test_create_fmu_container_types(reference_fmus_dist_dir):
                 filename=reference_fmus_dist_dir / '2.0' / 'Feedthrough.fmu',
                 name='instance1'
             ),
+            Component(
+                filename=reference_fmus_dist_dir / '2.0' / 'Feedthrough.fmu',
+                name='instance2'
+            ),
         ],
-        connections=[]
+        connections=[
+            Connection('instance1', 'Float64_continuous_output', 'instance2', 'Float64_continuous_input'),
+            Connection('instance1', 'Int32_output', 'instance2', 'Int32_input'),
+            Connection('instance1', 'Boolean_output', 'instance2', 'Boolean_input'),
+        ]
     )
 
     filename = 'StartValuesContainer.fmu'
@@ -351,6 +373,8 @@ def test_create_fmu_container_types(reference_fmus_dist_dir):
 
     assert not problems
 
+    # test default start values
+
     default_start_values = {
         'Float64_continuous_input': 1.1,
         'Boolean_input': True,
@@ -358,11 +382,15 @@ def test_create_fmu_container_types(reference_fmus_dist_dir):
     }
 
     result = simulate_fmu(filename, output=default_start_values.keys(),
-                          debug_logging=True, stop_time=1, output_interval=1)
+                          # debug_logging=True,
+                          # fmi_call_logger=print,
+                          stop_time=1, output_interval=1)
 
     for name, expected in default_start_values.items():
         actual = result[name][0]
         assert actual == expected
+
+    # test custom start values & connections
 
     custom_start_values = {
         'Float64_continuous_input': 1.2,
@@ -370,7 +398,10 @@ def test_create_fmu_container_types(reference_fmus_dist_dir):
         'Int32_input': 3,
     }
 
-    result = simulate_fmu(filename, start_values=custom_start_values, output=custom_start_values.keys(),
+    result = simulate_fmu(filename,
+                          start_values=custom_start_values,
+                          output=['Float64_continuous_input', 'Int32_input', 'Boolean_input',
+                                  'Float64_continuous_output', 'Int32_output', 'Boolean_output'],
                           # debug_logging=True,
                           # fmi_call_logger=print,
                           stop_time=1, output_interval=1)
@@ -379,9 +410,6 @@ def test_create_fmu_container_types(reference_fmus_dist_dir):
         actual = result[name][0]
         assert actual == expected
 
-    # plot_result(result)
-
-# TODO: test...
-#  - default parameters
-#  - custom start values
-#  - connections
+    assert result['Float64_continuous_output'][-1] == 1.2
+    assert result['Int32_output'][-1] == 3
+    assert result['Boolean_output'][-1] == False

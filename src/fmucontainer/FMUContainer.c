@@ -351,15 +351,15 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
         mpack_node_t components = mpack_node_map_cstr(variable, "components");
         mpack_node_t valueReferences = mpack_node_map_cstr(variable, "valueReferences");
+        mpack_node_t variableTypeNode = mpack_node_map_cstr(variable, "type");
+        FMIVariableType variableType = mpack_node_int(variableTypeNode);
 
         bool hasStartValue = mpack_node_map_contains_cstr(variable, "start");
         
         mpack_node_t start;
-        mpack_type_t variableType;
 
         if (hasStartValue) {
             start = mpack_node_map_cstr(variable, "start");
-            variableType = mpack_node_type(start);
         }
 
         s->variables[i].size = mpack_node_array_length(components);
@@ -380,28 +380,30 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
                 FMIInstance *m = s->components[ci]->instance;
 
                 switch (variableType) {
-                case mpack_type_double: {
+                case FMIRealType: {
                     fmi2Real value = mpack_node_double(start);
                     status = FMI2SetReal(m, &vr, 1, &value);
                     break;
                 }
-                case mpack_type_int: {
+                case FMIIntegerType: {
                     fmi2Integer value = mpack_node_int(start);
                     status = FMI2SetInteger(m, &vr, 1, &value);
                     break;
                 }
-                case mpack_type_bool: {
+                case FMIBooleanType: {
                     fmi2Boolean value = mpack_node_bool(start);
                     status = FMI2SetBoolean(m, &vr, 1, &value);
                     break;
                 }
-                case mpack_type_str: {
+                case FMIStringType: {
                     fmi2String value = mpack_node_cstr_alloc(start, 2048);
                     status = FMI2SetString(m, &vr, 1, &value);
                     MPACK_FREE((void*)value);
                     break;
                 }
                 default:
+                    functions->logger(NULL, instanceName, fmi2Fatal, "logError", "Unknown type ID for variable index %d: %d.", j, variableType);
+                    return NULL;
                     break;
                 }
 

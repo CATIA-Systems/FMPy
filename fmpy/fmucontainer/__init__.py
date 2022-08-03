@@ -54,6 +54,13 @@ class Configuration(object):
     connections = attrib(type=List[Connection], default=Factory(list), repr=False)
 
 
+FMI_TYPES = {
+    'Real': 2,
+    'Integer': 8,
+    'Boolean': 12,
+    'String': 13,
+}
+
 def create_fmu_container(configuration, output_filename):
     """ Create an FMU from nested FMUs (experimental)
 
@@ -141,6 +148,7 @@ def create_fmu_container(configuration, output_filename):
             value_references.append(value_reference)
 
         variable = {
+            'type': FMI_TYPES[v.type],
             'components': component_indices,
             'valueReferences': value_references,
         }

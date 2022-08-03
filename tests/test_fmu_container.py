@@ -166,12 +166,21 @@ def test_create_fmu_container_types(resources_dir):
         variables=[
             Variable(
                 type='Real',
+                variability='fixed',
+                causality='parameter',
+                name='real_parameter',
+                start='0.0',
+                description='Real parameter',
+                mapping=[('instance1', 'real_parameter')]
+            ),
+            Variable(
+                type='Real',
                 variability='continuous',
                 causality='input',
                 name='real_in',
                 start='40',
                 description='Real input',
-                mapping=[('types', 'real_in')]
+                mapping=[('instance1', 'real_in')]
             ),
             Variable(
                 type='Real',
@@ -180,7 +189,16 @@ def test_create_fmu_container_types(resources_dir):
                 initial='calculated',
                 name='real_out',
                 description='Real output',
-                mapping=[('types', 'real_out')],
+                mapping=[('instance2', 'real_out')],
+            ),
+            Variable(
+                type='Integer',
+                variability='fixed',
+                causality='parameter',
+                name='integer_parameter',
+                start='0',
+                description='Integer parameter',
+                mapping=[('instance1', 'integer_parameter'), ('instance2', 'integer_parameter')]
             ),
             Variable(
                 type='Integer',
@@ -189,7 +207,7 @@ def test_create_fmu_container_types(resources_dir):
                 name='integer_in',
                 start='40',
                 description='Integer input',
-                mapping=[('types', 'integer_in')]
+                mapping=[('instance1', 'integer_in')]
             ),
             Variable(
                 type='Integer',
@@ -198,7 +216,16 @@ def test_create_fmu_container_types(resources_dir):
                 initial='calculated',
                 name='integer_out',
                 description='Integer output',
-                mapping=[('types', 'integer_out')],
+                mapping=[('instance2', 'integer_out')],
+            ),
+            Variable(
+                type='Boolean',
+                variability='fixed',
+                causality='parameter',
+                name='boolean_parameter',
+                start='false',
+                description='Boolean parameter',
+                mapping=[('instance1', 'boolean_parameter')]
             ),
             Variable(
                 type='Boolean',
@@ -207,7 +234,7 @@ def test_create_fmu_container_types(resources_dir):
                 name='boolean_in',
                 start='false',
                 description='Boolean input',
-                mapping=[('types', 'boolean_in')]
+                mapping=[('instance1', 'boolean_in')]
             ),
             Variable(
                 type='Boolean',
@@ -216,18 +243,23 @@ def test_create_fmu_container_types(resources_dir):
                 initial='calculated',
                 name='boolean_out',
                 description='Boolean output',
-                mapping=[('types', 'boolean_out')],
+                mapping=[('instance2', 'boolean_out')],
             ),
         ],
         components=[
             Component(
                 filename=resources_dir / 'Feedthrough.fmu',
-                name='types'
+                name='instance1'
+            ),
+            Component(
+                filename=resources_dir / 'Feedthrough.fmu',
+                name='instance2'
             ),
         ],
         connections=[
-            # Connection('drivetrain', 'w', 'controller', 'u_m'),
-            # Connection('controller', 'y', 'drivetrain', 'tau'),
+            Connection('instance1', 'real_out', 'instance2', 'real_in'),
+            Connection('instance1', 'integer_out', 'instance2', 'integer_in'),
+            Connection('instance1', 'boolean_out', 'instance2', 'boolean_in'),
         ]
     )
 
@@ -241,6 +273,25 @@ def test_create_fmu_container_types(resources_dir):
 
     input = read_csv(resources_dir / 'FeedthroughContainer_in.csv')
 
-    result = simulate_fmu(filename, input=input, stop_time=2)
+    start_values = {
+        'real_parameter': 1,
+        'integer_parameter': 1,
+        'boolean_parameter': True
+    }
+
+    result = simulate_fmu(filename,
+                          start_values=start_values,
+                          # input=input,
+                          stop_time=2, output=[
+        'boolean_in',
+        'boolean_out',
+        'boolean_parameter',
+        'integer_in',
+        'integer_out',
+        'integer_parameter',
+        'real_in',
+        'real_out',
+        'real_parameter'
+    ])
 
     plot_result(result)

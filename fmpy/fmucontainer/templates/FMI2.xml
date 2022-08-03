@@ -4,7 +4,7 @@
   modelName="{{modelName}}"
   guid=""
 {% if description %}
-  description="{{description}}"
+  description="{{xml_encode(description)}}"
 {% endif %}
   generationTool="FMPy {{fmpyVersion}} FMU Container"
   generationDateAndTime="{{generationDateAndTime}}"
@@ -19,7 +19,7 @@
 
   <ModelVariables>
 {% for variable in system.variables %}
-    <ScalarVariable name="{{variable.name}}" valueReference="{{loop.index0}}"{% if variable.variability %} variability="{{variable.variability}}"{% endif %}{% if variable.causality %} causality="{{variable.causality}}"{% endif %}{% if variable.initial %} initial="{{variable.initial}}"{% endif %}{% if variable.description %} description="{{variable.description}}"{% endif %}>
+    <ScalarVariable name="{{variable.name}}" valueReference="{{loop.index0}}"{% if variable.variability %} variability="{{variable.variability}}"{% endif %}{% if variable.causality %} causality="{{variable.causality}}"{% endif %}{% if variable.initial %} initial="{{variable.initial}}"{% endif %}{% if variable.description %} description="{{xml_encode(variable.description)}}"{% endif %}>
       <{{variable.type}}{% if variable.start %} start="{{variable.start}}"{% endif %}/>
     </ScalarVariable>
 {% endfor %}

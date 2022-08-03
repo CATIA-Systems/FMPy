@@ -172,10 +172,14 @@ def create_fmu_container(configuration, output_filename):
 
     template = environment.get_template('FMI2.xml')
 
+    template.globals.update({
+        'xml_encode': xml_encode,
+    })
+
     xml = template.render(
         system=configuration,
         modelName=model_name,
-        description=xml_encode(configuration.description),
+        description=configuration.description,
         generationDateAndTime=datetime.now(pytz.utc).isoformat(),
         fmpyVersion=fmpy.__version__
     )

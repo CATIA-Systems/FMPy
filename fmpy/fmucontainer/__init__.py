@@ -64,7 +64,7 @@ def create_fmu_container(configuration, output_filename):
         """ Escape non-ASCII characters """
 
         if s is None:
-            return ""
+            return s
 
         s = s.replace('&', '&amp;')
         s = s.replace('<', '&lt;')
@@ -77,6 +77,7 @@ def create_fmu_container(configuration, output_filename):
 
         return s
 
+    import jinja2
     import os
     import shutil
     import fmpy
@@ -84,6 +85,7 @@ def create_fmu_container(configuration, output_filename):
     import msgpack
     from datetime import datetime
     import pytz
+    from pathlib import Path
 
     base_filename, _ = os.path.splitext(output_filename)
     model_name = os.path.basename(base_filename)
@@ -126,60 +128,6 @@ def create_fmu_container(configuration, output_filename):
     for i, v in enumerate(configuration.variables):
         variables_map[v.name] = (i, v)
 
-    unit_defintions = ''
-
-    def to_xml(o):
-
-        xml = f'<{type(o).__name__}'
-
-        for a in dir(o):
-            if not a.startswith('_'):
-                v = getattr(o, a)
-                if v:
-                    xml += f' {a}="{v}"'
-
-        xml += '/>'
-
-        return xml
-
-    if configuration.unitDefinitions:
-
-        unit_defintions += '\n  <UnitDefinitions>'
-
-        for unit in configuration.unitDefinitions:
-            unit_defintions += f'\n    <Unit name="{unit.name}">'
-            if unit.baseUnit:
-                unit_defintions += '\n      ' + to_xml(unit.baseUnit)
-            for displayUnit in unit.displayUnits:
-                unit_defintions += '\n      ' + to_xml(displayUnit)
-            unit_defintions += '\n    </Unit>'
-
-        unit_defintions += '\n  </UnitDefinitions>'
-
-    type_definitions = ''
-
-    if configuration.typeDefinitions:
-
-        type_definitions += '\n  <TypeDefinitions>'
-
-        for simpleType in configuration.typeDefinitions:
-            type_definitions += f'\n    <SimpleType name="{simpleType.name}">'
-            type_definitions += f'\n      <{simpleType.type}'
-            if simpleType.quantity:
-                type_definitions += f' quantity="{simpleType.quantity}'
-            if simpleType.unit:
-                type_definitions += f' unit="{simpleType.unit}"'
-            if simpleType.displayUnit:
-                type_definitions += f' displayUnit="{simpleType.displayUnit}"'
-            type_definitions += '/>'
-            type_definitions += '\n    </SimpleType>'
-
-        type_definitions += '\n  </TypeDefinitions>'
-
-    mv = ''  # model variables
-    mo = ''  # model outputs
-    iu = ''  # initial unknowns
-
     for i, v in enumerate(configuration.variables):
 
         component_indices = []
@@ -209,73 +157,6 @@ def create_fmu_container(configuration, output_filename):
 
         data['variables'].append(variable)
 
-        # modelDescription.xml
-        start = f' start="{ v.start }"' if v.start else ''
-        mv += f'\n    <ScalarVariable name="{ xml_encode(v.name) }" valueReference="{ i }" variability="{ v.variability }" causality="{ v.causality }"'
-        if v.initial:
-            mv += f' initial="{ v.initial }"'
-        mv += f' description="{ xml_encode(v.description) }">'
-        mv += f'\n      <{v.type}{ start }'
-        if v.declaredType:
-            mv += f' declaredType="{v.declaredType}"'
-        if v.unit:
-            mv += f' unit="{v.unit}"'
-        if v.displayUnit:
-            mv += f' displayUnit="{v.displayUnit}"'
-        mv += '/>'
-        mv += f'\n    </ScalarVariable>'
-
-        if v.causality == 'output':
-            mo += f'\n      <Unknown index="{ i + 1 }"/>'
-
-        if (v.causality == 'output' and v.initial in {'approx', 'calculated'}) or v.causality == 'calculatedParameter':
-            iu += f'\n      <Unknown index="{ i + 1 }"/>'
-
-
-    xml = f'''<?xml version="1.0" encoding="UTF-8"?>
-<fmiModelDescription
-  fmiVersion="2.0"
-  modelName="{ model_name }"
-  guid=""
-  description="{ xml_encode(configuration.description) }"
-  generationTool="FMPy {fmpy.__version__} FMU Container"
-  generationDateAndTime="{ datetime.now(pytz.utc).isoformat() }"
-  variableNamingConvention="{ configuration.variableNamingConvention }">
-  
-  <CoSimulation modelIdentifier="FMUContainer">
-    <SourceFiles>
-      <File name="FMUContainer.c"/>
-      <File name="mpack.c"/>
-    </SourceFiles>
-  </CoSimulation>
-
-  { unit_defintions }
-
-  { type_definitions }
-
-  <ModelVariables>{ mv }
-  </ModelVariables>
-
-  <ModelStructure>
-    <Outputs>{mo}
-    </Outputs>
-'''
-
-    if iu:
-        xml += f'''
-    <InitialUnknowns>{ iu }
-    </InitialUnknowns>
-'''
-
-    xml += '''
-  </ModelStructure>
-
-</fmiModelDescription>
-'''
-
-    with open(os.path.join(unzipdir, 'modelDescription.xml'), 'w') as f:
-        f.write(xml)
-
     for c in configuration.connections:
         data['connections'].append({
             'type': component_map[c.startElement][1][c.startConnector].type,
@@ -284,6 +165,23 @@ def create_fmu_container(configuration, output_filename):
             'startValueReference': component_map[c.startElement][1][c.startConnector].valueReference,
             'endValueReference': component_map[c.endElement][1][c.endConnector].valueReference,
         })
+
+    loader = jinja2.FileSystemLoader(searchpath=Path(__file__).parent / 'templates')
+
+    environment = jinja2.Environment(loader=loader, trim_blocks=True)
+
+    template = environment.get_template('FMI2.xml')
+
+    xml = template.render(
+        system=configuration,
+        modelName=model_name,
+        description=xml_encode(configuration.description),
+        generationDateAndTime=datetime.now(pytz.utc).isoformat(),
+        fmpyVersion=fmpy.__version__
+    )
+
+    with open(os.path.join(unzipdir, 'modelDescription.xml'), 'w') as f:
+        f.write(xml)
 
     with open(os.path.join(unzipdir, 'resources', 'config.mp'), 'wb') as f:
         packed = msgpack.packb(data)

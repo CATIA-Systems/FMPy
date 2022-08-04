@@ -18,6 +18,10 @@ model @=modelName=@
 
   parameter Boolean loggingOn = false annotation(Dialog(tab="FMI", group="Parameters"));
 
+  parameter Boolean logToFile = false annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter String logFile = getInstanceName() + ".txt" annotation(Dialog(tab="FMI", group="Parameters"));
+
   parameter Boolean logFMICalls = false annotation(Dialog(tab="FMI", group="Parameters"));
 @@ block parameters @@
 @@ endblock @@
@@ -52,7 +56,9 @@ protected
     "@=instantiationToken=@",
     visible,
     loggingOn,
-    logFMICalls);
+    logFMICalls,
+    logToFile,
+    logFile);
 @@ block equations @@
 @@ endblock @@
 

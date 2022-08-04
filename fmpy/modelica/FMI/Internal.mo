@@ -15,9 +15,11 @@ package Internal
         input Boolean visible;
         input Boolean loggingOn;
         input Boolean logFMICalls;
+        input Boolean logToFile;
+        input String logFile;
         output ExternalFMU externalFMU;
     external"C" externalFMU =
-          FMU_load(callbacks, unzipdir, fmiVersion, modelIdentifier, instanceName, interfaceType, instantiationToken, visible, loggingOn, logFMICalls) annotation (Library="ModelicaFMI");
+          FMU_load(callbacks, unzipdir, fmiVersion, modelIdentifier, instanceName, interfaceType, instantiationToken, visible, loggingOn, logFMICalls, logToFile, logFile) annotation (Library="ModelicaFMI");
 
     end constructor;
 

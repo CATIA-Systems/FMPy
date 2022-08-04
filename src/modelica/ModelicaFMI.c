@@ -13,46 +13,62 @@ static void logMessage(FMIInstance* instance, FMIStatus status, const char* cate
 
 static void logFunctionCall(FMIInstance* instance, FMIStatus status, const char* message, ...) {
 
-    //if (!logFile) {
-    //    return;
-    //}
-
     va_list args;
     va_start(args, message);
 
-    //vfprintf(logFile, message, args);
-
-    ModelicaVFormatMessage(message, args);
+    const char* suffix;
 
     switch (status) {
     case FMIOK:
-        ModelicaFormatMessage(" -> OK\n");
+        suffix = " -> OK\n";
         break;
     case FMIWarning:
-        ModelicaFormatMessage(" -> Warning\n");
+        suffix = " -> Warning\n";
         break;
     case FMIDiscard:
-        ModelicaFormatMessage(" -> Discard\n");
+        suffix = " -> Discard\n";
         break;
     case FMIError:
-        ModelicaFormatMessage(" -> Error\n");
+        suffix = " -> Error\n";
         break;
     case FMIFatal:
-        ModelicaFormatMessage(" -> Fatal\n");
+        suffix = " -> Fatal\n";
         break;
     case FMIPending:
-        ModelicaFormatMessage(" -> Pending\n");
+        suffix = " -> Pending\n";
         break;
     default:
-        ModelicaFormatMessage(" -> Unknown status (%d)\n", status);
+        suffix = " -> Illegal return code\n";
         break;
     }
 
+    FILE* logFile = (FILE*)instance->userData;
+
+    if (logFile) {
+        vfprintf(logFile, message, args);
+        fprintf(logFile, suffix);
+    } else {
+        ModelicaVFormatMessage(message, args);
+        ModelicaFormatMessage(suffix);
+    }
+    
     va_end(args);
 }
 
 
-void* FMU_load(ModelicaUtilityFunctions_t* callbacks, const char* unzipdir, int fmiVersion, const char* modelIdentifier, const char* instanceName, int interfaceType, const char* instantiationToken, int visible, int loggingOn, int logFMICalls) {
+void* FMU_load(
+    ModelicaUtilityFunctions_t* callbacks, 
+    const char* unzipdir, 
+    int fmiVersion, 
+    const char* modelIdentifier, 
+    const char* instanceName, 
+    int interfaceType, 
+    const char* instantiationToken, 
+    int visible, 
+    int loggingOn, 
+    int logFMICalls,
+    int logToFile,
+    const char* logFile) {
 
     setModelicaUtilityFunctions(callbacks);
 
@@ -61,6 +77,10 @@ void* FMU_load(ModelicaUtilityFunctions_t* callbacks, const char* unzipdir, int 
     FMIPlatformBinaryPath(unzipdir, modelIdentifier, fmiVersion, platformBinaryPath, 2048);
 
     FMIInstance* S = FMICreateInstance(instanceName, platformBinaryPath, logMessage, logFMICalls ? logFunctionCall : NULL);
+
+    if (logToFile && logFile) {
+        S->userData = fopen(logFile, "w");
+    }
 
     if (!S) {
         ModelicaFormatError("Failed to load platform binary %s.", platformBinaryPath);

@@ -51,6 +51,7 @@ package_data = {
         'fmucontainer/binaries/win32/FMUContainer.dll',
         'fmucontainer/binaries/win64/FMUContainer.dll',
         'fmucontainer/documentation/LICENSE.txt',
+        'fmucontainer/templates/FMI2.xml',
         'modelica/FMI/package.order',
         'modelica/FMI/*.mo',
         'modelica/FMI/FMI2/package.order',

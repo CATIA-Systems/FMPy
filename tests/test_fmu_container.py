@@ -1,67 +1,80 @@
+import pytest
 from fmpy import simulate_fmu, plot_result
 from fmpy.fmucontainer import create_fmu_container, Variable, Connection, Configuration, Component, Unit, BaseUnit, DisplayUnit, SimpleType
 from fmpy.validation import validate_fmu
-from fmpy.util import validate_signal, read_csv
-import numpy as np
 
 
-def test_create_fmu_container_me(resources_dir):
+@pytest.mark.parametrize("parallelDoStep", [False, True])
+def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
 
     configuration = Configuration(
-        parallelDoStep=False,
+        parallelDoStep=parallelDoStep,
         variables=[
             Variable(
                 type='Real',
                 variability='continuous',
-                causality='output',
+                causality='input',
+                name='Float64_continuous_input',
+                start='1.1',
+                mapping=[('instance1', 'Float64_continuous_input')]
+            ),
+            Variable(
+                type='Integer',
+                variability='discrete',
+                causality='input',
+                name='Int32_input',
+                start='2',
+                mapping=[('instance1', 'Int32_input')]
+            ),
+            Variable(
+                type='Boolean',
+                variability='discrete',
+                causality='input',
+                name='Boolean_input',
+                start='true',
+                mapping=[('instance1', 'Boolean_input')]
+            ),
+            Variable(
+                type='Real',
                 initial='calculated',
-                name='h',
-                description='Height',
-                mapping=[('ball', 'h')]
+                variability='continuous',
+                causality='output',
+                name='Float64_continuous_output',
+                mapping=[('instance2', 'Float64_continuous_output')]
+            ),
+            Variable(
+                type='Integer',
+                variability='discrete',
+                causality='output',
+                name='Int32_output',
+                mapping=[('instance2', 'Int32_output')]
             ),
             Variable(
                 type='Boolean',
                 variability='discrete',
                 causality='output',
-                initial='calculated',
-                name='reset',
-                description="Reset",
-                mapping=[('bounce', 'reset')]
-            ),
-            Variable(
-                type='Real',
-                variability='discrete',
-                causality='output',
-                initial='calculated',
-                name='ticks',
-                description='Ticks',
-                mapping=[('ticker', 'ticks')]
+                name='Boolean_output',
+                mapping=[('instance2', 'Boolean_output')]
             ),
         ],
         components=[
             Component(
-                filename=resources_dir / 'Bounce.fmu',
-                interfaceType='ModelExchange',
-                name='bounce'
+                filename=reference_fmus_dist_dir / '2.0' / 'Feedthrough.fmu',
+                name='instance1'
             ),
             Component(
-                filename=resources_dir / 'Ball.fmu',
-                interfaceType='ModelExchange',
-                name='ball'
+                filename=reference_fmus_dist_dir / '2.0' / 'Feedthrough.fmu',
+                name='instance2'
             ),
-            Component(
-                filename=resources_dir / 'Ticker.fmu',
-                interfaceType='ModelExchange',
-                name='ticker'
-            )
         ],
         connections=[
-            Connection('ball', 'h', 'bounce', 'h'),
-            Connection('bounce', 'reset', 'ball', 'reset'),
+            Connection('instance1', 'Float64_continuous_output', 'instance2', 'Float64_continuous_input'),
+            Connection('instance1', 'Int32_output', 'instance2', 'Int32_input'),
+            Connection('instance1', 'Boolean_output', 'instance2', 'Boolean_input'),
         ]
     )
 
-    filename = 'BouncingAndBall.fmu'
+    filename = 'FeedthroughContainer.fmu'
 
     create_fmu_container(configuration, filename)
 
@@ -69,91 +82,43 @@ def test_create_fmu_container_me(resources_dir):
 
     assert not problems
 
-    result = simulate_fmu(filename, stop_time=3.5, fmi_call_logger=None)
+    # test default start values
 
-    # plot_result(result)
+    default_start_values = {
+        'Float64_continuous_input': 1.1,
+        'Boolean_input': True,
+        'Int32_input': 2,
+    }
 
+    result = simulate_fmu(filename, output=default_start_values.keys(),
+                          # debug_logging=True,
+                          # fmi_call_logger=print,
+                          stop_time=1, output_interval=1)
 
-def test_create_fmu_container_cs(resources_dir):
+    for name, expected in default_start_values.items():
+        actual = result[name][0]
+        assert actual == expected
 
-    configuration = Configuration(
-        parallelDoStep=True,
-        description="A controlled drivetrain",
-        variableNamingConvention='structured',
-        unitDefinitions=[
-            Unit(name='rad/s', baseUnit=BaseUnit(rad=1, s=-1), displayUnits=[DisplayUnit(name='rpm', factor=0.1047197551196598)])
-        ],
-        typeDefinitions=[
-            SimpleType(name='AngularVelocity', type='Real', unit='rad/s')
-        ],
-        variables=[
-            Variable(
-                type='Real',
-                variability='tunable',
-                causality='parameter',
-                initial='exact',
-                name='k',
-                start='40',
-                description='Gain of controller',
-                mapping=[('controller', 'PI.k')]
-            ),
-            Variable(
-                type='Real',
-                variability='continuous',
-                causality='input',
-                name='w_ref',
-                start='0',
-                description='Reference speed',
-                mapping=[('controller', 'u_s')],
-                declaredType='AngularVelocity'
-            ),
-            Variable(
-                type='Real',
-                variability='continuous',
-                causality='output',
-                initial='calculated',
-                name='w',
-                description="Gain of controller",
-                mapping=[('drivetrain', 'w')],
-                unit='rad/s',
-                displayUnit='rpm'
-            ),
-        ],
-        components=[
-            Component(
-                filename=resources_dir / 'Controller.fmu',
-                interfaceType='CoSimulation',
-                name='controller'
-            ),
-            Component(
-                filename=resources_dir / 'Drivetrain.fmu',
-                interfaceType='CoSimulation',
-                name='drivetrain',
-            )
-        ],
-        connections=[
-            Connection('drivetrain', 'w', 'controller', 'u_m'),
-            Connection('controller', 'y', 'drivetrain', 'tau'),
-        ]
-    )
+    # test custom start values & connections
 
-    filename = 'ControlledDrivetrain.fmu'
+    custom_start_values = {
+        'Float64_continuous_input': 1.2,
+        'Boolean_input': False,
+        'Int32_input': 3,
+    }
 
-    create_fmu_container(configuration, filename)
+    result = simulate_fmu(filename,
+                          start_values=custom_start_values,
+                          output=['Float64_continuous_input', 'Int32_input', 'Boolean_input',
+                                  'Float64_continuous_output', 'Int32_output', 'Boolean_output'],
+                          # debug_logging=True,
+                          # fmi_call_logger=print,
+                          stop_time=1, output_interval=1)
 
-    problems = validate_fmu(filename)
+    for name, expected in custom_start_values.items():
+        actual = result[name][0]
+        assert actual == expected
 
-    assert not problems
-
-    input = read_csv(resources_dir / 'ControlledDrivetrain_in.csv')
-
-    result = simulate_fmu(filename, input=input, output=['w_ref', 'w', 'k'], stop_time=5, output_interval=5e-2)
-
-    t_band, y_min, y_max, i_out = validate_signal(t=result['time'], y=result['w'],
-                                                  t_ref=input['time'], y_ref=input['w_ref'], dx=100, dy=0.4)
-
-    assert result['k'][0] == 40, 'Default start value has not been set.'
-
-    assert not i_out.any()
-
-    # plot_result(result)
+    assert result['Float64_continuous_output'][-1] == 1.2
+    assert result['Int32_output'][-1] == 3
+    assert result['Boolean_output'][-1] == False

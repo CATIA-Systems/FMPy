@@ -68,12 +68,10 @@ target_include_directories(FMUContainer PUBLIC
   ../fmpy/c-code
   ../thirdparty/Reference-FMUs/include
   ../thirdparty/mpack/src/mpack
-  ${CVODE_INSTALL_DIR}/include
 )
 
 target_link_libraries(FMUContainer
   ${CMAKE_DL_LIBS}
-  ${SUNDIALS_LIBS}
 )
 
 add_custom_command(TARGET FMUContainer POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy

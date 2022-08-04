@@ -24,7 +24,7 @@
 
 
 #define EPSILON 1e-14
-
+#define RTOL  RCONST(1.0e-4)   /* scalar relative tolerance            */
 
 #if defined(_WIN32)
 #define SHARED_LIBRARY_EXTENSION ".dll"

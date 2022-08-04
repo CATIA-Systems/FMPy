@@ -25,9 +25,11 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
     if interface_type == 'ModelExchange':
         model_identifier = model_description.modelExchange.modelIdentifier
         IT = 'ME'
-    else:
+    elif interface_type == 'CoSimulation':
         model_identifier = model_description.coSimulation.modelIdentifier
         IT = 'CS'
+    else:
+        raise Exception(f"interface_type must be 'ModelExchange' or 'CoSimulation', but was '{interface_type}'.")
 
     package_root = package_dir
 

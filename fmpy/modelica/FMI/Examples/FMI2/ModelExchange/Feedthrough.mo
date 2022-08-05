@@ -16,6 +16,10 @@ model Feedthrough
 
   parameter Boolean loggingOn = false annotation(Dialog(tab="FMI", group="Parameters"));
 
+  parameter Boolean logToFile = false annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter String logFile = getInstanceName() + ".txt" annotation(Dialog(tab="FMI", group="Parameters"));
+
   parameter Boolean logFMICalls = false annotation(Dialog(tab="FMI", group="Parameters"));
 
   parameter Real 'Float64_fixed_parameter' = 0;
@@ -60,7 +64,9 @@ protected
     "{8c4e810f-3df3-4a00-8276-176fa3c9f004}",
     visible,
     loggingOn,
-    logFMICalls);
+    logFMICalls,
+    logToFile,
+    logFile);
 
   final constant Integer nx = 0;
   final constant Integer nz = 0;

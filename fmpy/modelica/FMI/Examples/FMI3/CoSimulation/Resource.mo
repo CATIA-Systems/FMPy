@@ -16,6 +16,10 @@ model Resource
 
   parameter Boolean loggingOn = false annotation(Dialog(tab="FMI", group="Parameters"));
 
+  parameter Boolean logToFile = false annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter String logFile = getInstanceName() + ".txt" annotation(Dialog(tab="FMI", group="Parameters"));
+
   parameter Boolean logFMICalls = false annotation(Dialog(tab="FMI", group="Parameters"));
 
   parameter Modelica.Units.SI.Time communicationStepSize = 1e-2 annotation(Dialog(tab="FMI", group="Parameters"));
@@ -36,7 +40,9 @@ protected
     "{7b9c2114-2ce5-4076-a138-2cbc69e069e5}",
     visible,
     loggingOn,
-    logFMICalls);
+    logFMICalls,
+    logToFile,
+    logFile);
 
 initial algorithm
 

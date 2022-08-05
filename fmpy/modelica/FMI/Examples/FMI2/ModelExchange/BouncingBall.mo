@@ -16,6 +16,10 @@ model BouncingBall
 
   parameter Boolean loggingOn = false annotation(Dialog(tab="FMI", group="Parameters"));
 
+  parameter Boolean logToFile = false annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter String logFile = getInstanceName() + ".txt" annotation(Dialog(tab="FMI", group="Parameters"));
+
   parameter Boolean logFMICalls = false annotation(Dialog(tab="FMI", group="Parameters"));
 
   parameter Real 'g' = -9.81 "Gravity acting on the ball";
@@ -40,7 +44,9 @@ protected
     "{8c4e810f-3df3-4a00-8276-176fa3c9f003}",
     visible,
     loggingOn,
-    logFMICalls);
+    logFMICalls,
+    logToFile,
+    logFile);
 
   final constant Integer nx = 2;
   final constant Integer nz = 1;

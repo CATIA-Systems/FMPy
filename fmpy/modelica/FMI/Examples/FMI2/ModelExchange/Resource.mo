@@ -16,6 +16,10 @@ model Resource
 
   parameter Boolean loggingOn = false annotation(Dialog(tab="FMI", group="Parameters"));
 
+  parameter Boolean logToFile = false annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter String logFile = getInstanceName() + ".txt" annotation(Dialog(tab="FMI", group="Parameters"));
+
   parameter Boolean logFMICalls = false annotation(Dialog(tab="FMI", group="Parameters"));
 
   IntegerOutput 'y' annotation (Placement(transformation(extent={ { 600, -10.0 }, { 620, 10.0 } }), iconTransformation(extent={ { 600, -10.0 }, { 620, 10.0 } })));
@@ -34,7 +38,9 @@ protected
     "{7b9c2114-2ce5-4076-a138-2cbc69e069e5}",
     visible,
     loggingOn,
-    logFMICalls);
+    logFMICalls,
+    logToFile,
+    logFile);
 
   final constant Integer nx = 0;
   final constant Integer nz = 0;

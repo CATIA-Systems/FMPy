@@ -1,6 +1,6 @@
 import pytest
 from fmpy import simulate_fmu, plot_result
-from fmpy.fmucontainer import create_fmu_container, Variable, Connection, Configuration, Component, Unit, BaseUnit, DisplayUnit, SimpleType
+from fmpy.fmucontainer import create_fmu_container, Variable, Connection, Configuration, Component
 from fmpy.validation import validate_fmu
 
 

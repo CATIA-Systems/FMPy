@@ -74,7 +74,10 @@ def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
         ]
     )
 
-    filename = 'FeedthroughContainer.fmu'
+    if parallelDoStep:
+        filename = 'FeedthroughParallel.fmu'
+    else:
+        filename = 'FeedthroughSynchronous.fmu'
 
     create_fmu_container(configuration, filename)
 

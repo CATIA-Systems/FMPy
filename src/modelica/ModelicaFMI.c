@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 
 #include "ModelicaFMI.h"
@@ -96,7 +97,6 @@ void* FMU_load(
 #else
     strcat(resourcePath, "/resources/");
     realpath(resourcePath, resourcePath);
-    strcat(path, "/");
 #endif
 
     FMIStatus status = FMIFatal;

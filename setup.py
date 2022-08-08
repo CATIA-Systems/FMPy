@@ -1,3 +1,4 @@
+import os
 from setuptools import setup
 
 # compile Qt UI and resources
@@ -5,7 +6,14 @@ try:
     from fmpy.gui import compile_resources
     compile_resources()
 except Exception as e:
-    print("Failed to compile Qt UI and resources. %s" % e)
+    print("Failed to compile Qt UI and resources. {e}")
+
+# generate Modelica examples
+try:
+    from fmpy.modelica import generate_examples
+    generate_examples()
+except Exception as e:
+    print("Failed to generate Modelica examples. {e}")
 
 long_description = """
 FMPy
@@ -34,6 +42,15 @@ packages = [
     'fmpy.webapp'
 ]
 
+
+def modelica_files(directory):
+    paths = []
+    for (path, directories, filenames) in os.walk(directory):
+        for filename in filenames:
+            paths.append(os.path.join('..', path, filename))
+    return paths
+
+
 package_data = {
     'fmpy': [
         'c-code/*.h',
@@ -53,9 +70,70 @@ package_data = {
         'fmucontainer/documentation/LICENSE.txt',
         'fmucontainer/templates/FMI2.xml',
         'modelica/FMI/package.order',
+
         'modelica/FMI/*.mo',
+        'modelica/FMI/package.order',
+
+        'modelica/FMI/Examples/*.mo',
+        'modelica/FMI/Examples/package.order',
+
+        'modelica/FMI/Examples/FMI2/package.mo',
+        'modelica/FMI/Examples/FMI2/package.order',
+
+        'modelica/FMI/Examples/FMI2/CoSimulation/*.mo',
+        'modelica/FMI/Examples/FMI2/CoSimulation/package.order',
+
+        'modelica/FMI/Examples/FMI2/ModelExchange/*.mo',
+        'modelica/FMI/Examples/FMI2/ModelExchange/package.order',
+
+        'modelica/FMI/Examples/FMI3/package.mo',
+        'modelica/FMI/Examples/FMI3/package.order',
+
+        'modelica/FMI/Examples/FMI3/CoSimulation/*.mo',
+        'modelica/FMI/Examples/FMI3/CoSimulation/package.order',
+
+        'modelica/FMI/Examples/FMI3/ModelExchange/*.mo',
+        'modelica/FMI/Examples/FMI3/ModelExchange/package.order',
+
+        # FMI3
+        'modelica/FMI/FMI2/package.mo',
         'modelica/FMI/FMI2/package.order',
-        'modelica/FMI/FMI2/*.mo',
+
+        'modelica/FMI/FMI2/Functions/*.mo',
+        'modelica/FMI/FMI2/Functions/package.order',
+
+        'modelica/FMI/FMI2/Interfaces/*.mo',
+        'modelica/FMI/FMI2/Interfaces/package.order',
+
+        # FMI3
+        'modelica/FMI/FMI3/package.mo',
+        'modelica/FMI/FMI3/package.order',
+
+        'modelica/FMI/FMI3/Functions/*.mo',
+        'modelica/FMI/FMI3/Functions/package.order',
+
+        'modelica/FMI/FMI3/Interfaces/*.mo',
+        'modelica/FMI/FMI3/Interfaces/package.order',
+
+        'modelica/FMI/FMI3/Types/*.mo',
+        'modelica/FMI/FMI3/Types/package.order',
+
+        # Resources
+        'modelica/FMI/Resources/FMUs/*/binaries/darwin64/*.dylib',
+        'modelica/FMI/Resources/FMUs/*/binaries/linux64/*.so',
+        'modelica/FMI/Resources/FMUs/*/binaries/win64/*.dll',
+        'modelica/FMI/Resources/FMUs/*/binaries/x86_64-darwin/*.dylib',
+        'modelica/FMI/Resources/FMUs/*/binaries/x86_64-linux/*.so',
+        'modelica/FMI/Resources/FMUs/*/binaries/x86_64-windows/*.dll',
+        'modelica/FMI/Resources/FMUs/*/documentation/index.html',
+        'modelica/FMI/Resources/FMUs/*/documentation/LICENSE.txt',
+        'modelica/FMI/Resources/FMUs/*/documentation/*.csv',
+        'modelica/FMI/Resources/FMUs/*/documentation/*.svg',
+        'modelica/FMI/Resources/FMUs/*/sources/buildDescription.xml',
+        'modelica/FMI/Resources/FMUs/*/sources/*.c',
+        'modelica/FMI/Resources/FMUs/*/sources/*.h',
+        'modelica/FMI/Resources/FMUs/*/modelDescription.xml',
+
         'modelica/FMI/Resources/Include/ModelicaUtilityFunctions.c',
         'modelica/FMI/Resources/Include/ModelicaUtilityFunctions.h',
         'modelica/FMI/Resources/FMI_bare.png',
@@ -63,8 +141,11 @@ package_data = {
         'modelica/FMI/Resources/Library/linux64/ModelicaFMI.so',
         'modelica/FMI/Resources/Library/win32/ModelicaFMI.dll',
         'modelica/FMI/Resources/Library/win64/ModelicaFMI.dll',
+
         'modelica/templates/FMI2_CS.mo',
         'modelica/templates/FMI2_ME.mo',
+        'modelica/templates/FMI3_CS.mo',
+        'modelica/templates/FMI3_ME.mo',
         'modelica/templates/FMU.mo',
         'remoting/linux64/client_sm.so',
         'remoting/linux64/client_tcp.so',

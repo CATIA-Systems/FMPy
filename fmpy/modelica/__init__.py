@@ -37,7 +37,7 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
 
     package_dir = Path(model_path).parent
 
-    if not (package_dir / 'package.order').is_file():
+    if not (package_dir / 'package.mo').is_file():
         raise Exception(f"{package_dir} is not a package of a Modelica library.")
 
     model_description = read_model_description(fmu_path)
@@ -184,8 +184,11 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
     with open(model_path, 'w') as f:
         f.write(class_text)
 
-    with open(package_dir / 'package.order', 'r') as f:
-        package_order = list(map(lambda l: l.strip(), f.readlines()))
+    if (package_dir / 'package.order').is_file():
+        with open(package_dir / 'package.order', 'r') as f:
+            package_order = list(map(lambda l: l.strip(), f.readlines()))
+    else:
+        package_order = []
 
     if model_name not in package_order:
         with open(package_dir / 'package.order', 'a') as f:

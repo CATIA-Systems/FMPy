@@ -44,13 +44,13 @@ EXPORT void FMU_FMI3EnterContinuousTimeMode(void* instance);
 
 EXPORT void FMU_FMI3SetTime(void* instance, double time);
 
-EXPORT void FMU_FMI3SetContinuousStates(void* instance, const double continuousStates[], size_t nContinuousStates);
+EXPORT void FMU_FMI3SetContinuousStates(void* instance, const double continuousStates[], int nContinuousStates);
 
-EXPORT void FMU_FMI3GetContinuousStateDerivatives(void* instance, double derivatives[], size_t nContinuousStates);
+EXPORT void FMU_FMI3GetContinuousStateDerivatives(void* instance, double derivatives[], int nContinuousStates);
 
-EXPORT void FMU_FMI3GetEventIndicators(void* instance, double eventIndicators[], size_t nEventIndicators);
+EXPORT void FMU_FMI3GetEventIndicators(void* instance, double eventIndicators[], int nEventIndicators);
 
-EXPORT void FMU_FMI3GetContinuousStates(void* instance, double continuousStates[], size_t nContinuousStates);
+EXPORT void FMU_FMI3GetContinuousStates(void* instance, double continuousStates[], int nContinuousStates);
 
 /***************************************************
 Functions for Co-Simulation

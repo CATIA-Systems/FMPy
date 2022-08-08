@@ -117,6 +117,7 @@ add_library(ModelicaFMI SHARED
   ../thirdparty/Reference-FMUs/src/FMI2.c
   ../thirdparty/Reference-FMUs/src/FMI3.c
   modelica/ModelicaFMI.h
+  modelica/ModelicaFMI2.h
   modelica/ModelicaFMI3.h
   modelica/ModelicaFMI.c
   modelica/ModelicaFMI2.c

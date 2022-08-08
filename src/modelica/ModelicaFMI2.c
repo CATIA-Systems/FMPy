@@ -1,7 +1,7 @@
 #include <math.h>
 
-#include "ModelicaFMI.h"
 #include "ModelicaUtilities.h"
+#include "ModelicaFMI2.h"
 #include "FMI2.h"
 
 

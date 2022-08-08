@@ -1,7 +1,7 @@
 #include <math.h>
 
-#include "ModelicaFMI3.h"
 #include "ModelicaUtilities.h"
+#include "ModelicaFMI3.h"
 #include "FMI3.h"
 
 
@@ -98,19 +98,19 @@ void FMU_FMI3SetTime(void* instance, double time) {
     CALL(FMI3SetTime((FMIInstance*)instance, time));
 }
 
-void FMU_FMI3SetContinuousStates(void* instance, const double continuousStates[], size_t nContinuousStates) {
+void FMU_FMI3SetContinuousStates(void* instance, const double continuousStates[], int nContinuousStates) {
     if (nContinuousStates > 0) CALL(FMI3SetContinuousStates((FMIInstance*)instance, continuousStates, nContinuousStates));
 }
 
-void FMU_FMI3GetContinuousStateDerivatives(void* instance, double derivatives[], size_t nContinuousStates) {
+void FMU_FMI3GetContinuousStateDerivatives(void* instance, double derivatives[], int nContinuousStates) {
     if (nContinuousStates > 0) CALL(FMI3GetContinuousStateDerivatives((FMIInstance*)instance, derivatives, nContinuousStates));
 }
 
-void FMU_FMI3GetEventIndicators(void* instance, double eventIndicators[], size_t nEventIndicators) {
+void FMU_FMI3GetEventIndicators(void* instance, double eventIndicators[], int nEventIndicators) {
     if (nEventIndicators > 0) CALL(FMI3GetEventIndicators((FMIInstance*)instance, eventIndicators, nEventIndicators));
 }
 
-void FMU_FMI3GetContinuousStates(void* instance, double continuousStates[], size_t nContinuousStates) {
+void FMU_FMI3GetContinuousStates(void* instance, double continuousStates[], int nContinuousStates) {
     if (nContinuousStates > 0) CALL(FMI3GetContinuousStates((FMIInstance*)instance, continuousStates, nContinuousStates));
 }
 

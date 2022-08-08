@@ -16,7 +16,7 @@ using namespace std;
 
 #define ARG(T, IDX) ((T)&pBuf[MAX_ARG_SIZE * IDX])
 
-#define STATUS *ARG(fmi2Status*, 10)
+#define STATUS *ARG(FMIStatus*, 10)
 
 
 struct LogMessage {
@@ -176,13 +176,13 @@ int main(int argc, char *argv[]) {
         case rpc_fmi2GetTypesPlatform:
         case rpc_fmi2GetVersion:
         case rpc_fmi2SetDebugLogging:
-            STATUS = fmi2Error;
+            STATUS = FMIError;
             break;
         
         case rpc_fmi2Instantiate:
             m_instance = FMICreateInstance(ARG(fmi2String, 1), argv[2], logMessage, /*logFunctionCall*/NULL);
             if (!m_instance) {
-                STATUS = fmi2Error;
+                STATUS = FMIError;
                 receive = false;
                 break;
             }
@@ -191,7 +191,7 @@ int main(int argc, char *argv[]) {
 
         case rpc_fmi2FreeInstance:
             FMI2FreeInstance(m_instance);
-            STATUS = fmi2OK;
+            STATUS = FMIOK;
             receive = false;
             break;
 
@@ -224,7 +224,7 @@ int main(int argc, char *argv[]) {
             break;
         
         case rpc_fmi2GetString:
-            STATUS = fmi2Error;
+            STATUS = FMIError;
             break;
         
         case rpc_fmi2SetReal:
@@ -240,7 +240,7 @@ int main(int argc, char *argv[]) {
             break;
         
         case rpc_fmi2SetString:
-            STATUS = fmi2Error;
+            STATUS = FMIError;
             break;
 
         case rpc_fmi2GetFMUstate:
@@ -249,7 +249,7 @@ int main(int argc, char *argv[]) {
         case rpc_fmi2SerializedFMUstateSize:
         case rpc_fmi2SerializeFMUstate:
         case rpc_fmi2DeSerializeFMUstate:
-            STATUS = fmi2Error;
+            STATUS = FMIError;
             break;
 
         case rpc_fmi2GetDirectionalDerivative:
@@ -345,7 +345,7 @@ int main(int argc, char *argv[]) {
 
         default:
             cout << "Unknown RPC: " << rpc << endl;
-            STATUS = fmi2Fatal;
+            STATUS = FMIFatal;
             receive = false;
             break;
         }

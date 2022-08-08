@@ -48,7 +48,7 @@ protected
 
   FMI.Internal.ExternalFMU instance = FMI.Internal.ExternalFMU(
     callbacks,
-    Modelica.Utilities.Files.loadResource("modelica://@=rootPackage=@/Resources/FMUs/@=modelIdentifier=@"),
+    Modelica.Utilities.Files.loadResource("modelica://@=rootPackage=@/Resources/FMUs/@=hash=@"),
     @=fmiMajorVersion-1=@,
     "@=modelIdentifier=@",
     getInstanceName(),

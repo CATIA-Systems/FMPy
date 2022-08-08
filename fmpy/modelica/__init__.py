@@ -1,3 +1,27 @@
+def generate_examples():
+
+    from .. import extract
+    from ..util import download_file
+    from pathlib import Path
+
+    url = r'https://github.com/modelica/Reference-FMUs/releases/download/v0.0.17/Reference-FMUs-0.0.17.zip'
+    checksum = '1185a0537f0307806255c9b2c7d502371e120febf816ca9792d4739cf680935c'
+    archive = download_file(url=url, checksum=checksum)
+
+    dist = Path(extract(archive))
+
+    modelica = Path(__file__).parent
+
+    for fmi_version in [2, 3]:
+        for interface_type in ['CoSimulation', 'ModelExchange']:
+            for model in ['BouncingBall', 'Dahlquist', 'Feedthrough', 'Stair', 'Resource', 'VanDerPol']:
+                import_fmu_to_modelica(
+                    fmu_path=dist / f'{fmi_version}.0' / f'{model}.fmu',
+                    model_path=modelica / 'FMI' / 'Examples' / f'FMI{fmi_version}' / interface_type / f'{model}.mo',
+                    interface_type=interface_type,
+                )
+
+
 def import_fmu_to_modelica(fmu_path, model_path, interface_type):
 
     from os import makedirs
@@ -5,6 +29,7 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
 
     import jinja2
     from fmpy import extract, read_model_description
+    from fmpy.util import sha256_checksum
 
     fmu_path = Path(fmu_path)
     model_path = Path(model_path)
@@ -39,7 +64,11 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
         package_root = package_root.parent
         package = package_root.name + '.' + package
 
-    unzipdir = package_root / 'Resources' / 'FMUs' / model_identifier
+    hash = sha256_checksum(fmu_path)
+
+    hash = hash[:7]
+
+    unzipdir = package_root / 'Resources' / 'FMUs' / hash
 
     makedirs(unzipdir, exist_ok=True)
 
@@ -123,6 +152,7 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
     stopTime = getattr(model_description.defaultExperiment, 'stopTime', 1)
 
     class_text = template.render(
+        hash=hash,
         rootPackage=package_root.name,
         package=package,
         description=model_description.description,

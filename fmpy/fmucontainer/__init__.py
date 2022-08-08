@@ -1,9 +1,10 @@
 from os import PathLike
-
 from tempfile import mkdtemp
 from typing import List, Tuple
+
 from attr import attrs, attrib, Factory
-from ..model_description import Unit, BaseUnit, DisplayUnit, SimpleType
+
+from ..model_description import Unit, SimpleType
 
 
 @attrs(eq=False, auto_attribs=True)
@@ -60,6 +61,7 @@ FMI_TYPES = {
     'Boolean': 12,
     'String': 13,
 }
+
 
 def create_fmu_container(configuration, output_filename):
     """ Create an FMU from nested FMUs (experimental)
@@ -159,7 +161,14 @@ def create_fmu_container(configuration, output_filename):
             elif v.type in ['Enumeration', 'Integer']:
                 variable['start'] = int(v.start)
             elif v.type == 'Boolean':
-                variable['start'] = bool(v.start)
+                if isinstance(v.start, str):
+                    if v.start.lower() not in ['true', 'false']:
+                        raise Exception(f'The start value "{v.start}" for variable "{v.name}"'
+                                        ' could not be converted to Boolean.')
+                    else:
+                        variable['start'] = v.start.lower() == 'true'
+                else:
+                    variable['start'] = bool(v.start)
             elif v.type == 'String':
                 variable['start'] = v.start
 
@@ -180,8 +189,15 @@ def create_fmu_container(configuration, output_filename):
 
     template = environment.get_template('FMI2.xml')
 
+    def to_literal(value):
+        if isinstance(value, bool):
+            return 'true' if value else 'false'
+        else:
+            return str(value)
+
     template.globals.update({
         'xml_encode': xml_encode,
+        'to_literal': to_literal,
     })
 
     xml = template.render(

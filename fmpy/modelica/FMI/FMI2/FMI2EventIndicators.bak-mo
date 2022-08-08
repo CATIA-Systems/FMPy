@@ -1,7 +1,0 @@
-within FMI.FMI2;
-impure function FMI2EventIndicators
-  input ExternalFMU instance;
-  input Integer ni;
-  output Real eventIndicators[nx];
-  external"C" FMU_FMI2EventIndicators(instance, eventIndicators, ni) annotation (Library="ModelicaFMI");
-end FMI2EventIndicators;

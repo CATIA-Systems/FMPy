@@ -1319,8 +1319,10 @@ class MainWindow(QMainWindow):
 
         if interface_type == 'Co-Simulation':
             model_identifier = self.modelDescription.coSimulation.modelIdentifier
+            interface_type = 'CoSimulation'
         else:
             model_identifier = self.modelDescription.modelExchange.modelIdentifier
+            interface_type = 'ModelExchange'
 
         filename, _ = QFileDialog.getSaveFileName(self,
                                                 caption="Save Modelica Model",

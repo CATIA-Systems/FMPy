@@ -1,4 +1,8 @@
 @@ extends "FMU.mo" @@
+@@ block imports @@
+  import FMI.FMI2.Interfaces.*;
+  import FMI.FMI2.Functions.*;
+@@ endblock @@
 @@ block parameters @@
 
   parameter Modelica.Units.SI.Time communicationStepSize = @=communicationStepSize=@ annotation(Dialog(tab="FMI", group="Parameters"));

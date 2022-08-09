@@ -197,7 +197,7 @@ public:
 
 			resetExitTimer();
 
-            fmi2Status status = FMI2Instantiate(m_instance, fmuResourceLocation.c_str(), static_cast<fmi2Type>(fmuType), fmuGUID.c_str(), visible, loggingOn);
+			FMIStatus status = FMI2Instantiate(m_instance, fmuResourceLocation.c_str(), static_cast<fmi2Type>(fmuType), fmuGUID.c_str(), visible, loggingOn);
 
             if (status > fmi2Warning) {
                 return createReturnValue(0);
@@ -216,31 +216,31 @@ public:
 		/* Enter and exit initialization mode, terminate and reset */
 		srv.bind("fmi2SetupExperiment", [this](int toleranceDefined, double tolerance, double startTime, int stopTimeDefined, double stopTime) {
 			resetExitTimer();
-			const fmi2Status status = FMI2SetupExperiment(m_instance, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime);
+			const FMIStatus status = FMI2SetupExperiment(m_instance, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime);
 			return createReturnValue(status);
 		});
 		
 		srv.bind("fmi2EnterInitializationMode", [this]() {
 			resetExitTimer();
-			const fmi2Status status = FMI2EnterInitializationMode(m_instance);
+			const FMIStatus status = FMI2EnterInitializationMode(m_instance);
 			return createReturnValue(status);
 		});
 
 		srv.bind("fmi2ExitInitializationMode",  [this]() {
 			resetExitTimer();
-			const fmi2Status status = FMI2ExitInitializationMode(m_instance);
+			const FMIStatus status = FMI2ExitInitializationMode(m_instance);
 			return createReturnValue(status);
 		});
 		
 		srv.bind("fmi2Terminate", [this]() {
 			resetExitTimer();
-			const fmi2Status status = FMI2Terminate(m_instance);
+			const FMIStatus status = FMI2Terminate(m_instance);
 			return createReturnValue(status);
 		});
 
 		srv.bind("fmi2Reset", [this]() {
 			resetExitTimer();
-			const fmi2Status status = FMI2Reset(m_instance);
+			const FMIStatus status = FMI2Reset(m_instance);
 			return createReturnValue(status);
 		});
 
@@ -248,39 +248,39 @@ public:
 		srv.bind("fmi2GetReal", [this](const vector<unsigned int> &vr) {
 			resetExitTimer();
 			vector<double> value(vr.size());
-			const fmi2Status status = FMI2GetReal(m_instance, vr.data(), vr.size(), value.data());
+			const FMIStatus status = FMI2GetReal(m_instance, vr.data(), vr.size(), value.data());
             return createRealReturnValue(status, value);
 		});
 
 		srv.bind("fmi2GetInteger", [this](const vector<unsigned int> &vr) {
 			resetExitTimer();
 			vector<int> value(vr.size());
-			const fmi2Status status = FMI2GetInteger(m_instance, vr.data(), vr.size(), value.data());
+			const FMIStatus status = FMI2GetInteger(m_instance, vr.data(), vr.size(), value.data());
 			return createIntegerReturnValue(status, value);
 		});
 
 		srv.bind("fmi2GetBoolean", [this](const vector<unsigned int> &vr) {
 			resetExitTimer();
 			vector<int> value(vr.size());
-			const fmi2Status status = FMI2GetBoolean(m_instance, vr.data(), vr.size(), value.data());
+			const FMIStatus status = FMI2GetBoolean(m_instance, vr.data(), vr.size(), value.data());
 			return createIntegerReturnValue(status, value);
 		});
 
 		srv.bind("fmi2SetReal", [this](const vector<unsigned int> &vr, const vector<double> &value) {
 			resetExitTimer();
-			const fmi2Status status = FMI2SetReal(m_instance, vr.data(), vr.size(), value.data());
+			const FMIStatus status = FMI2SetReal(m_instance, vr.data(), vr.size(), value.data());
 			return createReturnValue(status);
 		});
 
 		srv.bind("fmi2SetInteger", [this](const vector<unsigned int> &vr, const vector<int> &value) {
 			resetExitTimer();
-			const fmi2Status status = FMI2SetInteger(m_instance, vr.data(), vr.size(), value.data());
+			const FMIStatus status = FMI2SetInteger(m_instance, vr.data(), vr.size(), value.data());
 			return createReturnValue(status);
 		});
 
 		srv.bind("fmi2SetBoolean", [this](const vector<unsigned int> &vr, const vector<int> &value) {
 			resetExitTimer();
-			const fmi2Status status = FMI2SetBoolean(m_instance, vr.data(), vr.size(), value.data());
+			const FMIStatus status = FMI2SetBoolean(m_instance, vr.data(), vr.size(), value.data());
 			return createReturnValue(status);
 		});
 
@@ -295,7 +295,7 @@ public:
 		srv.bind("fmi2GetDirectionalDerivative", [this](const vector<unsigned int> &vUnknown_ref, const vector<unsigned int> &vKnown_ref, const vector<double> &dvKnown) {
 			resetExitTimer();
 			vector<double> dvUnknown(vKnown_ref.size());
-			const fmi2Status status = FMI2GetDirectionalDerivative(m_instance, vUnknown_ref.data(), vUnknown_ref.size(),
+			const FMIStatus status = FMI2GetDirectionalDerivative(m_instance, vUnknown_ref.data(), vUnknown_ref.size(),
 				vKnown_ref.data(), vKnown_ref.size(), dvKnown.data(), dvUnknown.data());
 			return createRealReturnValue(status, dvUnknown);
 		});
@@ -307,20 +307,20 @@ public:
 		/* Enter and exit the different modes */
 		srv.bind("fmi2EnterEventMode", [this]() {
 			resetExitTimer();
-			const fmi2Status status = FMI2EnterEventMode(m_instance);
+			const FMIStatus status = FMI2EnterEventMode(m_instance);
 			return createReturnValue(status);
 		});
 
 		srv.bind("fmi2NewDiscreteStates", [this]() {
 			resetExitTimer();
 			fmi2EventInfo eventInfo = { 0 };
-			const fmi2Status status = FMI2NewDiscreteStates(m_instance, &eventInfo);
+			const FMIStatus status = FMI2NewDiscreteStates(m_instance, &eventInfo);
 			return createEventInfoReturnValue(status, &eventInfo);
 		});
 
 		srv.bind("fmi2EnterContinuousTimeMode", [this]() {
 			resetExitTimer();
-			const fmi2Status status = FMI2EnterContinuousTimeMode(m_instance);
+			const FMIStatus status = FMI2EnterContinuousTimeMode(m_instance);
 			return createReturnValue(status);
 		});
 
@@ -329,20 +329,20 @@ public:
 			vector<int> value(2);
 			fmi2Boolean* enterEventMode = &(value.data()[0]);
 			fmi2Boolean* terminateSimulation = &(value.data()[1]);
-			const fmi2Status status = FMI2CompletedIntegratorStep(m_instance, noSetFMUStatePriorToCurrentPoint, enterEventMode, terminateSimulation);
+			const FMIStatus status = FMI2CompletedIntegratorStep(m_instance, noSetFMUStatePriorToCurrentPoint, enterEventMode, terminateSimulation);
 			return createIntegerReturnValue(status, value);
 		});
 
 		/* Providing independent variables and re-initialization of caching */
 		srv.bind("fmi2SetTime", [this](double time) {
 			resetExitTimer();
-			const fmi2Status status = FMI2SetTime(m_instance, time);
+			const FMIStatus status = FMI2SetTime(m_instance, time);
 			return createReturnValue(status);
 		});
 
 		srv.bind("fmi2SetContinuousStates", [this](const vector<double> &x) {
 			resetExitTimer();
-			const fmi2Status status = FMI2SetContinuousStates(m_instance, x.data(), x.size());
+			const FMIStatus status = FMI2SetContinuousStates(m_instance, x.data(), x.size());
 			return createReturnValue(status);
 		});
 
@@ -350,28 +350,28 @@ public:
 		srv.bind("fmi2GetDerivatives", [this](size_t nx) {
 			resetExitTimer();
 			vector<double> derivatives(nx);
-			const fmi2Status status = FMI2GetDerivatives(m_instance, derivatives.data(), nx);
+			const FMIStatus status = FMI2GetDerivatives(m_instance, derivatives.data(), nx);
 			return createRealReturnValue(status, derivatives);
 		});
 		
 		srv.bind("fmi2GetEventIndicators", [this](size_t ni) {
 			resetExitTimer();
 			vector<double> eventIndicators(ni);
-			const fmi2Status status = FMI2GetEventIndicators(m_instance, eventIndicators.data(), ni);
+			const FMIStatus status = FMI2GetEventIndicators(m_instance, eventIndicators.data(), ni);
 			return createRealReturnValue(status, eventIndicators);
 		});
 
 		srv.bind("fmi2GetContinuousStates", [this](size_t nx) {
 			resetExitTimer();
 			vector<double> x(nx);
-			const fmi2Status status = FMI2GetContinuousStates(m_instance, x.data(), nx);
+			const FMIStatus status = FMI2GetContinuousStates(m_instance, x.data(), nx);
 			return createRealReturnValue(status, x);
 		});
 
 		srv.bind("fmi2GetNominalsOfContinuousStates", [this](size_t nx) {
 			resetExitTimer();
 			vector<double> x_nominal(nx);
-			const fmi2Status status = FMI2GetNominalsOfContinuousStates(m_instance, x_nominal.data(), nx);
+			const FMIStatus status = FMI2GetNominalsOfContinuousStates(m_instance, x_nominal.data(), nx);
 			return createRealReturnValue(status, x_nominal);
 		});
 
@@ -382,26 +382,26 @@ public:
 		/* Simulating the slave */
 		srv.bind("fmi2SetRealInputDerivatives", [this](const vector<unsigned int> &vr, const vector<int> &order, const vector<double> &value) {
 			resetExitTimer();
-			const fmi2Status status = FMI2SetRealInputDerivatives(m_instance, vr.data(), vr.size(), order.data(), value.data());
+			const FMIStatus status = FMI2SetRealInputDerivatives(m_instance, vr.data(), vr.size(), order.data(), value.data());
 			return createReturnValue(status);
 		});
 
 		srv.bind("fmi2GetRealOutputDerivatives", [this](const vector<unsigned int> &vr, const vector<int> &order) {
 			resetExitTimer();
 			vector<double> value(vr.size());
-			const fmi2Status status = FMI2GetRealOutputDerivatives(m_instance, vr.data(), vr.size(), order.data(), value.data());
+			const FMIStatus status = FMI2GetRealOutputDerivatives(m_instance, vr.data(), vr.size(), order.data(), value.data());
 			return createRealReturnValue(status, value);
 		});
 
 		srv.bind("fmi2DoStep", [this](double currentCommunicationPoint, double communicationStepSize, int noSetFMUStatePriorToCurrentPoint) {
 			resetExitTimer();
-			const fmi2Status status = FMI2DoStep(m_instance, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint);
+			const FMIStatus status = FMI2DoStep(m_instance, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint);
 			return createReturnValue(status);
 		});
 		
 		srv.bind("fmi2CancelStep", [this]() {
 			resetExitTimer();
-			const fmi2Status status = FMI2CancelStep(m_instance);
+			const FMIStatus status = FMI2CancelStep(m_instance);
 			return createReturnValue(status);
 		});
 
@@ -409,28 +409,28 @@ public:
 		srv.bind("fmi2GetStatus", [this](int s) {
 			resetExitTimer();
 			vector<int> value(1);
-			const fmi2Status status = FMI2GetStatus(m_instance, fmi2StatusKind(s), reinterpret_cast<fmi2Status *>(value.data()));
+			const FMIStatus status = FMI2GetStatus(m_instance, fmi2StatusKind(s), reinterpret_cast<fmi2Status *>(value.data()));
 			return createIntegerReturnValue(status, value);
 		});
 
 		srv.bind("fmi2GetRealStatus", [this](int s) {
 			resetExitTimer();
 			vector<double> value(1);
-			const fmi2Status status = FMI2GetRealStatus(m_instance, fmi2StatusKind(s), value.data());
+			const FMIStatus status = FMI2GetRealStatus(m_instance, fmi2StatusKind(s), value.data());
 			return createRealReturnValue(status, value);
 		});
 
 		srv.bind("fmi2GetIntegerStatus", [this](int s) {
 			resetExitTimer();
 			vector<int> value(1);
-			const fmi2Status status = FMI2GetIntegerStatus(m_instance, fmi2StatusKind(s), value.data());
+			const FMIStatus status = FMI2GetIntegerStatus(m_instance, fmi2StatusKind(s), value.data());
 			return createIntegerReturnValue(status, value);
 		});
 
 		srv.bind("fmi2GetBooleanStatus", [this](int s) {
 			resetExitTimer();
 			vector<int> value(1);
-			const fmi2Status status = FMI2GetBooleanStatus(m_instance, fmi2StatusKind(s), value.data());
+			const FMIStatus status = FMI2GetBooleanStatus(m_instance, fmi2StatusKind(s), value.data());
 			return createIntegerReturnValue(status, value);
 		});
 

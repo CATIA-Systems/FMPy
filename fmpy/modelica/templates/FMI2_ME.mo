@@ -1,4 +1,8 @@
 @@ extends "FMU.mo" @@
+@@ block imports @@
+  import FMI.FMI2.Interfaces.*;
+  import FMI.FMI2.Functions.*;
+@@ endblock @@
 @@ block equations @@
 
   final constant Integer nx = @=nx=@;
@@ -18,7 +22,7 @@
   Boolean valuesOfContinuousStatesChanged;
   Real nextEventTime;
 
-  function setTimeAndStates
+  impure function setTimeAndStates
     input FMI.Internal.ExternalFMU instance;
     input Real t;
     input Real x[:];
@@ -29,7 +33,7 @@
     instanceTime := t;
   end setTimeAndStates;
 
-  function getDerivatives
+  impure function getDerivatives
     input FMI.Internal.ExternalFMU instance;
     input Real instanceTime;
     output Real dx[nx];
@@ -37,7 +41,7 @@
     dx := FMI2GetDerivatives(instance, size(dx, 1));
   end getDerivatives;
 
-  function getEventIndicators
+  impure function getEventIndicators
     input FMI.Internal.ExternalFMU instance;
     input Real instanceTime;
     input Real realInputs[:];
@@ -46,12 +50,12 @@
     output Real z[nz];
   algorithm
     FMI2SetReal(instance, realInputVRs, size(realInputs, 1), realInputs);
-    FMI2SetInteger(instance, integerInputVRs, size(integerInputs, 1), integerInputs);
-    FMI2SetBoolean(instance, booleanInputVRs, size(booleanInputs, 1), booleanInputs);
+    // FMI2SetInteger(instance, integerInputVRs, size(integerInputs, 1), integerInputs);
+    // FMI2SetBoolean(instance, booleanInputVRs, size(booleanInputs, 1), booleanInputs);
     z := FMI2GetEventIndicators(instance, size(z, 1));
   end getEventIndicators;
 
-  function updateDiscreteStates
+  impure function updateDiscreteStates
     input FMI.Internal.ExternalFMU instance;
     output Boolean valuesOfContinuousStatesChanged;
     output Real nextEventTime;
@@ -61,7 +65,7 @@
     FMI2EnterContinuousTimeMode(instance);
   end updateDiscreteStates;
 
-  function setInputs
+  impure function setInputs
     input FMI.Internal.ExternalFMU instance;
     input Integer[:] integerInputs;
     input Boolean[:] booleanInputs;

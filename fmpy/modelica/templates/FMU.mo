@@ -5,7 +5,8 @@ model @=modelName=@
   "@=description=@"
 @@ endif @@
 
-  import FMI.FMI2.*;
+@@ block imports @@
+@@ endblock @@
 
   parameter Modelica.Units.SI.Time startTime = 0.0 annotation(Dialog(tab="FMI", group="Parameters"));
 
@@ -16,6 +17,10 @@ model @=modelName=@
   parameter Boolean visible = false annotation(Dialog(tab="FMI", group="Parameters"));
 
   parameter Boolean loggingOn = false annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter Boolean logToFile = false annotation(Dialog(tab="FMI", group="Parameters"));
+
+  parameter String logFile = getInstanceName() + ".txt" annotation(Dialog(tab="FMI", group="Parameters"));
 
   parameter Boolean logFMICalls = false annotation(Dialog(tab="FMI", group="Parameters"));
 @@ block parameters @@
@@ -30,11 +35,11 @@ model @=modelName=@
 @@ endfor @@
 @@ for variable in inputs @@
 
-  Modelica.Blocks.Interfaces.@=variable.type=@Input '@=variable.name=@'(start='@=variable.name=@_start') @=annotations[variable.name]=@;
+  @=variable.type=@Input '@=variable.name=@'(start='@=variable.name=@_start') @=annotations[variable.name]=@;
 @@ endfor @@
 @@ for variable in outputs @@
 
-  Modelica.Blocks.Interfaces.@=variable.type=@Output '@=variable.name=@' @=annotations[variable.name]=@;
+  @=variable.type=@Output '@=variable.name=@' @=annotations[variable.name]=@;
 @@ endfor @@
 
 protected
@@ -43,14 +48,17 @@ protected
 
   FMI.Internal.ExternalFMU instance = FMI.Internal.ExternalFMU(
     callbacks,
-    Modelica.Utilities.Files.loadResource("modelica://@=package=@/Resources/FMUs/@=modelIdentifier=@"),
+    Modelica.Utilities.Files.loadResource("modelica://@=rootPackage=@/Resources/FMUs/@=hash=@"),
+    @=fmiMajorVersion-1=@,
     "@=modelIdentifier=@",
     getInstanceName(),
     @=interfaceType=@,
     "@=instantiationToken=@",
     visible,
     loggingOn,
-    logFMICalls);
+    logFMICalls,
+    logToFile,
+    logFile);
 @@ block equations @@
 @@ endblock @@
 
@@ -61,9 +69,9 @@ protected
       graphics={
         Text(extent={{@=x0=@,@=y1+10=@}, {@=x1=@,@=y1+50=@}}, lineColor={0,0,255}, textString="%name"),
         Rectangle(extent={{@=x0=@,@=y0=@},{@=x1=@,@=y1=@}}, lineColor={95,95,95}, fillColor={255,255,255}, fillPattern=FillPattern.Solid)
-        @=labels=@
       }
     ),
-    Diagram(coordinateSystem(preserveAspectRatio=false, extent={{@=x0=@,@=y0=@}, {@=x1=@,@=y1=@}}))
+    Diagram(coordinateSystem(preserveAspectRatio=false, extent={{@=x0=@,@=y0=@}, {@=x1=@,@=y1=@}})),
+    experiment(StopTime=@=stopTime=@)
   );
 end @=modelName=@;

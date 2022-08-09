@@ -104,25 +104,35 @@ add_custom_command(TARGET cswrapper POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
 )
 
 add_library(ModelicaFMI SHARED
-  ../fmpy/modelica/FMI/Resources/Source/fmi2Functions.h
-  ../fmpy/modelica/FMI/Resources/Source/fmi2FunctionTypes.h
-  ../fmpy/modelica/FMI/Resources/Source/fmi2TypesPlatform.h
-  ../fmpy/modelica/FMI/Resources/Source/FMI.h
-  ../fmpy/modelica/FMI/Resources/Source/FMI2.h
-  ../fmpy/modelica/FMI/Resources/Source/FMI.c
-  ../fmpy/modelica/FMI/Resources/Source/FMI2.c
-  ../fmpy/modelica/FMI/Resources/Source/ModelicaFMI.h
-  ../fmpy/modelica/FMI/Resources/Source/ModelicaFMI.c
-  ../fmpy/modelica/FMI/Resources/Source/ModelicaUtilities.h
-  ../fmpy/modelica/FMI/Resources/Source/ModelicaUtilities.c
+  ../fmpy/c-code/fmi2Functions.h
+  ../fmpy/c-code/fmi2FunctionTypes.h
+  ../fmpy/c-code/fmi2TypesPlatform.h
+  ../fmpy/c-code/fmi3Functions.h
+  ../fmpy/c-code/fmi3FunctionTypes.h
+  ../fmpy/c-code/fmi3PlatformTypes.h
+  ../thirdparty/Reference-FMUs/include/FMI.h
+  ../thirdparty/Reference-FMUs/include/FMI2.h
+  ../thirdparty/Reference-FMUs/include/FMI3.h
+  ../thirdparty/Reference-FMUs/src/FMI.c
+  ../thirdparty/Reference-FMUs/src/FMI2.c
+  ../thirdparty/Reference-FMUs/src/FMI3.c
+  modelica/ModelicaFMI.h
+  modelica/ModelicaFMI2.h
+  modelica/ModelicaFMI3.h
+  modelica/ModelicaFMI.c
+  modelica/ModelicaFMI2.c
+  modelica/ModelicaFMI3.c
+  modelica/ModelicaUtilities.h
+  modelica/ModelicaUtilities.c
   ../fmpy/modelica/FMI/Resources/Include/ModelicaUtilityFunctions.h
 )
 
 set_target_properties(ModelicaFMI PROPERTIES PREFIX "")
 
 target_include_directories(ModelicaFMI PRIVATE
+  ../fmpy/c-code
+  ../thirdparty/Reference-FMUs/include
   ../fmpy/modelica/FMI/Resources/Include
-  ../fmpy/modelica/FMI/Resources/Source
 )
 
 add_custom_command(TARGET ModelicaFMI POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy

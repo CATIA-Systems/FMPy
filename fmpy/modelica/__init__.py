@@ -1,3 +1,27 @@
+def generate_examples():
+
+    from .. import extract
+    from ..util import download_file
+    from pathlib import Path
+
+    url = r'https://github.com/modelica/Reference-FMUs/releases/download/v0.0.17/Reference-FMUs-0.0.17.zip'
+    checksum = '1185a0537f0307806255c9b2c7d502371e120febf816ca9792d4739cf680935c'
+    archive = download_file(url=url, checksum=checksum)
+
+    dist = Path(extract(archive))
+
+    modelica = Path(__file__).parent
+
+    for fmi_version in [2, 3]:
+        for interface_type in ['CoSimulation', 'ModelExchange']:
+            for model in ['BouncingBall', 'Dahlquist', 'Feedthrough', 'Stair', 'Resource', 'VanDerPol']:
+                import_fmu_to_modelica(
+                    fmu_path=dist / f'{fmi_version}.0' / f'{model}.fmu',
+                    model_path=modelica / 'FMI' / 'Examples' / f'FMI{fmi_version}' / interface_type / f'{model}.mo',
+                    interface_type=interface_type,
+                )
+
+
 def import_fmu_to_modelica(fmu_path, model_path, interface_type):
 
     from os import makedirs
@@ -5,6 +29,7 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
 
     import jinja2
     from fmpy import extract, read_model_description
+    from fmpy.util import sha256_checksum
 
     fmu_path = Path(fmu_path)
     model_path = Path(model_path)
@@ -12,7 +37,7 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
 
     package_dir = Path(model_path).parent
 
-    if not (package_dir / 'package.order').is_file():
+    if not (package_dir / 'package.mo').is_file():
         raise Exception(f"{package_dir} is not a package of a Modelica library.")
 
     model_description = read_model_description(fmu_path)
@@ -22,10 +47,14 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
     else:
         communicationStepSize = '1e-2'
 
-    if interface_type == 'Model Exchange':
+    if interface_type == 'ModelExchange':
         model_identifier = model_description.modelExchange.modelIdentifier
-    else:
+        IT = 'ME'
+    elif interface_type == 'CoSimulation':
         model_identifier = model_description.coSimulation.modelIdentifier
+        IT = 'CS'
+    else:
+        raise Exception(f"interface_type must be 'ModelExchange' or 'CoSimulation', but was '{interface_type}'.")
 
     package_root = package_dir
 
@@ -35,7 +64,11 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
         package_root = package_root.parent
         package = package_root.name + '.' + package
 
-    unzipdir = package_root / 'Resources' / 'FMUs' / model_identifier
+    hash = sha256_checksum(fmu_path)
+
+    hash = hash[:7]
+
+    unzipdir = package_root / 'Resources' / 'FMUs' / hash
 
     makedirs(unzipdir, exist_ok=True)
 
@@ -46,27 +79,18 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
     environment = jinja2.Environment(loader=loader, trim_blocks=True, block_start_string='@@',
                                      block_end_string='@@', variable_start_string='@=', variable_end_string='=@')
 
-    if interface_type == 'Co-Simulation':
-        template = environment.get_template(f'FMI2_CS.mo')
-    else:
-        template = environment.get_template(f'FMI2_ME.mo')
+    fmiMajorVersion = int(model_description.fmiVersion[0])
+
+    template = environment.get_template(f'FMI{fmiMajorVersion}_{IT}.mo')
 
     parameters = []
 
     inputs = []
     outputs = []
 
-    width = 400
-    height = 200
-
-    x0 = -int(width / 2)
-    x1 = int(width / 2)
-    y0 = -int(height / 2)
-    y1 = int(height / 2)
-
     for variable in model_description.modelVariables:
 
-        if variable.type not in {'Real', 'Integer', 'Boolean'}:
+        if variable.type not in {'Float64', 'Int32', 'Real', 'Integer', 'Boolean'}:
             continue
 
         if variable.causality == 'parameter':
@@ -76,22 +100,23 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
         elif variable.causality == 'output':
             outputs.append(variable)
 
-    labels = []
+    width = 1200
+    height = max(200, 100 * max(len(inputs), len(outputs)))
+
+    x0 = -int(width / 2)
+    x1 = int(width / 2)
+    y0 = -int(height / 2)
+    y1 = int(height / 2)
+
     annotations = dict()
 
     for i, variable in enumerate(inputs):
         y = y1 - (i + 1) * (height / (1 + len(inputs)))
-        annotations[
-            variable.name] = f'annotation (Placement(transformation(extent={{ {{ {x0 - 40}, {y - 20} }}, {{ {x0}, {y + 20} }} }}), iconTransformation(extent={{ {{ {x0 - 40}, {y - 20} }}, {{ {x0}, {y + 20} }} }})))'
-        labels.append(
-            f', Text(extent={{ {{ {x0 + 10}, {y - 10} }}, {{ -10, {y + 10} }} }}, textColor={{0,0,0}}, textString="{variable.name}", horizontalAlignment=TextAlignment.Left)')
+        annotations[variable.name] = f'annotation (Placement(transformation(extent={{ {{ {x0 - 40}, {y - 20} }}, {{ {x0}, {y + 20} }} }}), iconTransformation(extent={{ {{ {x0 - 40}, {y - 20} }}, {{ {x0}, {y + 20} }} }})))'
 
     for i, variable in enumerate(outputs):
         y = y1 - (i + 1) * (height / (1 + len(outputs)))
-        annotations[
-            variable.name] = f'annotation (Placement(transformation(extent={{ {{ {x1}, {y - 10} }}, {{ {x1 + 20}, {y + 10} }} }}), iconTransformation(extent={{ {{ {x1}, {y - 10} }}, {{ {x1 + 20}, {y + 10} }} }})))'
-        labels.append(
-            f', Text(extent={{ {{ 10, {y - 10} }}, {{ {x1 - 10}, {y + 10} }} }}, textColor={{0,0,0}}, textString="{variable.name}", horizontalAlignment=TextAlignment.Right)')
+        annotations[variable.name] = f'annotation (Placement(transformation(extent={{ {{ {x1}, {y - 10} }}, {{ {x1 + 20}, {y + 10} }} }}), iconTransformation(extent={{ {{ {x1}, {y - 10} }}, {{ {x1 + 20}, {y + 10} }} }})))'
 
     def as_array(values, default):
         if len(values) > 0:
@@ -124,12 +149,17 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
         'modelica_type': modelica_type
     })
 
+    stopTime = getattr(model_description.defaultExperiment, 'stopTime', 1)
+
     class_text = template.render(
+        hash=hash,
+        rootPackage=package_root.name,
         package=package,
         description=model_description.description,
+        fmiMajorVersion=fmiMajorVersion,
         modelName=model_name,
         modelIdentifier=model_identifier,
-        interfaceType=0 if interface_type == 'Model Exchange' else 1,
+        interfaceType=0 if interface_type == 'ModelExchange' else 1,
         instantiationToken=model_description.guid,
         nx=model_description.numberOfContinuousStates,
         nz=model_description.numberOfEventIndicators,
@@ -139,7 +169,6 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
         x1=x1,
         y0=y0,
         y1=y1,
-        labels=' '.join(labels),
         inputs=inputs,
         outputs=outputs,
         annotations=annotations,
@@ -149,13 +178,17 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
         integerInputs=[v.name for v in inputs if v.type == 'Integer'],
         booleanInputVRs=[str(v.valueReference) for v in inputs if v.type == 'Boolean'],
         booleanInputs=[v.name for v in inputs if v.type == 'Boolean'],
+        stopTime=stopTime
     )
 
     with open(model_path, 'w') as f:
         f.write(class_text)
 
-    with open(package_dir / 'package.order', 'r') as f:
-        package_order = list(map(lambda l: l.strip(), f.readlines()))
+    if (package_dir / 'package.order').is_file():
+        with open(package_dir / 'package.order', 'r') as f:
+            package_order = list(map(lambda l: l.strip(), f.readlines()))
+    else:
+        package_order = []
 
     if model_name not in package_order:
         with open(package_dir / 'package.order', 'a') as f:

@@ -70,55 +70,36 @@ package_data = {
         'fmucontainer/documentation/LICENSE.txt',
         'fmucontainer/templates/FMI2.xml',
         'modelica/FMI/package.order',
-
         'modelica/FMI/*.mo',
         'modelica/FMI/package.order',
-
         'modelica/FMI/Examples/*.mo',
         'modelica/FMI/Examples/package.order',
-
         'modelica/FMI/Examples/FMI2/package.mo',
         'modelica/FMI/Examples/FMI2/package.order',
-
         'modelica/FMI/Examples/FMI2/CoSimulation/*.mo',
         'modelica/FMI/Examples/FMI2/CoSimulation/package.order',
-
         'modelica/FMI/Examples/FMI2/ModelExchange/*.mo',
         'modelica/FMI/Examples/FMI2/ModelExchange/package.order',
-
         'modelica/FMI/Examples/FMI3/package.mo',
         'modelica/FMI/Examples/FMI3/package.order',
-
         'modelica/FMI/Examples/FMI3/CoSimulation/*.mo',
         'modelica/FMI/Examples/FMI3/CoSimulation/package.order',
-
         'modelica/FMI/Examples/FMI3/ModelExchange/*.mo',
         'modelica/FMI/Examples/FMI3/ModelExchange/package.order',
-
-        # FMI3
         'modelica/FMI/FMI2/package.mo',
         'modelica/FMI/FMI2/package.order',
-
         'modelica/FMI/FMI2/Functions/*.mo',
         'modelica/FMI/FMI2/Functions/package.order',
-
         'modelica/FMI/FMI2/Interfaces/*.mo',
         'modelica/FMI/FMI2/Interfaces/package.order',
-
-        # FMI3
         'modelica/FMI/FMI3/package.mo',
         'modelica/FMI/FMI3/package.order',
-
         'modelica/FMI/FMI3/Functions/*.mo',
         'modelica/FMI/FMI3/Functions/package.order',
-
         'modelica/FMI/FMI3/Interfaces/*.mo',
         'modelica/FMI/FMI3/Interfaces/package.order',
-
         'modelica/FMI/FMI3/Types/*.mo',
         'modelica/FMI/FMI3/Types/package.order',
-
-        # Resources
         'modelica/FMI/Resources/FMUs/*/binaries/darwin64/*.dylib',
         'modelica/FMI/Resources/FMUs/*/binaries/linux64/*.so',
         'modelica/FMI/Resources/FMUs/*/binaries/win64/*.dll',
@@ -133,7 +114,6 @@ package_data = {
         'modelica/FMI/Resources/FMUs/*/sources/*.c',
         'modelica/FMI/Resources/FMUs/*/sources/*.h',
         'modelica/FMI/Resources/FMUs/*/modelDescription.xml',
-
         'modelica/FMI/Resources/Include/ModelicaUtilityFunctions.c',
         'modelica/FMI/Resources/Include/ModelicaUtilityFunctions.h',
         'modelica/FMI/Resources/FMI_bare.png',
@@ -141,7 +121,6 @@ package_data = {
         'modelica/FMI/Resources/Library/linux64/ModelicaFMI.so',
         'modelica/FMI/Resources/Library/win32/ModelicaFMI.dll',
         'modelica/FMI/Resources/Library/win64/ModelicaFMI.dll',
-
         'modelica/templates/FMI2_CS.mo',
         'modelica/templates/FMI2_ME.mo',
         'modelica/templates/FMI3_CS.mo',
@@ -194,7 +173,7 @@ extras_require = {
 extras_require['complete'] = sorted(set(sum(extras_require.values(), [])))
 
 setup(name='FMPy',
-      version='0.3.11',
+      version='0.3.12',
       description="Simulate Functional Mock-up Units (FMUs) in Python",
       long_description=long_description,
       author="Torsten Sommer",

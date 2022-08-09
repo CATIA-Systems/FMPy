@@ -6,7 +6,7 @@ from ctypes import *
 import _ctypes
 from typing import Union, IO, List
 
-__version__ = '0.3.11'
+__version__ = '0.3.12'
 
 # library to use in plot_result()
 plot_library = 'plotly'  # or 'matplotlib'

@@ -30,8 +30,8 @@ def resources_dir():
 @pytest.fixture(scope='session')
 def reference_fmus_dist_dir(resources_dir):
 
-    version = '0.0.17'
-    checksum = '1185a0537f0307806255c9b2c7d502371e120febf816ca9792d4739cf680935c'
+    version = '0.0.18'
+    checksum = '2987bbaa41aacc717d43a886917b4ab4f9ae122d27e3951b25c11427492c26bf'
 
     zip_file = download_file(
         url=f'https://github.com/modelica/Reference-FMUs/releases/download/v{version}/Reference-FMUs-{version}.zip',
@@ -47,18 +47,7 @@ def reference_fmus_dist_dir(resources_dir):
 @pytest.fixture(scope='session')
 def reference_fmus_repo_dir(resources_dir):
 
-    version = '0.0.14'
-    checksum = '93ffb56774b15130b6993d345dff1795ddce7872706c0b4d8f4d8edd361a8a7a'
-
-    zip_file = download_file(
-        url=f'https://github.com/modelica/Reference-FMUs/archive/v{version}.zip',
-        checksum=checksum)
-
-    extract(filename=zip_file, unzipdir=resources_dir)
-
-    repo_dir = resources_dir / f'Reference-FMUs-{version}'
-
-    yield repo_dir
+    yield Path(__file__).parent.parent / 'thirdparty' / 'Reference-FMUs'
 
 
 @pytest.fixture(scope='session')

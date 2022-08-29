@@ -441,6 +441,8 @@ class MainWindow(QMainWindow):
             fmi_types.append('Co-Simulation')
         if md.modelExchange:
             fmi_types.append('Model Exchange')
+        if md.scheduledExecution:
+            fmi_types.append('Scheduled Execution')
 
         experiment = md.defaultExperiment
 
@@ -520,7 +522,10 @@ class MainWindow(QMainWindow):
         self.ui.actionShowLog.setEnabled(True)
         self.ui.actionShowResults.setEnabled(False)
 
-        can_sim, _ = can_simulate(platforms)
+        if 'Co-Simulation' not in fmi_types and 'Model Exchange' not in fmi_types:
+            can_sim = False
+        else:
+            can_sim, _ = can_simulate(platforms)
 
         self.ui.actionLoadStartValues.setEnabled(can_sim)
         self.ui.actionSimulate.setEnabled(can_sim)

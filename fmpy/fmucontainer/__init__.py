@@ -63,7 +63,7 @@ FMI_TYPES = {
 }
 
 
-def create_fmu_container(configuration, output_filename):
+def create_fmu_container(configuration, output_filename, generation_datetime=datetime.now(pytz.utc).isoformat()):
     """ Create an FMU from nested FMUs (experimental)
 
         see tests/test_fmu_container.py for an example
@@ -204,7 +204,7 @@ def create_fmu_container(configuration, output_filename):
         system=configuration,
         modelName=model_name,
         description=configuration.description,
-        generationDateAndTime=datetime.now(pytz.utc).isoformat(),
+        generationDateAndTime=generation_datetime,
         fmpyVersion=fmpy.__version__
     )
 

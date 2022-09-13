@@ -1,6 +1,6 @@
 from os import PathLike
 from tempfile import mkdtemp
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from attr import attrs, attrib, Factory
 
@@ -63,10 +63,19 @@ FMI_TYPES = {
 }
 
 
-def create_fmu_container(configuration, output_filename):
+def create_fmu_container(configuration: Configuration,
+                         output_filename: str,
+                         generation_datetime: Optional[str] = None,
+                         validate_model_descriptions: bool=True):
     """ Create an FMU from nested FMUs (experimental)
 
         see tests/test_fmu_container.py for an example
+
+        Parameters:
+            configuration                  configuration of contained FMUs, connections, inputs/outputs, ...
+            output_filename                name of the resulting FMU
+            generation_datetime            Datetime string added to the resulting model description as "generationDateAndTime" attribute
+            validate_model_descriptions    whether to validate the model descriptions that are being read
     """
 
     def xml_encode(s):
@@ -86,7 +95,6 @@ def create_fmu_container(configuration, output_filename):
 
         return s
 
-    import jinja2
     import os
     import shutil
     import fmpy
@@ -98,6 +106,7 @@ def create_fmu_container(configuration, output_filename):
 
     base_filename, _ = os.path.splitext(output_filename)
     model_name = os.path.basename(base_filename)
+    generation_datetime = datetime.now(pytz.utc).isoformat() if generation_datetime is None else generation_datetime
 
     unzipdir = mkdtemp()
 
@@ -118,7 +127,7 @@ def create_fmu_container(configuration, output_filename):
     component_map = {}
 
     for i, component in enumerate(configuration.components):
-        model_description = read_model_description(component.filename)
+        model_description = read_model_description(component.filename, validate=validate_model_descriptions)
         model_identifier = model_description.coSimulation.modelIdentifier
         extract(component.filename, os.path.join(unzipdir, 'resources', model_identifier))
         variables = dict((v.name, v) for v in model_description.modelVariables)
@@ -183,6 +192,34 @@ def create_fmu_container(configuration, output_filename):
             'endValueReference': component_map[c.endElement][1][c.endConnector].valueReference,
         })
 
+    write_model_description(unzipdir, configuration, model_name, generation_datetime)
+    _write_msgpack_config(unzipdir, data)
+
+    shutil.make_archive(base_filename, 'zip', unzipdir)
+
+    if os.path.isfile(output_filename):
+        os.remove(output_filename)
+
+    os.rename(base_filename + '.zip', output_filename)
+
+    shutil.rmtree(unzipdir, ignore_errors=True)
+
+def write_model_description(target_folder: str,
+                            configuration: Configuration,
+                            model_name: str,
+                            generation_datetime: str):
+    """ Write model description file according to the configuration (experimental)
+
+        Parameters:
+            target_folder              folder to write the model description file into
+            configuration              configuration of contained FMUs, connections, inputs/outputs, ...
+            model_name                 the model's name
+            generation_datetime        Datetime string added to the resulting model description as "generationDateAndTime" attribute
+    """
+    from pathlib import Path
+    import jinja2
+    import os
+
     loader = jinja2.FileSystemLoader(searchpath=Path(__file__).parent / 'templates')
 
     environment = jinja2.Environment(loader=loader, trim_blocks=True)
@@ -204,22 +241,14 @@ def create_fmu_container(configuration, output_filename):
         system=configuration,
         modelName=model_name,
         description=configuration.description,
-        generationDateAndTime=datetime.now(pytz.utc).isoformat(),
+        generationDateAndTime=generation_datetime,
         fmpyVersion=fmpy.__version__
     )
 
-    with open(os.path.join(unzipdir, 'modelDescription.xml'), 'w') as f:
+    with open(os.path.join(target_folder, 'modelDescription.xml'), 'w') as f:
         f.write(xml)
 
+def _write_msgpack_config(unzipdir, data):
     with open(os.path.join(unzipdir, 'resources', 'config.mp'), 'wb') as f:
         packed = msgpack.packb(data)
         f.write(packed)
-
-    shutil.make_archive(base_filename, 'zip', unzipdir)
-
-    if os.path.isfile(output_filename):
-        os.remove(output_filename)
-
-    os.rename(base_filename + '.zip', output_filename)
-
-    shutil.rmtree(unzipdir, ignore_errors=True)

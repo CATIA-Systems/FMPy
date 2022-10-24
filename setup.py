@@ -154,7 +154,7 @@ package_data = {
 install_requires = [
     'attrs',
     'Jinja2',
-    'lark-parser',
+    'lark',
     'lxml',
     'msgpack',
     'numpy',

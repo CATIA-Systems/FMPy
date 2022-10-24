@@ -1043,52 +1043,6 @@ def auto_interval(t):
     return h
 
 
-def change_fmu(input_file, output_file=None, start_values={}):
-    """ Make changes to an FMU """
-
-    from lxml import etree
-    import zipfile
-    from fmpy import extract
-    from shutil import rmtree
-
-    if output_file is None:
-        output_file = input_file
-
-    tempdir = extract(input_file)
-
-    # read the model description
-    with zipfile.ZipFile(input_file, 'r') as zf:
-        xml = zf.open('modelDescription.xml')
-        tree = etree.parse(xml)
-
-    root = tree.getroot()
-
-    # apply the start values
-    for variable in root.find('ModelVariables'):
-        if variable.get("name") in start_values:
-            for child in variable.getchildren():
-                if child.tag in ['Real', 'Integer', 'Enumeration', 'Boolean', 'String']:
-                    child.set('start', start_values[variable.get("name")])
-
-    # write the new model description
-    tree.write(os.path.join(tempdir, 'modelDescription.xml'))
-
-    # create a new archive from the modified files
-    with zipfile.ZipFile(output_file, 'w', zipfile.ZIP_DEFLATED) as zf:
-        base_path = os.path.normpath(tempdir)
-        for dirpath, dirnames, filenames in os.walk(tempdir):
-            for name in sorted(dirnames):
-                path = os.path.normpath(os.path.join(dirpath, name))
-                zf.write(path, os.path.relpath(path, base_path))
-            for name in filenames:
-                path = os.path.normpath(os.path.join(dirpath, name))
-                if os.path.isfile(path):
-                    zf.write(path, os.path.relpath(path, base_path))
-
-    # clean up
-    rmtree(tempdir, ignore_errors=True)
-
-
 def get_start_values(filename):
     """ Get the start values of an FMU's variables
 

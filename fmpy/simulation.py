@@ -626,7 +626,7 @@ def simulate_fmu(filename,
         record_events          record outputs at events (model exchange only)
         fmi_type               FMI type for the simulation (None: determine from FMU)
         start_values           dictionary of variable name -> value pairs
-        apply_default_start_values  apply the start values from the model description
+        apply_default_start_values  apply the start values from the model description (deprecated)
         input                  a structured numpy array that contains the input (see :class:`Input`)
         output                 list of variables to record (None: record outputs)
         timeout                timeout for the simulation

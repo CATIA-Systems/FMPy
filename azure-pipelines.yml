@@ -1,6 +1,6 @@
 variables:
 - name: create_environment
-  value: conda create --yes --quiet --name fmpy-env -c conda-forge python=3.7 attrs dask ipython=7 jinja2 lark lxml matplotlib notebook numpy plotly pyqt pyqtgraph pytest-cov requests scipy
+  value: conda create --yes --quiet --name fmpy-env -c conda-forge python=3.8 attrs dask ipython=7 jinja2 lark lxml matplotlib notebook numpy plotly pyqt pyqtgraph pytest-cov requests scipy
 
 jobs:
 
@@ -16,7 +16,7 @@ jobs:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
 
-  - bash: conda create --yes --name fmpy-env -c conda-forge python=3.7
+  - bash: conda create --yes --name fmpy-env -c conda-forge python=3.8
     displayName: Create Anaconda environment
 
   - bash: |

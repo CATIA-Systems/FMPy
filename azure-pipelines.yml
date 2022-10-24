@@ -1,6 +1,6 @@
 variables:
 - name: create_environment
-  value: conda create --yes --quiet --name py37 -c conda-forge python=3.7 attrs dask ipython=7 jinja2 lark lxml matplotlib notebook numpy plotly pyqt pyqtgraph pytest-cov requests scipy
+  value: conda create --yes --quiet --name fmpy-env -c conda-forge python=3.7 attrs dask ipython=7 jinja2 lark lxml matplotlib notebook numpy plotly pyqt pyqtgraph pytest-cov requests scipy
 
 jobs:
 
@@ -16,31 +16,31 @@ jobs:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
 
-  - bash: conda create --yes --name py37 -c conda-forge python=3.7
+  - bash: conda create --yes --name fmpy-env -c conda-forge python=3.7
     displayName: Create Anaconda environment
 
   - bash: |
-      source activate py37
+      source activate fmpy-env
       conda install -c conda-forge --yes attrs dask ipython=7 jinja2 lark lxml matplotlib notebook numpy plotly pyqt pyqtgraph pytest-cov requests scipy cmake
     displayName: Install conda packages
 
   - bash: |
-      source activate py37
+      source activate fmpy-env
       python build_cvode.py
     displayName: Build CVode binaries
 
   - bash: |
-      source activate py37
+      source activate fmpy-env
       python build_binaries.py
     displayName: Build FMPy binaries
 
   - bash: |
-      source activate py37
+      source activate fmpy-env
       python build_remoting.py
     displayName: Build remoting binaries
 
   - bash: |
-      source activate py37
+      source activate fmpy-env
       python setup.py bdist_wheel --universal
       for f in dist/FMPy-*.whl; do
         pip install $f --no-deps -vv
@@ -89,17 +89,17 @@ jobs:
     displayName: Create Anaconda environment
 
   - bash: |
-      source activate py37
+      source activate fmpy-env
       python build_cvode.py
     displayName: Build CVode binaries
 
   - bash: |
-      source activate py37
+      source activate fmpy-env
       python build_binaries.py
     displayName: Build FMPy binaries
 
   - bash: |
-      source activate py37
+      source activate fmpy-env
       python setup.py bdist_wheel --universal
       for f in dist/FMPy-*.whl; do
         pip install $f --no-deps -vv
@@ -143,22 +143,22 @@ jobs:
     displayName: Create Anaconda environment
 
   - script: |
-      call activate py37
+      call activate fmpy-env
       python build_cvode.py
     displayName: Build CVode binaries
 
   - bash: |
-      source activate py37
+      source activate fmpy-env
       python build_binaries.py
     displayName: Build FMPy binaries
     
   - script: |
-      call activate py37
+      call activate fmpy-env
       python build_remoting.py
     displayName: Build Remoting binaries
 
   - script: |
-      call activate py37
+      call activate fmpy-env
       python setup.py bdist_wheel --universal
     displayName: Build wheel
 
@@ -168,7 +168,7 @@ jobs:
       artifact: 'windows'
 
   - script: |
-      call activate py37
+      call activate fmpy-env
       for %%f in (dist\FMPy-*.whl) do pip install %%f --no-deps
       cd tests
       pytest --junitxml=junit/test-results.xml --cov=fmpy --cov-report=xml

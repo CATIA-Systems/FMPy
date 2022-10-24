@@ -258,7 +258,6 @@ class MainWindow(QMainWindow):
         self.ui.actionExit.triggered.connect(QApplication.closeAllWindows)
         self.ui.actionLoadStartValues.triggered.connect(self.loadStartValues)
         self.ui.actionReload.triggered.connect(lambda: self.load(self.filename))
-        self.ui.actionSaveChanges.triggered.connect(self.saveChanges)
 
         # tools menu
         self.ui.actionValidateFMU.triggered.connect(self.validateFMU)
@@ -1172,18 +1171,6 @@ class MainWindow(QMainWindow):
             contour.setPen(pen)
 
             y += lh
-
-    def saveChanges(self):
-
-        from ..util import change_fmu
-
-        output_file, _ = QFileDialog.getSaveFileName(parent=self,
-                                                     caption='Save Changed FMU',
-                                                     directory=self.filename,
-                                                     filter='FMUs (*.fmu)')
-
-        if output_file:
-            change_fmu(input_file=self.filename, output_file=output_file, start_values=self.startValues)
 
     def loadStartValues(self):
         from ..util import get_start_values

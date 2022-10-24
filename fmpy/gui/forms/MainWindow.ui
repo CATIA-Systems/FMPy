@@ -1313,8 +1313,6 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="separator"/>
     <addaction name="actionReload"/>
     <addaction name="separator"/>
-    <addaction name="actionSaveChanges"/>
-    <addaction name="separator"/>
     <addaction name="actionSaveResult"/>
     <addaction name="actionSavePlottedResult"/>
     <addaction name="separator"/>

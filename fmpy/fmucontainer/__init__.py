@@ -96,17 +96,20 @@ def create_fmu_container(configuration, output_filename):
     import pytz
     from pathlib import Path
 
+    output_filename = Path(output_filename)
     base_filename, _ = os.path.splitext(output_filename)
     model_name = os.path.basename(base_filename)
 
-    unzipdir = mkdtemp()
+    unzipdir = Path(mkdtemp())
 
-    basedir = os.path.dirname(__file__)
+    basedir = Path(__file__).parent
 
     for directory in ['binaries', 'documentation']:
-        shutil.copytree(os.path.join(basedir, directory), os.path.join(unzipdir, directory))
+        shutil.copytree(basedir / directory, unzipdir / directory)
 
-    os.mkdir(os.path.join(unzipdir, 'resources'))
+    os.mkdir(unzipdir / 'resources')
+
+    shutil.copytree(basedir / 'sources', unzipdir / 'sources')
 
     data = {
         'parallelDoStep': configuration.parallelDoStep,
@@ -120,7 +123,7 @@ def create_fmu_container(configuration, output_filename):
     for i, component in enumerate(configuration.components):
         model_description = read_model_description(component.filename)
         model_identifier = model_description.coSimulation.modelIdentifier
-        extract(component.filename, os.path.join(unzipdir, 'resources', model_identifier))
+        extract(component.filename, unzipdir / 'resources' / model_identifier)
         variables = dict((v.name, v) for v in model_description.modelVariables)
         component_map[component.name] = (i, variables)
 
@@ -208,16 +211,18 @@ def create_fmu_container(configuration, output_filename):
         fmpyVersion=fmpy.__version__
     )
 
-    with open(os.path.join(unzipdir, 'modelDescription.xml'), 'w') as f:
+    with open(unzipdir / 'modelDescription.xml', 'w') as f:
         f.write(xml)
 
-    with open(os.path.join(unzipdir, 'resources', 'config.mp'), 'wb') as f:
+    with open(unzipdir / 'resources' / 'config.mp', 'wb') as f:
         packed = msgpack.packb(data)
         f.write(packed)
 
+
+
     shutil.make_archive(base_filename, 'zip', unzipdir)
 
-    if os.path.isfile(output_filename):
+    if output_filename.is_file():
         os.remove(output_filename)
 
     os.rename(base_filename + '.zip', output_filename)

@@ -1,4 +1,7 @@
 import os
+import shutil
+from pathlib import Path
+
 from setuptools import setup
 
 # compile Qt UI and resources
@@ -6,14 +9,41 @@ try:
     from fmpy.gui import compile_resources
     compile_resources()
 except Exception as e:
-    print("Failed to compile Qt UI and resources. {e}")
+    print(f"Failed to compile Qt UI and resources. {e}")
 
 # generate Modelica examples
 try:
     from fmpy.modelica import generate_examples
     generate_examples()
 except Exception as e:
-    print("Failed to generate Modelica examples. {e}")
+    print(f"Failed to generate Modelica examples. {e}")
+
+# copy the sources of the Container FMU
+try:
+    root = Path(__file__).parent
+    for file in [
+        root / 'thirdparty' / 'Reference-FMUs' / 'src' / 'FMI.c',
+        root / 'thirdparty' / 'Reference-FMUs' / 'include' / 'FMI.h',
+        root / 'thirdparty' / 'Reference-FMUs' / 'src' / 'FMI2.c',
+        root / 'thirdparty' / 'Reference-FMUs' / 'include' / 'FMI2.h',
+        root / 'src' / 'fmucontainer' / 'FMUContainer.c',
+        root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack.h',
+        root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack-common.c',
+        root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack-common.h',
+        root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack-expect.c',
+        root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack-expect.h',
+        root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack-node.c',
+        root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack-node.h',
+        root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack-platform.c',
+        root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack-platform.h',
+        root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack-reader.c',
+        root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack-reader.h',
+        root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack-writer.c',
+        root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack-writer.h',
+    ]:
+        shutil.copyfile(src=file, dst=root / 'fmpy' / 'fmucontainer' / 'sources' / file.name)
+except Exception as e:
+    print(f"Failed to copy sources of the Container FMU. {e}")
 
 long_description = """
 FMPy
@@ -24,7 +54,7 @@ FMPy is a free Python library to simulate `Functional Mock-up Units (FMUs) <http
 - supports FMI 1.0 and 2.0 for Co-Simulation and Model Exchange
 - runs on Windows, Linux and macOS
 - has a graphical user interface
-- compiles C code FMUs and generates CMake projects for debugging 
+- compiles C code FMUs and generates CMake projects for debugging
 """
 
 packages = [

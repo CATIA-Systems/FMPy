@@ -12,8 +12,15 @@
 
   <CoSimulation modelIdentifier="FMUContainer">
     <SourceFiles>
+      <File name="FMI.c"/>
+      <File name="FMI2.c"/>
       <File name="FMUContainer.c"/>
-      <File name="mpack.c"/>
+      <File name="mpack-common.c"/>
+      <File name="mpack-expect.c"/>
+      <File name="mpack-node.c"/>
+      <File name="mpack-platform.c"/>
+      <File name="mpack-reader.c"/>
+      <File name="mpack-writer.c"/>
     </SourceFiles>
   </CoSimulation>
 

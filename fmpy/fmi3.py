@@ -473,13 +473,13 @@ class _FMU3(_FMU):
         """
 
         if not hasattr(self.dll, fname):
-
-            def raise_exception(*args):
-                raise Exception("Function %s is missing in shared library." % fname)
-
-            setattr(self, fname, raise_exception)
-
-            return
+            if self.requireFunctions:
+                raise Exception(f"Function {fname} is missing in shared library.")
+            else:
+                def raise_exception(*args):
+                    raise Exception(f"Function {fname} is missing in shared library.")
+                setattr(self, fname, raise_exception)
+                return
 
         if len(params) > 0:
             argtypes, argnames = zip(*params)

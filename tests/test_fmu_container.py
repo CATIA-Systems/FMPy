@@ -1,6 +1,7 @@
 import pytest
 from fmpy import simulate_fmu, plot_result
 from fmpy.fmucontainer import create_fmu_container, Variable, Connection, Configuration, Component
+from fmpy.util import compile_platform_binary
 from fmpy.validation import validate_fmu
 
 
@@ -125,3 +126,6 @@ def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
     assert result['Float64_continuous_output'][-1] == 1.2
     assert result['Int32_output'][-1] == 3
     assert result['Boolean_output'][-1] == False
+
+    compile_platform_binary(filename)
+    simulate_fmu(filename=filename)

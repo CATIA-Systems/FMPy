@@ -735,7 +735,7 @@ def simulate_fmu(filename,
         add_remoting(unzipdir, host_platform=platform, remote_platform=remote_platform)
 
     if fmu_instance is None:
-        fmu = instantiate_fmu(unzipdir, model_description, fmi_type, visible, debug_logging, logger, fmi_call_logger, None, early_return_allowed, use_event_mode)
+        fmu = instantiate_fmu(unzipdir, model_description, fmi_type, visible, debug_logging, logger, fmi_call_logger, None, early_return_allowed, use_event_mode, None, validate)
     else:
         fmu = fmu_instance
 
@@ -767,7 +767,7 @@ def simulate_fmu(filename,
     return result
 
 
-def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, debug_logging=False, logger=None, fmi_call_logger=None, library_path=None, early_return_allowed=False, event_mode_used=False, intermediate_update=None):
+def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, debug_logging=False, logger=None, fmi_call_logger=None, library_path=None, early_return_allowed=False, event_mode_used=False, intermediate_update=None, require_functions=True):
     """
     Create an instance of fmpy.fmi1._FMU (see simulate_fmu() for documentation of the parameters).
     """
@@ -777,7 +777,8 @@ def instantiate_fmu(unzipdir, model_description, fmi_type=None, visible=False, d
         'guid': model_description.guid,
         'unzipDirectory': unzipdir,
         'instanceName': None,
-        'fmiCallLogger': fmi_call_logger
+        'fmiCallLogger': fmi_call_logger,
+        'requireFunctions': require_functions
     }
 
     if library_path:

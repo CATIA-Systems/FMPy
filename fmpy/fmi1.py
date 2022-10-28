@@ -123,7 +123,7 @@ class FMICallException(Exception):
 class _FMU(object):
     """ Base class for all FMUs """
 
-    def __init__(self, guid, modelIdentifier, unzipDirectory, instanceName=None, libraryPath=None, fmiCallLogger=None):
+    def __init__(self, guid, modelIdentifier, unzipDirectory, instanceName=None, libraryPath=None, fmiCallLogger=None, requireFunctions=True):
         """
         Parameters:
             guid             the GUI from the modelDescription.xml
@@ -132,6 +132,7 @@ class _FMU(object):
             instanceName     the name of the FMU instance
             libraryPath      path to the shared library
             fmiCallLogger    logger callback that takes a message as input
+            requireFunctions assert required FMI functions in the shared library
         """
 
         self.guid = guid
@@ -139,6 +140,7 @@ class _FMU(object):
         self.unzipDirectory = unzipDirectory
         self.instanceName = instanceName if instanceName is not None else self.modelIdentifier
         self.fmiCallLogger = fmiCallLogger
+        self.requireFunctions = requireFunctions
 
         # remember the current working directory
         work_dir = os.getcwd()

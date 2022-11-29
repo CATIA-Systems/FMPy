@@ -1254,10 +1254,10 @@ class MainWindow(QMainWindow):
 
             if QMessageBox.question(self, "Open Jupyter Notebook?", f"Start Jupyter and open {filename}?") == QMessageBox.Yes:
 
-                from subprocess import run, CREATE_NEW_CONSOLE
+                from subprocess import Popen, CREATE_NEW_CONSOLE
 
                 try:
-                    run(['jupyter', 'notebook', filename], creationflags=CREATE_NEW_CONSOLE)
+                    Popen(['jupyter', 'notebook', filename], creationflags=CREATE_NEW_CONSOLE)
                 except Exception as e:
                     QMessageBox.critical(self, "Failed to start Jupyter", str(e))
 

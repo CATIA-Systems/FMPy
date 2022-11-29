@@ -1214,11 +1214,23 @@ def create_jupyter_notebook(filename, notebook_filename=None):
 
     for variable in model_description.modelVariables:
         if variable.causality == 'parameter' and variable.variability in ['fixed', 'tunable']:
+
             name, start, unit, description = variable.name, variable.start, variable.unit, variable.description
-            if variable.type == 'String':
-                start = f"'%s'" % start.replace("'", "\\'")
-            elif variable.type == 'Boolean':
-                start = 'True' if start == 'true' else 'False'
+
+            def fix(v):
+                if variable.type == 'String':
+                    return f"'%s'" % v.replace("'", "\\'")
+                elif variable.type == 'Boolean':
+                    return 'True' if v == 'true' else 'False'
+                else:
+                    return v
+
+            if variable.dimensions:
+                start = start.split(' ')
+                start = '[' + ', '.join(map(fix, start)) + ']'
+            else:
+                start = fix(start)
+
             if unit is None and variable.declaredType is not None:
                 unit = variable.declaredType.unit
             max_name = max(max_name, len(name))

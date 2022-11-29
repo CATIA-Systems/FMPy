@@ -423,7 +423,7 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
     # remember the original filename
     _filename = filename
 
-    if isinstance(filename, str) and os.path.isdir(filename):  # extracted FMU
+    if isinstance(filename, (str, os.PathLike)) and os.path.isdir(filename):  # extracted FMU
         filename = os.path.join(filename, 'modelDescription.xml')
         tree = etree.parse(filename)
     elif isinstance(filename, str) and os.path.isfile(filename) and filename.lower().endswith('.xml'):  # XML file

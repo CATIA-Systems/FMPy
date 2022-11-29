@@ -73,7 +73,7 @@ def supported_platforms(filename: Union[str, IO]):
     """
 
     # get the files within the FMU
-    if isinstance(filename, str) and os.path.isdir(filename):  # extracted FMU
+    if isinstance(filename, (str, os.PathLike)) and os.path.isdir(filename):  # extracted FMU
         names = []
         for dirpath, _, filenames in os.walk(filename):
             for name in filenames:

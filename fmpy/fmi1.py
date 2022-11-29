@@ -236,7 +236,7 @@ class _FMU(object):
                        POINTER(c_int16), POINTER(c_uint16),
                        POINTER(c_int32), POINTER(c_uint32),
                        POINTER(c_int64), POINTER(c_uint64),
-                       POINTER(c_bool)] and hasattr(v, '__len__'):
+                       POINTER(c_bool), POINTER(c_char_p)] and hasattr(v, '__len__'):
                 # c_*_Array_N
                 a += '[' + ', '.join(map(str, v)) + ']'
             elif t == POINTER(c_double) and not hasattr(v, '__len__'):

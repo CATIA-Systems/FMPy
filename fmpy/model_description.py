@@ -698,7 +698,7 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
             'UInt32':      int,
             'Int64':       int,
             'UInt64':      int,
-            'Binary':      bytes,
+            'Binary':      bytes.fromhex,
             'Clock':       float,
         }
 

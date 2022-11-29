@@ -1229,8 +1229,6 @@ def create_jupyter_notebook(filename, notebook_filename=None):
     code = "import fmpy\n"
     code += "from fmpy import *\n"
     code += "\n"
-    code += "fmpy.plot_library = 'plotly'  # experimental\n"
-    code += "\n"
     code += "\n"
     # use relative path if possible
     if os.path.normpath(os.path.dirname(filename)) == os.path.normpath(os.path.dirname(notebook_filename)):

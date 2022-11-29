@@ -1216,7 +1216,7 @@ def create_jupyter_notebook(filename, notebook_filename=None):
         if variable.causality == 'parameter' and variable.variability in ['fixed', 'tunable']:
             name, start, unit, description = variable.name, variable.start, variable.unit, variable.description
             if variable.type == 'String':
-                start = "'%s'" % start
+                start = f"'%s'" % start.replace("'", "\\'")
             elif variable.type == 'Boolean':
                 start = 'True' if start == 'true' else 'False'
             if unit is None and variable.declaredType is not None:
@@ -1241,7 +1241,7 @@ def create_jupyter_notebook(filename, notebook_filename=None):
         max_unit + 10) + "description\n"
 
     for name, start, unit, description in parameters:
-        code += "    " + ("'" + name + "':").ljust(max_name + 3) + " "
+        code += "    " + ("'" + name.replace("'", "\\'") + "':").ljust(max_name + 3) + " "
         if unit:
             code += ("(" + start).rjust(max_start + 1)
             code += (", '" + unit + "'),").ljust(max_unit + 6)
@@ -1255,7 +1255,7 @@ def create_jupyter_notebook(filename, notebook_filename=None):
     code += "\n"
     code += "output = [\n"
     for name, description in output_variables:
-        code += "    " + ("'%s'," % name).ljust(max_output + 3)
+        code += "    " + ("'%s'," % name.replace("'", "\\'")).ljust(max_output + 3)
         if description:
             code += "  # " + description
         code += "\n"

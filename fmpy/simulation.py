@@ -857,7 +857,8 @@ def has_start_value(variable):
 
 
 def settable_in_instantiated(variable):
-    return variable.variability != 'constant' and variable.initial in {'approx', 'exact'}
+    return variable.causality == 'input' \
+           or variable.variability != 'constant' and variable.initial in {'approx', 'exact'}
 
 
 def settable_in_initialization_mode(variable):

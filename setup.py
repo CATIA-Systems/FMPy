@@ -197,7 +197,7 @@ install_requires = [
 extras_require = {
     'examples': ['dask[bag]', 'requests'],
     'plot': ['matplotlib', 'scipy'],
-    'gui': ['PyQt5', 'pyqtgraph'],
+    'gui': ['PyQt5', 'pyqtgraph', 'PyQtWebEngine'],
     'notebook': ['notebook', 'plotly'],
     'webapp': ['dash-bootstrap-components>=1.0.0']
 }

@@ -1,4 +1,5 @@
 """ Entry point for the graphical user interface """
+import shutil
 from os.path import dirname
 
 try:
@@ -12,7 +13,9 @@ import sys
 
 from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QStandardPaths, \
     QPointF, QBuffer, QIODevice
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, QMenu, QMessageBox, QProgressDialog, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, QGraphicsTextItem, QGraphicsPathItem
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, \
+    QMenu, QMessageBox, QProgressDialog, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, \
+    QGraphicsTextItem, QGraphicsPathItem, QFileSystemModel
 from PyQt5.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, QPolygonF, QPainterPath
 
 from fmpy.gui.generated.MainWindow import Ui_MainWindow
@@ -90,6 +93,7 @@ class MainWindow(QMainWindow):
 
         # state
         self.filename = None
+        self.unzipdir = None
         self.result = None
         self.modelDescription = None
         self.variables = dict()
@@ -150,7 +154,10 @@ class MainWindow(QMainWindow):
         # disable widgets
         self.ui.actionLoadStartValues.setEnabled(False)
         self.ui.actionReload.setEnabled(False)
+        self.ui.actionOpenUnzipDirectory.setEnabled(False)
         self.ui.actionSettings.setEnabled(False)
+        self.ui.actionFiles.setEnabled(False)
+        self.ui.actionDocumentation.setEnabled(False)
         self.ui.actionShowLog.setEnabled(False)
         self.ui.actionShowResults.setEnabled(False)
         self.ui.actionSimulate.setEnabled(False)
@@ -257,6 +264,7 @@ class MainWindow(QMainWindow):
         # file menu
         self.ui.actionExit.triggered.connect(QApplication.closeAllWindows)
         self.ui.actionLoadStartValues.triggered.connect(self.loadStartValues)
+        self.ui.actionOpenUnzipDirectory.triggered.connect(self.openUnzipDirectory)
         self.ui.actionReload.triggered.connect(lambda: self.load(self.filename))
 
         # tools menu
@@ -316,6 +324,8 @@ class MainWindow(QMainWindow):
         self.ui.actionSavePlottedResult.triggered.connect(lambda: self.saveResult(plotted=True))
         self.ui.actionSimulate.triggered.connect(self.startSimulation)
         self.ui.actionSettings.triggered.connect(lambda: self.setCurrentPage(self.ui.settingsPage))
+        self.ui.actionFiles.triggered.connect(self.showFiles)
+        self.ui.actionDocumentation.triggered.connect(self.showDocumentation)
         self.ui.actionShowLog.triggered.connect(lambda: self.setCurrentPage(self.ui.logPage))
         self.ui.actionShowResults.triggered.connect(lambda: self.setCurrentPage(self.ui.resultPage))
         self.fmiTypeComboBox.currentTextChanged.connect(self.updateSimulationSettings)
@@ -363,6 +373,10 @@ class MainWindow(QMainWindow):
         self.move(self.frameGeometry().topLeft() + self.windowOffset)
         self.windowOffset += QPoint(20, 20)
 
+    def closeEvent(self, event):
+        self.cleanUp()
+        super().closeEvent(event)
+
     def showContextMenu(self, point):
         """ Update and show the variables context menu """
 
@@ -389,24 +403,23 @@ class MainWindow(QMainWindow):
 
     def load(self, filename):
 
-        import zipfile
-
         if not self.isVisible():
             self.show()
 
+        self.cleanUp()
+
         try:
+            self.unzipdir = fmpy.extract(filename)
             self.modelDescription = md = read_model_description(filename)
         except Exception as e:
             QMessageBox.warning(self, "Failed to load FMU", "Failed to load %s. %s" % (filename, e))
             return
 
+        self.filename = filename
+
         # show model.png
         try:
-            pixmap = QPixmap()
-
-            # load the model.png
-            with zipfile.ZipFile(filename, 'r') as zf:
-                pixmap.loadFromData(zf.read('model.png'), format='PNG')
+            pixmap = QPixmap(os.path.join(self.unzipdir, 'model.png'))
 
             # show the unscaled version in tooltip
             buffer = QBuffer()
@@ -423,7 +436,6 @@ class MainWindow(QMainWindow):
             self.ui.modelImageLabel.setPixmap(QPixmap())
             self.ui.modelImageLabel.setToolTip(None)
 
-        self.filename = filename
         platforms = supported_platforms(self.filename)
 
         self.variables.clear()
@@ -516,8 +528,14 @@ class MainWindow(QMainWindow):
 
         self.ui.dockWidget.show()
 
+        has_documentation = os.path.isfile(os.path.join(self.unzipdir, 'documentation',
+                                                        '_main.html' if md.fmiVersion == '1.0' else 'index.html'))
+
         self.ui.actionReload.setEnabled(True)
+        self.ui.actionOpenUnzipDirectory.setEnabled(True)
         self.ui.actionSettings.setEnabled(True)
+        self.ui.actionFiles.setEnabled(True)
+        self.ui.actionDocumentation.setEnabled(has_documentation)
         self.ui.actionShowLog.setEnabled(True)
         self.ui.actionShowResults.setEnabled(False)
 
@@ -542,6 +560,10 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("%s - FMPy" % os.path.normpath(filename))
 
         self.createGraphics()
+
+    def cleanUp(self):
+        if self.unzipdir:
+            shutil.rmtree(self.unzipdir, ignore_errors=True)
 
     def open(self):
 
@@ -583,6 +605,29 @@ class MainWindow(QMainWindow):
         self.ui.actionSettings.blockSignals(False)
         self.ui.actionShowLog.blockSignals(False)
         self.ui.actionShowResults.blockSignals(False)
+
+    def showDocumentation(self):
+        filename = '_main.html' if self.modelDescription.fmiVersion == '1.0' else 'index.html'
+        self.ui.webEngineView.load(QUrl.fromLocalFile(os.path.join(self.unzipdir, 'documentation', filename)))
+        self.ui.stackedWidget.setCurrentWidget(self.ui.documentationPage)
+
+    def showFiles(self):
+        unzipdir = fmpy.extract(self.filename)
+        model = QFileSystemModel()
+        model.setRootPath(unzipdir)
+        self.ui.filesTreeView.setModel(model)
+        root_index = model.index(unzipdir)
+        self.ui.filesTreeView.setRootIndex(root_index)
+        self.ui.filesTreeView.expandRecursively(root_index, 10)
+        self.ui.stackedWidget.setCurrentWidget(self.ui.filesPage)
+        model.directoryLoaded.connect(self.expand)
+
+    def openUnzipDirectory(self):
+        QDesktopServices.openUrl(QUrl.fromLocalFile(self.unzipdir))
+
+    def expand(self):
+        self.ui.filesTreeView.expandAll()
+        self.ui.filesTreeView.resizeColumnToContents(0)
 
     def selectInputFile(self):
         start_dir = os.path.dirname(self.filename)
@@ -717,7 +762,7 @@ class MainWindow(QMainWindow):
 
         fmi_type = 'CoSimulation' if self.fmiTypeComboBox.currentText() == 'Co-Simulation' else 'ModelExchange'
 
-        self.simulationThread = SimulationThread(filename=self.filename,
+        self.simulationThread = SimulationThread(filename=self.unzipdir,
                                                  fmiType=fmi_type,
                                                  stopTime=stop_time,
                                                  solver=solver,

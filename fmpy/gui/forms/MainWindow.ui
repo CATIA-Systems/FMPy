@@ -88,7 +88,7 @@
    <bool>true</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout_2">
+   <layout class="QHBoxLayout" name="horizontalLayout_12">
     <property name="leftMargin">
      <number>0</number>
     </property>
@@ -101,7 +101,7 @@
     <property name="bottomMargin">
      <number>0</number>
     </property>
-    <item row="0" column="0">
+    <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
        <number>0</number>
@@ -1031,6 +1031,48 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="documentationPage">
+       <layout class="QGridLayout" name="gridLayout_2">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item row="0" column="0">
+         <widget class="QWebEngineView" name="webEngineView"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="filesPage">
+       <layout class="QGridLayout" name="gridLayout_4">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item row="0" column="0">
+         <widget class="QTreeView" name="filesTreeView">
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
       <widget class="QWidget" name="logPage">
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <property name="spacing">
@@ -1312,6 +1354,7 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="actionLoadStartValues"/>
     <addaction name="separator"/>
     <addaction name="actionReload"/>
+    <addaction name="actionOpenUnzipDirectory"/>
     <addaction name="separator"/>
     <addaction name="actionSaveResult"/>
     <addaction name="actionSavePlottedResult"/>
@@ -1628,6 +1671,8 @@ QToolButton::menu-button {
    <addaction name="actionReload"/>
    <addaction name="separator"/>
    <addaction name="actionSettings"/>
+   <addaction name="actionFiles"/>
+   <addaction name="actionDocumentation"/>
    <addaction name="actionShowLog"/>
    <addaction name="actionShowResults"/>
    <addaction name="separator"/>
@@ -1996,8 +2041,40 @@ QToolButton::menu-button {
     <string>Import to Modelica...</string>
    </property>
   </action>
+  <action name="actionDocumentation">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/icons/documentation.png</normaloff>:/icons/documentation.png</iconset>
+   </property>
+   <property name="text">
+    <string>Show documentation</string>
+   </property>
+  </action>
+  <action name="actionFiles">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/icons/files.png</normaloff>:/icons/files.png</iconset>
+   </property>
+   <property name="text">
+    <string>Show archive contents</string>
+   </property>
+  </action>
+  <action name="actionOpenUnzipDirectory">
+   <property name="text">
+    <string>Open &amp;Unzip Directory</string>
+   </property>
+   <property name="toolTip">
+    <string>Open unzip directory</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>QWebEngineView</class>
+   <extends>QWidget</extends>
+   <header location="global">QtWebEngineWidgets/QWebEngineView</header>
+   <container>1</container>
+  </customwidget>
   <customwidget>
    <class>GraphicsLayoutWidget</class>
    <extends>QGraphicsView</extends>

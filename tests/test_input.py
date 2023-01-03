@@ -75,7 +75,7 @@ class InputTest(unittest.TestCase):
             (0.2, 1),
             (0.3, 1),
             (0.4, 2)],
-            dtype=np.dtype([('time', np.float64), ('x', np.int)]))
+            dtype=np.dtype([('time', np.float64), ('x', int)]))
 
         t_event = Input.findEvents(signals, model_description)
 

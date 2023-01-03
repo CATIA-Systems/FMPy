@@ -299,17 +299,31 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None, marke
         # plot at most 20 signals
         names = result.dtype.names[1:20]
 
-    fig = make_subplots(rows=len(names), cols=1, shared_xaxes=True)
+    trajectories = []
 
-    for i, name in enumerate(names):
-
+    for name in names:
         y = result[name]
+        if y.ndim == 1:
+            trajectories.append((name, ()))
+        else:
+            for index in np.ndindex(y.shape[1:]):
+                trajectories.append((name, index))
+
+    fig = make_subplots(rows=len(trajectories), cols=1, shared_xaxes=True)
+
+    for i, (name, index) in enumerate(trajectories):
+
+        y = result[name][(slice(None), *index)]
+
         unit = units.get(name)
 
         if unit in display_units:
             display_unit = display_units[unit]
             y = y * display_unit.factor + display_unit.offset
             unit = display_unit.name
+
+        if len(index) > 0:
+            name += '[' + ','.join(map(str, index)) + ']'
 
         args = dict(
             x=time,
@@ -335,8 +349,8 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None, marke
         for t_event in time[np.argwhere(np.diff(time) == 0).flatten()]:
             fig.add_vline(x=t_event, line={'color': '#fbe424', 'width': 1})
 
-    fig['layout']['height'] = 160 * len(names) + 30 * max(0, 5 - len(names))
-    fig['layout'][f'xaxis{len(names)}'].update(title=f'time [{time_unit}]')
+    fig['layout']['height'] = 160 * len(trajectories) + 30 * max(0, 5 - len(trajectories))
+    fig['layout'][f'xaxis{len(trajectories)}'].update(title=f'time [{time_unit}]')
 
     axes_attrs = dict(showgrid=True, gridwidth=1, ticklen=0, gridcolor='LightGrey', linecolor='black', showline=True,
                       zerolinewidth=1, zerolinecolor='LightGrey')

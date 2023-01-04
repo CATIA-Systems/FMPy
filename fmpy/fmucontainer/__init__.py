@@ -4,6 +4,7 @@ from typing import List, Tuple
 
 from attr import attrs, attrib, Factory
 
+from .. import supported_platforms
 from ..model_description import Unit, SimpleType
 
 
@@ -104,8 +105,7 @@ def create_fmu_container(configuration, output_filename):
 
     basedir = Path(__file__).parent
 
-    for directory in ['binaries', 'documentation']:
-        shutil.copytree(basedir / directory, unzipdir / directory)
+    shutil.copytree(basedir / 'documentation', unzipdir / 'documentation')
 
     os.mkdir(unzipdir / 'resources')
 
@@ -119,6 +119,8 @@ def create_fmu_container(configuration, output_filename):
     }
 
     component_map = {}
+
+    platforms = []
 
     for i, component in enumerate(configuration.components):
         model_description = read_model_description(component.filename)
@@ -134,6 +136,15 @@ def create_fmu_container(configuration, output_filename):
         }
 
         data['components'].append(c)
+
+        platforms.append(set(supported_platforms(component.filename)))
+
+    platforms = platforms[0].intersection(*platforms[1:])  # platforms supported by all components
+
+    for platform in platforms:
+        src = basedir / 'binaries' / platform
+        if src.exists():
+            shutil.copytree(src, unzipdir / 'binaries' / platform)
 
     variables_map = {}
 
@@ -217,8 +228,6 @@ def create_fmu_container(configuration, output_filename):
     with open(unzipdir / 'resources' / 'config.mp', 'wb') as f:
         packed = msgpack.packb(data)
         f.write(packed)
-
-
 
     shutil.make_archive(base_filename, 'zip', unzipdir)
 

@@ -1670,9 +1670,9 @@ QToolButton::menu-button {
    <addaction name="actionOpen"/>
    <addaction name="actionReload"/>
    <addaction name="separator"/>
-   <addaction name="actionSettings"/>
-   <addaction name="actionFiles"/>
-   <addaction name="actionDocumentation"/>
+   <addaction name="actionShowSettings"/>
+   <addaction name="actionShowFiles"/>
+   <addaction name="actionShowDocumentation"/>
    <addaction name="actionShowLog"/>
    <addaction name="actionShowResults"/>
    <addaction name="separator"/>
@@ -1690,7 +1690,7 @@ QToolButton::menu-button {
     <string>Start simulation</string>
    </property>
   </action>
-  <action name="actionSettings">
+  <action name="actionShowSettings">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -2041,7 +2041,7 @@ QToolButton::menu-button {
     <string>Import to Modelica...</string>
    </property>
   </action>
-  <action name="actionDocumentation">
+  <action name="actionShowDocumentation">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -2053,7 +2053,7 @@ QToolButton::menu-button {
     <string>Show documentation</string>
    </property>
   </action>
-  <action name="actionFiles">
+  <action name="actionShowFiles">
    <property name="checkable">
     <bool>true</bool>
    </property>

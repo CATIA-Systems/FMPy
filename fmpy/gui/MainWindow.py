@@ -155,9 +155,9 @@ class MainWindow(QMainWindow):
         self.ui.actionLoadStartValues.setEnabled(False)
         self.ui.actionReload.setEnabled(False)
         self.ui.actionOpenUnzipDirectory.setEnabled(False)
-        self.ui.actionSettings.setEnabled(False)
-        self.ui.actionFiles.setEnabled(False)
-        self.ui.actionDocumentation.setEnabled(False)
+        self.ui.actionShowSettings.setEnabled(False)
+        self.ui.actionShowFiles.setEnabled(False)
+        self.ui.actionShowDocumentation.setEnabled(False)
         self.ui.actionShowLog.setEnabled(False)
         self.ui.actionShowResults.setEnabled(False)
         self.ui.actionSimulate.setEnabled(False)
@@ -323,9 +323,9 @@ class MainWindow(QMainWindow):
         self.ui.actionSaveResult.triggered.connect(self.saveResult)
         self.ui.actionSavePlottedResult.triggered.connect(lambda: self.saveResult(plotted=True))
         self.ui.actionSimulate.triggered.connect(self.startSimulation)
-        self.ui.actionSettings.triggered.connect(lambda: self.setCurrentPage(self.ui.settingsPage))
-        self.ui.actionFiles.triggered.connect(lambda: self.setCurrentPage(self.ui.filesPage))
-        self.ui.actionDocumentation.triggered.connect(lambda: self.setCurrentPage(self.ui.documentationPage))
+        self.ui.actionShowSettings.triggered.connect(lambda: self.setCurrentPage(self.ui.settingsPage))
+        self.ui.actionShowFiles.triggered.connect(lambda: self.setCurrentPage(self.ui.filesPage))
+        self.ui.actionShowDocumentation.triggered.connect(lambda: self.setCurrentPage(self.ui.documentationPage))
         self.ui.actionShowLog.triggered.connect(lambda: self.setCurrentPage(self.ui.logPage))
         self.ui.actionShowResults.triggered.connect(lambda: self.setCurrentPage(self.ui.resultPage))
         self.fmiTypeComboBox.currentTextChanged.connect(self.updateSimulationSettings)
@@ -547,9 +547,9 @@ class MainWindow(QMainWindow):
 
         self.ui.actionReload.setEnabled(True)
         self.ui.actionOpenUnzipDirectory.setEnabled(True)
-        self.ui.actionSettings.setEnabled(True)
-        self.ui.actionFiles.setEnabled(True)
-        self.ui.actionDocumentation.setEnabled(has_documentation)
+        self.ui.actionShowSettings.setEnabled(True)
+        self.ui.actionShowFiles.setEnabled(True)
+        self.ui.actionShowDocumentation.setEnabled(has_documentation)
         self.ui.actionShowLog.setEnabled(True)
         self.ui.actionShowResults.setEnabled(False)
 
@@ -604,25 +604,25 @@ class MainWindow(QMainWindow):
         """ Set the current page and the actions """
 
         # block the signals during the update
-        self.ui.actionSettings.blockSignals(True)
-        self.ui.actionFiles.blockSignals(True)
-        self.ui.actionDocumentation.blockSignals(True)
+        self.ui.actionShowSettings.blockSignals(True)
+        self.ui.actionShowFiles.blockSignals(True)
+        self.ui.actionShowDocumentation.blockSignals(True)
         self.ui.actionShowLog.blockSignals(True)
         self.ui.actionShowResults.blockSignals(True)
 
         self.ui.stackedWidget.setCurrentWidget(widget)
 
         # toggle the actions
-        self.ui.actionSettings.setChecked(widget == self.ui.settingsPage)
-        self.ui.actionFiles.setChecked(widget == self.ui.filesPage)
-        self.ui.actionDocumentation.setChecked(widget == self.ui.documentationPage)
+        self.ui.actionShowSettings.setChecked(widget == self.ui.settingsPage)
+        self.ui.actionShowFiles.setChecked(widget == self.ui.filesPage)
+        self.ui.actionShowDocumentation.setChecked(widget == self.ui.documentationPage)
         self.ui.actionShowLog.setChecked(widget == self.ui.logPage)
         self.ui.actionShowResults.setChecked(widget == self.ui.resultPage)
 
         # un-block the signals during the update
-        self.ui.actionSettings.blockSignals(False)
-        self.ui.actionFiles.blockSignals(False)
-        self.ui.actionDocumentation.blockSignals(False)
+        self.ui.actionShowSettings.blockSignals(False)
+        self.ui.actionShowFiles.blockSignals(False)
+        self.ui.actionShowDocumentation.blockSignals(False)
         self.ui.actionShowLog.blockSignals(False)
         self.ui.actionShowResults.blockSignals(False)
 
@@ -811,7 +811,7 @@ class MainWindow(QMainWindow):
         self.plotUpdateTimer.stop()
         self.simulationProgressBar.setVisible(False)
         self.ui.actionShowResults.setEnabled(True)
-        self.ui.actionSettings.setEnabled(True)
+        self.ui.actionShowSettings.setEnabled(True)
         self.setCurrentPage(self.ui.resultPage)
         self.updatePlotLayout()
 

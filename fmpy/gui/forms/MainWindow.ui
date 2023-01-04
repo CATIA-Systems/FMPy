@@ -2042,6 +2042,9 @@ QToolButton::menu-button {
    </property>
   </action>
   <action name="actionDocumentation">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../icons/icons.qrc">
      <normaloff>:/icons/documentation.png</normaloff>:/icons/documentation.png</iconset>
@@ -2051,6 +2054,9 @@ QToolButton::menu-button {
    </property>
   </action>
   <action name="actionFiles">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../icons/icons.qrc">
      <normaloff>:/icons/files.png</normaloff>:/icons/files.png</iconset>

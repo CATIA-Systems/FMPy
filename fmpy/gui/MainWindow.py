@@ -324,8 +324,8 @@ class MainWindow(QMainWindow):
         self.ui.actionSavePlottedResult.triggered.connect(lambda: self.saveResult(plotted=True))
         self.ui.actionSimulate.triggered.connect(self.startSimulation)
         self.ui.actionSettings.triggered.connect(lambda: self.setCurrentPage(self.ui.settingsPage))
-        self.ui.actionFiles.triggered.connect(self.showFiles)
-        self.ui.actionDocumentation.triggered.connect(self.showDocumentation)
+        self.ui.actionFiles.triggered.connect(lambda: self.setCurrentPage(self.ui.filesPage))
+        self.ui.actionDocumentation.triggered.connect(lambda: self.setCurrentPage(self.ui.documentationPage))
         self.ui.actionShowLog.triggered.connect(lambda: self.setCurrentPage(self.ui.logPage))
         self.ui.actionShowResults.triggered.connect(lambda: self.setCurrentPage(self.ui.resultPage))
         self.fmiTypeComboBox.currentTextChanged.connect(self.updateSimulationSettings)
@@ -528,8 +528,22 @@ class MainWindow(QMainWindow):
 
         self.ui.dockWidget.show()
 
-        has_documentation = os.path.isfile(os.path.join(self.unzipdir, 'documentation',
-                                                        '_main.html' if md.fmiVersion == '1.0' else 'index.html'))
+        # files page
+        model = QFileSystemModel()
+        model.setRootPath(self.unzipdir)
+        self.ui.filesTreeView.setModel(model)
+        root_index = model.index(self.unzipdir)
+        self.ui.filesTreeView.setRootIndex(root_index)
+        self.ui.filesTreeView.expandRecursively(root_index, 10)
+        model.directoryLoaded.connect(self.expand)
+
+        # documentation page
+        doc_file = os.path.join(self.unzipdir, 'documentation', '_main.html' if md.fmiVersion == '1.0' else 'index.html')
+
+        has_documentation = os.path.isfile(doc_file)
+
+        if has_documentation:
+            self.ui.webEngineView.load(QUrl.fromLocalFile(doc_file))
 
         self.ui.actionReload.setEnabled(True)
         self.ui.actionOpenUnzipDirectory.setEnabled(True)
@@ -591,6 +605,8 @@ class MainWindow(QMainWindow):
 
         # block the signals during the update
         self.ui.actionSettings.blockSignals(True)
+        self.ui.actionFiles.blockSignals(True)
+        self.ui.actionDocumentation.blockSignals(True)
         self.ui.actionShowLog.blockSignals(True)
         self.ui.actionShowResults.blockSignals(True)
 
@@ -598,29 +614,17 @@ class MainWindow(QMainWindow):
 
         # toggle the actions
         self.ui.actionSettings.setChecked(widget == self.ui.settingsPage)
+        self.ui.actionFiles.setChecked(widget == self.ui.filesPage)
+        self.ui.actionDocumentation.setChecked(widget == self.ui.documentationPage)
         self.ui.actionShowLog.setChecked(widget == self.ui.logPage)
         self.ui.actionShowResults.setChecked(widget == self.ui.resultPage)
 
         # un-block the signals during the update
         self.ui.actionSettings.blockSignals(False)
+        self.ui.actionFiles.blockSignals(False)
+        self.ui.actionDocumentation.blockSignals(False)
         self.ui.actionShowLog.blockSignals(False)
         self.ui.actionShowResults.blockSignals(False)
-
-    def showDocumentation(self):
-        filename = '_main.html' if self.modelDescription.fmiVersion == '1.0' else 'index.html'
-        self.ui.webEngineView.load(QUrl.fromLocalFile(os.path.join(self.unzipdir, 'documentation', filename)))
-        self.ui.stackedWidget.setCurrentWidget(self.ui.documentationPage)
-
-    def showFiles(self):
-        unzipdir = fmpy.extract(self.filename)
-        model = QFileSystemModel()
-        model.setRootPath(unzipdir)
-        self.ui.filesTreeView.setModel(model)
-        root_index = model.index(unzipdir)
-        self.ui.filesTreeView.setRootIndex(root_index)
-        self.ui.filesTreeView.expandRecursively(root_index, 10)
-        self.ui.stackedWidget.setCurrentWidget(self.ui.filesPage)
-        model.directoryLoaded.connect(self.expand)
 
     def openUnzipDirectory(self):
         QDesktopServices.openUrl(QUrl.fromLocalFile(self.unzipdir))

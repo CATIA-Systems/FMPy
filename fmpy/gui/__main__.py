@@ -6,8 +6,8 @@ if __name__ == '__main__':
     import sys
     import ctypes
     import platform
-    from PyQt5 import QtCore
-    from PyQt5.QtWidgets import QApplication
+    from PySide2 import QtCore
+    from PySide2.QtWidgets import QApplication
     from fmpy.gui.MainWindow import MainWindow
 
     if os.name == 'nt' and int(platform.release()) >= 8:

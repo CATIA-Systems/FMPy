@@ -11,12 +11,14 @@ except Exception as e:
 import os
 import sys
 
-from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QStandardPaths, \
+from PySide2.QtCore import QCoreApplication, QDir, Qt, QUrl, QSettings, QPoint, QTimer, QStandardPaths, \
     QPointF, QBuffer, QIODevice
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, \
+from PySide2.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, \
     QMenu, QMessageBox, QProgressDialog, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, \
     QGraphicsTextItem, QGraphicsPathItem, QFileSystemModel
-from PyQt5.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, QPolygonF, QPainterPath
+from PySide2.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, QPolygonF, QPainterPath
+
+from PySide2.QtCore import Signal as pyqtSignal
 
 from fmpy.gui.generated.MainWindow import Ui_MainWindow
 import fmpy
@@ -542,8 +544,8 @@ class MainWindow(QMainWindow):
 
         has_documentation = os.path.isfile(doc_file)
 
-        if has_documentation:
-            self.ui.webEngineView.load(QUrl.fromLocalFile(doc_file))
+        # if has_documentation:
+        #     self.ui.webEngineView.load(QUrl.fromLocalFile(doc_file))
 
         self.ui.actionReload.setEnabled(True)
         self.ui.actionOpenUnzipDirectory.setEnabled(True)
@@ -637,7 +639,7 @@ class MainWindow(QMainWindow):
         start_dir = os.path.dirname(self.filename)
         filename, _ = QFileDialog.getOpenFileName(parent=self,
                                                   caption="Select Input File",
-                                                  directory=start_dir,
+                                                  # directory=start_dir,
                                                   filter="FMUs (*.csv);;All Files (*.*)")
         if filename:
             self.ui.inputFilenameLineEdit.setText(filename)

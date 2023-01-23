@@ -11,14 +11,14 @@ except Exception as e:
 import os
 import sys
 
-from PySide2.QtCore import QCoreApplication, QDir, Qt, QUrl, QSettings, QPoint, QTimer, QStandardPaths, \
+from PySide6.QtCore import QCoreApplication, QDir, Qt, QUrl, QSettings, QPoint, QTimer, QStandardPaths, \
     QPointF, QBuffer, QIODevice
-from PySide2.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, \
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, \
     QMenu, QMessageBox, QProgressDialog, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, \
     QGraphicsTextItem, QGraphicsPathItem, QFileSystemModel
-from PySide2.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, QPolygonF, QPainterPath
+from PySide6.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, QPolygonF, QPainterPath
 
-from PySide2.QtCore import Signal as pyqtSignal
+from PySide6.QtCore import Signal as pyqtSignal
 
 from fmpy.gui.generated.MainWindow import Ui_MainWindow
 import fmpy
@@ -125,10 +125,10 @@ class MainWindow(QMainWindow):
         self.ui.logTreeView.setAttribute(Qt.WA_MacShowFocusRect, False)
 
         # set the window size to 85% of the available space
-        geo = QApplication.desktop().availableGeometry()
-        width = min(geo.width() * 0.85, 1100.0)
-        height = min(geo.height() * 0.85, 900.0)
-        self.resize(int(width), int(height))
+        # geo = QApplication.desktop().availableGeometry()
+        # width = min(geo.width() * 0.85, 1100.0)
+        # height = min(geo.height() * 0.85, 900.0)
+        # self.resize(int(width), int(height))
 
         # hide the variables
         self.ui.dockWidget.hide()
@@ -596,7 +596,7 @@ class MainWindow(QMainWindow):
 
         filename, _ = QFileDialog.getOpenFileName(parent=self,
                                                   caption="Open File",
-                                                  directory=start_dir,
+                                                  dir=start_dir,
                                                   filter="FMUs (*.fmu);;All Files (*.*)")
 
         if filename:

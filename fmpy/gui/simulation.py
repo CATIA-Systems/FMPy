@@ -1,5 +1,5 @@
-from PySide2.QtCore import QThread, QDateTime
-from PySide2.QtCore import Signal as pyqtSignal
+from PySide6.QtCore import QThread, QDateTime
+from PySide6.QtCore import Signal as pyqtSignal
 from fmpy import simulate_fmu
 from fmpy.fmi2 import fmi2Warning
 

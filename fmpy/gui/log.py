@@ -1,6 +1,6 @@
-from PySide2.QtCore import QAbstractTableModel, Qt, QModelIndex, QSortFilterProxyModel
-from PySide2.QtGui import QPixmap
-from PySide2.QtCore import Signal as pyqtSignal
+from PySide6.QtCore import QAbstractTableModel, Qt, QModelIndex, QSortFilterProxyModel
+from PySide6.QtGui import QPixmap
+from PySide6.QtCore import Signal as pyqtSignal
 
 
 class Log(QAbstractTableModel):

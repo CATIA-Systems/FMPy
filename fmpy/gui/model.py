@@ -1,6 +1,6 @@
-from PySide2.QtCore import QAbstractItemModel, QModelIndex, Qt, QSortFilterProxyModel
-from PySide2.QtGui import QPixmap, QFont
-from PySide2.QtCore import Signal as pyqtSignal
+from PySide6.QtCore import QAbstractItemModel, QModelIndex, Qt, QSortFilterProxyModel
+from PySide6.QtGui import QPixmap, QFont
+from PySide6.QtCore import Signal as pyqtSignal
 
 from ..model_description import ScalarVariable
 

@@ -43,6 +43,8 @@ class Connection(object):
 @attrs(eq=False)
 class Configuration(object):
 
+    fmiVersion = attrib(type=str, default=None, repr=False)
+
     parallelDoStep = attrib(type=bool, default=False, repr=False)
 
     description = attrib(type=str, default=None, repr=False)
@@ -57,10 +59,29 @@ class Configuration(object):
 
 
 FMI_TYPES = {
-    'Real': 2,
-    'Integer': 8,
+
+    # FMI 3.0 variable types
+    'Float32': 0,
+    'DiscreteFloat32': 1,
+    'Float64': 2,
+    'DiscreteFloat64': 3,
+    'Int8': 4,
+    'UInt8': 5,
+    'Int16': 6,
+    'UInt16': 7,
+    'Int32': 8,
+    'UInt32': 9,
+    'Int64': 10,
+    'UInt64': 11,
     'Boolean': 12,
     'String': 13,
+    'Binary': 14,
+    'Clock': 15,
+
+    # Aliases for FMI 1.0 and 2.0
+    'Real': 2,
+    'DiscreteReal': 3,
+    'Integer': 8,
 }
 
 
@@ -120,8 +141,8 @@ def create_fmu_container(configuration, output_filename):
 
     component_map = {}
 
-    platforms = []
-
+    # platforms = []
+    #
     for i, component in enumerate(configuration.components):
         model_description = read_model_description(component.filename)
         model_identifier = model_description.coSimulation.modelIdentifier
@@ -136,15 +157,17 @@ def create_fmu_container(configuration, output_filename):
         }
 
         data['components'].append(c)
+    #
+    #     platforms.append(set(supported_platforms(component.filename)))
+    #
+    # platforms = platforms[0].intersection(*platforms[1:])  # platforms supported by all components
+    #
+    # for platform in platforms:
+    #     src = basedir / 'binaries' / platform
+    #     if src.exists():
+    #         shutil.copytree(src, unzipdir / 'binaries' / platform)
 
-        platforms.append(set(supported_platforms(component.filename)))
-
-    platforms = platforms[0].intersection(*platforms[1:])  # platforms supported by all components
-
-    for platform in platforms:
-        src = basedir / 'binaries' / platform
-        if src.exists():
-            shutil.copytree(src, unzipdir / 'binaries' / platform)
+    shutil.copytree(basedir / 'binaries' / 'win64', unzipdir / 'binaries' / 'x86_64-windows')
 
     variables_map = {}
 
@@ -170,9 +193,9 @@ def create_fmu_container(configuration, output_filename):
         }
 
         if v.start is not None:
-            if v.type == 'Real':
+            if v.type in ['Float64', 'Real']:
                 variable['start'] = float(v.start)
-            elif v.type in ['Enumeration', 'Integer']:
+            elif v.type in ['Int32', 'Integer', 'Enumeration']:
                 variable['start'] = int(v.start)
             elif v.type == 'Boolean':
                 if isinstance(v.start, str):
@@ -190,7 +213,7 @@ def create_fmu_container(configuration, output_filename):
 
     for c in configuration.connections:
         data['connections'].append({
-            'type': component_map[c.startElement][1][c.startConnector].type,
+            'type': FMI_TYPES[component_map[c.startElement][1][c.startConnector].type],
             'startComponent': component_map[c.startElement][0],
             'endComponent': component_map[c.endElement][0],
             'startValueReference': component_map[c.startElement][1][c.startConnector].valueReference,
@@ -201,7 +224,12 @@ def create_fmu_container(configuration, output_filename):
 
     environment = jinja2.Environment(loader=loader, trim_blocks=True)
 
-    template = environment.get_template('FMI2.xml')
+    if configuration.fmiVersion == '2.0':
+        template = environment.get_template('FMI2.xml')
+    elif configuration.fmiVersion == '3.0':
+        template = environment.get_template('FMI3.xml')
+    else:
+        raise Exception(f"fmiVersion must be '2.0' or '3.0' but was '{ configuration.fmiVersion }'.")
 
     def to_literal(value):
         if isinstance(value, bool):
@@ -221,6 +249,8 @@ def create_fmu_container(configuration, output_filename):
         generationDateAndTime=datetime.now(pytz.utc).isoformat(),
         fmpyVersion=fmpy.__version__
     )
+
+    # print(xml)
 
     with open(unzipdir / 'modelDescription.xml', 'w') as f:
         f.write(xml)

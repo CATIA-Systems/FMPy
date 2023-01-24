@@ -48,6 +48,9 @@ add_library(FMUContainer SHARED
   ../fmpy/c-code/fmi2Functions.h
   ../fmpy/c-code/fmi2FunctionTypes.h
   ../fmpy/c-code/fmi2TypesPlatform.h
+  ../fmpy/c-code/fmi3Functions.h
+  ../fmpy/c-code/fmi3FunctionTypes.h
+  ../fmpy/c-code/fmi3PlatformTypes.h
   ../thirdparty/Reference-FMUs/include/FMI.h
   ../thirdparty/Reference-FMUs/include/FMI2.h
   ../thirdparty/Reference-FMUs/src/FMI.c

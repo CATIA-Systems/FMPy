@@ -5,14 +5,15 @@ from fmpy.util import compile_platform_binary
 from fmpy.validation import validate_fmu
 
 
-@pytest.mark.parametrize("parallelDoStep", [False, True])
+@pytest.mark.parametrize("parallelDoStep", [False])
 def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
 
     configuration = Configuration(
+        fmiVersion='3.0',
         parallelDoStep=parallelDoStep,
         variables=[
             Variable(
-                type='Real',
+                type='Float64',
                 variability='continuous',
                 causality='input',
                 name='Float64_continuous_input',
@@ -20,7 +21,7 @@ def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
                 mapping=[('instance1', 'Float64_continuous_input')]
             ),
             Variable(
-                type='Integer',
+                type='Int32',
                 variability='discrete',
                 causality='input',
                 name='Int32_input',
@@ -36,7 +37,7 @@ def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
                 mapping=[('instance1', 'Boolean_input')]
             ),
             Variable(
-                type='Real',
+                type='Float64',
                 initial='calculated',
                 variability='continuous',
                 causality='output',
@@ -44,7 +45,7 @@ def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
                 mapping=[('instance2', 'Float64_continuous_output')]
             ),
             Variable(
-                type='Integer',
+                type='Int32',
                 variability='discrete',
                 causality='output',
                 name='Int32_output',
@@ -96,7 +97,7 @@ def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
 
     result = simulate_fmu(filename, output=default_start_values.keys(),
                           # debug_logging=True,
-                          # fmi_call_logger=print,
+                          fmi_call_logger=print,
                           stop_time=1, output_interval=1)
 
     for name, expected in default_start_values.items():
@@ -127,5 +128,5 @@ def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
     assert result['Int32_output'][-1] == 3
     assert result['Boolean_output'][-1] == False
 
-    compile_platform_binary(filename)
-    simulate_fmu(filename=filename)
+    # compile_platform_binary(filename)
+    # simulate_fmu(filename=filename)

@@ -24,68 +24,14 @@
 
 #include "FMI2.h"
 
-#include "fmi3Functions.h"
+#include "FMUContainer.h"
 
 
-typedef struct {
+#define CHECK_STATUS(S) status = S; if (status > FMIWarning) goto END
 
-    size_t size;
-	size_t *ci;
-	fmi2ValueReference *vr;
-
-} VariableMapping;
-
-typedef struct {
-
-	FMIVariableType type;
-	size_t startComponent;
-	fmi2ValueReference startValueReference;
-	size_t endComponent;
-	fmi2ValueReference endValueReference;
-
-} Connection;
-
-typedef struct {
-
-    FMIInstance *instance;
 
 #ifdef _WIN32
-    HANDLE thread;
-    HANDLE mutex;
-#else
-    pthread_t thread;
-    pthread_mutex_t mutex;
-#endif
-
-    fmi2Real currentCommunicationPoint;
-    fmi2Real communicationStepSize;
-    fmi2Status status;
-    bool doStep;
-    bool terminate;
-
-} Component;
-
-typedef struct {
-
-    fmi2String instanceName;
-    fmi2CallbackLogger logger;
-    fmi2ComponentEnvironment envrionment;
-
-	size_t nComponents;
-    Component **components;
-	
-	size_t nVariables;
-	VariableMapping *variables;
-
-	size_t nConnections;
-	Connection *connections;
-
-    bool parallelDoStep;
-
-} System;
-
-#ifdef _WIN32
-DWORD WINAPI doStep(LPVOID lpParam) {
+static DWORD WINAPI instanceDoStep(LPVOID lpParam) {
 
     Component *c = (Component *)lpParam;
 
@@ -108,7 +54,7 @@ DWORD WINAPI doStep(LPVOID lpParam) {
     return TRUE;
 }
 #else
-void* doStep(void *arg) {
+static void* instanceDoStep(void *arg) {
 
     Component *c = (Component *)arg;
 
@@ -132,45 +78,6 @@ void* doStep(void *arg) {
 }
 #endif
 
-#define GET_SYSTEM \
-    fmi2Status status = fmi2OK; \
-    System *s = (System *)c; \
-    if (!s) return fmi2Error
-
-#define CHECK_STATUS(S) status = S; if (status > fmi2Warning) goto END
-
-#define NOT_IMPLEMENTED \
-    if (c) { \
-        System *system = (System *)c; \
-        system->logger(system->envrionment, system->instanceName, fmi2Error, "fmi2Error", "Function is not implemented."); \
-    } \
-    return fmi2Error
-
-/***************************************************
-Types for Common Functions
-****************************************************/
-
-/* Inquire version numbers of header files and setting logging status */
-const char* fmi2GetTypesPlatform() {
-    return fmi2TypesPlatform;
-}
-
-const char* fmi2GetVersion() { 
-    return fmi2Version; 
-}
-
-fmi2Status fmi2SetDebugLogging(fmi2Component c, fmi2Boolean loggingOn, size_t nCategories, const fmi2String categories[]) {
-    
-	GET_SYSTEM;
-
-	for (size_t i = 0; i < s->nComponents; i++) {
-        FMIInstance *m = s->components[i]->instance;
-        CHECK_STATUS(FMI2SetDebugLogging(m, loggingOn, nCategories, categories));
-	}
-
-END:
-	return status;
-}
 
 void logFMIMessage(FMIInstance *instance, FMIStatus status, const char *category, const char *message) {
     
@@ -184,7 +91,9 @@ void logFMIMessage(FMIInstance *instance, FMIStatus status, const char *category
 
     snprintf(buf, total_len, "[%s]: %s", instance->name, message);
 
-    s->logger(s->envrionment, s->instanceName, status, category, buf);
+    // TODO: use logger
+    // s->logger(s->envrionment, s->instanceName, status, category, buf);
+    printf(buf);
 
     free(buf);
 }
@@ -201,11 +110,20 @@ static void logFunctionCall(FMIInstance *instance, FMIStatus status, const char 
     vsnprintf(buf, FMI_MAX_MESSAGE_LENGTH, message, args);
     va_end(args);
 
-    s->logger(s->envrionment, s->instanceName, (fmi2Status)status, "debug", "[%s]: %s", instance->name, buf);
+    // TODO: use logger
+    // s->logger(s->envrionment, s->instanceName, (fmi2Status)status, "debug", "[%s]: %s", instance->name, buf);
+
+    printf(buf);
 }
 
-
-static void* instantiate(const char* resourcesDir, const char* instanceName, fmi2CallbackLogger logger, fmi2ComponentEnvironment componentEnvironment, bool loggingOn, bool visible) {
+System* instantiateSystem(
+    FMIVersion fmiVersion,
+    const char* resourcesDir,
+    const char* instanceName,
+    void* logMessage,
+    void* instanceEnvironment,
+    bool loggingOn,
+    bool visible) {
 
     char configFilename[4096] = "";
     strcpy(configFilename, resourcesDir);
@@ -225,9 +143,10 @@ static void* instantiate(const char* resourcesDir, const char* instanceName, fmi
 
     System* s = calloc(1, sizeof(System));
 
+    s->fmiVersion = fmiVersion;
     s->instanceName = strdup(instanceName);
-    s->logger = logger;
-    s->envrionment = componentEnvironment;
+    s->instanceEnvironment = instanceEnvironment;
+    s->logMessage = logMessage;
     s->parallelDoStep = mpack_node_bool(parallelDoStep);
 
     mpack_node_t components = mpack_node_map_cstr(root, "components");
@@ -288,11 +207,11 @@ static void* instantiate(const char* resourcesDir, const char* instanceName, fmi
 #ifdef _WIN32
             // TODO: check for invalid handles
             c->mutex = CreateMutexA(NULL, FALSE, NULL);
-            c->thread = CreateThread(NULL, 0, doStep, c, 0, NULL);
+            c->thread = CreateThread(NULL, 0, instanceDoStep, c, 0, NULL);
 #else
             // TODO: check return codes
             pthread_mutex_init(&c->mutex, NULL);
-            pthread_create(&c->thread, NULL, &doStep, c);
+            pthread_create(&c->thread, NULL, &instanceDoStep, c);
 #endif
         }
 
@@ -387,7 +306,8 @@ static void* instantiate(const char* resourcesDir, const char* instanceName, fmi
                     break;
                 }
                 default:
-                    logger(NULL, instanceName, fmi2Fatal, "logError", "Unknown type ID for variable index %d: %d.", j, variableType);
+                    // TODO: log this
+                    // logMessage(NULL, instanceName, fmi2Fatal, "logError", "Unknown type ID for variable index %d: %d.", j, variableType);
                     return NULL;
                     break;
                 }
@@ -405,336 +325,26 @@ static void* instantiate(const char* resourcesDir, const char* instanceName, fmi
 
     // clean up and check for errors
     if (mpack_tree_destroy(&tree) != mpack_ok) {
-        logger(NULL, instanceName, fmi2Error, "logError", "An error occurred decoding %s.", configFilename);
+        // TODO: log this
+        // logger(NULL, instanceName, fmi2Error, "logError", "An error occurred decoding %s.", configFilename);
         return NULL;
     }
 
     return s;
 }
 
-/* Creation and destruction of FMU instances and setting debug status */
-fmi2Component fmi2Instantiate(fmi2String instanceName,
-                              fmi2Type fmuType,
-                              fmi2String fmuGUID,
-                              fmi2String fmuResourceLocation,
-                              const fmi2CallbackFunctions* functions,
-                              fmi2Boolean visible,
-                              fmi2Boolean loggingOn) {
+#define CHECK_STATUS(S) status = S; if (status > FMIWarning) goto END
 
-    if (!functions || !functions->logger) {
-        return NULL;
-    }
+FMIStatus doStep(
+    System* s,
+    double  currentCommunicationPoint,
+    double  communicationStepSize,
+    bool    noSetFMUStatePriorToCurrentPoint) {
 
-    if (fmuType != fmi2CoSimulation) {
-        functions->logger(NULL, instanceName, fmi2Error, "logError", "Argument fmuType must be fmi2CoSimulation.");
-        return NULL;
-    }
-
-    char resourcesDir[4096] = "";
-
-    FMIURIToPath(fmuResourceLocation, resourcesDir, 4096);
-
-    return instantiate(resourcesDir, instanceName, functions->logger, functions->componentEnvironment, loggingOn, visible);
-}
-
-void fmi2FreeInstance(fmi2Component c) {
-
-	if (!c) return;
-	
-	System *system = (System *)c;
-
-	for (size_t i = 0; i < system->nComponents; i++) {
-        Component *component = system->components[i];
-		FMIInstance *m = component->instance;
-		FMI2FreeInstance(m);
-        FMIFreeInstance(m);
-        if (system->parallelDoStep) {
-#ifdef _WIN32
-            CloseHandle(component->mutex);       
-            CloseHandle(component->thread);
-#else
-            pthread_mutex_destroy(&component->mutex);
-            pthread_join(component->thread, NULL);
-#endif
-        }
-        free(component);
-	}
-
-    free((void *)system->instanceName);
-	free(system);
-}
-
-/* Enter and exit initialization mode, terminate and reset */
-fmi2Status fmi2SetupExperiment(fmi2Component c,
-                               fmi2Boolean toleranceDefined,
-                               fmi2Real tolerance,
-                               fmi2Real startTime,
-                               fmi2Boolean stopTimeDefined,
-                               fmi2Real stopTime) {
-    
-	GET_SYSTEM;
-
-	for (size_t i = 0; i < s->nComponents; i++) {
-        FMIInstance *m = s->components[i]->instance;
-        CHECK_STATUS(FMI2SetupExperiment(m, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime));
-	}
-
-END:
-	return status;
-}
-
-fmi2Status fmi2EnterInitializationMode(fmi2Component c) {
-	
-	GET_SYSTEM;
-
-	for (size_t i = 0; i < s->nComponents; i++) {
-        FMIInstance *m = s->components[i]->instance;
-		CHECK_STATUS(FMI2EnterInitializationMode(m));
-	}
-
-END:
-	return status;
-}
-
-fmi2Status fmi2ExitInitializationMode(fmi2Component c) {
-	
-	GET_SYSTEM;
-
-	for (size_t i = 0; i < s->nComponents; i++) {
-        
-        Component *c = s->components[i];
-        FMIInstance *m = c->instance;
-        
-        CHECK_STATUS(FMI2ExitInitializationMode(m));        
-	}
-
-END:
-	return status;
-}
-
-fmi2Status fmi2Terminate(fmi2Component c) {
-	
-	GET_SYSTEM;
-
-	for (size_t i = 0; i < s->nComponents; i++) {
-        
-        Component *component = s->components[i];
-        
-        CHECK_STATUS(FMI2Terminate(component->instance));
-
-        if (s->parallelDoStep) {
-#ifdef _WIN32
-            WaitForSingleObject(component->mutex, INFINITE);
-            component->terminate = true;
-            ReleaseMutex(component->mutex);
-            WaitForSingleObject(component->thread, INFINITE);
-#else
-            pthread_mutex_lock(&component->mutex);
-            component->terminate = true;
-            pthread_mutex_unlock(&component->mutex);
-            pthread_join(component->thread, NULL);
-#endif
-        }
-    }
-
-END:
-	return status;
-}
-
-fmi2Status fmi2Reset(fmi2Component c) {
-
-	GET_SYSTEM;
-
-	for (size_t i = 0; i < s->nComponents; i++) {
-        FMIInstance *m = s->components[i]->instance;
-		CHECK_STATUS(FMI2Reset(m));
-	}
-END:
-	return status;
-}
-
-/* Getting and setting variable values */
-fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Real value[]) {
-    
-	GET_SYSTEM;
-
-	for (size_t i = 0; i < nvr; i++) {
-		if (vr[i] >= s->nVariables) return fmi2Error;
-		VariableMapping vm = s->variables[vr[i]];
-        FMIInstance *m = s->components[vm.ci[0]]->instance;
-        CHECK_STATUS(FMI2GetReal(m, &(vm.vr[0]), 1, &value[i]));
-	}
-END:
-	return status;
-}
-
-fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Integer value[]) {
-
-	GET_SYSTEM;
-
-	for (size_t i = 0; i < nvr; i++) {
-		if (vr[i] >= s->nVariables) return fmi2Error;
-		VariableMapping vm = s->variables[vr[i]];
-        FMIInstance *m = s->components[vm.ci[0]]->instance;
-        CHECK_STATUS(FMI2GetInteger(m, &(vm.vr[0]), 1, &value[i]));
-	}
-END:
-	return status;
-}
-
-fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Boolean value[]) {
-
-	GET_SYSTEM;
-
-	for (size_t i = 0; i < nvr; i++) {
-		if (vr[i] >= s->nVariables) return fmi2Error;
-		VariableMapping vm = s->variables[vr[i]];
-        FMIInstance *m = s->components[vm.ci[0]]->instance;
-        CHECK_STATUS(FMI2GetBoolean(m, &(vm.vr[0]), 1, &value[i]));
-	}
-END:
-	return status;
-}
-
-fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2String  value[]) {
-
-	GET_SYSTEM;
-
-	for (size_t i = 0; i < nvr; i++) {
-		if (vr[i] >= s->nVariables) return fmi2Error;
-		VariableMapping vm = s->variables[vr[i]];
-        FMIInstance *m = s->components[vm.ci[0]]->instance;
-        CHECK_STATUS(FMI2GetString(m, &(vm.vr[0]), 1, &value[i]));
-	}
-END:
-	return status;
-}
-
-fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Real value[]) {
-	
-	GET_SYSTEM;
-
-	for (size_t i = 0; i < nvr; i++) {
-		if (vr[i] >= s->nVariables) return fmi2Error;
-		VariableMapping vm = s->variables[vr[i]];
-        for (size_t j = 0; j < vm.size; j++) {
-            FMIInstance *m = s->components[vm.ci[j]]->instance;
-            CHECK_STATUS(FMI2SetReal(m, &(vm.vr[j]), 1, &value[i]));
-        }
-	}
-END:
-	return status;
-}
-
-fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Integer value[]) {
-
-	GET_SYSTEM;
-
-	for (size_t i = 0; i < nvr; i++) {
-		if (vr[i] >= s->nVariables) return fmi2Error;
-		VariableMapping vm = s->variables[vr[i]];
-        for (size_t j = 0; j < vm.size; j++) {
-            FMIInstance *m = s->components[vm.ci[j]]->instance;
-            CHECK_STATUS(FMI2SetInteger(m, &(vm.vr[j]), 1, &value[i]));
-        }
-	}
-END:
-	return status;
-}
-
-fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Boolean value[]) {
-
-	GET_SYSTEM;
-
-	for (size_t i = 0; i < nvr; i++) {
-		if (vr[i] >= s->nVariables) return fmi2Error;
-		VariableMapping vm = s->variables[vr[i]];
-        for (size_t j = 0; j < vm.size; j++) {
-            FMIInstance *m = s->components[vm.ci[j]]->instance;
-            CHECK_STATUS(FMI2SetBoolean(m, &(vm.vr[j]), 1, &value[i]));
-        }
-	}
-END:
-	return status;
-}
-
-fmi2Status fmi2SetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2String  value[]) {
-
-	GET_SYSTEM;
-
-	for (size_t i = 0; i < nvr; i++) {
-		if (vr[i] >= s->nVariables) return fmi2Error;
-		VariableMapping vm = s->variables[vr[i]];
-        for (size_t j = 0; j < vm.size; j++) {
-            FMIInstance *m = s->components[vm.ci[j]]->instance;
-            CHECK_STATUS(FMI2SetString(m, &(vm.vr[j]), 1, &value[i]));
-        }
-	}
-END:
-	return status;
-}
-
-/* Getting and setting the internal FMU state */
-fmi2Status fmi2GetFMUstate(fmi2Component c, fmi2FMUstate* FMUstate) {
-    NOT_IMPLEMENTED;
-}
-
-fmi2Status fmi2SetFMUstate(fmi2Component c, fmi2FMUstate  FMUstate) {
-    NOT_IMPLEMENTED;
-}
-
-fmi2Status fmi2FreeFMUstate(fmi2Component c, fmi2FMUstate* FMUstate) {
-    NOT_IMPLEMENTED;
-}
-
-fmi2Status fmi2SerializedFMUstateSize(fmi2Component c, fmi2FMUstate  FMUstate, size_t* size) {
-    NOT_IMPLEMENTED;
-}
-
-fmi2Status fmi2SerializeFMUstate(fmi2Component c, fmi2FMUstate  FMUstate, fmi2Byte serializedState[], size_t size) {
-    NOT_IMPLEMENTED;
-}
-
-fmi2Status fmi2DeSerializeFMUstate(fmi2Component c, const fmi2Byte serializedState[], size_t size, fmi2FMUstate* FMUstate) {
-    NOT_IMPLEMENTED;
-}
-
-/* Getting partial derivatives */
-fmi2Status fmi2GetDirectionalDerivative(fmi2Component c,
-                                        const fmi2ValueReference vUnknown_ref[], size_t nUnknown,
-                                        const fmi2ValueReference vKnown_ref[],   size_t nKnown,
-                                        const fmi2Real dvKnown[],
-                                        fmi2Real dvUnknown[]) {
-    NOT_IMPLEMENTED;
-}
-
-/***************************************************
-Types for Functions for FMI2 for Co-Simulation
-****************************************************/
-
-/* Simulating the slave */
-fmi2Status fmi2SetRealInputDerivatives(fmi2Component c,
-                                       const fmi2ValueReference vr[], size_t nvr,
-                                       const fmi2Integer order[],
-                                       const fmi2Real value[]) {
-    NOT_IMPLEMENTED;
-}
-
-fmi2Status fmi2GetRealOutputDerivatives(fmi2Component c,
-                                        const fmi2ValueReference vr[], size_t nvr,
-                                        const fmi2Integer order[],
-                                        fmi2Real value[]) {
-    NOT_IMPLEMENTED;
-}
-
-fmi2Status _doStep(System* s,
-    fmi2Real      currentCommunicationPoint,
-    fmi2Real      communicationStepSize,
-    fmi2Boolean   noSetFMUStatePriorToCurrentPoint) {
-
-    fmi2Status status = fmi2OK;
+    FMIStatus status = FMIOK;
 
     for (size_t i = 0; i < s->nConnections; i++) {
+
         fmi2Real realValue;
         fmi2Integer integerValue;
         fmi2Boolean booleanValue;
@@ -816,639 +426,66 @@ END:
     return status;
 }
 
-fmi2Status fmi2DoStep(fmi2Component c,
-                      fmi2Real      currentCommunicationPoint,
-                      fmi2Real      communicationStepSize,
-                      fmi2Boolean   noSetFMUStatePriorToCurrentPoint) {
+FMIStatus terminateSystem(System* s) {
 
-    GET_SYSTEM;
+    FMIStatus status = FMIOK;
 
-    status = _doStep(s, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint);
+    for (size_t i = 0; i < s->nComponents; i++) {
+
+        Component* component = s->components[i];
+
+        CHECK_STATUS(FMI2Terminate(component->instance));
+
+        if (s->parallelDoStep) {
+#ifdef _WIN32
+            WaitForSingleObject(component->mutex, INFINITE);
+            component->terminate = true;
+            ReleaseMutex(component->mutex);
+            WaitForSingleObject(component->thread, INFINITE);
+#else
+            pthread_mutex_lock(&component->mutex);
+            component->terminate = true;
+            pthread_mutex_unlock(&component->mutex);
+            pthread_join(component->thread, NULL);
+#endif
+        }
+    }
 
 END:
-	return status;
+    return status;
 }
 
-fmi2Status fmi2CancelStep(fmi2Component c) {
-    NOT_IMPLEMENTED;
-}
+FMIStatus resetSystem(System* s) {
 
-/* Inquire slave status */
-fmi2Status fmi2GetStatus(fmi2Component c, const fmi2StatusKind s, fmi2Status*  value) {
-    NOT_IMPLEMENTED;
-}
-
-fmi2Status fmi2GetRealStatus(fmi2Component c, const fmi2StatusKind s, fmi2Real*    value) {
-    NOT_IMPLEMENTED;
-}
-
-fmi2Status fmi2GetIntegerStatus(fmi2Component c, const fmi2StatusKind s, fmi2Integer* value) {
-    NOT_IMPLEMENTED;
-}
-
-fmi2Status fmi2GetBooleanStatus(fmi2Component c, const fmi2StatusKind s, fmi2Boolean* value) {
-    NOT_IMPLEMENTED;
-}
-
-fmi2Status fmi2GetStringStatus(fmi2Component c, const fmi2StatusKind s, fmi2String*  value) {
-    NOT_IMPLEMENTED;
-}
-
-
-
-///////////////////////////////////////////////
-
-
-const char* fmi3GetVersion(void) {
-    return fmi3Version;
-}
-
-fmi3Status fmi3SetDebugLogging(fmi3Instance instance,
-    fmi3Boolean loggingOn,
-    size_t nCategories,
-    const fmi3String categories[]) { return fmi3Error; }
-
-fmi3Instance fmi3InstantiateModelExchange(
-    fmi3String                 instanceName,
-    fmi3String                 instantiationToken,
-    fmi3String                 resourcePath,
-    fmi3Boolean                visible,
-    fmi3Boolean                loggingOn,
-    fmi3InstanceEnvironment    instanceEnvironment,
-    fmi3LogMessageCallback     logMessage) { return NULL; }
-
-
-static fmi3LogMessageCallback s_logMessage;
-
-static void logMessage2(fmi2ComponentEnvironment componentEnvironment,
-    fmi2String instanceName,
-    fmi2Status status,
-    fmi2String category,
-    fmi2String message,
-    ...) {
-    s_logMessage(componentEnvironment, status, category, message);
-}
-
-
-fmi3Instance fmi3InstantiateCoSimulation(
-    fmi3String                     instanceName,
-    fmi3String                     instantiationToken,
-    fmi3String                     resourcePath,
-    fmi3Boolean                    visible,
-    fmi3Boolean                    loggingOn,
-    fmi3Boolean                    eventModeUsed,
-    fmi3Boolean                    earlyReturnAllowed,
-    const fmi3ValueReference       requiredIntermediateVariables[],
-    size_t                         nRequiredIntermediateVariables,
-    fmi3InstanceEnvironment        instanceEnvironment,
-    fmi3LogMessageCallback         logMessage,
-    fmi3IntermediateUpdateCallback intermediateUpdate) { 
-
-    s_logMessage = logMessage;
-
-    return instantiate(resourcePath, instanceName, logMessage, instanceEnvironment, loggingOn, visible);
-}
-
-fmi3Instance fmi3InstantiateScheduledExecution(
-    fmi3String                     instanceName,
-    fmi3String                     instantiationToken,
-    fmi3String                     resourcePath,
-    fmi3Boolean                    visible,
-    fmi3Boolean                    loggingOn,
-    fmi3InstanceEnvironment        instanceEnvironment,
-    fmi3LogMessageCallback         logMessage,
-    fmi3ClockUpdateCallback        clockUpdate,
-    fmi3LockPreemptionCallback     lockPreemption,
-    fmi3UnlockPreemptionCallback   unlockPreemption) { return NULL; }
-
-void fmi3FreeInstance(fmi3Instance instance) { }
-
-fmi3Status fmi3EnterInitializationMode(fmi3Instance instance,
-    fmi3Boolean toleranceDefined,
-    fmi3Float64 tolerance,
-    fmi3Float64 startTime,
-    fmi3Boolean stopTimeDefined,
-    fmi3Float64 stopTime) { 
-
-    System* s = (System*)instance;
-
-    fmi2Status status = fmi2OK;
+    FMIStatus status = FMIOK;
 
     for (size_t i = 0; i < s->nComponents; i++) {
         FMIInstance* m = s->components[i]->instance;
-        status = FMI2SetupExperiment(m, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime);
-        status = FMI2EnterInitializationMode(m);
+        CHECK_STATUS(FMI2Reset(m));
     }
-
+END:
     return status;
 }
 
-fmi3Status fmi3ExitInitializationMode(fmi3Instance instance) {
-
-    System* s = (System*)instance;
-
-    fmi2Status status = fmi2OK;
+void freeSystem(System* s) {
 
     for (size_t i = 0; i < s->nComponents; i++) {
-        FMIInstance* m = s->components[i]->instance;
-        status = FMI2ExitInitializationMode(m);
+        Component* component = s->components[i];
+        FMIInstance* m = component->instance;
+        FMI2FreeInstance(m);
+        FMIFreeInstance(m);
+        if (s->parallelDoStep) {
+#ifdef _WIN32
+            CloseHandle(component->mutex);
+            CloseHandle(component->thread);
+#else
+            pthread_mutex_destroy(&component->mutex);
+            pthread_join(component->thread, NULL);
+#endif
+        }
+        free(component);
     }
 
-    return status;
+    free((void*)s->instanceName);
+    free(system);
 }
-
-fmi3Status fmi3EnterEventMode(fmi3Instance instance) { return fmi3Error; }
-
-fmi3Status fmi3Terminate(fmi3Instance instance) { return fmi3OK; }
-
-fmi3Status fmi3Reset(fmi3Instance instance) { return fmi3Error; }
-
-fmi3Status fmi3GetFloat32(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3Float32 values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3GetFloat64(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3Float64 values[],
-    size_t nValues) { 
-
-    System* s = (System*)instance;
-
-    fmi2Status status = fmi2OK;
-
-    for (size_t i = 0; i < nValueReferences; i++) {
-        
-        const fmi3ValueReference vr = valueReferences[i];
-
-        if (vr == 0) {
-            // TODO: return time
-        }
-
-        const size_t j = vr - 1;
-
-        if (j >= s->nVariables) {
-            return fmi2Error;
-        }
-
-        VariableMapping vm = s->variables[j];
-        FMIInstance* m = s->components[vm.ci[0]]->instance;
-        status = FMI2GetReal(m, &(vm.vr[0]), 1, &values[i]);
-    }
-
-    return status;
-}
-
-fmi3Status fmi3GetInt8(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3Int8 values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3GetUInt8(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3UInt8 values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3GetInt16(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3Int16 values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3GetUInt16(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3UInt16 values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3GetInt32(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3Int32 values[],
-    size_t nValues) { 
-
-    System* s = (System*)instance;
-
-    fmi2Status status = fmi2OK;
-
-    for (size_t i = 0; i < nValueReferences; i++) {
-
-        const fmi3ValueReference vr = valueReferences[i];
-
-        const size_t j = vr - 1;
-
-        if (j >= s->nVariables) {
-            return fmi2Error;
-        }
-
-        VariableMapping vm = s->variables[j];
-        FMIInstance* m = s->components[vm.ci[0]]->instance;
-        status = FMI2GetInteger(m, &(vm.vr[0]), 1, &values[i]);
-    }
-
-    return status;
-
-}
-
-fmi3Status fmi3GetUInt32(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3UInt32 values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3GetInt64(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3Int64 values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3GetUInt64(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3UInt64 values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3GetBoolean(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3Boolean values[],
-    size_t nValues) { 
-
-    System* s = (System*)instance;
-
-    fmi2Status status = fmi2OK;
-
-    for (size_t i = 0; i < nValueReferences; i++) {
-
-        const fmi3ValueReference vr = valueReferences[i];
-
-        const size_t j = vr - 1;
-
-        if (j >= s->nVariables) {
-            return fmi2Error;
-        }
-
-        VariableMapping vm = s->variables[j];
-        FMIInstance* m = s->components[vm.ci[0]]->instance;
-        status = FMI2GetBoolean(m, &(vm.vr[0]), 1, &values[i]);
-    }
-
-    return status;
-}
-
-fmi3Status fmi3GetString(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3String values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3GetBinary(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    size_t valueSizes[],
-    fmi3Binary values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3GetClock(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3Clock values[]) { return fmi3Error; }
-
-fmi3Status fmi3SetFloat32(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3Float32 values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3SetFloat64(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3Float64 values[],
-    size_t nValues) { 
-
-    System* s = (System*)instance;
-
-    fmi2Status status = fmi2OK;
-
-    for (size_t i = 0; i < nValueReferences; i++) {
-
-        const size_t j = valueReferences[i] - 1;
-
-        if (j >= s->nVariables) {
-            return fmi2Error;
-        }
-
-        VariableMapping vm = s->variables[j];
-        FMIInstance* m = s->components[vm.ci[0]]->instance;
-        status = FMI2SetReal(m, &(vm.vr[0]), 1, &values[i]);
-    }
-
-    return status;
-}
-
-fmi3Status fmi3SetInt8(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3Int8 values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3SetUInt8(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3UInt8 values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3SetInt16(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3Int16 values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3SetUInt16(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3UInt16 values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3SetInt32(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3Int32 values[],
-    size_t nValues) { 
-
-    System* s = (System*)instance;
-
-    fmi2Status status = fmi2OK;
-
-    for (size_t i = 0; i < nValueReferences; i++) {
-
-        const size_t j = valueReferences[i] - 1;
-
-        if (j >= s->nVariables) {
-            return fmi2Error;
-        }
-
-        VariableMapping vm = s->variables[j];
-        FMIInstance* m = s->components[vm.ci[0]]->instance;
-        status = FMI2SetInteger(m, &(vm.vr[0]), 1, &values[i]);
-    }
-
-    return status;
-}
-
-fmi3Status fmi3SetUInt32(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3UInt32 values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3SetInt64(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3Int64 values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3SetUInt64(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3UInt64 values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3SetBoolean(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3Boolean values[],
-    size_t nValues) {
-
-    System* s = (System*)instance;
-
-    fmi2Status status = fmi2OK;
-
-    for (size_t i = 0; i < nValueReferences; i++) {
-
-        const size_t j = valueReferences[i] - 1;
-
-        if (j >= s->nVariables) {
-            return fmi2Error;
-        }
-
-        VariableMapping vm = s->variables[j];
-        FMIInstance* m = s->components[vm.ci[0]]->instance;
-        status = FMI2SetBoolean(m, &(vm.vr[0]), 1, &values[i]);
-    }
-
-    return status;
-}
-
-fmi3Status fmi3SetString(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3String values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3SetBinary(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const size_t valueSizes[],
-    const fmi3Binary values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3SetClock(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3Clock values[]) { return fmi3Error; }
-
-fmi3Status fmi3GetNumberOfVariableDependencies(fmi3Instance instance,
-    fmi3ValueReference valueReference,
-    size_t* nDependencies) { return fmi3Error; }
-
-fmi3Status fmi3GetVariableDependencies(fmi3Instance instance,
-    fmi3ValueReference dependent,
-    size_t elementIndicesOfDependent[],
-    fmi3ValueReference independents[],
-    size_t elementIndicesOfIndependents[],
-    fmi3DependencyKind dependencyKinds[],
-    size_t nDependencies) { return fmi3Error; }
-
-fmi3Status fmi3GetFMUState(fmi3Instance instance, fmi3FMUState* FMUState) { return fmi3Error; }
-
-fmi3Status fmi3SetFMUState(fmi3Instance instance, fmi3FMUState  FMUState) { return fmi3Error; }
-
-fmi3Status fmi3FreeFMUState(fmi3Instance instance, fmi3FMUState* FMUState) { return fmi3Error; }
-
-fmi3Status fmi3SerializedFMUStateSize(fmi3Instance instance,
-    fmi3FMUState FMUState,
-    size_t* size) { return fmi3Error; }
-
-fmi3Status fmi3SerializeFMUState(fmi3Instance instance,
-    fmi3FMUState FMUState,
-    fmi3Byte serializedState[],
-    size_t size) { return fmi3Error; }
-
-fmi3Status fmi3DeserializeFMUState(fmi3Instance instance,
-    const fmi3Byte serializedState[],
-    size_t size,
-    fmi3FMUState* FMUState) { return fmi3Error; }
-
-fmi3Status fmi3GetDirectionalDerivative(fmi3Instance instance,
-    const fmi3ValueReference unknowns[],
-    size_t nUnknowns,
-    const fmi3ValueReference knowns[],
-    size_t nKnowns,
-    const fmi3Float64 seed[],
-    size_t nSeed,
-    fmi3Float64 sensitivity[],
-    size_t nSensitivity) { return fmi3Error; }
-
-fmi3Status fmi3GetAdjointDerivative(fmi3Instance instance,
-    const fmi3ValueReference unknowns[],
-    size_t nUnknowns,
-    const fmi3ValueReference knowns[],
-    size_t nKnowns,
-    const fmi3Float64 seed[],
-    size_t nSeed,
-    fmi3Float64 sensitivity[],
-    size_t nSensitivity) { return fmi3Error; }
-
-fmi3Status fmi3EnterConfigurationMode(fmi3Instance instance) { return fmi3Error; }
-
-fmi3Status fmi3ExitConfigurationMode(fmi3Instance instance) { return fmi3Error; }
-
-fmi3Status fmi3GetIntervalDecimal(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3Float64 intervals[],
-    fmi3IntervalQualifier qualifiers[]) { return fmi3Error; }
-
-fmi3Status fmi3GetIntervalFraction(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3UInt64 counters[],
-    fmi3UInt64 resolutions[],
-    fmi3IntervalQualifier qualifiers[]) { return fmi3Error; }
-
-fmi3Status fmi3GetShiftDecimal(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3Float64 shifts[]) { return fmi3Error; }
-
-fmi3Status fmi3GetShiftFraction(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    fmi3UInt64 counters[],
-    fmi3UInt64 resolutions[]) { return fmi3Error; }
-
-fmi3Status fmi3SetIntervalDecimal(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3Float64 intervals[]) { return fmi3Error; }
-
-fmi3Status fmi3SetIntervalFraction(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3UInt64 counters[],
-    const fmi3UInt64 resolutions[]) { return fmi3Error; }
-
-fmi3Status fmi3SetShiftDecimal(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3Float64 shifts[]) { return fmi3Error; }
-
-fmi3Status fmi3SetShiftFraction(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3UInt64 counters[],
-    const fmi3UInt64 resolutions[]) { return fmi3Error; }
-
-fmi3Status fmi3EvaluateDiscreteStates(fmi3Instance instance) { return fmi3Error; }
-
-fmi3Status fmi3UpdateDiscreteStates(fmi3Instance instance,
-    fmi3Boolean* discreteStatesNeedUpdate,
-    fmi3Boolean* terminateSimulation,
-    fmi3Boolean* nominalsOfContinuousStatesChanged,
-    fmi3Boolean* valuesOfContinuousStatesChanged,
-    fmi3Boolean* nextEventTimeDefined,
-    fmi3Float64* nextEventTime) { return fmi3Error; }
-
-/***************************************************
-Types for Functions for Model Exchange
-****************************************************/
-
-fmi3Status fmi3EnterContinuousTimeMode(fmi3Instance instance) { return fmi3Error; }
-
-fmi3Status fmi3CompletedIntegratorStep(fmi3Instance instance,
-    fmi3Boolean  noSetFMUStatePriorToCurrentPoint,
-    fmi3Boolean* enterEventMode,
-    fmi3Boolean* terminateSimulation) { return fmi3Error; }
-
-fmi3Status fmi3SetTime(fmi3Instance instance, fmi3Float64 time) { return fmi3Error; }
-
-fmi3Status fmi3SetContinuousStates(fmi3Instance instance,
-    const fmi3Float64 continuousStates[],
-    size_t nContinuousStates) { return fmi3Error; }
-
-fmi3Status fmi3GetContinuousStateDerivatives(fmi3Instance instance,
-    fmi3Float64 derivatives[],
-    size_t nContinuousStates) { return fmi3Error; }
-
-fmi3Status fmi3GetEventIndicators(fmi3Instance instance,
-    fmi3Float64 eventIndicators[],
-    size_t nEventIndicators) { return fmi3Error; }
-
-fmi3Status fmi3GetContinuousStates(fmi3Instance instance,
-    fmi3Float64 continuousStates[],
-    size_t nContinuousStates) { return fmi3Error; }
-
-fmi3Status fmi3GetNominalsOfContinuousStates(fmi3Instance instance,
-    fmi3Float64 nominals[],
-    size_t nContinuousStates) { return fmi3Error; }
-
-fmi3Status fmi3GetNumberOfEventIndicators(fmi3Instance instance,
-    size_t* nEventIndicators) { return fmi3Error; }
-
-fmi3Status fmi3GetNumberOfContinuousStates(fmi3Instance instance,
-    size_t* nContinuousStates) { return fmi3Error; }
-
-/***************************************************
-Types for Functions for Co-Simulation
-****************************************************/
-
-fmi3Status fmi3EnterStepMode(fmi3Instance instance) { return fmi3Error; }
-
-fmi3Status fmi3GetOutputDerivatives(fmi3Instance instance,
-    const fmi3ValueReference valueReferences[],
-    size_t nValueReferences,
-    const fmi3Int32 orders[],
-    fmi3Float64 values[],
-    size_t nValues) { return fmi3Error; }
-
-fmi3Status fmi3DoStep(fmi3Instance instance,
-    fmi3Float64 currentCommunicationPoint,
-    fmi3Float64 communicationStepSize,
-    fmi3Boolean noSetFMUStatePriorToCurrentPoint,
-    fmi3Boolean* eventHandlingNeeded,
-    fmi3Boolean* terminateSimulation,
-    fmi3Boolean* earlyReturn,
-    fmi3Float64* lastSuccessfulTime) { 
-
-    System* s = (System*)instance;
-
-    *eventHandlingNeeded = fmi3False;
-    *terminateSimulation = fmi3False;
-    *earlyReturn         = fmi3False;
-    *lastSuccessfulTime  = currentCommunicationPoint + communicationStepSize;
-    
-    return _doStep(s, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint);
-}
-
-/***************************************************
-Types for Functions for Scheduled Execution
-****************************************************/
-
-fmi3Status fmi3ActivateModelPartition(fmi3Instance instance,
-    fmi3ValueReference clockReference,
-    fmi3Float64 activationTime) { return fmi3Error; }

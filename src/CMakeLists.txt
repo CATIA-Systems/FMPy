@@ -62,7 +62,10 @@ add_library(FMUContainer SHARED
   ../thirdparty/mpack/src/mpack/mpack-platform.c
   ../thirdparty/mpack/src/mpack/mpack-reader.c
   ../thirdparty/mpack/src/mpack/mpack-writer.c
+  fmucontainer/FMUContainer.h
   fmucontainer/FMUContainer.c
+  fmucontainer/fmi2Functions.c
+  fmucontainer/fmi3Functions.c
 )
 
 SET_TARGET_PROPERTIES(FMUContainer PROPERTIES PREFIX "")

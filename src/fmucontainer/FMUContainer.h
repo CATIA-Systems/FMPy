@@ -60,6 +60,8 @@ typedef struct {
 
     bool parallelDoStep;
 
+    double time;
+
 } System;
 
 

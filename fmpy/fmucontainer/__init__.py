@@ -118,6 +118,9 @@ def create_fmu_container(configuration, output_filename):
     import pytz
     from pathlib import Path
 
+    if configuration.fmiVersion not in ['2.0', '3.0']:
+        raise Exception(f"fmiVersion must be '2.0' or '3.0' but was '{ configuration.fmiVersion }'.")
+
     output_filename = Path(output_filename)
     base_filename, _ = os.path.splitext(output_filename)
     model_name = os.path.basename(base_filename)
@@ -167,7 +170,10 @@ def create_fmu_container(configuration, output_filename):
     #     if src.exists():
     #         shutil.copytree(src, unzipdir / 'binaries' / platform)
 
-    shutil.copytree(basedir / 'binaries' / 'win64', unzipdir / 'binaries' / 'x86_64-windows')
+    if configuration.fmiVersion == '2.0':
+        shutil.copytree(basedir / 'binaries' / 'win64', unzipdir / 'binaries' / 'win64')
+    else:
+        shutil.copytree(basedir / 'binaries' / 'win64', unzipdir / 'binaries' / 'x86_64-windows')
 
     variables_map = {}
 
@@ -226,10 +232,8 @@ def create_fmu_container(configuration, output_filename):
 
     if configuration.fmiVersion == '2.0':
         template = environment.get_template('FMI2.xml')
-    elif configuration.fmiVersion == '3.0':
-        template = environment.get_template('FMI3.xml')
     else:
-        raise Exception(f"fmiVersion must be '2.0' or '3.0' but was '{ configuration.fmiVersion }'.")
+        template = environment.get_template('FMI3.xml')
 
     def to_literal(value):
         if isinstance(value, bool):

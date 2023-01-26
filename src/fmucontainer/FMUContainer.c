@@ -148,6 +148,7 @@ System* instantiateSystem(
     s->instanceEnvironment = instanceEnvironment;
     s->logMessage = logMessage;
     s->parallelDoStep = mpack_node_bool(parallelDoStep);
+    s->time = 0;
 
     mpack_node_t components = mpack_node_map_cstr(root, "components");
 
@@ -258,7 +259,7 @@ System* instantiateSystem(
         mpack_node_t variableTypeNode = mpack_node_map_cstr(variable, "type");
         FMIVariableType variableType = mpack_node_int(variableTypeNode);
 
-        bool hasStartValue = mpack_node_map_contains_cstr(variable, "start");
+        const bool hasStartValue = mpack_node_map_contains_cstr(variable, "start");
 
         mpack_node_t start;
 
@@ -459,6 +460,8 @@ FMIStatus resetSystem(System* s) {
 
     FMIStatus status = FMIOK;
 
+    s->time = 0;
+
     for (size_t i = 0; i < s->nComponents; i++) {
         FMIInstance* m = s->components[i]->instance;
         CHECK_STATUS(FMI2Reset(m));
@@ -487,5 +490,5 @@ void freeSystem(System* s) {
     }
 
     free((void*)s->instanceName);
-    free(system);
+    free(s);
 }

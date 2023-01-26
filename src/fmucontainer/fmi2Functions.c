@@ -84,6 +84,8 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
 
     GET_SYSTEM;
 
+    s->time = startTime;
+
     for (size_t i = 0; i < s->nComponents; i++) {
         FMIInstance* m = s->components[i]->instance;
         CHECK_STATUS(FMI2SetupExperiment(m, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime));
@@ -142,10 +144,20 @@ fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
     GET_SYSTEM;
 
     for (size_t i = 0; i < nvr; i++) {
-        if (vr[i] >= s->nVariables) return fmi2Error;
-        VariableMapping vm = s->variables[vr[i]];
-        FMIInstance* m = s->components[vm.ci[0]]->instance;
-        CHECK_STATUS(FMI2GetReal(m, &(vm.vr[0]), 1, &value[i]));
+
+        if (vr[i] == 0) {
+            value[i] = s->time;
+            continue;
+        }
+
+        if (vr[i] > s->nVariables) {
+            return fmi2Error;
+        }
+
+        const VariableMapping* vm = &s->variables[vr[i] - 1];
+        FMIInstance* m = s->components[vm->ci[0]]->instance;
+
+        CHECK_STATUS(FMI2GetReal(m, &(vm->vr[0]), 1, &value[i]));
     }
 END:
     return status;
@@ -156,10 +168,15 @@ fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
     GET_SYSTEM;
 
     for (size_t i = 0; i < nvr; i++) {
-        if (vr[i] >= s->nVariables) return fmi2Error;
-        VariableMapping vm = s->variables[vr[i]];
-        FMIInstance* m = s->components[vm.ci[0]]->instance;
-        CHECK_STATUS(FMI2GetInteger(m, &(vm.vr[0]), 1, &value[i]));
+
+        if (vr[i] == 0 || vr[i] > s->nVariables) {
+            return fmi2Error;
+        }
+        
+        const VariableMapping* vm = &s->variables[vr[i] - 1];
+        FMIInstance* m = s->components[vm->ci[0]]->instance;
+        
+        CHECK_STATUS(FMI2GetInteger(m, &(vm->vr[0]), 1, &value[i]));
     }
 END:
     return status;
@@ -170,10 +187,15 @@ fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
     GET_SYSTEM;
 
     for (size_t i = 0; i < nvr; i++) {
-        if (vr[i] >= s->nVariables) return fmi2Error;
-        VariableMapping vm = s->variables[vr[i]];
-        FMIInstance* m = s->components[vm.ci[0]]->instance;
-        CHECK_STATUS(FMI2GetBoolean(m, &(vm.vr[0]), 1, &value[i]));
+
+        if (vr[i] == 0 || vr[i] > s->nVariables) {
+            return fmi2Error;
+        }
+
+        const VariableMapping* vm = &s->variables[vr[i] - 1];
+        FMIInstance* m = s->components[vm->ci[0]]->instance;
+
+        CHECK_STATUS(FMI2GetBoolean(m, &(vm->vr[0]), 1, &value[i]));
     }
 END:
     return status;
@@ -184,10 +206,15 @@ fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t 
     GET_SYSTEM;
 
     for (size_t i = 0; i < nvr; i++) {
-        if (vr[i] >= s->nVariables) return fmi2Error;
-        VariableMapping vm = s->variables[vr[i]];
-        FMIInstance* m = s->components[vm.ci[0]]->instance;
-        CHECK_STATUS(FMI2GetString(m, &(vm.vr[0]), 1, &value[i]));
+
+        if (vr[i] == 0 || vr[i] > s->nVariables) {
+            return fmi2Error;
+        }
+
+        const VariableMapping* vm = &s->variables[vr[i] - 1];
+        FMIInstance* m = s->components[vm->ci[0]]->instance;
+
+        CHECK_STATUS(FMI2GetString(m, &(vm->vr[0]), 1, &value[i]));
     }
 END:
     return status;
@@ -198,11 +225,16 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
     GET_SYSTEM;
 
     for (size_t i = 0; i < nvr; i++) {
-        if (vr[i] >= s->nVariables) return fmi2Error;
-        VariableMapping vm = s->variables[vr[i]];
-        for (size_t j = 0; j < vm.size; j++) {
-            FMIInstance* m = s->components[vm.ci[j]]->instance;
-            CHECK_STATUS(FMI2SetReal(m, &(vm.vr[j]), 1, &value[i]));
+
+        if (vr[i] == 0 || vr[i] > s->nVariables) {
+            return fmi2Error;
+        }
+
+        const VariableMapping* vm = &s->variables[vr[i] - 1];
+        
+        for (size_t j = 0; j < vm->size; j++) {
+            FMIInstance* m = s->components[vm->ci[j]]->instance;
+            CHECK_STATUS(FMI2SetReal(m, &(vm->vr[j]), 1, &value[i]));
         }
     }
 END:
@@ -214,11 +246,16 @@ fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
     GET_SYSTEM;
 
     for (size_t i = 0; i < nvr; i++) {
-        if (vr[i] >= s->nVariables) return fmi2Error;
-        VariableMapping vm = s->variables[vr[i]];
-        for (size_t j = 0; j < vm.size; j++) {
-            FMIInstance* m = s->components[vm.ci[j]]->instance;
-            CHECK_STATUS(FMI2SetInteger(m, &(vm.vr[j]), 1, &value[i]));
+        
+        if (vr[i] == 0 || vr[i] > s->nVariables) {
+            return fmi2Error;
+        }
+
+        const VariableMapping* vm = &s->variables[vr[i] - 1];
+        
+        for (size_t j = 0; j < vm->size; j++) {
+            FMIInstance* m = s->components[vm->ci[j]]->instance;
+            CHECK_STATUS(FMI2SetInteger(m, &(vm->vr[j]), 1, &value[i]));
         }
     }
 END:
@@ -230,11 +267,16 @@ fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
     GET_SYSTEM;
 
     for (size_t i = 0; i < nvr; i++) {
-        if (vr[i] >= s->nVariables) return fmi2Error;
-        VariableMapping vm = s->variables[vr[i]];
-        for (size_t j = 0; j < vm.size; j++) {
-            FMIInstance* m = s->components[vm.ci[j]]->instance;
-            CHECK_STATUS(FMI2SetBoolean(m, &(vm.vr[j]), 1, &value[i]));
+
+        if (vr[i] == 0 || vr[i] > s->nVariables) {
+            return fmi2Error;
+        }
+
+        const VariableMapping* vm = &s->variables[vr[i] - 1];
+        
+        for (size_t j = 0; j < vm->size; j++) {
+            FMIInstance* m = s->components[vm->ci[j]]->instance;
+            CHECK_STATUS(FMI2SetBoolean(m, &(vm->vr[j]), 1, &value[i]));
         }
     }
 END:
@@ -246,11 +288,15 @@ fmi2Status fmi2SetString(fmi2Component c, const fmi2ValueReference vr[], size_t 
     GET_SYSTEM;
 
     for (size_t i = 0; i < nvr; i++) {
-        if (vr[i] >= s->nVariables) return fmi2Error;
-        VariableMapping vm = s->variables[vr[i]];
-        for (size_t j = 0; j < vm.size; j++) {
-            FMIInstance* m = s->components[vm.ci[j]]->instance;
-            CHECK_STATUS(FMI2SetString(m, &(vm.vr[j]), 1, &value[i]));
+
+        if (vr[i] == 0 || vr[i] > s->nVariables) {
+            return fmi2Error;
+        }
+        
+        const VariableMapping* vm = &s->variables[vr[i] - 1];
+        for (size_t j = 0; j < vm->size; j++) {
+            FMIInstance* m = s->components[vm->ci[j]]->instance;
+            CHECK_STATUS(FMI2SetString(m, &(vm->vr[j]), 1, &value[i]));
         }
     }
 END:

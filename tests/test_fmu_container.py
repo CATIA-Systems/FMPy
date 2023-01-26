@@ -8,12 +8,21 @@ from fmpy.validation import validate_fmu
 @pytest.mark.parametrize("parallelDoStep", [False])
 def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
 
+
+    fmi_version = '2.0'
+    real_type = 'Real'
+    integer_type = 'Integer'
+
+    # fmi_version = '3.0'
+    # real_type = 'Float64'
+    # integer_type = 'Int32'
+
     configuration = Configuration(
-        fmiVersion='3.0',
+        fmiVersion=fmi_version,
         parallelDoStep=parallelDoStep,
         variables=[
             Variable(
-                type='Float64',
+                type=real_type,
                 variability='continuous',
                 causality='input',
                 name='Float64_continuous_input',
@@ -21,7 +30,7 @@ def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
                 mapping=[('instance1', 'Float64_continuous_input')]
             ),
             Variable(
-                type='Int32',
+                type=integer_type,
                 variability='discrete',
                 causality='input',
                 name='Int32_input',
@@ -37,7 +46,7 @@ def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
                 mapping=[('instance1', 'Boolean_input')]
             ),
             Variable(
-                type='Float64',
+                type=real_type,
                 initial='calculated',
                 variability='continuous',
                 causality='output',
@@ -45,7 +54,7 @@ def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
                 mapping=[('instance2', 'Float64_continuous_output')]
             ),
             Variable(
-                type='Int32',
+                type=integer_type,
                 variability='discrete',
                 causality='output',
                 name='Int32_output',

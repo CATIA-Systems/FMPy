@@ -65,7 +65,12 @@ fmi3Instance fmi3InstantiateScheduledExecution(
     return NULL;
 }
 
-void fmi3FreeInstance(fmi3Instance instance) { }
+void fmi3FreeInstance(fmi3Instance instance) {
+
+    if (instance) {
+        freeSystem((System*)instance);
+    }
+}
 
 fmi3Status fmi3EnterInitializationMode(fmi3Instance instance,
     fmi3Boolean toleranceDefined,
@@ -75,6 +80,8 @@ fmi3Status fmi3EnterInitializationMode(fmi3Instance instance,
     fmi3Float64 stopTime) {
 
     System* s = (System*)instance;
+
+    s->time = startTime;
 
     FMIStatus status = FMIOK;
 
@@ -138,7 +145,8 @@ fmi3Status fmi3GetFloat64(fmi3Instance instance,
         const fmi3ValueReference vr = valueReferences[i];
 
         if (vr == 0) {
-            // TODO: return time
+            values[i] = s->time;
+            continue;
         }
 
         const size_t j = vr - 1;
@@ -691,10 +699,12 @@ fmi3Status fmi3DoStep(fmi3Instance instance,
 
     System* s = (System*)instance;
 
+    s->time = currentCommunicationPoint + communicationStepSize;
+
     *eventHandlingNeeded = fmi3False;
     *terminateSimulation = fmi3False;
     *earlyReturn = fmi3False;
-    *lastSuccessfulTime = currentCommunicationPoint + communicationStepSize;
+    *lastSuccessfulTime = s->time;
 
     return doStep(s, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint);
 }

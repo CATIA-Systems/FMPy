@@ -22,11 +22,6 @@ except Exception as e:
 try:
     root = Path(__file__).parent
     for file in [
-        root / 'thirdparty' / 'Reference-FMUs' / 'src' / 'FMI.c',
-        root / 'thirdparty' / 'Reference-FMUs' / 'include' / 'FMI.h',
-        root / 'thirdparty' / 'Reference-FMUs' / 'src' / 'FMI2.c',
-        root / 'thirdparty' / 'Reference-FMUs' / 'include' / 'FMI2.h',
-        root / 'src' / 'fmucontainer' / 'FMUContainer.c',
         root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack.h',
         root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack-common.c',
         root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack-common.h',
@@ -40,6 +35,14 @@ try:
         root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack-reader.h',
         root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack-writer.c',
         root / 'thirdparty' / 'mpack' / 'src' / 'mpack' / 'mpack-writer.h',
+        root / 'thirdparty' / 'Reference-FMUs' / 'src' / 'FMI.c',
+        root / 'thirdparty' / 'Reference-FMUs' / 'include' / 'FMI.h',
+        root / 'thirdparty' / 'Reference-FMUs' / 'src' / 'FMI2.c',
+        root / 'thirdparty' / 'Reference-FMUs' / 'include' / 'FMI2.h',
+        root / 'src' / 'fmucontainer' / 'fmi2Functions.c',
+        root / 'src' / 'fmucontainer' / 'fmi3Functions.c',
+        root / 'src' / 'fmucontainer' / 'FMUContainer.c',
+        root / 'src' / 'fmucontainer' / 'FMUContainer.h',
     ]:
         shutil.copyfile(src=file, dst=root / 'fmpy' / 'fmucontainer' / 'sources' / file.name)
 except Exception as e:
@@ -98,6 +101,7 @@ package_data = {
         'fmucontainer/binaries/win32/FMUContainer.dll',
         'fmucontainer/binaries/win64/FMUContainer.dll',
         'fmucontainer/documentation/LICENSE.txt',
+        'fmucontainer/sources/buildDescription.xml',
         'fmucontainer/sources/*.c',
         'fmucontainer/sources/*.h',
         'fmucontainer/templates/FMI2.xml',

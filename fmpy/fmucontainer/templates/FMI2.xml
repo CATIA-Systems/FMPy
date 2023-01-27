@@ -14,6 +14,7 @@
     <SourceFiles>
       <File name="FMI.c"/>
       <File name="FMI2.c"/>
+      <File name="fmi2Functions.c"/>
       <File name="FMUContainer.c"/>
       <File name="mpack-common.c"/>
       <File name="mpack-expect.c"/>

@@ -136,5 +136,5 @@ def test_create_fmu_container(reference_fmus_dist_dir, fmi_version, parallelDoSt
     assert result['Int32_output'][-1] == 3
     assert result['Boolean_output'][-1] == False
 
-    # compile_platform_binary(filename)
-    # simulate_fmu(filename=filename)
+    compile_platform_binary(filename)
+    simulate_fmu(filename=filename)

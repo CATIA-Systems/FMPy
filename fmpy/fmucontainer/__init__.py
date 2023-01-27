@@ -119,7 +119,7 @@ def create_fmu_container(configuration, output_filename):
     from pathlib import Path
 
     if configuration.fmiVersion not in ['2.0', '3.0']:
-        raise Exception(f"fmiVersion must be '2.0' or '3.0' but was '{ configuration.fmiVersion }'.")
+        raise Exception(f"fmiVersion must be '2.0' or '3.0' but was { configuration.fmiVersion }.")
 
     output_filename = Path(output_filename)
     base_filename, _ = os.path.splitext(output_filename)
@@ -132,8 +132,38 @@ def create_fmu_container(configuration, output_filename):
     shutil.copytree(basedir / 'documentation', unzipdir / 'documentation')
 
     os.mkdir(unzipdir / 'resources')
+    os.mkdir(unzipdir / 'sources')
 
-    shutil.copytree(basedir / 'sources', unzipdir / 'sources')
+    sources = [
+        'FMI.c',
+        'FMI.h',
+        'FMI2.c',
+        'FMI2.h',
+        'FMUContainer.c',
+        'FMUContainer.h',
+        'mpack.h',
+        'mpack-common.c',
+        'mpack-common.h',
+        'mpack-expect.c',
+        'mpack-expect.h',
+        'mpack-node.c',
+        'mpack-node.h',
+        'mpack-platform.c',
+        'mpack-platform.h',
+        'mpack-reader.c',
+        'mpack-reader.h',
+        'mpack-writer.c',
+        'mpack-writer.h',
+    ]
+
+    if configuration.fmiVersion == '2.0':
+        sources.append('fmi2Functions.c')
+    else:
+        sources.append('fmi3Functions.c')
+        sources.append('buildDescription.xml')
+
+    for file in sources:
+        shutil.copyfile(basedir / 'sources' / file, unzipdir / 'sources' / file)
 
     data = {
         'parallelDoStep': configuration.parallelDoStep,

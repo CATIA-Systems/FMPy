@@ -105,6 +105,7 @@ package_data = {
         'fmucontainer/sources/*.c',
         'fmucontainer/sources/*.h',
         'fmucontainer/templates/FMI2.xml',
+        'fmucontainer/templates/FMI3.xml',
         'modelica/FMI/package.order',
         'modelica/FMI/*.mo',
         'modelica/FMI/package.order',

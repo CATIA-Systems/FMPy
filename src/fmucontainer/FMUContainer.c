@@ -79,7 +79,7 @@ static void* instanceDoStep(void *arg) {
 #endif
 
 
-void logFMIMessage(FMIInstance *instance, FMIStatus status, const char *category, const char *message) {
+static void logFMIMessage(FMIInstance *instance, FMIStatus status, const char *category, const char *message) {
     
     System *s = instance->userData;
     

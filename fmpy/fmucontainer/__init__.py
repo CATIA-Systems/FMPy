@@ -144,8 +144,8 @@ def create_fmu_container(configuration, output_filename):
 
     component_map = {}
 
-    # platforms = []
-    #
+    platforms = []
+
     for i, component in enumerate(configuration.components):
         model_description = read_model_description(component.filename)
         model_identifier = model_description.coSimulation.modelIdentifier
@@ -160,20 +160,25 @@ def create_fmu_container(configuration, output_filename):
         }
 
         data['components'].append(c)
-    #
-    #     platforms.append(set(supported_platforms(component.filename)))
-    #
-    # platforms = platforms[0].intersection(*platforms[1:])  # platforms supported by all components
-    #
-    # for platform in platforms:
-    #     src = basedir / 'binaries' / platform
-    #     if src.exists():
-    #         shutil.copytree(src, unzipdir / 'binaries' / platform)
 
-    if configuration.fmiVersion == '2.0':
-        shutil.copytree(basedir / 'binaries' / 'win64', unzipdir / 'binaries' / 'win64')
-    else:
-        shutil.copytree(basedir / 'binaries' / 'win64', unzipdir / 'binaries' / 'x86_64-windows')
+        platforms.append(set(supported_platforms(component.filename)))
+
+    platforms = platforms[0].intersection(*platforms[1:])  # platforms supported by all components
+
+    platform_map = {
+        'darwin64': 'x86_64-darwin',
+        'linux64': 'x86_64-linux',
+        'win64': 'x86_64-windows',
+    }
+
+    for platform in platforms:
+        src = basedir / 'binaries' / platform
+        if src.exists():
+            if configuration.fmiVersion == '2.0':
+                dst = unzipdir / 'binaries' / platform
+            else:
+                dst = unzipdir / 'binaries' / platform_map[platform]
+            shutil.copytree(src, dst)
 
     variables_map = {}
 

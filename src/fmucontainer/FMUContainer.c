@@ -1,18 +1,15 @@
 /* This file is part of FMPy. See LICENSE.txt for license information. */
 
 #if defined(_WIN32)
-#include <Windows.h>
 #include <shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")
 #elif defined(__APPLE__)
 #include <libgen.h>
 #include <sys/syslimits.h>
-#include<pthread.h>
 #else
 #define _GNU_SOURCE
 #include <libgen.h>
 #include <linux/limits.h>
-#include<pthread.h>
 #endif
 
 #include <mpack.h>
@@ -367,6 +364,8 @@ FMIStatus doStep(
         case FMIBooleanType:
             CHECK_STATUS(FMI2GetBoolean(m1, &(vr1), 1, &booleanValue));
             CHECK_STATUS(FMI2SetBoolean(m2, &(vr2), 1, &booleanValue));
+            break;
+        default:
             break;
         }
     }

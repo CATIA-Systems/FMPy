@@ -19,6 +19,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "fmi3FunctionTypes.h"
+
 #include "FMI2.h"
 
 #include "FMUContainer.h"
@@ -78,7 +80,15 @@ static void* instanceDoStep(void *arg) {
 
 static void logFMIMessage(FMIInstance *instance, FMIStatus status, const char *category, const char *message) {
     
-    System *s = instance->userData;
+    if (!instance) {
+        return;
+    }
+
+    System* s = instance->userData;
+
+    if (!s || !s->logMessage) {
+        return;
+    }
     
     size_t message_len = strlen(message);
     size_t instanceName_len = strlen(instance->name);
@@ -88,16 +98,31 @@ static void logFMIMessage(FMIInstance *instance, FMIStatus status, const char *c
 
     snprintf(buf, total_len, "[%s]: %s", instance->name, message);
 
-    // TODO: use logger
-    // s->logger(s->envrionment, s->instanceName, status, category, buf);
-    printf(buf);
+    switch (s->fmiVersion) {
+    case FMIVersion2:
+        ((fmi2CallbackLogger)s->logMessage)(s->instanceEnvironment, s->instanceName, status, category, buf);
+        break;
+    case FMIVersion3:
+        ((fmi3LogMessageCallback)s->logMessage)(s->instanceEnvironment, status, category, buf);
+        break;
+    default:
+        break;
+    }
 
     free(buf);
 }
 
 static void logFunctionCall(FMIInstance *instance, FMIStatus status, const char *message, ...) {
 
+    if (!instance) {
+        return;
+    }
+
     System *s = instance->userData;
+
+    if (!s || !s->logMessage) {
+        return;
+    }
 
     char buf[FMI_MAX_MESSAGE_LENGTH];
 
@@ -107,10 +132,16 @@ static void logFunctionCall(FMIInstance *instance, FMIStatus status, const char 
     vsnprintf(buf, FMI_MAX_MESSAGE_LENGTH, message, args);
     va_end(args);
 
-    // TODO: use logger
-    // s->logger(s->envrionment, s->instanceName, (fmi2Status)status, "debug", "[%s]: %s", instance->name, buf);
-
-    printf(buf);
+    switch (s->fmiVersion) {
+    case FMIVersion2:
+        ((fmi2CallbackLogger)s->logMessage)(s->instanceEnvironment, s->instanceName, status, "logDebug", buf);
+        break;
+    case FMIVersion3:
+        ((fmi3LogMessageCallback)s->logMessage)(s->instanceEnvironment, status, "logDebug", buf);
+        break;
+    default:
+        break;
+    }
 }
 
 System* instantiateSystem(

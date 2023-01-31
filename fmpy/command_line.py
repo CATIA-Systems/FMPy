@@ -182,3 +182,8 @@ Python version:     {sys.version}
 
         if args.show_plot:
             plot_result(result=result, window_title=args.fmu_filename)
+
+
+if __name__ == '__main__':
+    print('hello')
+    main()

@@ -14,6 +14,7 @@
     <SourceFiles>
       <File name="FMI.c"/>
       <File name="FMI2.c"/>
+      <File name="fmi2Functions.c"/>
       <File name="FMUContainer.c"/>
       <File name="mpack-common.c"/>
       <File name="mpack-expect.c"/>
@@ -25,8 +26,11 @@
   </CoSimulation>
 
   <ModelVariables>
+    <ScalarVariable name="time" valueReference="0" causality="independent" variability="continuous">
+      <Real/>
+    </ScalarVariable>
 {% for variable in system.variables %}
-    <ScalarVariable name="{{variable.name}}" valueReference="{{loop.index0}}"{% if variable.variability %} variability="{{variable.variability}}"{% endif %}{% if variable.causality %} causality="{{variable.causality}}"{% endif %}{% if variable.initial %} initial="{{variable.initial}}"{% endif %}{% if variable.description %} description="{{xml_encode(variable.description)}}"{% endif %}>
+    <ScalarVariable name="{{variable.name}}" valueReference="{{loop.index}}"{% if variable.variability %} variability="{{variable.variability}}"{% endif %}{% if variable.causality %} causality="{{variable.causality}}"{% endif %}{% if variable.initial %} initial="{{variable.initial}}"{% endif %}{% if variable.description %} description="{{xml_encode(variable.description)}}"{% endif %}>
       <{{variable.type}}{% if variable.start is not none %} start="{{to_literal(variable.start)}}"{% endif %}/>
     </ScalarVariable>
 {% endfor %}
@@ -36,14 +40,14 @@
     <Outputs>
 {% for variable in system.variables %}
 {% if variable.causality == 'output' %}
-      <Unknown index="{{loop.index}}"/>
+      <Unknown index="{{loop.index + 1}}"/>
 {% endif %}
 {% endfor %}
     </Outputs>
     <InitialUnknowns>
 {% for variable in system.variables %}
 {% if variable.causality == 'output' %}
-      <Unknown index="{{loop.index}}"/>
+      <Unknown index="{{loop.index + 1}}"/>
 {% endif %}
 {% endfor %}
     </InitialUnknowns>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="3.0"
+  modelName="{{modelName}}"
+  instantiationToken=""
+{% if description %}
+  description="{{xml_encode(description)}}"
+{% endif %}
+  generationTool="FMPy {{fmpyVersion}} FMU Container"
+  generationDateAndTime="{{generationDateAndTime}}"
+  variableNamingConvention="structured">
+
+  <CoSimulation modelIdentifier="FMUContainer"/>
+
+  <ModelVariables>
+    <Float64 name="time" valueReference="0" causality="independent" variability="continuous"/>
+{% for variable in system.variables %}
+    <{{variable.type}} name="{{variable.name}}" valueReference="{{loop.index}}" {% if variable.variability %} variability="{{variable.variability}}"{% endif %}{% if variable.causality %} causality="{{variable.causality}}"{% endif %}{% if variable.initial %} initial="{{variable.initial}}"{% endif %}{% if variable.description %} description="{{xml_encode(variable.description)}}"{% endif %}{% if variable.start is not none %} start="{{to_literal(variable.start)}}"{% endif %}/>
+{% endfor %}
+  </ModelVariables>
+
+  <ModelStructure>
+{% for variable in system.variables %}
+{% if variable.causality == 'output' %}
+    <Output valueReference="{{loop.index}}"/>
+{% endif %}
+{% endfor %}
+{% for variable in system.variables %}
+{% if variable.causality == 'output' %}
+    <InitialUnknown valueReference="{{loop.index}}"/>
+{% endif %}
+{% endfor %}
+  </ModelStructure>
+
+</fmiModelDescription>

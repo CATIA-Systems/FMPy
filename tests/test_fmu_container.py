@@ -1,18 +1,27 @@
 import pytest
+from itertools import product
 from fmpy import simulate_fmu, plot_result
 from fmpy.fmucontainer import create_fmu_container, Variable, Connection, Configuration, Component
 from fmpy.util import compile_platform_binary
 from fmpy.validation import validate_fmu
 
 
-@pytest.mark.parametrize("parallelDoStep", [False, True])
-def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
+@pytest.mark.parametrize('fmi_version, parallelDoStep', product([2, 3], [False, True]))
+def test_create_fmu_container(reference_fmus_dist_dir, fmi_version, parallelDoStep):
+
+    if fmi_version == 2:
+        real_type = 'Real'
+        integer_type = 'Integer'
+    else:
+        real_type = 'Float64'
+        integer_type = 'Int32'
 
     configuration = Configuration(
+        fmiVersion=f'{fmi_version}.0',
         parallelDoStep=parallelDoStep,
         variables=[
             Variable(
-                type='Real',
+                type=real_type,
                 variability='continuous',
                 causality='input',
                 name='Float64_continuous_input',
@@ -20,7 +29,7 @@ def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
                 mapping=[('instance1', 'Float64_continuous_input')]
             ),
             Variable(
-                type='Integer',
+                type=integer_type,
                 variability='discrete',
                 causality='input',
                 name='Int32_input',
@@ -36,7 +45,7 @@ def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
                 mapping=[('instance1', 'Boolean_input')]
             ),
             Variable(
-                type='Real',
+                type=real_type,
                 initial='calculated',
                 variability='continuous',
                 causality='output',
@@ -44,7 +53,7 @@ def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
                 mapping=[('instance2', 'Float64_continuous_output')]
             ),
             Variable(
-                type='Integer',
+                type=integer_type,
                 variability='discrete',
                 causality='output',
                 name='Int32_output',
@@ -76,9 +85,9 @@ def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
     )
 
     if parallelDoStep:
-        filename = 'FeedthroughParallel.fmu'
+        filename = f'FeedthroughParallel{fmi_version}.fmu'
     else:
-        filename = 'FeedthroughSynchronous.fmu'
+        filename = f'FeedthroughSynchronous{fmi_version}.fmu'
 
     create_fmu_container(configuration, filename)
 
@@ -96,7 +105,7 @@ def test_create_fmu_container(reference_fmus_dist_dir, parallelDoStep):
 
     result = simulate_fmu(filename, output=default_start_values.keys(),
                           # debug_logging=True,
-                          # fmi_call_logger=print,
+                          fmi_call_logger=print,
                           stop_time=1, output_interval=1)
 
     for name, expected in default_start_values.items():

@@ -10,70 +10,6 @@
     <height>836</height>
    </rect>
   </property>
-  <property name="palette">
-   <palette>
-    <active>
-     <colorrole role="Base">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-     <colorrole role="Window">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-    </active>
-    <inactive>
-     <colorrole role="Base">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-     <colorrole role="Window">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-    </inactive>
-    <disabled>
-     <colorrole role="Base">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-     <colorrole role="Window">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-    </disabled>
-   </palette>
-  </property>
   <property name="acceptDrops">
    <bool>true</bool>
   </property>
@@ -1045,9 +981,6 @@
         <property name="bottomMargin">
          <number>0</number>
         </property>
-        <item row="0" column="0">
-         <widget class="QWebEngineView" name="webEngineView"/>
-        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="filesPage">
@@ -1658,6 +1591,9 @@ QToolButton::menu-button {
    <property name="movable">
     <bool>false</bool>
    </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonTextUnderIcon</enum>
+   </property>
    <property name="floatable">
     <bool>false</bool>
    </property>
@@ -1696,7 +1632,7 @@ QToolButton::menu-button {
    </property>
    <property name="icon">
     <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/settings.png</normaloff>:/icons/settings.png</iconset>
+     <normaloff>:/icons/gear.svg</normaloff>:/icons/gear.svg</iconset>
    </property>
    <property name="text">
     <string>Settings</string>
@@ -1708,7 +1644,7 @@ QToolButton::menu-button {
   <action name="actionOpen">
    <property name="icon">
     <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/folder_open.png</normaloff>:/icons/folder_open.png</iconset>
+     <normaloff>:/icons/folder-open.svg</normaloff>:/icons/folder-open.svg</iconset>
    </property>
    <property name="text">
     <string>&amp;Open</string>
@@ -1925,7 +1861,7 @@ QToolButton::menu-button {
   <action name="actionReload">
    <property name="icon">
     <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/reload-16x16.png</normaloff>:/icons/reload-16x16.png</iconset>
+     <normaloff>:/icons/arrow-clockwise.svg</normaloff>:/icons/arrow-clockwise.svg</iconset>
    </property>
    <property name="text">
     <string>&amp;Reload</string>
@@ -2075,12 +2011,6 @@ QToolButton::menu-button {
   </action>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>QWebEngineView</class>
-   <extends>QWidget</extends>
-   <header location="global">QtWebEngineWidgets/QWebEngineView</header>
-   <container>1</container>
-  </customwidget>
   <customwidget>
    <class>GraphicsLayoutWidget</class>
    <extends>QGraphicsView</extends>

@@ -1,5 +1,10 @@
 <RCC>
   <qresource prefix="icons">
+    <file>folder-open.svg</file>
+    <file>arrow-clockwise.svg</file>
+    <file>gear.svg</file>
+    <file>rotate-right.svg</file>
+    <file>folder-open-regular.svg</file>
     <file>documentation.png</file>
     <file>files.png</file>
     <file>down_arrow.png</file>

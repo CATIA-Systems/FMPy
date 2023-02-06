@@ -19,59 +19,61 @@ if __name__ == '__main__':
     # # Start the event loop.
     # app.exec_()
 
-    import sys
-    from PySide6.QtWidgets import QApplication, QPushButton, QStyleFactory
-    from PySide6.QtWebEngineWidgets import QWebEngineView
-    from PySide6 import QUrl
-
-    app = QApplication(sys.argv)
-
-    # QApplication::setStyle(QStyleFactory::create("Fusion"));
-
-    # ("Windows", "WindowsXP", "WindowsVista", "Fusion")
-    app.setStyle(QStyleFactory.create('Fusion'))
-
-    view = QWebEngineView()
-    view.load(QUrl("http://qt-project.org/"))
-    view.show()
-
-    # window = QPushButton("Push Me")
-    # window.show()
-
-    app.exec_()
-
-    ############################
-
-    # import os
     # import sys
-    # import ctypes
-    # import platform
-    #
-    # os.environ['QT_PLUGIN_PATH'] = r'E:\mambaforge\envs\pyside6\Library\lib\qt6\plugins'
-    #
-    # from PySide6 import QtCore
-    # from PySide6.QtWidgets import QApplication, QStyleFactory
-    # from fmpy.gui.MainWindow import MainWindow
-    #
-    # if os.name == 'nt' and int(platform.release()) >= 8:
-    #     ctypes.windll.shcore.SetProcessDpiAwareness(True)
-    #
-    # QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+    # from PySide6.QtWidgets import QApplication, QPushButton, QStyleFactory
+    # from PySide6.QtWebEngineWidgets import QWebEngineView
+    # from PySide6 import QUrl
     #
     # app = QApplication(sys.argv)
     #
-    # print(QStyleFactory.keys())
+    # # QApplication::setStyle(QStyleFactory::create("Fusion"));
     #
+    # # ("Windows", "WindowsXP", "WindowsVista", "Fusion")
+    # app.setStyle(QStyleFactory.create('Fusion'))
+    #
+    # view = QWebEngineView()
+    # view.load(QUrl("http://qt-project.org/"))
+    # view.show()
+    #
+    # # window = QPushButton("Push Me")
+    # # window.show()
+    #
+    # app.exec_()
+
+    ############################
+
+    import os
+    import sys
+    import ctypes
+    import platform
+
+    os.environ['QT_PLUGIN_PATH'] = r'E:\mambaforge\envs\pyside6\Library\lib\qt6\plugins'
+
+    from PySide6 import QtCore
+    from PySide6.QtWidgets import QApplication, QStyleFactory
+    from fmpy.gui.MainWindow import MainWindow
+
+    if os.name == 'nt' and int(platform.release()) >= 8:
+        ctypes.windll.shcore.SetProcessDpiAwareness(True)
+
+    QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+
+    # sys.argv += ['-platform', 'windows:darkmode=2']
+
+    app = QApplication(sys.argv)
+
+    print(QStyleFactory.keys())
+
     # app.setStyle(QStyleFactory.create('WindowsVista'))
-    # # app.setStyle(QStyleFactory.create('Fusion'))
-    #
-    # window = MainWindow()
-    # window.show()
-    #
-    # for i, v in enumerate(sys.argv[1:]):
-    #     if i > 0:
-    #         window = MainWindow()
-    #         window.show()
-    #     window.load(v)
-    #
-    # sys.exit(app.exec_())
+    # app.setStyle('Fusion')
+
+    window = MainWindow()
+    window.show()
+
+    for i, v in enumerate(sys.argv[1:]):
+        if i > 0:
+            window = MainWindow()
+            window.show()
+        window.load(v)
+
+    sys.exit(app.exec_())

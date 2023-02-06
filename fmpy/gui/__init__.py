@@ -37,4 +37,4 @@ def compile_resources():
     if os.path.isfile(icons_qrc):
         if not os.path.isfile(icons_rc_py) or os.path.getmtime(icons_qrc) > os.path.getmtime(icons_rc_py):
             print("RCC'ing %s" % icons_qrc)
-            os.system(r'E:\mambaforge\envs\pyside6\Library\lib\qt6\rcc.exe %s -o %s' % (icons_qrc, icons_rc_py))
+            os.system(r'E:\mambaforge\envs\pyside6\Library\lib\qt6\rcc.exe %s -o %s -g python' % (icons_qrc, icons_rc_py))

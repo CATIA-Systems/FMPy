@@ -56,7 +56,7 @@ if __name__ == '__main__':
     if os.name == 'nt' and int(platform.release()) >= 8:
         ctypes.windll.shcore.SetProcessDpiAwareness(True)
 
-    QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+    # QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 
     # sys.argv += ['-platform', 'windows:darkmode=2']
 

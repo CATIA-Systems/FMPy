@@ -15,7 +15,7 @@ from PySide6.QtCore import QCoreApplication, QDir, Qt, QUrl, QSettings, QPoint, 
     QPointF, QBuffer, QIODevice
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, \
     QMenu, QMessageBox, QProgressDialog, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, \
-    QGraphicsTextItem, QGraphicsPathItem, QFileSystemModel
+    QGraphicsTextItem, QGraphicsPathItem, QFileSystemModel, QSpacerItem, QSizePolicy
 from PySide6.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, QPolygonF, QPainterPath
 
 from PySide6.QtCore import Signal as pyqtSignal
@@ -134,24 +134,75 @@ class MainWindow(QMainWindow):
         self.ui.dockWidget.hide()
 
         # toolbar
+
+        # stop time
+        layout = QVBoxLayout()
+        layout.setContentsMargins(20, 0, 20, 0)
+        layout.setSpacing(0)
+
+        layout.addStretch()
+
         self.stopTimeLineEdit = QLineEdit("1")
         self.stopTimeLineEdit.setToolTip("Stop time")
-        self.stopTimeLineEdit.setFixedWidth(50)
+        self.stopTimeLineEdit.setFixedWidth(60)
         self.stopTimeValidator = QDoubleValidator(self)
         self.stopTimeValidator.setBottom(0)
         self.stopTimeLineEdit.setValidator(self.stopTimeValidator)
 
-        self.ui.toolBar.addWidget(self.stopTimeLineEdit)
+        layout.addWidget(self.stopTimeLineEdit)
 
-        spacer = QWidget(self)
-        spacer.setFixedWidth(10)
-        self.ui.toolBar.addWidget(spacer)
+        layout.addStretch()
+
+        label = QLabel("Stop Time")
+        label.setAlignment(Qt.AlignCenter)
+        label.setEnabled(False)
+        layout.addWidget(label)
+
+        layout.addStretch()
+
+        widget = QWidget()
+        widget.setLayout(layout)
+
+        # label.setStyleSheet("background-color:red;")
+        widget.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        widget.setFixedWidth(100)
+        self.ui.toolBar.addWidget(widget)
+
+        # spacer = QWidget(self)
+        # spacer.setFixedWidth(10)
+        # self.ui.toolBar.addWidget(spacer)
+
+        # interface type
+        layout = QVBoxLayout()
+        layout.setContentsMargins(10, 0, 10, 4)
+        layout.setSpacing(0)
+
+        layout.addStretch()
 
         self.fmiTypeComboBox = QComboBox(self)
         self.fmiTypeComboBox.addItem("Co-Simulation")
         self.fmiTypeComboBox.setToolTip("FMI type")
         self.fmiTypeComboBox.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-        self.ui.toolBar.addWidget(self.fmiTypeComboBox)
+
+        layout.addWidget(self.fmiTypeComboBox)
+
+        layout.addStretch()
+
+        label = QLabel("Interface Type")
+        label.setEnabled(False)
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+
+        widget = QWidget()
+        widget.setLayout(layout)
+        self.ui.toolBar.addWidget(widget)
+
+        # spacerItem = QWidget()  # QSpacerItem(10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        # spacerItem.setMinimumWidth(10)
+        # spacerItem.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # spacerItem.setStyleSheet("background-color:red;");
+        #
+        # self.ui.toolBar.addWidget(spacerItem)
 
         # disable widgets
         self.ui.actionLoadStartValues.setEnabled(False)

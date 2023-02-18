@@ -297,9 +297,13 @@ class ValidationError(Exception):
     """
 
     def __init__(self, problems):
-        message = "Failed to validate modelDescription.xml:\n\n- " + '\n- '.join(problems)
         self.problems = problems
-        super(ValidationError, self).__init__(message)
+
+    def __str__(self):
+        message = "Failed to validate modelDescription.xml:"
+        for problem in self.problems:
+            message += f"\n- {problem}"
+        return message
 
 
 def _copy_attributes(element, object, attributes=None):

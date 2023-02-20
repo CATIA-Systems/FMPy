@@ -8,6 +8,7 @@ FMI2GetBooleanScalar
 FMI2SetReal
 FMI2SetInteger
 FMI2SetBoolean
+FMI2SetString
 FMI2EnterInitializationMode
 FMI2ExitInitializationMode
 FMI2DoStep

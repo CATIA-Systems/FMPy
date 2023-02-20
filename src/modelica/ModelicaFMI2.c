@@ -36,6 +36,10 @@ void FMU_FMI2SetBoolean(void* instance, const int vr[], int nvr, const int value
     if (nvr > 0) CALL(FMI2SetBoolean((FMIInstance*)instance, vr, nvr, value));
 }
 
+void FMU_FMI2SetString(void* instance, const int vr[], int nvr, const char* value[]) {
+    if (nvr > 0) CALL(FMI2SetString((FMIInstance*)instance, vr, nvr, value));
+}
+
 void FMU_FMI2SetupExperiment(void* instance,
     int toleranceDefined,
     double tolerance,

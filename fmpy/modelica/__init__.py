@@ -90,7 +90,7 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
 
     for variable in model_description.modelVariables:
 
-        if variable.type not in {'Float64', 'Int32', 'Real', 'Integer', 'Boolean'}:
+        if variable.type not in {'Float64', 'Int32', 'Real', 'Integer', 'Boolean', 'String'}:
             continue
 
         if variable.causality == 'parameter':
@@ -133,6 +133,8 @@ def import_fmu_to_modelica(fmu_path, model_path, interface_type):
     def start_value(variable):
         if variable.type == 'Boolean':
             return 'true' if variable.start in ['true', '1'] else 'false'
+        elif variable.type == 'String':
+            return f'"{variable.start}"'
         else:
             return str(variable.start)
 

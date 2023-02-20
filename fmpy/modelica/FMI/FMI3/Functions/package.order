@@ -11,6 +11,7 @@ FMI3GetBooleanScalar
 FMI3SetFloat64
 FMI3SetInt32
 FMI3SetBoolean
+FMI3SetString
 FMI3UpdateDiscreteStates
 FMI3EnterContinuousTimeMode
 FMI3SetTime

@@ -22,6 +22,8 @@ EXPORT void FMU_FMI2SetInteger(void* instance, const int vr[], int nvr, const in
 
 EXPORT void FMU_FMI2SetBoolean(void* instance, const int vr[], int nvr, const int value[]);
 
+EXPORT void FMU_FMI2SetString(void* instance, const int vr[], int nvr, const char* value[]);
+
 EXPORT void FMU_FMI2SetupExperiment(void* instance,
     int toleranceDefined,
     double tolerance,

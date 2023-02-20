@@ -61,6 +61,10 @@ void FMU_FMI3SetBoolean(void* instance, const int valueReferences[], int nValueR
     if (nValueReferences > 0) CALL(FMI3SetBoolean((FMIInstance*)instance, valueReferences, nValueReferences, (fmi3Boolean*)values, nValueReferences));
 }
 
+void FMU_FMI3SetString(void* instance, const int valueReferences[], int nValueReferences, const char* values[]) {
+    if (nValueReferences > 0) CALL(FMI3SetString((FMIInstance*)instance, valueReferences, nValueReferences, (fmi3String*)values, nValueReferences));
+}
+
 void FMU_FMI3UpdateDiscreteStates(void* instance, int* valuesOfContinuousStatesChanged, double* nextEventTime) {
 
     fmi3Boolean _discreteStatesNeedUpdate;

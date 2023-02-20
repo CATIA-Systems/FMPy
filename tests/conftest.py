@@ -80,4 +80,7 @@ def dymola(executable, work_dir):
         # ensure, that MSL is loaded, as functions like exportSSP do not trigger demand loading
         dymola.openModelFile('Modelica')
 
+        # build 64-bit binaries
+        dymola.setVariable('Advanced.CompileWith64', 2)
+
         yield dymola

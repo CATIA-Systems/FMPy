@@ -34,6 +34,8 @@ EXPORT void FMU_FMI3SetInt32(void* instance, const int valueReferences[], int nV
 
 EXPORT void FMU_FMI3SetBoolean(void* instance, const int valueReferences[], int nValueReferences, const int values[]);
 
+EXPORT void FMU_FMI3SetString(void* instance, const int valueReferences[], int nValueReferences, const char* values[]);
+
 EXPORT void FMU_FMI3UpdateDiscreteStates(void* instance, int* valuesOfContinuousStatesChanged, double* nextEventTime);
 
 /***************************************************

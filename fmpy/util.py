@@ -854,7 +854,7 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
                 output = subprocess.check_output(f"wsl wslpath -a '{include_dir}'")
                 include_dir = output.decode('utf-8').strip()
 
-            command = f'{cc} -c {compiler_options} -I. -I{include_dir} {definitions} {sources}'
+            command = f"{cc} -c {compiler_options} -I. -I'{include_dir}' {definitions} {sources}"
             command += f' && {cc} -static-libgcc -shared -o{target} *.o -lm'
 
         else:

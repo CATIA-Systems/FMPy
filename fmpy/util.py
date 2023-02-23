@@ -767,11 +767,23 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
 
     if compiler is None:
         if target_platform in ['win32', 'win64', 'x86-windows', 'x86_64-windows']:
-            compiler = 'vc'
-        elif target_platform in ['darwin64', 'x86_64-darwin', 'aarch64-darwin']:
-            compiler = 'clang'
+            if len(visual_c_versions()) > 0:
+                compiler = 'vc'
+
+    if compiler is None:
+        if fmpy.system == 'darwin':
+            if os.system('clang --version') == 0:
+                compiler = 'clang'
+            elif os.system('gcc --version') == 0:
+                compiler = 'gcc'
         else:
-            compiler = 'gcc'
+            if os.system('gcc --version') == 0:
+                compiler = 'gcc'
+            elif os.system('clang --version') == 0:
+                compiler = 'clang'
+
+    if compiler is None:
+        raise Exception("No C compiler found.")
 
     include_dir = os.path.join(os.path.dirname(__file__), 'c-code')
 
@@ -809,15 +821,23 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
     sources = ' '.join(source_files)
     model_identifier = build_configuration.modelIdentifier
 
-    if compiler == 'vc':
-
+    if target_platform in ['linux64', 'x86_64-linux']:
+        target = model_identifier + '.so'
+    elif target_platform in ['win64', 'x86_64-windows']:
         target = model_identifier + '.dll'
+    elif target_platform in ['darwin64', 'x86_64-darwin', 'x86_64-aarch64']:
+        target = model_identifier + '.dylib'
+
+    if compiler == 'vc':
+        definitions = ' '.join(f' /D{d}' for d in preprocessor_definitions)
+    else:
+        definitions = ' '.join(f' -D{d}' for d in preprocessor_definitions)
+
+    if compiler == 'vc':
 
         vc_versions = visual_c_versions()
 
         toolset = 'x86_amd64' if target_platform in ['win64', 'x86_64-windows'] else 'x86'
-
-        definitions = ' '.join(f' /D{d}' for d in preprocessor_definitions)
 
         if compiler_options is None:
             compiler_options = '/Oy /Ob1 /Oi /LD'
@@ -839,12 +859,9 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
 
     elif compiler == 'gcc':
 
-        definitions = ' '.join(f' -D{d}' for d in preprocessor_definitions)
+        cc = 'gcc'
 
-        if target_platform in ['linux64', 'x86_64-linux']:
-
-            cc = 'gcc'
-            target = model_identifier + '.so'
+        if target_platform in ['linux64', 'x86_64-linux']:  # GCC on native Linux or WSL
 
             if compiler_options is None:
                 compiler_options = '-fPIC'
@@ -854,28 +871,40 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
                 output = subprocess.check_output(f"wsl wslpath -a '{include_dir}'")
                 include_dir = output.decode('utf-8').strip()
 
-            command = f"{cc} -c {compiler_options} -I. -I'{include_dir}' {definitions} {sources}"
-            command += f' && {cc} -static-libgcc -shared -o{target} *.o -lm'
+            linker_options = '-static-libgcc -lm'
+
+        elif target_platform in ['win64', 'x86_64-windows']:  # MinGW
+
+            if compiler_options is None:
+                compiler_options = ''
+
+            linker_options = ''
 
         else:
             raise Exception(f'The target platform "{target_platform}" is not supported for the gcc compiler.')
 
+        command = f'{cc} -c {compiler_options} -I. -I"{include_dir}" {definitions} {sources}'
+        command += f' && {cc} -shared {linker_options} -o{target} *.o'
+
     elif compiler == 'clang':
 
-        definitions = ' '.join(f' -D{d}' for d in preprocessor_definitions)
-
-        if target_platform in ['darwin64', 'x86_64-darwin']:
-
-            target = f'{model_identifier}.dylib'
+        if target_platform in ['darwin64', 'x86_64-darwin']:  # LLVM on macOS
 
             if compiler_options is None:
                 compiler_options = '-arch x86_64 -arch arm64'
 
-            command = f'clang -c {compiler_options} -I. -I{include_dir} {definitions} {sources}'
-            command += f' && clang -shared -arch x86_64 -arch arm64 -o{target} *.o -lm'
+            linker_options = '-arch x86_64 -arch arm64 -lm'
+
+        elif target_platform in ['win64', 'x86_64-windows']:  # LLVM on Windows
+
+            compiler_options = ''
+            linker_options = '-lshlwapi'
 
         else:
             raise Exception(f'The target platform "{target_platform}" is not supported for the clang compiler.')
+
+        command = f'clang -c {compiler_options} -I. -I"{include_dir}" {definitions} {sources}'
+        command += f' && clang -shared {linker_options} -o{target} *.o'
 
     else:
         raise Exception(f'The compiler "{compiler}" is not supported.')
@@ -891,18 +920,19 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
     dll_path = os.path.join(sources_dir, target)
 
     if status != 0 or not os.path.isfile(dll_path):
-        raise Exception('Failed to compile shared library')
+        raise Exception(f"Failed to compile {target}.")
 
     return str(dll_path)
 
 
-def compile_platform_binary(filename, output_filename=None, target_platform=None, compiler_options=None):
+def compile_platform_binary(filename, output_filename=None, target_platform=None, compiler_options=None, compiler=None):
     """ Compile the binary of an FMU for the current platform and add it to the FMU
 
     Parameters:
         filename:          filename of the source code FMU
         output_filename:   filename of the FMU with the compiled binary (None: overwrite existing FMU)
         compiler_options:  custom compiler options
+        compiler:          the compiler to use ('vc' , 'gcc', or 'clang')
     """
 
     from . import read_model_description, extract, platform, platform_tuple
@@ -920,6 +950,7 @@ def compile_platform_binary(filename, output_filename=None, target_platform=None
     binary = compile_dll(model_description=model_description,
                          sources_dir=join(unzipdir, 'sources'),
                          target_platform=target_platform,
+                         compiler=compiler,
                          compiler_options=compiler_options)
 
     unzipdir2 = extract(filename)

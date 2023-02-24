@@ -1,5 +1,5 @@
 from PySide6.QtCore import QAbstractItemModel, QModelIndex, Qt, QSortFilterProxyModel
-from PySide6.QtGui import QPixmap, QFont
+from PySide6.QtGui import QPixmap, QFont, QIcon
 from PySide6.QtCore import Signal as pyqtSignal
 
 from ..model_description import ScalarVariable
@@ -72,7 +72,7 @@ class VariablesModel(QAbstractItemModel):
             if type.startswith(('enumeration', 'int', 'uint')):
                 type = 'integer'
 
-            return QPixmap(':/icons/%s_%s.png' % (type, causality))
+            return QIcon(':/icons/%s-%s.svg' % (type, causality))
 
         elif role == Qt.CheckStateRole and column == 'Plot':
             return Qt.Checked if v in self.selectedVariables else Qt.Unchecked

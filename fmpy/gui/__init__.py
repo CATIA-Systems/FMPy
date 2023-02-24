@@ -28,7 +28,8 @@ def compile_resources():
             if os.path.isfile(ui_file):
                 if not os.path.isfile(py_file) or os.path.getmtime(ui_file) > os.path.getmtime(py_file):
                     print("UIC'ing %s" % ui_file)
-                    os.system(r'E:\mambaforge\envs\pyside6\Library\lib\qt6\uic.exe %s -o %s -g python' % (ui_file, py_file))
+                    # os.system(r'E:\mambaforge\envs\pyside6\Library\lib\qt6\uic.exe %s -o %s -g python' % (ui_file, py_file))
+                    os.system(r'/Users/tors10/mambaforge/envs/pyside6/lib/qt6/uic %s -o %s -g python --from-imports' % (ui_file, py_file))
 
     icons_qrc = os.path.join(gui_dir, 'icons', 'icons.qrc')
     icons_rc_py = os.path.join(generated_dir, 'icons_rc.py')
@@ -37,4 +38,5 @@ def compile_resources():
     if os.path.isfile(icons_qrc):
         if not os.path.isfile(icons_rc_py) or os.path.getmtime(icons_qrc) > os.path.getmtime(icons_rc_py):
             print("RCC'ing %s" % icons_qrc)
-            os.system(r'E:\mambaforge\envs\pyside6\Library\lib\qt6\rcc.exe %s -o %s -g python' % (icons_qrc, icons_rc_py))
+            # os.system(r'E:\mambaforge\envs\pyside6\Library\lib\qt6\rcc.exe %s -o %s -g python' % (icons_qrc, icons_rc_py))
+            os.system(r'/Users/tors10/mambaforge/envs/pyside6/lib/qt6/rcc %s -o %s -g python' % (icons_qrc, icons_rc_py))

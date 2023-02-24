@@ -93,6 +93,10 @@ class MainWindow(QMainWindow):
         # save from garbage collection
         self.windows.append(self)
 
+        QIcon.setFallbackSearchPaths(QIcon.fallbackSearchPaths() + [":icons/dark"])
+        QIcon.setThemeName('dark')
+        # icon = QIcon.fromTheme("open")
+
         # state
         self.filename = None
         self.unzipdir = None
@@ -110,6 +114,8 @@ class MainWindow(QMainWindow):
         # UI
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
+        # self.ui.actionOpen.setIcon(icon)
 
         self.showColumnActions = {}
 
@@ -455,6 +461,10 @@ class MainWindow(QMainWindow):
         self.contextMenu.exec_(currentView.mapToGlobal(point))
 
     def load(self, filename):
+
+        # icon1 = QIcon.fromTheme("open")
+        #
+        # QIcon.setThemeName('light')
 
         if not self.isVisible():
             self.show()
@@ -1066,6 +1076,15 @@ class MainWindow(QMainWindow):
         return [x for x in seq if not (x in seen or seen_add(x))]
 
     def validateFMU(self):
+
+        if QIcon.themeName() == 'light':
+            QIcon.setThemeName('dark')
+        else:
+            QIcon.setThemeName('light')
+
+        self.ui.toolBar.update()
+
+        return
 
         from ..validation import validate_fmu
 

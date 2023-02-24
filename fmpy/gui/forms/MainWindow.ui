@@ -653,7 +653,7 @@
                 <property name="minimumSize">
                  <size>
                   <width>70</width>
-                  <height>0</height>
+                  <height>24</height>
                  </size>
                 </property>
                 <property name="maximumSize">
@@ -703,7 +703,7 @@
                 <property name="minimumSize">
                  <size>
                   <width>90</width>
-                  <height>0</height>
+                  <height>26</height>
                  </size>
                 </property>
                 <property name="currentIndex">
@@ -760,7 +760,7 @@
                 <property name="minimumSize">
                  <size>
                   <width>70</width>
-                  <height>0</height>
+                  <height>24</height>
                  </size>
                 </property>
                 <property name="maximumSize">
@@ -825,7 +825,7 @@
                    <property name="minimumSize">
                     <size>
                      <width>70</width>
-                     <height>0</height>
+                     <height>24</height>
                     </size>
                    </property>
                    <property name="maximumSize">
@@ -891,7 +891,7 @@
                 <property name="minimumSize">
                  <size>
                   <width>70</width>
-                  <height>0</height>
+                  <height>24</height>
                  </size>
                 </property>
                 <property name="maximumSize">
@@ -1133,7 +1133,7 @@ QToolButton:checked, QToolButton:hover:pressed {
              </property>
              <property name="icon">
               <iconset resource="../icons/icons.qrc">
-               <normaloff>:/icons/debug-16x16.png</normaloff>:/icons/debug-16x16.png</iconset>
+               <normaloff>:/icons/bug.svg</normaloff>:/icons/bug.svg</iconset>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -1159,7 +1159,7 @@ QToolButton:checked, QToolButton:hover:pressed {
              </property>
              <property name="icon">
               <iconset resource="../icons/icons.qrc">
-               <normaloff>:/icons/info-16x16.png</normaloff>:/icons/info-16x16.png</iconset>
+               <normaloff>:/icons/info.svg</normaloff>:/icons/info.svg</iconset>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -1185,7 +1185,7 @@ QToolButton:checked, QToolButton:hover:pressed {
              </property>
              <property name="icon">
               <iconset resource="../icons/icons.qrc">
-               <normaloff>:/icons/warning-16x16.png</normaloff>:/icons/warning-16x16.png</iconset>
+               <normaloff>:/icons/warning.svg</normaloff>:/icons/warning.svg</iconset>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -1211,7 +1211,7 @@ QToolButton:checked, QToolButton:hover:pressed {
              </property>
              <property name="icon">
               <iconset resource="../icons/icons.qrc">
-               <normaloff>:/icons/error-16x16.png</normaloff>:/icons/error-16x16.png</iconset>
+               <normaloff>:/icons/error.svg</normaloff>:/icons/error.svg</iconset>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -1274,7 +1274,7 @@ QToolButton:checked, QToolButton:hover:pressed {
      <x>0</x>
      <y>0</y>
      <width>1125</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -1474,7 +1474,7 @@ QToolButton::menu-button {
           </property>
           <property name="icon">
            <iconset resource="../icons/icons.qrc">
-            <normaloff>:/icons/filter.png</normaloff>:/icons/filter.png</iconset>
+            <normaloff>:/icons/filter.svg</normaloff>:/icons/filter.svg</iconset>
           </property>
           <property name="checkable">
            <bool>true</bool>
@@ -1500,7 +1500,7 @@ QToolButton::menu-button {
           </property>
           <property name="icon">
            <iconset resource="../icons/icons.qrc">
-            <normaloff>:/icons/list-16x16.png</normaloff>:/icons/list-16x16.png</iconset>
+            <normaloff>:/icons/list.svg</normaloff>:/icons/list.svg</iconset>
           </property>
           <property name="checkable">
            <bool>true</bool>
@@ -1542,6 +1542,12 @@ QToolButton::menu-button {
            </property>
            <property name="selectionMode">
             <enum>QAbstractItemView::ExtendedSelection</enum>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>16</width>
+             <height>16</height>
+            </size>
            </property>
           </widget>
          </item>
@@ -1585,15 +1591,25 @@ QToolButton::menu-button {
    </widget>
   </widget>
   <widget class="QToolBar" name="toolBar">
+   <property name="palette">
+    <palette>
+     <active/>
+     <inactive/>
+     <disabled/>
+    </palette>
+   </property>
    <property name="windowTitle">
     <string>toolBar</string>
+   </property>
+   <property name="autoFillBackground">
+    <bool>true</bool>
    </property>
    <property name="movable">
     <bool>false</bool>
    </property>
    <property name="iconSize">
     <size>
-     <width>56</width>
+     <width>24</width>
      <height>24</height>
     </size>
    </property>
@@ -1638,7 +1654,7 @@ QToolButton::menu-button {
    </property>
    <property name="icon">
     <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/gear.svg</normaloff>:/icons/gear.svg</iconset>
+     <normaloff>:/icons/settings.png</normaloff>:/icons/settings.png</iconset>
    </property>
    <property name="text">
     <string>Settings</string>
@@ -1649,8 +1665,7 @@ QToolButton::menu-button {
   </action>
   <action name="actionOpen">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/folder-open.svg</normaloff>:/icons/folder-open.svg</iconset>
+    <iconset theme="open"/>
    </property>
    <property name="text">
     <string>&amp;Open</string>
@@ -1668,7 +1683,7 @@ QToolButton::menu-button {
    </property>
    <property name="icon">
     <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/graph.svg</normaloff>:/icons/graph.svg</iconset>
+     <normaloff>:/icons/results.svg</normaloff>:/icons/results.svg</iconset>
    </property>
    <property name="text">
     <string>Results</string>
@@ -1803,7 +1818,7 @@ QToolButton::menu-button {
    </property>
    <property name="icon">
     <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/list-task.svg</normaloff>:/icons/list-task.svg</iconset>
+     <normaloff>:/icons/log.svg</normaloff>:/icons/log.svg</iconset>
    </property>
    <property name="text">
     <string>Log</string>
@@ -1867,7 +1882,7 @@ QToolButton::menu-button {
   <action name="actionReload">
    <property name="icon">
     <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/arrow-clockwise.svg</normaloff>:/icons/arrow-clockwise.svg</iconset>
+     <normaloff>:/icons/reload.svg</normaloff>:/icons/reload.svg</iconset>
    </property>
    <property name="text">
     <string>&amp;Reload</string>
@@ -1989,10 +2004,10 @@ QToolButton::menu-button {
    </property>
    <property name="icon">
     <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/book.svg</normaloff>:/icons/book.svg</iconset>
+     <normaloff>:/icons/doc.svg</normaloff>:/icons/doc.svg</iconset>
    </property>
    <property name="text">
-    <string>Docs</string>
+    <string>Doc</string>
    </property>
   </action>
   <action name="actionShowFiles">
@@ -2001,10 +2016,13 @@ QToolButton::menu-button {
    </property>
    <property name="icon">
     <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/file-earmark-zip.svg</normaloff>:/icons/file-earmark-zip.svg</iconset>
+     <normaloff>:/icons/contents.svg</normaloff>:/icons/contents.svg</iconset>
    </property>
    <property name="text">
     <string>Contents</string>
+   </property>
+   <property name="toolTip">
+    <string>Show archive contents</string>
    </property>
   </action>
   <action name="actionOpenUnzipDirectory">

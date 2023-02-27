@@ -26,6 +26,9 @@ jobs:
 
   - bash: |
       source activate fmpy-env
+      which python
+      python --version
+      printf "import _ctypes\nprint(dir(_ctypes))" | python
       python build_cvode.py
     displayName: Build CVode binaries
 

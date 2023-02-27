@@ -100,7 +100,7 @@ class Recorder(object):
             if sv.name in variableNames:
                 type = sv.type
                 if type == 'Enumeration':
-                    type = 'Integer' if modelDescription.fmiVersion in {'1.0', '2.0'} else 'Int32'
+                    type = 'Integer' if modelDescription.fmiVersion in {'1.0', '2.0'} else 'Int64'
                 names, vrs, shapes, n_values, getter = self.info.get(type, ([], [], [], 0, getattr(self.fmu, 'get' + type)))
                 names.append(sv.name)
                 vrs.append(sv.valueReference)
@@ -500,7 +500,7 @@ def apply_start_values(fmu, model_description, start_values, settable=None):
             if model_description.fmiVersion in {'1.0', '2.0'}:
                 setter = getattr(fmu, 'setInteger')
             else:
-                setter = getattr(fmu, 'setInt32')
+                setter = getattr(fmu, 'setInt64')
         else:
             setter = getattr(fmu, 'set' + variable.type)
 

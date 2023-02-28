@@ -16,7 +16,7 @@ jobs:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
 
-  - bash: conda create --yes --name fmpy-env -c conda-forge python=3.8
+  - bash: conda create --yes --name fmpy-env -c conda-forge python=3.10
     displayName: Create Anaconda environment
 
   - bash: |

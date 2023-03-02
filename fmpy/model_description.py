@@ -259,10 +259,14 @@ class Unknown(object):
 @attrs(eq=False)
 class ModelDescription(object):
 
-    guid = attrib(type=str, default=None, repr=False)
     fmiVersion = attrib(type=str, default=None)
     modelName = attrib(type=str, default=None)
+    guid = attrib(type=str, default=None, repr=False)
     description = attrib(type=str, default=None, repr=False)
+    author = attrib(type=str, default=None, repr=False)
+    version = attrib(type=str, default=None, repr=False)
+    copyright = attrib(type=str, default=None, repr=False)
+    license = attrib(type=str, default=None, repr=False)
     generationTool = attrib(type=str, default=None, repr=False)
     generationDateAndTime = attrib(type=str, default=None, repr=False)
     variableNamingConvention = attrib(type=str, default='flat', repr=False)
@@ -465,8 +469,19 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
             raise ValidationError(problems)
 
     modelDescription = ModelDescription()
-    _copy_attributes(root, modelDescription, ['fmiVersion', 'guid', 'modelName', 'description', 'generationTool',
-                                              'generationDateAndTime', 'variableNamingConvention'])
+
+    _copy_attributes(root, modelDescription, [
+        'fmiVersion',
+        'modelName',
+        'guid',
+        'description',
+        'author',
+        'version',
+        'copyright',
+        'license',
+        'generationTool',
+        'generationDateAndTime',
+        'variableNamingConvention'])
 
     if is_fmi3:
         modelDescription.guid = root.get('instantiationToken')

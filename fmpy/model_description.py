@@ -610,7 +610,7 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
             simple_type = SimpleType(
                 name=t.get('name'),
                 type=first.tag[:-len('Type')] if is_fmi1 else first.tag,
-                **first.attrib
+                **dict(first.attrib)
             )
 
             # add enumeration items
@@ -631,7 +631,7 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
                              'EnumerationType'}:
                 continue
 
-            simple_type = SimpleType(type=t.tag[:-4], **t.attrib)
+            simple_type = SimpleType(type=t.tag[:-4], **dict(t.attrib))
 
             # add enumeration items
             for item in t.findall('Item'):

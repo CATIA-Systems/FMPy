@@ -3,7 +3,6 @@
 import sys
 import os
 from ctypes import *
-import _ctypes
 from typing import Union, IO, List
 
 __version__ = '0.3.15'
@@ -34,14 +33,16 @@ if sys.platform.startswith('win'):
     calloc = cdll.msvcrt.calloc
     realloc = cdll.msvcrt.realloc
     free = cdll.msvcrt.free
-    freeLibrary = _ctypes.FreeLibrary
+    freeLibrary = windll.kernel32.FreeLibrary
 else:
     from ctypes.util import find_library
     libc = CDLL(find_library("c"))
     calloc = libc.calloc
     realloc = libc.realloc
     free = libc.free
-    freeLibrary = _ctypes.dlclose
+    freeLibrary = cdll.LoadLibrary(None).dlclose
+
+freeLibrary.argtypes = [c_void_p]
 
 calloc.argtypes = [c_size_t, c_size_t]
 calloc.restype = c_void_p

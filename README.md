@@ -22,7 +22,7 @@ Several options are available:
 - Install with from PyPI: `python -m pip install fmpy[complete]`
 - [Install a development build](docs/faq.md)
 
-If you don't have Python on your machine you can install [Anaconda Python](https://www.anaconda.com/download/).
+If you don't have Python on your machine you can install [Miniforge](https://github.com/conda-forge/miniforge).
 
 ## Start the Graphical User Interface
 

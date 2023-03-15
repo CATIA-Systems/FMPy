@@ -240,11 +240,11 @@ def create_fmu_container(configuration, output_filename):
                 variable['start'] = int(v.start)
             elif v.type == 'Boolean':
                 if isinstance(v.start, str):
-                    if v.start.lower() not in ['true', 'false']:
+                    if v.start.lower() not in ['false', 'true', '0', '1']:
                         raise Exception(f'The start value "{v.start}" for variable "{v.name}"'
                                         ' could not be converted to Boolean.')
                     else:
-                        variable['start'] = v.start.lower() == 'true'
+                        variable['start'] = v.start.lower() in ['1', 'true']
                 else:
                     variable['start'] = bool(v.start)
             elif v.type == 'String':

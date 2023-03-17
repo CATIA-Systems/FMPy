@@ -1,7 +1,7 @@
 import pytest
 from itertools import product
 from fmpy import simulate_fmu, plot_result
-from fmpy.fmucontainer import create_fmu_container, Variable, Connection, Configuration, Component
+from fmpy.fmucontainer import create_fmu_container, Variable, Connection, Configuration, Component, DefaultExperiment
 from fmpy.util import compile_platform_binary
 from fmpy.validation import validate_fmu
 from fmpy.model_description import Unit, BaseUnit, SimpleType, DisplayUnit, Item
@@ -31,6 +31,12 @@ def test_create_fmu_container(reference_fmus_dist_dir, fmi_version, parallelDoSt
                 Item(name='Option 2', value=2, description="Second option")
             ])
         ],
+        defaultExperiment=DefaultExperiment(
+            startTime='0',
+            stopTime='10',
+            tolerance='1e-5',
+            stepSize='1e-2'
+        ),
         variables=[
             Variable(
                 type=real_type,

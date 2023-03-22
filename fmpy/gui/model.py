@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, pyqtSignal, QSortFilterProxyModel
-from PyQt5.QtGui import QPixmap, QFont
+from PyQt5.QtGui import QPixmap, QFont, QIcon
 
 from ..model_description import ScalarVariable
 
@@ -71,7 +71,7 @@ class VariablesModel(QAbstractItemModel):
             if type.startswith(('enumeration', 'int', 'uint')):
                 type = 'integer'
 
-            return QPixmap(':/icons/%s_%s.png' % (type, causality))
+            return QIcon(f':/icons/float-{causality}.svg')
 
         elif role == Qt.CheckStateRole and column == 'Plot':
             return Qt.Checked if v in self.selectedVariables else Qt.Unchecked

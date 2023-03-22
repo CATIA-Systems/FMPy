@@ -1,0 +1,10 @@
+[Icon Theme]
+Name= Dark
+Comment=An example icon light theme
+
+Directories= test,
+
+[test]
+Size=24
+Context=Actions
+Type=Fixed

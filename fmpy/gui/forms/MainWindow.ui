@@ -1341,7 +1341,7 @@ QToolButton:checked, QToolButton:hover:pressed {
      <x>0</x>
      <y>0</y>
      <width>1125</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -1680,8 +1680,7 @@ QToolButton::menu-button {
   </widget>
   <action name="actionSimulate">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/play.png</normaloff>:/icons/play.png</iconset>
+    <iconset theme="play"/>
    </property>
    <property name="text">
     <string>Simulate</string>
@@ -1695,8 +1694,7 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/settings.png</normaloff>:/icons/settings.png</iconset>
+    <iconset theme="gear"/>
    </property>
    <property name="text">
     <string>Settings</string>
@@ -1707,8 +1705,7 @@ QToolButton::menu-button {
   </action>
   <action name="actionOpen">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/folder_open.png</normaloff>:/icons/folder_open.png</iconset>
+    <iconset theme="folder-open"/>
    </property>
    <property name="text">
     <string>&amp;Open</string>
@@ -1725,8 +1722,7 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/stats.png</normaloff>:/icons/stats.png</iconset>
+    <iconset theme="graph"/>
    </property>
    <property name="text">
     <string>Results</string>
@@ -1860,8 +1856,7 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/log.png</normaloff>:/icons/log.png</iconset>
+    <iconset theme="list-task"/>
    </property>
    <property name="text">
     <string>Log</string>
@@ -1924,8 +1919,7 @@ QToolButton::menu-button {
   </action>
   <action name="actionReload">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/reload-16x16.png</normaloff>:/icons/reload-16x16.png</iconset>
+    <iconset theme="arrow-clockwise"/>
    </property>
    <property name="text">
     <string>&amp;Reload</string>
@@ -2046,8 +2040,7 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/documentation.png</normaloff>:/icons/documentation.png</iconset>
+    <iconset theme="book"/>
    </property>
    <property name="text">
     <string>Show documentation</string>
@@ -2058,8 +2051,7 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/files.png</normaloff>:/icons/files.png</iconset>
+    <iconset theme="file-earmark-zip"/>
    </property>
    <property name="text">
     <string>Show archive contents</string>

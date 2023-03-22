@@ -91,6 +91,9 @@ class MainWindow(QMainWindow):
         # save from garbage collection
         self.windows.append(self)
 
+        # QIcon.setFallbackSearchPaths(QIcon.fallbackSearchPaths() + [":icons/light"])
+        QIcon.setThemeName('dark')
+
         # state
         self.filename = None
         self.unzipdir = None

@@ -218,7 +218,7 @@ jobs:
       downloadPath: windows
 
   - bash: |
-      pip3 install setuptools
+      pip3 install wheel
       unzip -o linux/*.whl -d merged
       unzip -o macosx/*.whl -d merged
       unzip -o windows/*.whl -d merged

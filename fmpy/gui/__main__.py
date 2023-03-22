@@ -10,6 +10,7 @@ if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication
     from fmpy.gui.MainWindow import MainWindow
 
+
     if os.name == 'nt' and int(platform.release()) >= 8:
         ctypes.windll.shcore.SetProcessDpiAwareness(True)
 
@@ -22,6 +23,7 @@ if __name__ == '__main__':
     app.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)
 
     window = MainWindow()
+
     window.show()
 
     for i, v in enumerate(sys.argv[1:]):

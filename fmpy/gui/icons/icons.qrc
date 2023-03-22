@@ -1,5 +1,15 @@
 <RCC>
   <qresource prefix="icons">
+    <file>light/test/arrow-clockwise.svg</file>
+    <file>light/test/book.svg</file>
+    <file>light/test/file-earmark-zip.svg</file>
+    <file>light/test/folder-open.svg</file>
+    <file>light/test/gear.svg</file>
+    <file>light/test/graph.svg</file>
+    <file>light/test/list-task.svg</file>
+    <file>light/test/open.svg</file>
+    <file>light/test/play.svg</file>
+    <file>light/test/stop.png</file>
     <file>dark/test/arrow-clockwise.svg</file>
     <file>dark/test/book.svg</file>
     <file>dark/test/file-earmark-zip.svg</file>

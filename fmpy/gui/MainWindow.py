@@ -12,7 +12,7 @@ import os
 import sys
 
 from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QStandardPaths, \
-    QPointF, QBuffer, QIODevice
+    QPointF, QBuffer, QIODevice, QEvent
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, \
     QMenu, QMessageBox, QProgressDialog, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, \
     QGraphicsTextItem, QGraphicsPathItem, QFileSystemModel
@@ -26,6 +26,8 @@ from fmpy.util import can_simulate
 
 from fmpy.gui.model import VariablesTableModel, VariablesTreeModel, VariablesModel, VariablesFilterModel
 from fmpy.gui.log import Log, LogMessagesFilterProxyModel
+
+from fmpy.gui import darkdetect
 
 QCoreApplication.setApplicationVersion(fmpy.__version__)
 QCoreApplication.setOrganizationName("CATIA-Systems")
@@ -92,7 +94,11 @@ class MainWindow(QMainWindow):
         self.windows.append(self)
 
         # QIcon.setFallbackSearchPaths(QIcon.fallbackSearchPaths() + [":icons/light"])
-        QIcon.setThemeName('dark')
+
+        if darkdetect.isLight():
+            QIcon.setThemeName('light')
+        else:
+            QIcon.setThemeName('dark')
 
         # state
         self.filename = None
@@ -783,7 +789,7 @@ class MainWindow(QMainWindow):
                                                  debugLogging=self.ui.debugLoggingCheckBox.isChecked(),
                                                  fmiLogging=self.ui.logFMICallsCheckBox.isChecked())
 
-        self.ui.actionSimulate.setIcon(QIcon(':/icons/stop.png'))
+        self.ui.actionSimulate.setIcon(QIcon.fromTheme("stop"))
         self.ui.actionSimulate.setToolTip("Stop simulation")
         self.ui.actionSimulate.triggered.disconnect(self.startSimulation)
         self.ui.actionSimulate.triggered.connect(self.simulationThread.stop)
@@ -809,7 +815,7 @@ class MainWindow(QMainWindow):
         # update UI
         self.ui.actionSimulate.triggered.disconnect(self.simulationThread.stop)
         self.ui.actionSimulate.triggered.connect(self.startSimulation)
-        self.ui.actionSimulate.setIcon(QIcon(':/icons/play.png'))
+        self.ui.actionSimulate.setIcon(QIcon.fromTheme("play"))
         self.ui.actionSimulate.setToolTip("Start simulation")
         self.plotUpdateTimer.stop()
         self.simulationProgressBar.setVisible(False)

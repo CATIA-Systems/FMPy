@@ -218,14 +218,16 @@ jobs:
       downloadPath: windows
 
   - bash: |
+      pip3 install setuptools
       unzip -o linux/*.whl -d merged
       unzip -o macosx/*.whl -d merged
       unzip -o windows/*.whl -d merged
       ls -al ./merged
       wheel pack merged
+      ls -al .
     displayName: Merge Python Wheels
 
   - task: PublishBuildArtifacts@1
     inputs:
-      pathtoPublish: merged
+      pathtoPublish: "*.whl"
       artifactName: merged

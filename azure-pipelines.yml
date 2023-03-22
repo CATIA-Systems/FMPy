@@ -41,7 +41,7 @@ jobs:
 
   - bash: |
       source activate fmpy-env
-      python setup.py bdist_wheel --universal
+      python setup.py bdist_wheel
       for f in dist/FMPy-*.whl; do
         pip install $f --no-deps -vv
       done
@@ -100,7 +100,7 @@ jobs:
 
   - bash: |
       source activate fmpy-env
-      python setup.py bdist_wheel --universal
+      python setup.py bdist_wheel
       for f in dist/FMPy-*.whl; do
         pip install $f --no-deps -vv
       done
@@ -159,7 +159,7 @@ jobs:
 
   - script: |
       call activate fmpy-env
-      python setup.py bdist_wheel --universal
+      python setup.py bdist_wheel
     displayName: Build wheel
 
   - task: PublishPipelineArtifact@1
@@ -221,11 +221,11 @@ jobs:
       unzip -o linux/*.whl -d merged
       unzip -o macosx/*.whl -d merged
       unzip -o windows/*.whl -d merged
-      cd merged
-      zip -r FMPy-x.x.x-py3-none-any.whl .
+      ls -al ./merged
+      wheel pack merged
     displayName: Merge Python Wheels
 
   - task: PublishBuildArtifacts@1
     inputs:
-      pathtoPublish: merged/FMPy-x.x.x-py3-none-any.whl
+      pathtoPublish: merged
       artifactName: merged

@@ -1,6 +1,6 @@
-import os.path
 import pytest
 from itertools import product
+from os import PathLike
 from fmpy import simulate_fmu, plot_result
 from fmpy.fmucontainer import create_fmu_container, Variable, Connection, Configuration, Component
 from fmpy.util import compile_platform_binary
@@ -8,7 +8,7 @@ from fmpy.validation import validate_fmu
 
 
 @pytest.mark.parametrize('fmi_version, parallelDoStep', product([2, 3], [False, True]))
-def test_create_fmu_container(reference_fmus_dist_dir, fmi_version: int, parallelDoStep: bool):
+def test_create_fmu_container(reference_fmus_dist_dir: PathLike, fmi_version: int, parallelDoStep: bool):
 
     if fmi_version == 2:
         real_type = 'Real'
@@ -71,11 +71,11 @@ def test_create_fmu_container(reference_fmus_dist_dir, fmi_version: int, paralle
         ],
         components=[
             Component(
-                filename=os.path.join(reference_fmus_dist_dir, fmi_version_str, 'Feedthrough.fmu'),
+                filename=reference_fmus_dist_dir / fmi_version_str / 'Feedthrough.fmu',
                 name='instance1'
             ),
             Component(
-                filename=os.path.join(reference_fmus_dist_dir, fmi_version_str, 'Feedthrough.fmu'),
+                filename=reference_fmus_dist_dir / fmi_version_str / 'Feedthrough.fmu',
                 name='instance2'
             ),
         ],

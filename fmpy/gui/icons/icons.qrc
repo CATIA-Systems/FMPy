@@ -1,5 +1,12 @@
 <RCC>
   <qresource prefix="icons">
+    <file>dark/qcheckbox-checked.svg</file>
+    <file>dark/qcheckbox-checked_tick.svg</file>
+    <file>dark/qcheckbox-checked-disabled.svg</file>
+    <file>dark/qcheckbox-intermediary.svg</file>
+    <file>dark/qradiobox-checked.svg</file>
+    <file>dark/qradiobox-checked-disabled.svg</file>
+    <file>dark/qradiobox-unchecked-disabled.svg</file>
     <file>light/test/arrow-clockwise.svg</file>
     <file>light/test/book.svg</file>
     <file>light/test/file-earmark-zip.svg</file>

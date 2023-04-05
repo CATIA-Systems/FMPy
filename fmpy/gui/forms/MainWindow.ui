@@ -10,70 +10,6 @@
     <height>836</height>
    </rect>
   </property>
-  <property name="palette">
-   <palette>
-    <active>
-     <colorrole role="Base">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-     <colorrole role="Window">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-    </active>
-    <inactive>
-     <colorrole role="Base">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-     <colorrole role="Window">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-    </inactive>
-    <disabled>
-     <colorrole role="Base">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-     <colorrole role="Window">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-    </disabled>
-   </palette>
-  </property>
   <property name="acceptDrops">
    <bool>true</bool>
   </property>
@@ -83,6 +19,129 @@
   <property name="windowIcon">
    <iconset resource="../icons/icons.qrc">
     <normaloff>:/icons/app_icon.ico</normaloff>:/icons/app_icon.ico</iconset>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">/*
+text: #dfe1e5;
+light: #2b2d30
+dark: #1e1f22
+menu active: #2e436e
+*/
+
+QMainWindow {
+    background-color: #2b2d30;
+}
+
+QMainWindow::separator
+{
+    background-color: tranparent;
+    width: 2;
+    border: none;
+}
+
+QDockWidget &gt; QWidget {
+	border-right: 1px solid #1e1f22;
+}
+
+QLineEdit, QComboBox {
+    background-color: #2b2d30;
+	padding-top: 2px;
+    /* This QLineEdit fix  103, 111 */
+    padding-bottom: 2px;
+    /* This QLineEdit fix  103, 111 */
+    padding-left: 4px;
+    padding-right: 4px;
+    border-style: solid;
+}
+
+QToolButton#selectInputButton {
+    background-color: #2b2d30;
+}
+
+/*
+QRadioButton::indicator {
+	width: 11px; 
+	height: 11px;
+}
+
+QRadioButton::indicator::unchecked { 
+	image: url(:/icons/dark/qradiobox-unchecked-disabled.svg);
+}
+
+QRadioButton::indicator::checked {
+	image: url(:/icons/dark/qradiobox-checked.svg);
+}
+*/
+
+/*
+QCheckBox::indicator {
+	width: 11px; 
+	height: 11px;
+}
+
+QCheckBox::indicator::unchecked { 
+	image: url(:/icons/dark/qcheckbox-checked-disabled.svg);
+}
+
+QCheckBox::indicator::checked {
+	image: url(:/icons/dark/qcheckbox-checked_tick.svg);
+}
+*/
+
+QWidget {
+    /*background-color: #3c3f41;*/
+	color: #dfe1e5;
+}
+
+QMenuBar  {
+    background-color: #3c3f41;
+}
+
+QMenu {
+	color: #dfe1e5;
+    background-color: #2b2d30;
+}
+
+QMenu::item:selected{
+ 	background-color: #2e436e;
+} 
+
+QToolBar  {
+    background-color: #3c3f41;
+	border: 1px solid #1e1f22;
+}
+
+QAbstractScrollArea {
+    background-color: #2b2d30;
+}
+
+QMenu::separator
+{
+    height: 1px;
+    background-color: #393b40;
+    color: #ffffff;
+    padding-left: 4px;
+    margin-left: 10px;
+    margin-right: 5px;
+}
+
+QHeaderView::section {
+    background-color: #2b2d30;	
+}
+
+QGraphicsView#plotWidget  {
+    background-color: red;
+}
+
+QStatusBar {
+    background-color: #2b2d30;
+	border-top: 1px solid #1e1f22;
+}
+
+QWidget#centralwidget {
+    background-color: #1e1f22;
+}
+</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_12">
@@ -1338,7 +1397,7 @@ QToolButton:checked, QToolButton:hover:pressed {
      <x>0</x>
      <y>0</y>
      <width>1125</width>
-     <height>24</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -1418,21 +1477,18 @@ QToolButton:checked, QToolButton:hover:pressed {
   </widget>
   <widget class="QStatusBar" name="statusBar">
    <property name="styleSheet">
-    <string notr="true">QStatusBar {
-	border-top: 1px solid palette(midlight);
-}
-
-QStatusBar::item {
+    <string notr="true">QStatusBar::item {
 	border: none;
 }
 </string>
    </property>
+   <property name="sizeGripEnabled">
+    <bool>false</bool>
+   </property>
   </widget>
   <widget class="QDockWidget" name="dockWidget">
    <property name="styleSheet">
-    <string notr="true">QDockWidget &gt; QWidget {
-	border-right: 1px solid palette(midlight);
-}</string>
+    <string notr="true"/>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
@@ -1677,7 +1733,8 @@ QToolButton::menu-button {
   </widget>
   <action name="actionSimulate">
    <property name="icon">
-    <iconset theme="play"/>
+    <iconset theme="play">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Simulate</string>
@@ -1691,7 +1748,8 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="gear"/>
+    <iconset theme="gear">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Settings</string>
@@ -1702,7 +1760,8 @@ QToolButton::menu-button {
   </action>
   <action name="actionOpen">
    <property name="icon">
-    <iconset theme="folder-open"/>
+    <iconset theme="folder-open">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Open</string>
@@ -1719,7 +1778,8 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="graph"/>
+    <iconset theme="graph">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Results</string>
@@ -1853,7 +1913,8 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="list-task"/>
+    <iconset theme="list-task">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Log</string>
@@ -1916,7 +1977,8 @@ QToolButton::menu-button {
   </action>
   <action name="actionReload">
    <property name="icon">
-    <iconset theme="arrow-clockwise"/>
+    <iconset theme="arrow-clockwise">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Reload</string>
@@ -2037,7 +2099,8 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="book"/>
+    <iconset theme="book">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Show documentation</string>
@@ -2048,7 +2111,8 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="file-earmark-zip"/>
+    <iconset theme="file-earmark-zip">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Show archive contents</string>

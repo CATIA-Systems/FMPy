@@ -95,10 +95,13 @@ class MainWindow(QMainWindow):
 
         # QIcon.setFallbackSearchPaths(QIcon.fallbackSearchPaths() + [":icons/light"])
 
-        if darkdetect.isLight():
-            QIcon.setThemeName('light')
-        else:
-            QIcon.setThemeName('dark')
+        # QIcon.setThemeName('light')
+        QIcon.setThemeName('dark')
+
+        # if darkdetect.isLight():
+        #     QIcon.setThemeName('light')
+        # else:
+        #     QIcon.setThemeName('dark')
 
         # state
         self.filename = None
@@ -863,6 +866,13 @@ class MainWindow(QMainWindow):
 
     def updatePlotLayout(self):
 
+        import pyqtgraph as pg
+
+        pg.setConfigOption('background', '#2b2d30')
+        pg.setConfigOption('foreground', '#dfe1e5')
+
+        self.ui.plotWidget.setBackground('#1e1f22')
+
         self.ui.plotWidget.clear()
 
         self.curves[:] = []
@@ -874,7 +884,7 @@ class MainWindow(QMainWindow):
         else:
             stop_time = 1.0
 
-        pen = (0, 0, 255)
+        pen = (100, 100, 255)
 
         for variable in self.selectedVariables:
 

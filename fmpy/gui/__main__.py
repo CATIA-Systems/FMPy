@@ -18,6 +18,8 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
 
+    QApplication.setStyle("fusion")
+
     # app.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
     app.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps)

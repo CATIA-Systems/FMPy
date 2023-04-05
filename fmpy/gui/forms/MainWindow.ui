@@ -26,9 +26,22 @@ text: #dfe1e5;
 light: #2b2d30
 dark: #1e1f22
 menu active: #2e436e
-button selected: #4e5157 (grey)
-button selected: #3574f0 (blue)
+button checked: #4e5157 (grey)
+button checked: #3574f0 (blue)
 */
+
+QGroupBox  {
+    border-top: 1px solid gray;
+    margin-top: 10px;
+	padding-top: 10px;
+}
+
+QGroupBox::title  {
+	padding-top: 3px;
+	padding-right: 5px;
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+}
 
 QMainWindow {
     background-color: #2b2d30;
@@ -36,31 +49,45 @@ QMainWindow {
 
 QMainWindow::separator
 {
-    background-color: tranparent;
-    width: 2;
-    border: none;
+    background-color: #1e1f22;
+    width: 1;
 }
 
-QDockWidget &gt; QWidget {
-	border-right: 1px solid #1e1f22;
-}
-
-QLineEdit, QComboBox {
-    background-color: #2b2d30;
+QLineEdit, QComboBox, QPushButton {
+    background-color: transparent;
 	padding-top: 2px;
-    /* This QLineEdit fix  103, 111 */
     padding-bottom: 2px;
-    /* This QLineEdit fix  103, 111 */
     padding-left: 4px;
     padding-right: 4px;
     border-style: solid;
+	border-radius: 2px;
+	border: 1px solid #595c51;
+}
+
+QWidget#centralwidget QToolButton:checked {
+    background-color: #3574f0;
+}
+
+QWidget#centralwidget QToolButton {
+	height: 17px;
+   border: 1px solid #595c51;
+   border-radius: 2px;
+   margin: 3px;
+}
+
+QWidget#centralwidget:pressed, QToolButton:hover {
+    background-color: #4e5157;
+}
+
+QWidget#centralwidget QToolButton:checked {
+    background-color: #4e5157;
 }
 
 QToolButton#selectInputButton {
     background-color: #2b2d30;
 }
 
-QToolButton {
+QToolBar QToolButton {
     border-radius: 5px;
 	margin: 3px;
 }
@@ -69,7 +96,7 @@ QToolButton:pressed, QToolButton:hover {
     background-color: #4e5157;
 }
 
-QToolButton:checked {
+QToolBar QToolButton:checked {
     background-color: #3574f0;
 }
 
@@ -108,8 +135,13 @@ QWidget {
 	color: #dfe1e5;
 }
 
+QWidget:disabled {
+    /*background-color: #3c3f41;*/
+	color: #595c51;
+}
+
 QMenuBar  {
-    background-color: #3c3f41;
+    background-color: #2b2d30;
 }
 
 QMenu {
@@ -138,13 +170,12 @@ QAbstractScrollArea {
     background-color: #2b2d30;
 }
 
-QMenu::separator
-{
+QMenu::separator {
     height: 1px;
     background-color: #393b40;
     color: #ffffff;
-    padding-left: 4px;
-    margin-left: 10px;
+    padding-left: 0px;
+    margin-left: 0px;
     margin-right: 5px;
 	margin-top: 4px;
 	margin-bottom: 4px;
@@ -165,6 +196,67 @@ QStatusBar {
 
 QWidget#centralwidget {
     background-color: #1e1f22;
+}
+
+QScrollBar:vertical {
+	border-color: rgba(255, 255, 255, 0%);
+	border-width: 1px;
+	border-style: solid;
+   background-color: rgba(255, 255, 255, 0%);
+	width: 10px;
+	margin: 0;
+}
+
+QScrollBar:vertical:hover {
+	border-color: rgba(255, 255, 255, 5%);
+   background-color: rgba(255, 255, 255, 5%);
+}
+
+QScrollBar::handle:vertical {
+   background-color: rgba(255, 255, 255, 20%);
+	min-height: 25px;
+}
+
+QScrollBar::handle:vertical:hover {
+   background-color: rgba(255, 255, 255, 25%);
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+	background: none;
+}
+
+QScrollBar:horizontal {
+	border-color: rgba(255, 255, 255, 0%);
+	border-width: 1px;
+	border-style: solid;
+   background-color: rgba(255, 255, 255, 0%);
+	height: 10px;
+	margin: 0;
+}
+
+QScrollBar:horizontal:hover {
+	border-color: rgba(255, 255, 255, 5%);
+   background-color: rgba(255, 255, 255, 5%);
+}
+
+QScrollBar::handle:horizontal {
+   background-color: rgba(255, 255, 255, 20%);
+	min-width: 25px;
+}
+
+QScrollBar::handle:horizontal:hover {
+   background-color: rgba(255, 255, 255, 25%);
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+	background: none;
+/*
+	border: 2px solid black;
+	background-color: #32CC99;
+    height: 25px;
+	subcontrol-position: top;
+	subcontrol-origin: margin;
+*/
 }
 </string>
   </property>
@@ -1173,25 +1265,6 @@ QWidget#centralwidget {
         </property>
         <item>
          <widget class="QWidget" name="logWidget" native="true">
-          <property name="styleSheet">
-           <string notr="true">QToolButton {
-     padding: 1px;
-	 border: 1px solid transparent;
-	 border-radius: 2px;
-     background: transparent;
-	height: 14px;
-}
-
-QToolButton:hover {
-		border: 1px solid  rgba( 92, 163, 255, 20% );
-		background-color: rgba( 92, 163, 255, 10% );
-}
-
-QToolButton:checked, QToolButton:hover:pressed {
-		border: 1px solid  rgba( 92, 163, 255, 50% );
-		background-color: rgba( 92, 163, 255, 25% );
-}</string>
-          </property>
           <layout class="QHBoxLayout" name="horizontalLayout_11">
            <property name="spacing">
             <number>4</number>
@@ -1222,9 +1295,6 @@ QToolButton:checked, QToolButton:hover:pressed {
              <property name="text">
               <string>clear</string>
              </property>
-             <property name="autoRaise">
-              <bool>true</bool>
-             </property>
             </widget>
            </item>
            <item>
@@ -1247,22 +1317,10 @@ QToolButton:checked, QToolButton:hover:pressed {
              <property name="checked">
               <bool>true</bool>
              </property>
-             <property name="autoRaise">
-              <bool>true</bool>
-             </property>
             </widget>
            </item>
            <item>
             <widget class="QLineEdit" name="logFilterLineEdit">
-             <property name="styleSheet">
-              <string notr="true">QLineEdit {
-     border: 1px solid #ddd;
-	 border-radius: 2px;
-     padding: 1px 5px 2px 5px;
-     background: transparent;
-	font-size: 11px;
- }</string>
-             </property>
              <property name="placeholderText">
               <string>filter messages</string>
              </property>
@@ -1292,9 +1350,6 @@ QToolButton:checked, QToolButton:hover:pressed {
              <property name="toolButtonStyle">
               <enum>Qt::ToolButtonTextBesideIcon</enum>
              </property>
-             <property name="autoRaise">
-              <bool>true</bool>
-             </property>
             </widget>
            </item>
            <item>
@@ -1317,9 +1372,6 @@ QToolButton:checked, QToolButton:hover:pressed {
              </property>
              <property name="toolButtonStyle">
               <enum>Qt::ToolButtonTextBesideIcon</enum>
-             </property>
-             <property name="autoRaise">
-              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -1344,9 +1396,6 @@ QToolButton:checked, QToolButton:hover:pressed {
              <property name="toolButtonStyle">
               <enum>Qt::ToolButtonTextBesideIcon</enum>
              </property>
-             <property name="autoRaise">
-              <bool>true</bool>
-             </property>
             </widget>
            </item>
            <item>
@@ -1369,9 +1418,6 @@ QToolButton:checked, QToolButton:hover:pressed {
              </property>
              <property name="toolButtonStyle">
               <enum>Qt::ToolButtonTextBesideIcon</enum>
-             </property>
-             <property name="autoRaise">
-              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -1534,25 +1580,6 @@ QToolButton:checked, QToolButton:hover:pressed {
      </property>
      <item row="0" column="0">
       <widget class="QWidget" name="filterWidget" native="true">
-       <property name="styleSheet">
-        <string notr="true">QToolButton {
-     padding: 1px;
-	 border: 1px solid transparent;
-	 border-radius: 2px;
-     background: transparent;
-	height: 14px;
-}
-
-QToolButton:hover {
-		border: 1px solid  rgba( 92, 163, 255, 20% );
-		background-color: rgba( 92, 163, 255, 10% );
-}
-
-QToolButton:checked, QToolButton:hover:pressed {
-		border: 1px solid  rgba( 92, 163, 255, 50% );
-		background-color: rgba( 92, 163, 255, 25% );
-}</string>
-       </property>
        <layout class="QHBoxLayout" name="horizontalLayout_5">
         <property name="spacing">
          <number>4</number>
@@ -1571,16 +1598,6 @@ QToolButton:checked, QToolButton:hover:pressed {
         </property>
         <item>
          <widget class="QLineEdit" name="filterLineEdit">
-          <property name="styleSheet">
-           <string notr="true">QLineEdit {
-     border: 1px solid #ddd;
-	 border-radius: 2px;
-     padding: 1px 5px 2px 5px;
-     background: transparent;
-	font-size: 11px;
- }
-</string>
-          </property>
           <property name="placeholderText">
            <string>filter variables</string>
           </property>
@@ -1593,26 +1610,6 @@ QToolButton:checked, QToolButton:hover:pressed {
          <widget class="QToolButton" name="filterToolButton">
           <property name="toolTip">
            <string>Filter variables</string>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">
-QToolButton {
-	width: 20px;
-	padding-right: 10px;
-}
-
-QToolButton::menu-arrow {
-    image: url(:/icons/down_arrow.png);
-}
-
-QToolButton::menu-button {
-    border: 1px transparent #76797C;
-    border-top-right-radius: 6px;
-    border-bottom-right-radius: 6px;
-    width: 16px;
-    outline: none;
-}
-</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -1639,9 +1636,6 @@ QToolButton::menu-button {
          <widget class="QToolButton" name="tableViewToolButton">
           <property name="toolTip">
            <string>Toggle list view</string>
-          </property>
-          <property name="styleSheet">
-           <string notr="true"/>
           </property>
           <property name="icon">
            <iconset resource="../icons/icons.qrc">

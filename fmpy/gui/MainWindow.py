@@ -884,7 +884,7 @@ class MainWindow(QMainWindow):
         else:
             stop_time = 1.0
 
-        pen = (100, 100, 255)
+        pen = '#3574f0'
 
         for variable in self.selectedVariables:
 

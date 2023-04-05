@@ -167,6 +167,10 @@ QToolBar  {
 }
 
 QAbstractScrollArea {
+    background-color: #1e1f22;
+}
+
+QDockWidget QAbstractScrollArea {
     background-color: #2b2d30;
 }
 

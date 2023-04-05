@@ -26,6 +26,8 @@ text: #dfe1e5;
 light: #2b2d30
 dark: #1e1f22
 menu active: #2e436e
+button selected: #4e5157 (grey)
+button selected: #3574f0 (blue)
 */
 
 QMainWindow {
@@ -56,6 +58,19 @@ QLineEdit, QComboBox {
 
 QToolButton#selectInputButton {
     background-color: #2b2d30;
+}
+
+QToolButton {
+    border-radius: 5px;
+	margin: 3px;
+}
+
+QToolButton:pressed, QToolButton:hover {
+    background-color: #4e5157;
+}
+
+QToolButton:checked {
+    background-color: #3574f0;
 }
 
 /*
@@ -114,8 +129,9 @@ QMenu::item:selected {
 } 
 
 QToolBar  {
-    background-color: #3c3f41;
-	border: 1px solid #1e1f22;
+    background-color: #2b2d30;
+	border-top: 1px solid #1e1f22;
+	border-bottom: 1px solid #1e1f22;
 }
 
 QAbstractScrollArea {

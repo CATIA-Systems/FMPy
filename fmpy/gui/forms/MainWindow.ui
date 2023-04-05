@@ -98,11 +98,18 @@ QMenuBar  {
 }
 
 QMenu {
+	border: 1px solid #393b40;
 	color: #dfe1e5;
     background-color: #2b2d30;
+	padding: 5px;
 }
 
-QMenu::item:selected{
+QMenu::item {
+	padding: 4px;
+} 
+
+QMenu::item:selected {
+	border-radius: 5px;
  	background-color: #2e436e;
 } 
 
@@ -123,6 +130,8 @@ QMenu::separator
     padding-left: 4px;
     margin-left: 10px;
     margin-right: 5px;
+	margin-top: 4px;
+	margin-bottom: 4px;
 }
 
 QHeaderView::section {

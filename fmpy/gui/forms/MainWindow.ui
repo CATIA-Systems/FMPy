@@ -30,6 +30,13 @@ button checked: #4e5157 (grey)
 button checked: #3574f0 (blue)
 */
 
+QToolTip {
+	padding: 5px;
+	color: #dfe1e5;
+	background-color: #393b40;
+	border: 1px solid #43454a;
+}
+
 QGroupBox  {
     border-top: 1px solid gray;
     margin-top: 10px;

@@ -611,7 +611,8 @@ def simulate_fmu(filename,
                  use_event_mode: bool = False,
                  initialize: bool = True,
                  terminate: bool = True,
-                 fmu_state: Union[bytes, c_void_p] = None) -> SimulationResult:
+                 fmu_state: Union[bytes, c_void_p] = None,
+                 set_stop_time: bool = True) -> SimulationResult:
     """ Simulate an FMU
 
     Parameters:
@@ -645,6 +646,7 @@ def simulate_fmu(filename,
         initialize             initialize the FMU
         terminate              terminate the FMU
         fmu_state              the FMU state or serialized FMU state to initialize the FMU
+        set_stop_time          communicate the stop time to the FMU instance
     Returns:
         result                 a structured numpy array that contains the result
     """
@@ -753,9 +755,9 @@ def simulate_fmu(filename,
 
     # simulate_fmu the FMU
     if fmi_type == 'ModelExchange':
-        result = simulateME(model_description, fmu, start_time, stop_time, solver, step_size, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, record_events, timeout, step_finished, validate)
+        result = simulateME(model_description, fmu, start_time, stop_time, solver, step_size, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, record_events, timeout, step_finished, validate, set_stop_time)
     elif fmi_type == 'CoSimulation':
-        result = simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, timeout, step_finished, set_input_derivatives, use_event_mode, early_return_allowed, validate, initialize, terminate)
+        result = simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, timeout, step_finished, set_input_derivatives, use_event_mode, early_return_allowed, validate, initialize, terminate, set_stop_time)
 
     if fmu_instance is None:
         fmu.freeInstance()
@@ -867,7 +869,7 @@ def settable_in_initialization_mode(variable):
            or (variable.variability != 'constant' and variable.initial == 'exact')
 
 
-def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_size, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, record_events, timeout, step_finished, validate):
+def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_size, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, record_events, timeout, step_finished, validate, set_stop_time):
 
     if relative_tolerance is None:
         relative_tolerance = 1e-5
@@ -897,7 +899,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
     if is_fmi1:
         fmu.setTime(time)
     elif is_fmi2:
-        fmu.setupExperiment(startTime=start_time, stopTime=stop_time)
+        fmu.setupExperiment(startTime=start_time, stopTime=stop_time if set_stop_time else None)
 
     input = Input(fmu, model_description, input_signals)
 
@@ -949,7 +951,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
         start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_instantiated)
 
-        fmu.enterInitializationMode(startTime=start_time, stopTime=stop_time)
+        fmu.enterInitializationMode(startTime=start_time, stopTime=stop_time if set_stop_time else None)
 
         input.apply(time)
 
@@ -1164,7 +1166,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
     return recorder.result()
 
 
-def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, timeout, step_finished, set_input_derivatives, use_event_mode, early_return_allowed, validate, initialize, terminate):
+def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, timeout, step_finished, set_input_derivatives, use_event_mode, early_return_allowed, validate, initialize, terminate, set_stop_time):
 
     if set_input_derivatives and not model_description.coSimulation.canInterpolateInputs:
         raise Exception("Parameter set_input_derivatives is True but the FMU cannot interpolate inputs.")
@@ -1183,15 +1185,13 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
 
     if initialize:
 
-        if is_fmi2:
-            fmu.setupExperiment(tolerance=relative_tolerance, startTime=time, stopTime=stop_time)
-
         # initialize the model
         if is_fmi1:
             start_values = apply_start_values(fmu, model_description, start_values, settable=has_start_value)
             input.apply(time)
-            fmu.initialize(tStart=time, stopTime=stop_time)
+            fmu.initialize(tStart=time, stopTime=stop_time if set_stop_time else None)
         elif is_fmi2:
+            fmu.setupExperiment(tolerance=relative_tolerance, startTime=time, stopTime=stop_time if set_stop_time else None)
             start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_instantiated)
             fmu.enterInitializationMode()
             start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_initialization_mode)
@@ -1199,7 +1199,7 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
             fmu.exitInitializationMode()
         else:
             start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_instantiated)
-            fmu.enterInitializationMode(tolerance=relative_tolerance, startTime=time, stopTime=stop_time)
+            fmu.enterInitializationMode(tolerance=relative_tolerance, startTime=time, stopTime=stop_time if set_stop_time else None)
             start_values = apply_start_values(fmu, model_description, start_values, settable=settable_in_initialization_mode)
             input.apply(time)
             fmu.exitInitializationMode()

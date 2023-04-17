@@ -1,69 +1,67 @@
-import unittest
-from unittest import skipIf
+import os.path
+
+import pytest
 from fmpy.examples.coupled_clutches import simulate_coupled_clutches
 from fmpy.examples.custom_input import simulate_custom_input
 from fmpy.examples.efficient_loops import run_efficient_loop
 from fmpy.examples.parameter_variation import run_experiment
+from fmpy.examples.continue_simulation import continue_simulation
 from fmpy import platform
 import numpy as np
-import sys
 
 
-class ExamplesTest(unittest.TestCase):
+def test_coupled_clutches_example():
 
-    @classmethod
-    def setUpClass(cls):
-        print("Python:")
-        print(sys.version)
+    if platform.startswith('win'):
+        fmi_versions = ['2.0']  # ['1.0', '2.0'] quick fix until 1.0 is available again
+    elif platform.startswith(('darwin', 'linux')):
+        fmi_versions = ['2.0']
+    else:
+        pytest.fail('Platform not supported')
 
-    def test_coupled_clutches_example(self):
+    for fmi_version in fmi_versions:
+        for fmi_type in ['CoSimulation', 'ModelExchange']:
 
-        if platform.startswith('win'):
-            fmi_versions = ['2.0']  # ['1.0', '2.0'] quick fix until 1.0 is available again
-        elif platform.startswith(('darwin', 'linux')):
-            fmi_versions = ['2.0']
-        else:
-            self.fail('Platform not supported')
+            solvers = ['Euler']
 
-        for fmi_version in fmi_versions:
-            for fmi_type in ['CoSimulation', 'ModelExchange']:
+            if fmi_type == 'ModelExchange':
+                solvers.append('CVode')
 
-                solvers = ['Euler']
+            for solver in solvers:
 
-                if fmi_type == 'ModelExchange':
-                    solvers.append('CVode')
+                result = simulate_coupled_clutches(fmi_version=fmi_version,
+                                                   fmi_type=fmi_type,
+                                                   solver=solver,
+                                                   show_plot=False,
+                                                   output=['inputs', 'CoupledClutches1_freqHz'])
 
-                for solver in solvers:
+                if result is not None:  # sometimes the download fails...
 
-                    result = simulate_coupled_clutches(fmi_version=fmi_version,
-                                                       fmi_type=fmi_type,
-                                                       solver=solver,
-                                                       show_plot=False,
-                                                       output=['inputs', 'CoupledClutches1_freqHz'])
+                    freqHz = result['CoupledClutches1_freqHz']
+                    assert np.all(freqHz == 0.4), "Start value has not been applied"
 
-                    if result is not None:  # sometimes the download fails...
+                    inputs = result['inputs']
+                    assert inputs[0] == pytest.approx(0), "Input has not been applied"
+                    assert inputs[-1] == pytest.approx(1), "Input has not been applied"
 
-                        freqHz = result['CoupledClutches1_freqHz']
-                        self.assertTrue(np.all(freqHz == 0.4), "Start value has not been applied")
-
-                        inputs = result['inputs']
-                        self.assertAlmostEqual(inputs[0], 0, "Input has not been applied")
-                        self.assertAlmostEqual(inputs[-1], 1, "Input has not been applied")
-
-                        self.assertEqual(0.0, result['time'][0], msg="Result must start at start_time (= 0.0)")
-
-    def test_custom_input_example(self):
-        end_time = simulate_custom_input(show_plot=False)
-        self.assertAlmostEqual(end_time, 1.1, delta=1e-2)
-
-    def test_efficient_loops(self):
-        run_efficient_loop()
-
-    @skipIf(platform not in ['win32', 'win64'], "FMU only available for Windows")
-    def test_parameter_variation(self):
-        LOSSES = run_experiment(show_plot=False)
-        self.assertTrue(np.all(LOSSES > 0))
+                    assert 0.0 == result['time'][0], "Result must start at start_time (= 0.0)"
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_custom_input_example():
+    end_time = simulate_custom_input(show_plot=False)
+    assert end_time == pytest.approx(1.1, rel=1e-2)
+
+
+def test_efficient_loops():
+    run_efficient_loop()
+
+
+@pytest.mark.skipif(platform not in ['win32', 'win64'], reason="FMU only available for Windows")
+def test_parameter_variation():
+    LOSSES = run_experiment(show_plot=False)
+    assert np.all(LOSSES > 0)
+
+
+def test_continue_simulation(reference_fmus_dist_dir):
+    for fmi_version in ['1.0/cs', '2.0', '3.0']:
+        continue_simulation(fmu_filename=os.path.join(reference_fmus_dist_dir, fmi_version, 'BouncingBall.fmu'))

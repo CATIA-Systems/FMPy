@@ -27,13 +27,14 @@ def continue_simulation(fmu_filename):
         filename=unzipdir,
         model_description=model_description,
         fmu_instance=fmu_instance,
+        start_values={'e': 0.95},
         stop_time=1,
         set_stop_time=False,  # don't communicate the stop time, so we can continue
         terminate=False  # keep the FMU instance alive
     )
 
     # change a tunable parameter
-    apply_start_values(fmu=fmu_instance, model_description=model_description, start_values={'e': 0.95})
+    apply_start_values(fmu=fmu_instance, model_description=model_description, start_values={'e': 0.55})
 
     # continue to 2 s
     result2 = simulate_fmu(
@@ -42,27 +43,15 @@ def continue_simulation(fmu_filename):
         fmu_instance=fmu_instance,
         initialize=False,  # the FMU instance is already instantiated
         start_time=1,  # start where we left off
-        set_stop_time=False,
         stop_time=2,
         terminate=False
     )
 
-    apply_start_values(fmu=fmu_instance, model_description=model_description, start_values={'e': 0.55})
-
-    # continue to 3 s and terminate the FMU instance
-    result3 = simulate_fmu(
-        filename=unzipdir,
-        model_description=model_description,
-        fmu_instance=fmu_instance,
-        initialize=False,
-        start_time=2,
-        stop_time=3
-    )
-
     # concatenate and plot the results
-    plot_result(np.concatenate((result1, result2, result3)), events=True)
+    plot_result(np.concatenate((result1, result2)), events=True)
 
     # clean up
+    fmu_instance.terminate()
     fmu_instance.freeInstance()
     shutil.rmtree(unzipdir)
 
@@ -79,4 +68,4 @@ if __name__ == '__main__':
         extract(archive_filename, unzipdir=tempdir)
 
         # works also for '1.0/cs' and '2.0'
-        continue_simulations(os.path.join(tempdir, '3.0', 'BouncingBall.fmu'))
+        continue_simulation(os.path.join(tempdir, '3.0', 'BouncingBall.fmu'))

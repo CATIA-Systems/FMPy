@@ -940,20 +940,36 @@ def compile_platform_binary(filename, output_filename=None, target_platform=None
         output_filename = filename  # overwrite the existing archive
 
     # create a new archive from the existing files + compiled binary
-    with zipfile.ZipFile(output_filename, 'w', zipfile.ZIP_DEFLATED) as zf:
-        base_path = normpath(unzipdir2)
-        for dirpath, dirnames, filenames in os.walk(unzipdir2):
-            for name in sorted(dirnames):
-                path = normpath(join(dirpath, name))
-                zf.write(path, relpath(path, base_path))
-            for name in filenames:
-                path = normpath(join(dirpath, name))
-                if isfile(path):
-                    zf.write(path, relpath(path, base_path))
+    create_zip_archive(output_filename, unzipdir2)
 
     # clean up
     rmtree(unzipdir, ignore_errors=True)
     rmtree(unzipdir2, ignore_errors=True)
+
+
+def remove_source_code(filename):
+    """ Remove the source code from an FMU """
+
+    import tempfile
+    from shutil import rmtree
+    from lxml import etree
+
+    with tempfile.TemporaryDirectory() as unzipdir:
+
+        fmpy.extract(filename=filename, unzipdir=unzipdir)
+
+        rmtree(os.path.join(unzipdir, 'sources'))
+
+        model_description = fmpy.read_model_description(filename)
+
+        if model_description.fmiVersion == '2.0':
+            xml = os.path.join(unzipdir, 'modelDescription.xml')
+            tree = etree.parse(xml)
+            for e in tree.xpath('//SourceFiles'):
+                e.getparent().remove(e)
+            tree.write(xml, pretty_print=True, encoding='utf-8')
+
+        create_zip_archive(filename, unzipdir)
 
 
 def add_remoting(filename, host_platform, remote_platform):
@@ -1019,18 +1035,7 @@ def add_remoting(filename, host_platform, remote_platform):
     copyfile(license, join(tempdir, 'documentation', 'licenses', 'fmpy-remoting-binaries.txt'))
 
     if not isdir(filename):
-        # create a new archive from the existing files + remoting binaries
-        with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED) as zf:
-            base_path = normpath(tempdir)
-            for dirpath, dirnames, filenames in os.walk(tempdir):
-                for name in sorted(dirnames):
-                    path = normpath(join(dirpath, name))
-                    zf.write(path, relpath(path, base_path))
-                for name in filenames:
-                    path = normpath(join(dirpath, name))
-                    if isfile(path):
-                        zf.write(path, relpath(path, base_path))
-        # clean up
+        create_zip_archive(filename, tempdir)
         rmtree(tempdir, ignore_errors=True)
 
 
@@ -1369,3 +1374,18 @@ def can_simulate(platforms, remote_platform='auto'):
     return False, None
 
 
+def create_zip_archive(filename, source_dir):
+
+    import zipfile
+    import os
+
+    with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED) as zf:
+        base_path = os.path.normpath(source_dir)
+        for dirpath, dirnames, filenames in os.walk(source_dir):
+            for name in sorted(dirnames):
+                path = os.path.normpath(os.path.join(dirpath, name))
+                zf.write(path, os.path.relpath(path, base_path))
+            for name in filenames:
+                path = os.path.normpath(os.path.join(dirpath, name))
+                if os.path.isfile(path):
+                    zf.write(path, os.path.relpath(path, base_path))

@@ -41,8 +41,9 @@ Python version:     {sys.version}
 
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=description)
 
-    parser.add_argument('command', choices=['info', 'validate', 'simulate', 'compile', 'add-cswrapper', 'add-remoting',
-                                            'create-cmake-project', 'create-jupyter-notebook'],
+    parser.add_argument('command', choices=['info', 'validate', 'simulate', 'compile', 'remove-source-code',
+                                            'add-cswrapper','add-remoting', 'create-cmake-project',
+                                            'create-jupyter-notebook'],
                         help="Command to execute")
     parser.add_argument('fmu_filename', help="filename of the FMU")
 
@@ -99,6 +100,11 @@ Python version:     {sys.version}
         compile_platform_binary(filename=args.fmu_filename,
                                 target_platform=args.target_platform,
                                 compiler_options=args.compiler_options)
+
+    elif args.command == 'remove-source-code':
+
+        from fmpy.util import remove_source_code
+        remove_source_code(filename=args.fmu_filename)
 
     elif args.command == 'add-cswrapper':
 

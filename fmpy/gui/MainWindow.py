@@ -22,7 +22,7 @@ from fmpy.gui.generated.MainWindow import Ui_MainWindow
 import fmpy
 from fmpy import read_model_description, supported_platforms, platform
 from fmpy.model_description import ScalarVariable
-from fmpy.util import can_simulate
+from fmpy.util import can_simulate, remove_source_code
 
 from fmpy.gui.model import VariablesTableModel, VariablesTreeModel, VariablesModel, VariablesFilterModel
 from fmpy.gui.log import Log, LogMessagesFilterProxyModel
@@ -273,6 +273,7 @@ class MainWindow(QMainWindow):
         self.ui.actionCompileLinuxBinary.triggered.connect(lambda: self.compilePlatformBinary('linux64'))
         self.ui.actionCompileWin32Binary.triggered.connect(lambda: self.compilePlatformBinary('win32'))
         self.ui.actionCompileWin64Binary.triggered.connect(lambda: self.compilePlatformBinary('win64'))
+        self.ui.actionRemoveSourceCode.triggered.connect(self.removeSourceCode)
         self.ui.actionCreateJupyterNotebook.triggered.connect(self.createJupyterNotebook)
         self.ui.actionCreateCMakeProject.triggered.connect(self.createCMakeProject)
         self.ui.actionAddWindows32Remoting.triggered.connect(lambda: self.addRemotingBinaries('win64', 'win32'))
@@ -470,6 +471,8 @@ class MainWindow(QMainWindow):
         self.ui.actionCompileLinuxBinary.setEnabled(can_compile and fmpy.system in ['linux', 'windows'])
         self.ui.actionCompileWin32Binary.setEnabled(can_compile and fmpy.system == 'windows')
         self.ui.actionCompileWin64Binary.setEnabled(can_compile and fmpy.system == 'windows')
+
+        self.ui.actionRemoveSourceCode.setEnabled('c-code' in platforms)
 
         self.ui.actionCreateCMakeProject.setEnabled(can_compile)
 
@@ -1280,6 +1283,14 @@ class MainWindow(QMainWindow):
             return
 
         self.load(self.filename)
+
+    def removeSourceCode(self):
+
+        button = QMessageBox.question(self, "Remove Source Code?", "Do you want to remove the source code from the FMU?\nThis action cannot be undone.")
+
+        if button == QMessageBox.Yes:
+            remove_source_code(self.filename)
+            self.load(self.filename)
 
     def createJupyterNotebook(self):
         """ Create a Juypyter Notebook to simulate the FMU """

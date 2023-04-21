@@ -133,8 +133,6 @@ add_library(ModelicaFMI SHARED
   ../fmpy/modelica/FMI/Resources/Include/ModelicaUtilityFunctions.h
 )
 
-set_target_properties(ModelicaFMI PROPERTIES PREFIX "")
-
 target_include_directories(ModelicaFMI PRIVATE
   ../fmpy/c-code
   ../thirdparty/Reference-FMUs/include

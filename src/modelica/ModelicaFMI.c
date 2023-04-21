@@ -46,9 +46,11 @@ static void logFunctionCall(FMIInstance* instance, FMIStatus status, const char*
     FILE* logFile = (FILE*)instance->userData;
 
     if (logFile) {
+        fprintf(logFile, "[%s] ", instance->name);
         vfprintf(logFile, message, args);
         fprintf(logFile, suffix);
     } else {
+        ModelicaFormatMessage("[%s] ", instance->name);
         ModelicaVFormatMessage(message, args);
         ModelicaFormatMessage(suffix);
     }

@@ -9,7 +9,10 @@ static ModelicaUtilityFunctions_t s_callbacks = { NULL };
 
 
 void setModelicaUtilityFunctions(ModelicaUtilityFunctions_t *callbacks) {
-	s_callbacks = *callbacks;
+
+    if (callbacks) {
+    	s_callbacks = *callbacks;
+    }
 }
 
 void ModelicaMessage(const char *string) {

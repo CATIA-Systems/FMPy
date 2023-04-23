@@ -9,6 +9,7 @@
   parameter Modelica.Units.SI.Time communicationStepSize = @=communicationStepSize=@ annotation(Dialog(tab="FMI", group="Parameters"));
 @@ endblock @@
 @@ block equations @@
+  Boolean initialized;
 
 initial algorithm
 
@@ -22,17 +23,21 @@ initial algorithm
   FMI3Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@_start'});
 @@ endfor @@
 
-  FMI3ExitInitializationMode(instance);
-
 algorithm
 
-  when sample(startTime, communicationStepSize) then
+  when {initial(), sample(startTime, communicationStepSize)} then
 
 @@ for variable in inputs @@
     FMI3Set@=variable.type=@(instance, {@=variable.valueReference=@}, 1, {'@=variable.name=@'});
 @@ endfor @@
 
-    FMI3DoStep(instance, time, communicationStepSize);
+    if time >= communicationStepSize + startTime then
+      if not initialized then
+        FMI3ExitInitializationMode(instance);
+        initialized := true;
+      end if;
+      FMI3DoStep(instance, time, communicationStepSize);
+    end if;
 
 @@ for variable in outputs @@
     '@=variable.name=@' := FMI3Get@=variable.type=@Scalar(instance, @=variable.valueReference=@);

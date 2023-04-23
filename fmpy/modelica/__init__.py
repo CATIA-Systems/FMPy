@@ -4,8 +4,8 @@ def generate_examples():
     from ..util import download_file
     from pathlib import Path
 
-    url = r'https://github.com/modelica/Reference-FMUs/releases/download/v0.0.17/Reference-FMUs-0.0.17.zip'
-    checksum = '1185a0537f0307806255c9b2c7d502371e120febf816ca9792d4739cf680935c'
+    url = r'https://github.com/modelica/Reference-FMUs/releases/download/v0.0.23/Reference-FMUs-0.0.23.zip'
+    checksum = 'd6ad6fc08e53053fe413540016552387257971261f26f08a855f9a6404ef2991'
     archive = download_file(url=url, checksum=checksum)
 
     dist = Path(extract(archive))

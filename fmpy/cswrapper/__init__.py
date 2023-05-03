@@ -2,10 +2,11 @@
 
 def add_cswrapper(filename, outfilename=None):
 
-    from fmpy import read_model_description, extract, sharedLibraryExtension, platform, __version__
     from lxml import etree
     import os
     from shutil import copyfile, rmtree
+    from fmpy import read_model_description, extract, sharedLibraryExtension, platform, __version__
+    from fmpy.util import create_zip_archive
 
     if outfilename is None:
         outfilename = filename
@@ -61,20 +62,3 @@ def add_cswrapper(filename, outfilename=None):
     create_zip_archive(outfilename, unzipdir)
 
     rmtree(unzipdir, ignore_errors=True)
-
-
-def create_zip_archive(filename, source_dir):
-
-    import zipfile
-    import os
-
-    with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED) as zf:
-        base_path = os.path.normpath(source_dir)
-        for dirpath, dirnames, filenames in os.walk(source_dir):
-            for name in sorted(dirnames):
-                path = os.path.normpath(os.path.join(dirpath, name))
-                zf.write(path, os.path.relpath(path, base_path))
-            for name in filenames:
-                path = os.path.normpath(os.path.join(dirpath, name))
-                if os.path.isfile(path):
-                    zf.write(path, os.path.relpath(path, base_path))

@@ -1409,6 +1409,7 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="separator"/>
     <addaction name="actionValidateFMU"/>
     <addaction name="menuCompilePlatformBinary"/>
+    <addaction name="actionRemoveSourceCode"/>
     <addaction name="actionCreateJupyterNotebook"/>
     <addaction name="actionCreateCMakeProject"/>
     <addaction name="menuAddRemoting"/>
@@ -2071,6 +2072,14 @@ QToolButton::menu-button {
    </property>
    <property name="toolTip">
     <string>Open unzip directory</string>
+   </property>
+  </action>
+  <action name="actionRemoveSourceCode">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Remove Source Code</string>
    </property>
   </action>
  </widget>

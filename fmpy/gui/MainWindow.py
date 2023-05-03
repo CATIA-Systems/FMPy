@@ -12,7 +12,7 @@ import os
 import sys
 
 from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QStandardPaths, \
-    QPointF, QBuffer, QIODevice
+    QPointF, QBuffer, QIODevice, QSize
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, \
     QMenu, QMessageBox, QProgressDialog, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, \
     QGraphicsTextItem, QGraphicsPathItem, QFileSystemModel
@@ -90,6 +90,8 @@ class MainWindow(QMainWindow):
 
         # save from garbage collection
         self.windows.append(self)
+
+        QIcon.setThemeName('light')
 
         # state
         self.filename = None
@@ -783,7 +785,7 @@ class MainWindow(QMainWindow):
                                                  debugLogging=self.ui.debugLoggingCheckBox.isChecked(),
                                                  fmiLogging=self.ui.logFMICallsCheckBox.isChecked())
 
-        self.ui.actionSimulate.setIcon(QIcon(':/icons/stop.png'))
+        self.ui.actionSimulate.setIcon(QIcon(':/icons/light/stop.svg'))
         self.ui.actionSimulate.setToolTip("Stop simulation")
         self.ui.actionSimulate.triggered.disconnect(self.startSimulation)
         self.ui.actionSimulate.triggered.connect(self.simulationThread.stop)
@@ -809,7 +811,7 @@ class MainWindow(QMainWindow):
         # update UI
         self.ui.actionSimulate.triggered.disconnect(self.simulationThread.stop)
         self.ui.actionSimulate.triggered.connect(self.startSimulation)
-        self.ui.actionSimulate.setIcon(QIcon(':/icons/play.png'))
+        self.ui.actionSimulate.setIcon(QIcon(':/icons/light/play.svg'))
         self.ui.actionSimulate.setToolTip("Start simulation")
         self.plotUpdateTimer.stop()
         self.simulationProgressBar.setVisible(False)
@@ -917,7 +919,8 @@ class MainWindow(QMainWindow):
     def setStatusMessage(self, level, text):
 
         if level in ['debug', 'info', 'warning', 'error']:
-            self.statusIconLabel.setPixmap(QPixmap(':/icons/%s-16x16.png' % level))
+            icon = QIcon(':/icons/light/%s.svg' % level)
+            self.statusIconLabel.setPixmap(icon.pixmap(QSize(16, 16)))
         else:
             self.statusIconLabel.setPixmap(QPixmap())
 

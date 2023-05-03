@@ -84,9 +84,6 @@
    <iconset resource="../icons/icons.qrc">
     <normaloff>:/icons/app_icon.ico</normaloff>:/icons/app_icon.ico</iconset>
   </property>
-  <property name="unifiedTitleAndToolBarOnMac">
-   <bool>true</bool>
-  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_12">
     <property name="leftMargin">
@@ -108,9 +105,22 @@
       </property>
       <widget class="QWidget" name="startPage">
        <layout class="QVBoxLayout" name="verticalLayout_2">
-        <property name="spacing">
-         <number>15</number>
-        </property>
+        <item>
+         <spacer name="verticalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>100</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
         <item>
          <spacer name="verticalSpacer_2">
           <property name="orientation">
@@ -139,39 +149,6 @@
            <property name="bottomMargin">
             <number>0</number>
            </property>
-           <item>
-            <spacer name="horizontalSpacer_8">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_9">
-             <property name="pixmap">
-              <pixmap resource="../icons/icons.qrc">:/icons/start-background.png</pixmap>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_7">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
           </layout>
          </widget>
         </item>
@@ -215,6 +192,10 @@
              <property name="text">
               <string>open an FMU</string>
              </property>
+             <property name="icon">
+              <iconset theme="folder-open">
+               <normaloff>.</normaloff>.</iconset>
+             </property>
             </widget>
            </item>
            <item>
@@ -232,6 +213,22 @@
            </item>
           </layout>
          </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
         </item>
         <item>
          <widget class="QWidget" name="widget" native="true">
@@ -1200,7 +1197,7 @@ QToolButton:checked, QToolButton:hover:pressed {
              </property>
              <property name="icon">
               <iconset resource="../icons/icons.qrc">
-               <normaloff>:/icons/debug-16x16.png</normaloff>:/icons/debug-16x16.png</iconset>
+               <normaloff>:/icons/light/debug.svg</normaloff>:/icons/light/debug.svg</iconset>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -1226,7 +1223,7 @@ QToolButton:checked, QToolButton:hover:pressed {
              </property>
              <property name="icon">
               <iconset resource="../icons/icons.qrc">
-               <normaloff>:/icons/info-16x16.png</normaloff>:/icons/info-16x16.png</iconset>
+               <normaloff>:/icons/light/info.svg</normaloff>:/icons/light/info.svg</iconset>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -1252,7 +1249,7 @@ QToolButton:checked, QToolButton:hover:pressed {
              </property>
              <property name="icon">
               <iconset resource="../icons/icons.qrc">
-               <normaloff>:/icons/warning-16x16.png</normaloff>:/icons/warning-16x16.png</iconset>
+               <normaloff>:/icons/light/warning.svg</normaloff>:/icons/light/warning.svg</iconset>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -1278,7 +1275,7 @@ QToolButton:checked, QToolButton:hover:pressed {
              </property>
              <property name="icon">
               <iconset resource="../icons/icons.qrc">
-               <normaloff>:/icons/error-16x16.png</normaloff>:/icons/error-16x16.png</iconset>
+               <normaloff>:/icons/light/error.svg</normaloff>:/icons/light/error.svg</iconset>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -1541,8 +1538,8 @@ QToolButton::menu-button {
            <string>...</string>
           </property>
           <property name="icon">
-           <iconset resource="../icons/icons.qrc">
-            <normaloff>:/icons/filter.png</normaloff>:/icons/filter.png</iconset>
+           <iconset theme="filter">
+            <normaloff>.</normaloff>.</iconset>
           </property>
           <property name="checkable">
            <bool>true</bool>
@@ -1567,8 +1564,8 @@ QToolButton::menu-button {
            <string notr="true"/>
           </property>
           <property name="icon">
-           <iconset resource="../icons/icons.qrc">
-            <normaloff>:/icons/list-16x16.png</normaloff>:/icons/list-16x16.png</iconset>
+           <iconset theme="list">
+            <normaloff>.</normaloff>.</iconset>
           </property>
           <property name="checkable">
            <bool>true</bool>
@@ -1681,8 +1678,8 @@ QToolButton::menu-button {
   </widget>
   <action name="actionSimulate">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/play.png</normaloff>:/icons/play.png</iconset>
+    <iconset theme="play">
+     <normaloff>:/icons/play.svg</normaloff>:/icons/play.svg</iconset>
    </property>
    <property name="text">
     <string>Simulate</string>
@@ -1696,8 +1693,8 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/settings.png</normaloff>:/icons/settings.png</iconset>
+    <iconset theme="gear">
+     <normaloff>:/icons/gear.svg</normaloff>:/icons/gear.svg</iconset>
    </property>
    <property name="text">
     <string>Settings</string>
@@ -1708,8 +1705,8 @@ QToolButton::menu-button {
   </action>
   <action name="actionOpen">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/folder_open.png</normaloff>:/icons/folder_open.png</iconset>
+    <iconset theme="folder-open">
+     <normaloff>:/icons/folder-open.svg</normaloff>:/icons/folder-open.svg</iconset>
    </property>
    <property name="text">
     <string>&amp;Open</string>
@@ -1726,8 +1723,8 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/stats.png</normaloff>:/icons/stats.png</iconset>
+    <iconset theme="graph">
+     <normaloff>:/icons/graph.svg</normaloff>:/icons/graph.svg</iconset>
    </property>
    <property name="text">
     <string>Results</string>
@@ -1861,8 +1858,8 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/log.png</normaloff>:/icons/log.png</iconset>
+    <iconset theme="list-task">
+     <normaloff>:/icons/list-task.svg</normaloff>:/icons/list-task.svg</iconset>
    </property>
    <property name="text">
     <string>Log</string>
@@ -1925,8 +1922,8 @@ QToolButton::menu-button {
   </action>
   <action name="actionReload">
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/reload-16x16.png</normaloff>:/icons/reload-16x16.png</iconset>
+    <iconset theme="arrow-clockwise">
+     <normaloff>:/icons/arrow-clockwise.svg</normaloff>:/icons/arrow-clockwise.svg</iconset>
    </property>
    <property name="text">
     <string>&amp;Reload</string>
@@ -2047,8 +2044,8 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/documentation.png</normaloff>:/icons/documentation.png</iconset>
+    <iconset theme="book">
+     <normaloff>:/icons/book.svg</normaloff>:/icons/book.svg</iconset>
    </property>
    <property name="text">
     <string>Show documentation</string>
@@ -2059,8 +2056,8 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons/icons.qrc">
-     <normaloff>:/icons/files.png</normaloff>:/icons/files.png</iconset>
+    <iconset theme="file-earmark-zip">
+     <normaloff>:/icons/file-earmark-zip.svg</normaloff>:/icons/file-earmark-zip.svg</iconset>
    </property>
    <property name="text">
     <string>Show archive contents</string>

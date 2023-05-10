@@ -1,6 +1,6 @@
 from os import PathLike
 from tempfile import mkdtemp
-from typing import List, Tuple
+from typing import List, Tuple, Sequence
 
 from attr import attrs, attrib, Factory
 
@@ -18,7 +18,7 @@ class Variable(object):
     name: str = None
     start: str = None
     description: str = None
-    mapping: Tuple[str, str] = None
+    mapping: Sequence[Tuple[str, str]] = None
     declaredType: str = None
     unit: str = None
     displayUnit: str = None
@@ -78,10 +78,12 @@ FMI_TYPES = {
     'Binary': 14,
     'Clock': 15,
 
+    'Enumeration': 8,
+
     # Aliases for FMI 1.0 and 2.0
     'Real': 2,
     'DiscreteReal': 3,
-    'Integer': 8,
+    'Integer': 8
 }
 
 

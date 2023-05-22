@@ -327,7 +327,7 @@ def _copy_attributes(element, object, attributes=None):
 
         # convert the value to the correct type
         if t is bool:
-            value = value == 'true'
+            value = value in {'true', '1'}
         elif t is int:
             value = int(value)
         elif t is float:
@@ -394,7 +394,7 @@ def read_build_description(filename, validate=True):
                 definition = PreProcessorDefinition()
                 definition.name = pd.get('name')
                 definition.value = pd.get('value')
-                definition.optional = pd.get('optional') == 'true'
+                definition.optional = pd.get('optional') in {'true', '1'}
                 definition.description = pd.get('description')
                 sourceFileSet.preprocessorDefinitions.append(definition)
 
@@ -545,17 +545,24 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
 
     else:
 
+        def get_fmu_state_attributes(element, object):
+            object.canGetAndSetFMUstate = element.get('canGetAndSetFMUState') in {'true', '1'}
+            object.canSerializeFMUstate = element.get('canSerializeFMUState') in {'true', '1'}
+
         for me in root.findall('ModelExchange'):
             modelDescription.modelExchange = ModelExchange()
             _copy_attributes(me, modelDescription.modelExchange)
+            get_fmu_state_attributes(me, modelDescription.modelExchange)
 
         for cs in root.findall('CoSimulation'):
             modelDescription.coSimulation = CoSimulation()
             _copy_attributes(cs, modelDescription.coSimulation)
+            get_fmu_state_attributes(cs, modelDescription.coSimulation)
 
         for se in root.findall('ScheduledExecution'):
             modelDescription.scheduledExecution = ScheduledExecution()
             _copy_attributes(se, modelDescription.scheduledExecution)
+            get_fmu_state_attributes(se, modelDescription.scheduledExecution)
 
     # build configurations
     if is_fmi2:
@@ -726,10 +733,10 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
         if sv.type in ['Real', 'Float32', 'Float64']:
             sv.unit = value.get('unit')
             sv.displayUnit = value.get('displayUnit')
-            sv.relativeQuantity = value.get('relativeQuantity') == 'true'
+            sv.relativeQuantity = value.get('relativeQuantity') in {'true', '1'}
             sv.derivative = value.get('derivative')
             sv.nominal = value.get('nominal')
-            sv.unbounded = value.get('unbounded') == 'true'
+            sv.unbounded = value.get('unbounded') in {'true', '1'}
 
         if sv.type in ['Real', 'Enumeration'] or sv.type.startswith(('Float', 'Int')):
             sv.quantity = value.get('quantity')

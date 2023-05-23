@@ -124,12 +124,14 @@ static void logFunctionCall(FMIInstance *instance, FMIStatus status, const char 
         return;
     }
 
-    char buf[FMI_MAX_MESSAGE_LENGTH];
+    char buf[FMI_MAX_MESSAGE_LENGTH] = "";
+
+    const size_t len = snprintf(buf, FMI_MAX_MESSAGE_LENGTH, "[%s] ", instance->name);
 
     va_list args;
 
     va_start(args, message);
-    vsnprintf(buf, FMI_MAX_MESSAGE_LENGTH, message, args);
+    vsnprintf(&buf[len], FMI_MAX_MESSAGE_LENGTH - len, message, args);
     va_end(args);
 
     switch (s->fmiVersion) {

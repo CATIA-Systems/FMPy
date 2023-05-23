@@ -221,7 +221,6 @@ fmi3Status fmi3GetInt32(fmi3Instance instance,
     }
 
     return status;
-
 }
 
 fmi3Status fmi3GetUInt32(fmi3Instance instance,
@@ -237,7 +236,29 @@ fmi3Status fmi3GetInt64(fmi3Instance instance,
     size_t nValueReferences,
     fmi3Int64 values[],
     size_t nValues) {
-    NOT_IMPLEMENTED;
+
+    System* s = (System*)instance;
+
+    FMIStatus status = FMIOK;
+
+    for (size_t i = 0; i < nValueReferences; i++) {
+
+        const fmi3ValueReference vr = valueReferences[i];
+
+        const size_t j = vr - 1;
+
+        if (j >= s->nVariables) {
+            return FMIError;
+        }
+
+        VariableMapping vm = s->variables[j];
+        FMIInstance* m = s->components[vm.ci[0]]->instance;
+        fmi2Integer value;
+        status = FMI2GetInteger(m, &(vm.vr[0]), 1, &value);
+        values[i] = value;
+    }
+
+    return status;
 }
 
 fmi3Status fmi3GetUInt64(fmi3Instance instance,
@@ -410,7 +431,26 @@ fmi3Status fmi3SetInt64(fmi3Instance instance,
     size_t nValueReferences,
     const fmi3Int64 values[],
     size_t nValues) {
-    NOT_IMPLEMENTED;
+
+    System* s = (System*)instance;
+
+    FMIStatus status = FMIOK;
+
+    for (size_t i = 0; i < nValueReferences; i++) {
+
+        const size_t j = valueReferences[i] - 1;
+
+        if (j >= s->nVariables) {
+            return FMIError;
+        }
+
+        VariableMapping vm = s->variables[j];
+        FMIInstance* m = s->components[vm.ci[0]]->instance;
+        fmi2Integer value = (fmi2Integer)values[i];
+        status = FMI2SetInteger(m, &(vm.vr[0]), 1, &value);
+    }
+
+    return status;
 }
 
 fmi3Status fmi3SetUInt64(fmi3Instance instance,

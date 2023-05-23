@@ -4,6 +4,7 @@ from fmpy import simulate_fmu, plot_result
 from fmpy.fmucontainer import create_fmu_container, Variable, Connection, Configuration, Component
 from fmpy.util import compile_platform_binary
 from fmpy.validation import validate_fmu
+from fmpy.model_description import Unit, BaseUnit, SimpleType, DisplayUnit, Item
 
 
 @pytest.mark.parametrize('fmi_version, parallelDoStep', product([2, 3], [False, True]))
@@ -19,6 +20,17 @@ def test_create_fmu_container(reference_fmus_dist_dir, fmi_version, parallelDoSt
     configuration = Configuration(
         fmiVersion=f'{fmi_version}.0',
         parallelDoStep=parallelDoStep,
+        unitDefinitions=[
+            Unit(name="rad/s", baseUnit=BaseUnit(rad=1, s=-1), displayUnits=[DisplayUnit(name='rpm', factor=9.549296585513721)]),
+        ],
+        typeDefinitions=[
+            SimpleType(name='AngularVelocity', type=real_type, quantity='AngularVelocity', unit='rad/s',
+                       displayUnit='rpm'),
+            SimpleType(name='Option', type='Enumeration', items=[
+                Item(name='Option 1', value=1, description="First option"),
+                Item(name='Option 2', value=2, description="Second option")
+            ])
+        ],
         variables=[
             Variable(
                 type=real_type,
@@ -26,6 +38,7 @@ def test_create_fmu_container(reference_fmus_dist_dir, fmi_version, parallelDoSt
                 causality='input',
                 name='Float64_continuous_input',
                 start='1.1',
+                declaredType='AngularVelocity',
                 mapping=[('instance1', 'Float64_continuous_input')]
             ),
             Variable(
@@ -45,11 +58,22 @@ def test_create_fmu_container(reference_fmus_dist_dir, fmi_version, parallelDoSt
                 mapping=[('instance1', 'Boolean_input')]
             ),
             Variable(
+                type='Enumeration',
+                variability='discrete',
+                causality='input',
+                name='Enumeration_input',
+                declaredType='Option',
+                start='1',
+                mapping=[('instance1', 'Enumeration_input')]
+            ),
+            Variable(
                 type=real_type,
                 initial='calculated',
                 variability='continuous',
                 causality='output',
                 name='Float64_continuous_output',
+                unit='rad/s',
+                displayUnit='rpm',
                 mapping=[('instance2', 'Float64_continuous_output')]
             ),
             Variable(
@@ -66,6 +90,14 @@ def test_create_fmu_container(reference_fmus_dist_dir, fmi_version, parallelDoSt
                 name='Boolean_output',
                 mapping=[('instance2', 'Boolean_output')]
             ),
+            Variable(
+                type='Enumeration',
+                variability='discrete',
+                causality='output',
+                declaredType='Option',
+                name='Enumeration_output',
+                mapping=[('instance2', 'Enumeration_output')]
+            )
         ],
         components=[
             Component(
@@ -81,6 +113,7 @@ def test_create_fmu_container(reference_fmus_dist_dir, fmi_version, parallelDoSt
             Connection('instance1', 'Float64_continuous_output', 'instance2', 'Float64_continuous_input'),
             Connection('instance1', 'Int32_output', 'instance2', 'Int32_input'),
             Connection('instance1', 'Boolean_output', 'instance2', 'Boolean_input'),
+            Connection('instance1', 'Enumeration_output', 'instance2', 'Enumeration_input'),
         ]
     )
 
@@ -118,12 +151,13 @@ def test_create_fmu_container(reference_fmus_dist_dir, fmi_version, parallelDoSt
         'Float64_continuous_input': 1.2,
         'Boolean_input': False,
         'Int32_input': 3,
+        'Enumeration_input': 2
     }
 
     result = simulate_fmu(filename,
                           start_values=custom_start_values,
-                          output=['Float64_continuous_input', 'Int32_input', 'Boolean_input',
-                                  'Float64_continuous_output', 'Int32_output', 'Boolean_output'],
+                          output=['Float64_continuous_input', 'Int32_input', 'Boolean_input', 'Enumeration_input',
+                                  'Float64_continuous_output', 'Int32_output', 'Boolean_output', 'Enumeration_output'],
                           # debug_logging=True,
                           # fmi_call_logger=print,
                           stop_time=1, output_interval=1)
@@ -135,6 +169,7 @@ def test_create_fmu_container(reference_fmus_dist_dir, fmi_version, parallelDoSt
     assert result['Float64_continuous_output'][-1] == 1.2
     assert result['Int32_output'][-1] == 3
     assert result['Boolean_output'][-1] == False
+    assert result['Enumeration_output'][-1] == 2
 
     compile_platform_binary(filename)
     simulate_fmu(filename=filename)

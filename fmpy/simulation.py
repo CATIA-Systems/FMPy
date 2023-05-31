@@ -230,25 +230,28 @@ class Input(object):
 
         # get the setters
         if is_fmi1:
-            setters['Real']    = (fmu.fmi1SetReal,    fmi1Real)
-            setters['Integer'] = (fmu.fmi1SetInteger, fmi1Integer)
-            setters['Boolean'] = (fmu.fmi1SetBoolean, c_int8)
+            setters['Real']        = (fmu.fmi1SetReal,    fmi1Real)
+            setters['Integer']     = (fmu.fmi1SetInteger, fmi1Integer)
+            setters['Boolean']     = (fmu.fmi1SetBoolean, c_int8)
+            setters['Enumeration'] = (fmu.fmi1SetInteger, fmi1Integer)
         elif is_fmi2:
-            setters['Real']    = (fmu.fmi2SetReal,    fmi2Real)
-            setters['Integer'] = (fmu.fmi2SetInteger, fmi2Integer)
-            setters['Boolean'] = (fmu.fmi2SetBoolean, fmi2Boolean)
+            setters['Real']        = (fmu.fmi2SetReal,    fmi2Real)
+            setters['Integer']     = (fmu.fmi2SetInteger, fmi2Integer)
+            setters['Boolean']     = (fmu.fmi2SetBoolean, fmi2Boolean)
+            setters['Enumeration'] = (fmu.fmi2SetInteger, fmi2Integer)
         else:
-            setters['Float32'] = (fmu.fmi3SetFloat32, fmi3.fmi3Float32)
-            setters['Float64'] = (fmu.fmi3SetFloat64, fmi3.fmi3Float64)
-            setters['Int8']    = (fmu.fmi3SetInt8,    fmi3.fmi3Int8)
-            setters['UInt8']   = (fmu.fmi3SetUInt8,   fmi3.fmi3UInt8)
-            setters['Int16']   = (fmu.fmi3SetInt16,   fmi3.fmi3Int16)
-            setters['UInt16']  = (fmu.fmi3SetUInt16,  fmi3.fmi3UInt16)
-            setters['Int32']   = (fmu.fmi3SetInt32,   fmi3.fmi3Int32)
-            setters['UInt32']  = (fmu.fmi3SetUInt32,  fmi3.fmi3UInt32)
-            setters['Int64']   = (fmu.fmi3SetInt64,   fmi3.fmi3Int64)
-            setters['UInt64']  = (fmu.fmi3SetUInt64,  fmi3.fmi3UInt64)
-            setters['Boolean'] = (fmu.fmi3SetBoolean, fmi3.fmi3Boolean)
+            setters['Float32']     = (fmu.fmi3SetFloat32, fmi3.fmi3Float32)
+            setters['Float64']     = (fmu.fmi3SetFloat64, fmi3.fmi3Float64)
+            setters['Int8']        = (fmu.fmi3SetInt8,    fmi3.fmi3Int8)
+            setters['UInt8']       = (fmu.fmi3SetUInt8,   fmi3.fmi3UInt8)
+            setters['Int16']       = (fmu.fmi3SetInt16,   fmi3.fmi3Int16)
+            setters['UInt16']      = (fmu.fmi3SetUInt16,  fmi3.fmi3UInt16)
+            setters['Int32']       = (fmu.fmi3SetInt32,   fmi3.fmi3Int32)
+            setters['UInt32']      = (fmu.fmi3SetUInt32,  fmi3.fmi3UInt32)
+            setters['Int64']       = (fmu.fmi3SetInt64,   fmi3.fmi3Int64)
+            setters['UInt64']      = (fmu.fmi3SetUInt64,  fmi3.fmi3UInt64)
+            setters['Boolean']     = (fmu.fmi3SetBoolean, fmi3.fmi3Boolean)
+            setters['Enumeration'] = (fmu.fmi3SetInt64,   fmi3.fmi3Int64)
 
         from collections import defaultdict
 
@@ -271,9 +274,7 @@ class Input(object):
             if variable.type in {'Float32', 'Float64', 'Real'} and variable.variability not in ['discrete', 'tunable']:
                 continuous_inputs[variable.type].append((variable.valueReference, variable.name))
             else:
-                # use the same table for Integer and Enumeration
-                type_ = 'Integer' if variable.type == 'Enumeration' else variable.type
-                discrete_inputs[type_].append((variable.valueReference, variable.name))
+                discrete_inputs[variable.type].append((variable.valueReference, variable.name))
 
         for type_, vrs_and_names in continuous_inputs.items():
             vrs, names = zip(*vrs_and_names)

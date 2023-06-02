@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QAbstractTableModel, Qt, QModelIndex, pyqtSignal, QSortFilterProxyModel
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QIcon
 
 
 class Log(QAbstractTableModel):
@@ -82,7 +82,7 @@ class Log(QAbstractTableModel):
         elif role == Qt.ToolTipRole:
             return text
         elif role == Qt.DecorationRole:
-            return QPixmap(':/icons/%s-16x16.png' % level)
+            return QIcon(':/icons/light/%s.svg' % level)
 
         return None
 

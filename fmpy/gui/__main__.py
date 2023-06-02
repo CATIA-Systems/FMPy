@@ -14,6 +14,7 @@ if __name__ == '__main__':
         ctypes.windll.shcore.SetProcessDpiAwareness(True)
 
     QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+    QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
     app = QApplication(sys.argv)
     window = MainWindow()

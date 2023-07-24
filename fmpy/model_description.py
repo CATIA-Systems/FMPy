@@ -163,7 +163,7 @@ class ScalarVariable(object):
     description = attrib(type=str, default=None, repr=False)
 
     causality = attrib(type=str, default=None, repr=False)
-    "One of 'parameter', 'calculatedParameter', 'input', 'output', 'local', 'independent'"
+    "One of 'parameter', 'calculatedParameter', 'input', 'output', 'local', 'independent', 'structuralParameter'"
 
     variability = attrib(type=str, default=None, repr=False)
     "One of 'constant', 'fixed', 'tunable', 'discrete' or 'continuous'"
@@ -754,14 +754,22 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
         if is_fmi1:
             if sv.causality == 'internal':
                 sv.causality = 'local'
-
             if sv.variability == 'parameter':
                 sv.causality = 'parameter'
                 sv.variability = None
-        else:
-            if sv.variability is None:
-                sv.variability = 'continuous' if sv.type in {'Float32', 'Float64', 'Real'} else 'discrete'
 
+        if sv.variability is None:
+            if is_fmi1 or is_fmi2:
+                sv.variability = 'continuous'
+            else:
+                if sv.causality in {'parameter', 'calculatedParameter', 'structuralParameter'}:
+                    sv.variability = 'fixed'
+                elif sv.type in {'Float32', 'Float64'} and sv.causality not in {'parameter', 'structuralParameter', 'calculatedParameter'}:
+                    sv.variability = 'continuous'
+                else:
+                    sv.variability = 'discrete'
+
+        if is_fmi2 or is_fmi3:
             if sv.initial is None:
                 try:
                     sv.initial = initial_defaults[sv.variability][sv.causality]

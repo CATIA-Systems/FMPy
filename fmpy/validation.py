@@ -76,8 +76,8 @@ def validate_model_description(model_description: ModelDescription, validate_var
     # assert legal variability
     for variable in model_description.modelVariables:
         if variable.type not in {'Real', 'Float32', 'Float64'} and variable.variability == 'continuous':
-            problems.append(f'The variable "{variable.name}" (line {variable.sourceline}) of type {variable.type}'
-                            ' cannot have causality="causality".')
+            problems.append(f'The variable "{variable.name}" (line {variable.sourceline}) is of type {variable.type}'
+                            f' and must have variability != "continuous".')
 
     if is_fmi2 or is_fmi3:
 

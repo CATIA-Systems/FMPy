@@ -756,7 +756,7 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
                 sv.causality = 'local'
             if sv.variability == 'parameter':
                 sv.causality = 'parameter'
-                sv.variability = None
+                sv.variability = 'fixed'
 
         if sv.variability is None:
             if is_fmi1 or is_fmi2:

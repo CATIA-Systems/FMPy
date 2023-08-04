@@ -73,6 +73,12 @@ def validate_model_description(model_description: ModelDescription, validate_var
     is_fmi2 = model_description.fmiVersion == '2.0'
     is_fmi3 = model_description.fmiVersion.startswith('3.0')
 
+    # assert legal variability
+    for variable in model_description.modelVariables:
+        if variable.type not in {'Real', 'Float32', 'Float64'} and variable.variability == 'continuous':
+            problems.append(f'The variable "{variable.name}" (line {variable.sourceline}) is of type {variable.type}'
+                            f' and must have variability != "continuous".')
+
     if is_fmi2 or is_fmi3:
 
         # assert required start values (see FMI 2.0 spec, p. 53)

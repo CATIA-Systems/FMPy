@@ -88,7 +88,7 @@ def validate_model_description(model_description: ModelDescription, validate_var
 
         # assert that initial is not set for input and independent variables (see FMI 2.0 spec, p. 49)
         for v in model_description.modelVariables:
-            if v.causality in {'input', 'independent'} and v.initial is not None:
+            if is_fmi2 and v.causality in {'input', 'independent'} and v.initial is not None:
                 problems.append(f'Variable "{v.name}" (line {v.sourceline}) " has causality "{v.causality}" but defines a intial "{v.initial}".')
 
         # legal combinations of causality and variability (see FMI 2.0 spec, p. 49)

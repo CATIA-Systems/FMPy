@@ -36,7 +36,10 @@ class CVodeSolver(object):
     """ Interface to the CVode solver """
 
     def __init__(self,
-                 nx, nz, get_x, set_x, get_dx, get_z, set_time, input,
+                 nx, nz, get_x, set_x, get_dx, get_z,
+                 get_nominals,
+                 set_time,
+                 input,
                  startTime,
                  maxStep=float('inf'),
                  relativeTolerance=1e-5,
@@ -60,9 +63,11 @@ class CVodeSolver(object):
         self.set_x = set_x
         self.get_dx = get_dx
         self.get_z = get_z
+        self.get_nominals = get_nominals
         self.set_time = set_time
         self.input = input
         self.error_info = None
+        self.reltol = relativeTolerance
 
         self.discrete = nx == 0
 
@@ -77,18 +82,20 @@ class CVodeSolver(object):
         self.x      = N_VNew_Serial(self.nx)
         self.abstol = N_VNew_Serial(self.nx)
 
-        self.px      = NV_DATA_S(self.x)
-        self.pabstol = NV_DATA_S(self.abstol)
+        self.px       = NV_DATA_S(self.x)
+        self.pabstol  = NV_DATA_S(self.abstol)
+        self.npabstol = np.ctypeslib.as_array(self.pabstol, (self.nx,))
 
         # initialize
         if self.discrete:
             x = np.ctypeslib.as_array(self.px, (self.nx,))
             x[:] = 1.0
+            self.npabstol[:] = 1.0
         else:
             self.get_x(self.px, self.nx)
+            self.get_nominals(self.pabstol, self.nx)
 
-        abstol = np.ctypeslib.as_array(self.pabstol, (self.nx,))
-        abstol[:] = relativeTolerance
+        self.npabstol *= self.reltol
 
         self.cvode_mem = CVodeCreate(CV_BDF)
 
@@ -176,6 +183,8 @@ class CVodeSolver(object):
 
         if not self.discrete:
             self.get_x(self.px, self.nx)
+            self.get_nominals(self.pabstol, self.nx)
+            self.npabstol *= self.reltol
 
         # reset the solver
         flag = CVodeReInit(self.cvode_mem, time, self.x)

@@ -940,8 +940,8 @@ class FMU3Model(_FMU3):
     def getContinuousStates(self, continuousStates, nContinuousStates):
         return self.fmi3GetContinuousStates(self.component, continuousStates, nContinuousStates)
 
-    def getNominalsOfContinuousState(self, nominals, nContinuousStates):
-        return self.fmi3GetNominalsOfContinuousState(self.component, nominals, nContinuousStates)
+    def getNominalsOfContinuousStates(self, nominals, nContinuousStates):
+        return self.fmi3GetNominalsOfContinuousStates(self.component, nominals, nContinuousStates)
 
 
 class FMU3Slave(_FMU3):

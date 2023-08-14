@@ -340,7 +340,7 @@ int main(int argc, char *argv[]) {
             break;
 
         case rpc_fmi2GetStringStatus:
-            STATUS = FMI2GetContinuousStates(m_instance, ARG(fmi2Real*, 1), *ARG(size_t*, 2));
+            STATUS = FMIError;
             break;
 
         default:

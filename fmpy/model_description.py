@@ -665,12 +665,11 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
 
     # default values for 'initial' derived from variability and causality
     initial_defaults = {
-        'constant':   {'output': 'exact', 'local': 'exact', 'parameter': 'exact'},
-        'fixed':      {'parameter': 'exact', 'calculatedParameter': 'calculated', 'structuralParameter': 'exact', 'local': 'calculated'},
-        'tunable':    {'parameter': 'exact', 'calculatedParameter': 'calculated', 'structuralParameter': 'exact', 'local': 'calculated'},
-        'discrete':   {'input': None, 'output': 'calculated', 'local': 'calculated'},
-        'continuous': {'input': None, 'output': 'calculated', 'local': 'calculated', 'independent': None},
-        'clock':      {'input': 'exact', 'output': 'calculated', 'local': 'calculated'},
+        'constant':   {'output': 'exact', 'local': 'exact'},
+        'fixed':      {'structuralParameter': 'exact', 'parameter': 'exact', 'calculatedParameter': 'calculated', 'local': 'calculated'},
+        'tunable':    {'structuralParameter': 'exact', 'parameter': 'exact', 'calculatedParameter': 'calculated', 'local': 'calculated'},
+        'discrete':   {'input': 'exact', 'output': 'calculated', 'local': 'calculated'},
+        'continuous': {'input': 'exact', 'output': 'calculated', 'local': 'calculated', 'independent': None},
     }
 
     # model variables
@@ -769,13 +768,12 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
                 else:
                     sv.variability = 'discrete'
 
-        if is_fmi2 or is_fmi3:
-            if sv.initial is None:
-                try:
-                    sv.initial = initial_defaults[sv.variability][sv.causality]
-                except KeyError:
-                    raise Exception('Variable "%s" (line %s) has an illegal combination of causality="%s"'
-                                    ' and variability="%s".' % (sv.name, sv.sourceline, sv.causality, sv.variability))
+        if sv.initial is None and not is_fmi1:
+            try:
+                sv.initial = initial_defaults[sv.variability][sv.causality]
+            except KeyError:
+                raise Exception(f'Variable "{sv.name}" (line {sv.sourceline}) has an illegal combination of '
+                                f'causality="{sv.causality}" and variability="{sv.variability}".')
 
         dimensions = variable.findall('Dimension')
 

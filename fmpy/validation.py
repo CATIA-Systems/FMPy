@@ -86,38 +86,55 @@ def validate_model_description(model_description: ModelDescription, validate_var
             if v.type != 'Clock' and (v.initial in {'exact', 'approx'} or v.causality == 'input') and v.start is None:
                 problems.append(f'Variable "{v.name}" (line {v.sourceline}) has no start value.')
 
-        # assert that initial is not set for input and independent variables (see FMI 2.0 spec, p. 49)
-        for v in model_description.modelVariables:
-            if v.causality in {'input', 'independent'} and v.initial is not None:
-                problems.append(f'Variable "{v.name}" (line {v.sourceline}) " has causality "{v.causality}" but defines a intial "{v.initial}".')
-
-        # legal combinations of causality and variability (see FMI 2.0 spec, p. 49)
+        # legal combinations of causality, variability, and initial
         legal_combinations = {
-            ('parameter', 'fixed'),
-            ('parameter', 'tunable'),
-            ('calculatedParameter', 'fixed'),
-            ('calculatedParameter', 'tunable'),
-            ('structuralParameter', 'fixed'),
-            ('structuralParameter', 'tunable'),
-            ('input', 'discrete'),
-            ('input', 'continuous'),
-            ('output', 'constant'),
-            ('output', 'discrete'),
-            ('output', 'continuous'),
-            ('local', 'constant'),
-            ('local', 'fixed'),
-            ('local', 'tunable'),
-            ('local', 'discrete'),
-            ('local', 'continuous'),
-            ('independent', 'continuous'),
+
+            ('structuralParameter', 'fixed', 'exact'),
+            ('structuralParameter', 'tunable', 'exact'),
+
+            ('parameter', 'fixed', 'exact'),
+            ('parameter', 'tunable', 'exact'),
+
+            ('calculatedParameter', 'fixed', 'calculated'),
+            ('calculatedParameter', 'fixed', 'approx'),
+
+            ('calculatedParameter', 'tunable', 'calculated'),
+            ('calculatedParameter', 'tunable', 'approx'),
+
+            ('input', 'discrete', 'exact'),
+            ('input', 'continuous', 'exact'),
+
+            ('output', 'constant', 'exact'),
+
+            ('output', 'discrete', 'calculated'),
+            ('output', 'discrete', 'exact'),
+            ('output', 'discrete', 'approx'),
+
+            ('output', 'continuous', 'calculated'),
+            ('output', 'continuous', 'exact'),
+            ('output', 'continuous', 'approx'),
+
+            ('local', 'constant', 'exact'),
+
+            ('local', 'fixed', 'calculated'),
+            ('local', 'fixed', 'approx'),
+
+            ('local', 'tunable', 'calculated'),
+            ('local', 'tunable', 'approx'),
+
+            ('local', 'discrete', 'calculated'),
+            ('local', 'discrete', 'exact'),
+            ('local', 'discrete', 'approx'),
+
+            ('local', 'continuous', 'calculated'),
+            ('local', 'continuous', 'exact'),
+            ('local', 'continuous', 'approx'),
+
+            ('independent', 'continuous', None),
         }
 
-        if is_fmi3:
-            legal_combinations.add(('input', 'clock'))
-            legal_combinations.add(('output', 'clock'))
-
         for v in model_description.modelVariables:
-            if (v.causality, v.variability) not in legal_combinations:
+            if (v.causality, v.variability, v.initial) not in legal_combinations:
                 problems.append(f'The combination causality="{v.causality}" and variability="{v.variability}" '
                                 f'in variable "{v.name}" (line {v.sourceline}) is not allowed.')
 

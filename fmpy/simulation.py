@@ -995,7 +995,8 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
         fixed_step = True
     elif solver_name is None or solver_name == 'CVode':
         from .sundials import CVodeSolver
-        solver = CVodeSolver(set_time=fmu.setTime,
+        solver = CVodeSolver(get_nominals=fmu.getNominalContinuousStates if is_fmi1 else fmu.getNominalsOfContinuousStates,
+                             set_time=fmu.setTime,
                              startTime=start_time,
                              maxStep=(stop_time - start_time) / 50.,
                              relativeTolerance=relative_tolerance,

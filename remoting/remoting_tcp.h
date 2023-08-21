@@ -32,6 +32,13 @@ struct IntegerReturnValue {
 	MSGPACK_DEFINE_ARRAY(status, logMessages, value)
 };
 
+struct StringReturnValue {
+	int status;
+	std::list<LogMessage> logMessages;
+	std::vector<std::string> value;
+	MSGPACK_DEFINE_ARRAY(status, logMessages, value)
+};
+
 struct EventInfoReturnValue {
 	int status;
 	std::list<LogMessage> logMessages;

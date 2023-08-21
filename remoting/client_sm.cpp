@@ -15,14 +15,15 @@ using namespace std;
 #define ARG(IDX) (&pBuf[MAX_ARG_SIZE * IDX])
 
 
-HANDLE inputReady = INVALID_HANDLE_VALUE;
-HANDLE outputReady = INVALID_HANDLE_VALUE;
+static HANDLE inputReady = INVALID_HANDLE_VALUE;
+static HANDLE outputReady = INVALID_HANDLE_VALUE;
 
-HANDLE hMapFile = INVALID_HANDLE_VALUE;
-LPTSTR pBuf = NULL;
+static HANDLE hMapFile = INVALID_HANDLE_VALUE;
+static LPTSTR pBuf = NULL;
 
-fmi2CallbackLogger s_logger = NULL;
-fmi2ComponentEnvironment s_componentEnvironment = NULL;
+static char* s_instanceName = NULL;
+static fmi2CallbackLogger s_logger = NULL;
+static fmi2ComponentEnvironment s_componentEnvironment = NULL;
 
 static 	PROCESS_INFORMATION s_proccessInfo = { 0 };
 
@@ -96,6 +97,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
         return NULL;
     }
 
+    s_instanceName = strdup(instanceName);
     s_logger = functions->logger;
     s_componentEnvironment = functions->componentEnvironment;
 
@@ -216,6 +218,8 @@ void fmi2FreeInstance(fmi2Component c) {
 
     fmi2Status status = makeRPC(rpc_fmi2FreeInstance);
 
+    free(s_instanceName);
+
     UnmapViewOfFile(pBuf);
 
     CloseHandle(hMapFile);
@@ -291,8 +295,21 @@ fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
     return status;
 }
 
-fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2String  value[]) {
-	NOT_IMPLEMENTED
+fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2String value[]) {
+
+    if (nvr > 1) {
+        s_logger(s_componentEnvironment, s_instanceName, fmi2Error, "fmiError", "fmi2GetString() supports only one value per call.");
+        return fmi2Error;
+    }
+
+    memcpy(ARG(1), vr, sizeof(fmi2ValueReference) * nvr);
+    memcpy(ARG(2), &nvr, sizeof(size_t));
+
+    fmi2Status status = makeRPC(rpc_fmi2GetString);
+
+    value[0] = ARG(3);
+
+    return status;
 }
 
 fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Real value[]) {
@@ -322,8 +339,19 @@ fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
     return makeRPC(rpc_fmi2SetBoolean);
 }
 
-fmi2Status fmi2SetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2String  value[]) {
-	NOT_IMPLEMENTED
+fmi2Status fmi2SetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2String value[]) {
+
+    if (nvr > 1) {
+        s_logger(s_componentEnvironment, s_instanceName, fmi2Error, "fmiError", "fmi2SetString() supports only one value per call.");
+        return fmi2Error;
+    }
+
+    memcpy(ARG(1), vr, sizeof(fmi2ValueReference) * nvr);
+    memcpy(ARG(2), &nvr, sizeof(size_t));
+    
+    strcpy(ARG(3), value[0]);
+    
+    return makeRPC(rpc_fmi2SetString);
 }
 
 /* Getting and setting the internal FMU state */

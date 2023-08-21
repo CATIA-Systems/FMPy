@@ -35,7 +35,7 @@ import pyqtgraph as pg
 
 pg.setConfigOptions(background='w', foreground='k', antialias=True)
 
-COLLAPSABLE_COLUMNS = ['Type', 'Value Reference', 'Initial', 'Causality', 'Variability', 'Min', 'Max']
+COLLAPSABLE_COLUMNS = ['Type', 'Value Reference', 'Initial', 'Causality', 'Variability', 'Nominal', 'Min', 'Max']
 
 
 class ClickableLabel(QLabel):

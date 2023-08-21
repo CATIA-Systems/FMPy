@@ -69,8 +69,10 @@ int main(int argc, char *argv[]) {
 	auto setupExperiment         = get<fmi2SetupExperimentTYPE>         (l, "fmi2SetupExperiment");
 	auto enterInitializationMode = get<fmi2EnterInitializationModeTYPE> (l, "fmi2EnterInitializationMode");
 	auto exitInitializationMode  = get<fmi2ExitInitializationModeTYPE>  (l, "fmi2ExitInitializationMode");
-	auto getReal                 = get<fmi2GetRealTYPE>                 (l, "fmi2GetReal");
-	auto doStep                  = get<fmi2DoStepTYPE>                  (l, "fmi2DoStep");
+    auto getReal                 = get<fmi2GetRealTYPE>                 (l, "fmi2GetReal");
+    auto getString               = get<fmi2GetStringTYPE>               (l, "fmi2GetString");
+    auto setString               = get<fmi2SetStringTYPE>               (l, "fmi2SetString");
+    auto doStep                  = get<fmi2DoStepTYPE>                  (l, "fmi2DoStep");
 	auto terminate               = get<fmi2TerminateTYPE>               (l, "fmi2Terminate");
 	auto freeInstance            = get<fmi2FreeInstanceTYPE>            (l, "fmi2FreeInstance");
 

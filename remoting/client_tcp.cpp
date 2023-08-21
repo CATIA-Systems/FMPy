@@ -386,8 +386,16 @@ fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 	return fmi2Status(r.status);
 }
 
-fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2String  value[]) {
-	NOT_IMPLEMENTED
+fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2String value[]) {
+    vector<unsigned int> v_vr(vr, vr + nvr);
+    auto r = client->call("fmi2GetString", v_vr).as<StringReturnValue>();
+    static vector<string> s;
+    s = r.value;
+    for (size_t i = 0; i < r.value.size(); i++) {
+        value[i] = s[i].c_str();
+    }
+    forwardLogMessages(r.logMessages);
+    return fmi2Status(r.status);
 }
 
 fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Real value[]) {
@@ -415,7 +423,11 @@ fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 }
 
 fmi2Status fmi2SetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2String  value[]) {
-	NOT_IMPLEMENTED
+    auto vr_ = static_cast<const unsigned int*>(vr);
+    vector<unsigned int> v_vr(vr_, vr_ + nvr);
+    vector<string> v_value(value, value + nvr);
+    auto r = client->call("fmi2SetString", v_vr, v_value).as<ReturnValue>();
+    return handleReturnValue(r);
 }
 
 /* Getting and setting the internal FMU state */

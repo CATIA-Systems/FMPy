@@ -138,14 +138,20 @@ private:
 		return r;
 	}
 
-	RealReturnValue createRealReturnValue(int status, const vector<double> &value) {
+	RealReturnValue createRealReturnValue(int status, const vector<double>& value) {
 		RealReturnValue r = { status, s_logMessages, value };
 		s_logMessages.clear();
 		return r;
 	}
 
-	IntegerReturnValue createIntegerReturnValue(int status, const vector<int> &value) {
+	IntegerReturnValue createIntegerReturnValue(int status, const vector<int>& value) {
 		IntegerReturnValue r = { status, s_logMessages, value };
+		s_logMessages.clear();
+		return r;
+	}
+
+	StringReturnValue createStringReturnValue(int status, const vector<string>& value) {
+		StringReturnValue r = { status, s_logMessages, value };
 		s_logMessages.clear();
 		return r;
 	}
@@ -259,11 +265,22 @@ public:
 			return createIntegerReturnValue(status, value);
 		});
 
-		srv.bind("fmi2GetBoolean", [this](const vector<unsigned int> &vr) {
+		srv.bind("fmi2GetBoolean", [this](const vector<unsigned int>& vr) {
 			resetExitTimer();
 			vector<int> value(vr.size());
 			const FMIStatus status = FMI2GetBoolean(m_instance, vr.data(), vr.size(), value.data());
 			return createIntegerReturnValue(status, value);
+		});
+
+		srv.bind("fmi2GetString", [this](const vector<unsigned int>& vr) {
+			resetExitTimer();
+			vector<fmi2String> value(vr.size());
+			const FMIStatus status = FMI2GetString(m_instance, vr.data(), vr.size(), value.data());
+			vector<string> v;
+			for (size_t i = 0; i < value.size(); i++) {
+				v.push_back(value[i]);
+			}
+			return createStringReturnValue(status, v);
 		});
 
 		srv.bind("fmi2SetReal", [this](const vector<unsigned int> &vr, const vector<double> &value) {
@@ -278,9 +295,19 @@ public:
 			return createReturnValue(status);
 		});
 
-		srv.bind("fmi2SetBoolean", [this](const vector<unsigned int> &vr, const vector<int> &value) {
+		srv.bind("fmi2SetBoolean", [this](const vector<unsigned int>& vr, const vector<int>& value) {
 			resetExitTimer();
 			const FMIStatus status = FMI2SetBoolean(m_instance, vr.data(), vr.size(), value.data());
+			return createReturnValue(status);
+			});
+
+		srv.bind("fmi2SetString", [this](const vector<unsigned int>& vr, const vector<string>& value) {
+			resetExitTimer();
+			vector<fmi2String> v_value;
+			for (size_t i = 0; i < value.size(); i++) {
+				v_value.push_back(value[i].c_str());
+			}
+			const FMIStatus status = FMI2SetString(m_instance, vr.data(), vr.size(), v_value.data());
 			return createReturnValue(status);
 		});
 

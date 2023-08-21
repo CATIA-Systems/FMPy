@@ -223,10 +223,19 @@ int main(int argc, char *argv[]) {
             STATUS = FMI2GetBoolean(m_instance, ARG(fmi2ValueReference*, 1), *ARG(size_t*, 2), ARG(fmi2Boolean*, 3));
             break;
         
-        case rpc_fmi2GetString:
-            STATUS = FMIError;
+        case rpc_fmi2GetString: {
+            fmi2String value;
+            STATUS = FMI2GetString(m_instance, ARG(fmi2ValueReference*, 1), *ARG(size_t*, 2), &value);
+            if (STATUS < FMIDiscard) {
+                if (strlen(value) > (MAX_ARG_SIZE - 1)) {
+                    cout << "Error: value returned from fmi2GetString() exceeds " << (MAX_ARG_SIZE - 1) << " bytes." << endl;
+                    STATUS = FMIError;
+                } else {
+                    strcpy(ARG(char*, 3), value);
+                }
+            }
             break;
-        
+        }
         case rpc_fmi2SetReal:
             STATUS = FMI2SetReal(m_instance, ARG(fmi2ValueReference*, 1), *ARG(size_t*, 2), ARG(const fmi2Real*, 3));
             break;
@@ -239,10 +248,11 @@ int main(int argc, char *argv[]) {
             STATUS = FMI2SetBoolean(m_instance, ARG(fmi2ValueReference*, 1), *ARG(size_t*, 2), ARG(const fmi2Boolean*, 3));
             break;
         
-        case rpc_fmi2SetString:
-            STATUS = FMIError;
+        case rpc_fmi2SetString: {
+            const fmi2String value = ARG(const fmi2String, 3);
+            STATUS = FMI2SetString(m_instance, ARG(fmi2ValueReference*, 1), *ARG(size_t*, 2), &value);
             break;
-
+        }
         case rpc_fmi2GetFMUstate:
         case rpc_fmi2SetFMUstate:
         case rpc_fmi2FreeFMUstate:

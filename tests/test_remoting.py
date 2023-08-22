@@ -26,6 +26,23 @@ class RemotingTest(unittest.TestCase):
 
         simulate_fmu(filename, fmi_type='CoSimulation', remote_platform=None)
 
+#    @skipIf(platform != 'linux64', "Linux 32-bit is only supported on Linux 64-bit")
+#    def test_remoting_linux32_on_linux64_cs(self):
+#
+#        filename = download_file(
+#            'https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/linux32/MapleSim/2015.2/Rectifier/Rectifier.fmu',
+#            checksum='7629fda38cd4078f9e7f512e9cbcf63a9ff67a58e7b2b56c972f4cd467fb85d6')
+#
+#        self.assertNotIn('linux64', supported_platforms(filename))
+#
+#        simulate_fmu(filename, fmi_type='CoSimulation', remote_platform='linux32')
+#
+#        add_remoting(filename, host_platform='linux64', remote_platform='linux32')
+#
+#        self.assertIn('linux64', supported_platforms(filename))
+#
+#        simulate_fmu(filename, fmi_type='CoSimulation', remote_platform=None)
+
     @skipIf(platform != 'win64', "Windows 32-bit is only supported on Windows 64-bit")
     def test_remoting_win32_on_win64_me(self):
 

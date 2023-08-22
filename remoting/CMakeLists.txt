@@ -1,12 +1,4 @@
-##
-##   ___                  __                __ 
-## .'  _|.--------.--.--.|  |_.-----.-----.|  |
-## |   _||        |  |  ||   _|  _  |  _  ||  |
-## |__|  |__|__|__|_____||____|_____|_____||__|
-## 
-## 
- 
- cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.18)
 project (remoting)
 
 set (CMAKE_C_STANDARD 99)

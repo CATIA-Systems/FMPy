@@ -1,1 +1,1 @@
-#define REMOTING_VERSION "LOCAL"
+#define REMOTING_VERSION "1.0"

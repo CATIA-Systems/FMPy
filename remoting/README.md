@@ -56,6 +56,7 @@ When Simulation Enviroment will use the FMU on 32bits kernel:
   2. which will communicate with `win64/server_exe`.
   3. which will load `win64/real-model.dll` 
 
+
 ## TODO List
 
 - [X] Unique name for event/memory
@@ -66,3 +67,7 @@ When Simulation Enviroment will use the FMU on 32bits kernel:
 - [ ] TCP/IP communication ?
   - [ ] Linux support ?
   
+  ## AUTHOR
+
+  This remoting code is written by Nicolas.LAURENT@Renault.com. It is based on
+  FMPy original code.

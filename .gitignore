@@ -43,3 +43,7 @@ tests/Rectifier/
 
 # generated documentation
 _build
+
+# MacOS finder cache file
+.DS_Store
+fmpy/.DS_Store

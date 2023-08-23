@@ -32,7 +32,7 @@ target_include_directories(server_sm PUBLIC include)
 
 add_custom_command(TARGET server_sm POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
     "$<TARGET_FILE:server_sm>"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../fmutool/remoting/${FMI_PLATFORM}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/remoting/${FMI_PLATFORM}"
 )
 
 
@@ -75,7 +75,7 @@ target_include_directories(test_sizeof PRIVATE
 
 add_custom_command(TARGET test_sizeof POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
     "$<TARGET_FILE:test_sizeof>"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../fmutool/remoting/${FMI_PLATFORM}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/remoting/${FMI_PLATFORM}"
 )
 
 add_custom_command(OUTPUT test_sizeof.c

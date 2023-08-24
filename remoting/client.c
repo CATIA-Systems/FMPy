@@ -137,17 +137,17 @@ static char *basename(char* path) {
 
 static const char* get_server_arch(void) {
     /* current process (calling this dll) is 64bits, the server is 32 bits */
-#ifdef WIN32
+#if defined WIN32
     if (sizeof(void*) == 8)
         return "win32";
     else
         return "win64";
-#else ifdef __linux__
+#elif defined __linux__
     if (sizeof(void*) == 8)
         return "linux32";
     else
         return "linux64";
-#else ifdef __macos__
+#elif defined __macos__
     if (sizeof(void*) == 8)
         return "darwin32";
     else
@@ -174,7 +174,7 @@ static int get_server_argv(client_t *client, char *argv[]) {
     argv[2] = malloc(16);
     argv[3] = malloc(MAX_PATH);
 
-    snprintf(argv[0], MAX_PATH, "%s\\%s\\server_sm.exe", path, arch, get_server_arch());
+    snprintf(argv[0], MAX_PATH, "%s\\%s\\server_sm.exe", path, get_server_arch());
     snprintf(argv[1], 16, "%lu", process_current_id());
     strcpy(argv[2], client->shared_key);
     snprintf(argv[3], MAX_PATH, "%s\\%s\\%s.dll", path, get_server_arch(), model_identifier);

@@ -34,6 +34,10 @@ add_executable(server_sm
 
 target_include_directories(server_sm PUBLIC include)
 
+if (UNIX)
+    target_link_libraries(server_sm ${CMAKE_DL_LIBS})
+endif ()
+
 add_custom_command(TARGET server_sm POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
     "$<TARGET_FILE:server_sm>"
     "${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/remoting/${FMI_PLATFORM}"

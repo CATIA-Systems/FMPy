@@ -10,6 +10,8 @@ if (WIN32)
         set(FMI_PLATFORM win32)
 	endif ()
 else ()
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Threads REQUIRED)
     set(FMI_PLATFORM linux64)
 endif ()
 
@@ -37,7 +39,7 @@ target_include_directories(server_sm PUBLIC include)
 if (UNIX)
     target_link_libraries(server_sm ${CMAKE_DL_LIBS})
     if (NOT APPLE)
-        target_link_libraries(server_sm rt)
+        target_link_libraries(server_sm rt Threads::Threads)
     endif()
 endif ()
 
@@ -66,7 +68,7 @@ target_include_directories(client_sm PRIVATE
 )
 
 if (UNIX AND NOT APPLE)
-        target_link_libraries(client_sm rt)
+        target_link_libraries(client_sm rt Threads::Threads)
 endif()
 
 add_custom_command(TARGET client_sm POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy

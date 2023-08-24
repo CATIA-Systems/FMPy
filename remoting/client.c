@@ -135,16 +135,27 @@ static char *basename(char* path) {
 }
 
 
-static const char *get_server_dll_suffixe(const char *path, const char* model_identifier) {
-    char candidate_filename[MAX_PATH];
-
-    snprintf(candidate_filename, sizeof(candidate_filename), "%s\\win64\\%s-remoted.dll",
-        path, model_identifier);
-
-    if (access(candidate_filename, 00) == 0)
-        return "-remoted";
+static const char* get_server_arch(void) {
+    /* current process (calling this dll) is 64bits, the server is 32 bits */
+#ifdef WIN32
+    if (sizeof(void*) == 8)
+        return "win32";
     else
-        return "";
+        return "win64";
+#else ifdef __linux__
+    if (sizeof(void*) == 8)
+        return "linux32";
+    else
+        return "linux64";
+#else ifdef __macos__
+    if (sizeof(void*) == 8)
+        return "darwin32";
+    else
+        return "darwin64";
+#else
+#   error "Architecture not supported"
+    return "__never_reached__";
+#endif
 }
 
 
@@ -157,17 +168,17 @@ static int get_server_argv(client_t *client, char *argv[]) {
 
     model_identifier = basename(dirname(path));
     dirname(path);
-    const char* dll_suffixe = get_server_dll_suffixe(path, model_identifier);
 
     argv[0] = malloc(MAX_PATH);
     argv[1] = malloc(16);
     argv[2] = malloc(16);
     argv[3] = malloc(MAX_PATH);
 
-    snprintf(argv[0], MAX_PATH, "%s\\win64\\server_sm.exe", path);
+    snprintf(argv[0], MAX_PATH, "%s\\%s\\server_sm.exe", path, arch, get_arch());
     snprintf(argv[1], 16, "%lu", process_current_id());
     strcpy(argv[2], client->shared_key);
-    snprintf(argv[3], MAX_PATH, "%s\\win64\\%s%s.dll", path, model_identifier, dll_suffixe);
+    snprintf(argv[3], MAX_PATH, "%s\\%s\\%s.dll", path, get_arch(), model_identifier);
+
     return 0;
 }
 

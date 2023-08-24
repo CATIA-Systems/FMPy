@@ -3,6 +3,7 @@
 #else
 #   include <stdlib.h> 
 #   include <signal.h>
+#   define _GNU_SOURCE  /* to access to dladdr */
 #   include <dlfcn.h>
 #   include <string.h>
 #   include <unistd.h>

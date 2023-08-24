@@ -174,10 +174,10 @@ static int get_server_argv(client_t *client, char *argv[]) {
     argv[2] = malloc(16);
     argv[3] = malloc(MAX_PATH);
 
-    snprintf(argv[0], MAX_PATH, "%s\\%s\\server_sm.exe", path, arch, get_arch());
+    snprintf(argv[0], MAX_PATH, "%s\\%s\\server_sm.exe", path, arch, get_server_arch());
     snprintf(argv[1], 16, "%lu", process_current_id());
     strcpy(argv[2], client->shared_key);
-    snprintf(argv[3], MAX_PATH, "%s\\%s\\%s.dll", path, get_arch(), model_identifier);
+    snprintf(argv[3], MAX_PATH, "%s\\%s\\%s.dll", path, get_server_arch(), model_identifier);
 
     return 0;
 }

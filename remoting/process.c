@@ -1,10 +1,10 @@
 #ifdef WIN32
 #   include <windows.h>
 #else
-#   include <stdlib.h> 
-#   include <signal.h>
 #   define _GNU_SOURCE  /* to access to dladdr */
 #   include <dlfcn.h>
+#   include <stdlib.h> 
+#   include <signal.h>
 #   include <string.h>
 #   include <unistd.h>
 #endif

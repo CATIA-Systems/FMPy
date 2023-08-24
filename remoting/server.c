@@ -106,7 +106,7 @@ static void map_entries(fmu_entries_t* entries, library_t library) {
 #	define MAP(x) entries->x = (x ## TYPE*)library_symbol(library, #x); \
 	SERVER_LOG("function %-30s: %s\n", "`" #x "'", (entries->x)?"found":"not implemented")
 
-    MAP(fmi2GetTypesPlatform);
+    MAP(fmi2GetTypesPlatform);  /* 0 */
     MAP(fmi2GetVersion);
     MAP(fmi2SetDebugLogging);
     MAP(fmi2Instantiate);
@@ -116,7 +116,7 @@ static void map_entries(fmu_entries_t* entries, library_t library) {
     MAP(fmi2ExitInitializationMode);
     MAP(fmi2Terminate);
     MAP(fmi2Reset);
-    MAP(fmi2GetReal);
+    MAP(fmi2GetReal); /* 10 */
     MAP(fmi2GetInteger);
     MAP(fmi2GetBoolean);
     MAP(fmi2GetString);
@@ -126,17 +126,29 @@ static void map_entries(fmu_entries_t* entries, library_t library) {
     MAP(fmi2SetString);
     MAP(fmi2GetFMUstate);
     MAP(fmi2SetFMUstate);
-    MAP(fmi2FreeFMUstate);
+    MAP(fmi2FreeFMUstate); /* 20 */
     MAP(fmi2SerializedFMUstateSize);
     MAP(fmi2SerializeFMUstate);
     MAP(fmi2DeSerializeFMUstate);
     MAP(fmi2GetDirectionalDerivative);
+
+    MAP(fmi2EnterEventMode);
+    MAP(fmi2NewDiscreteStates);
+    MAP(fmi2EnterContinuousTimeMode);
+    MAP(fmi2CompletedIntegratorStep);
+    MAP(fmi2SetTime);
+    MAP(fmi2SetContinuousStates); /* 30 */
+    MAP(fmi2GetDerivatives);
+    MAP(fmi2GetEventIndicators);
+    MAP(fmi2GetContinuousStates);
+    MAP(fmi2GetNominalsOfContinuousStates);
+
     MAP(fmi2SetRealInputDerivatives);
     MAP(fmi2GetRealOutputDerivatives);
     MAP(fmi2DoStep);
     MAP(fmi2CancelStep);
     MAP(fmi2GetStatus);
-    MAP(fmi2GetRealStatus);
+    MAP(fmi2GetRealStatus); /* 40 */
     MAP(fmi2GetIntegerStatus);
     MAP(fmi2GetBooleanStatus);
     MAP(fmi2GetStringStatus);

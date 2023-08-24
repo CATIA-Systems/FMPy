@@ -147,7 +147,7 @@ static const char* get_server_arch(void) {
         return "linux32";
     else
         return "linux64";
-#elif defined __macos__
+#elif defined __APPLE__
     if (sizeof(void*) == 8)
         return "darwin32";
     else

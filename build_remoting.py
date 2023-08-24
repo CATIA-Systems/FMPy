@@ -40,7 +40,6 @@ else:
         'cmake',
         '-B', 'remoting/' + 'linux64',
         '-G', 'Unix Makefiles',
-        '-D', 'RPCLIB=' + os.path.join(rpclib_dir, 'linux64', 'install'),
         '-B', 'remoting/linux64', 'remoting'
     ])
 

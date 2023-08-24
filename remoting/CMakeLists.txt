@@ -3,10 +3,14 @@ project (remoting)
 
 set (CMAKE_C_STANDARD 99)
 
-if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
-    set(FMI_PLATFORM win64)
+if (WIN32)
+    if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
+        set(FMI_PLATFORM win64)
+    else ()
+        set(FMI_PLATFORM win32)
+	endif ()
 else ()
-    set(FMI_PLATFORM win32)
+    set(FMI_PLATFORM linux64)
 endif ()
 
 message("FMI_PLATFORM: ${FMI_PLATFORM}")
@@ -56,7 +60,7 @@ target_include_directories(client_sm PRIVATE
 
 add_custom_command(TARGET client_sm POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
     "$<TARGET_FILE:client_sm>"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../fmutool/remoting/${FMI_PLATFORM}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/remoting/${FMI_PLATFORM}"
 )
 
 

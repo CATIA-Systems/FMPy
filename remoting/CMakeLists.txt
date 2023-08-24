@@ -36,6 +36,9 @@ target_include_directories(server_sm PUBLIC include)
 
 if (UNIX)
     target_link_libraries(server_sm ${CMAKE_DL_LIBS})
+    if (NOT APPLE)
+        target_link_libraries(server_sm rt)
+    endif()
 endif ()
 
 add_custom_command(TARGET server_sm POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
@@ -61,6 +64,10 @@ add_library(client_sm SHARED
 target_include_directories(client_sm PRIVATE
     include
 )
+
+if (UNIX AND NOT APPLE)
+        target_link_libraries(client_sm rt)
+endif()
 
 add_custom_command(TARGET client_sm POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
     "$<TARGET_FILE:client_sm>"

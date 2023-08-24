@@ -7,6 +7,11 @@
 #   include <signal.h>
 #   include <string.h>
 #   include <unistd.h>
+#   define _BSD_SOURCE  /* to access wait4 */
+#   include <sys/types.h>
+#   include <sys/time.h>
+#   include <sys/resource.h>
+#   include <sys/wait.h>
 #endif
 
 #include "process.h"
@@ -109,6 +114,6 @@ void process_waitfor(process_handle_t handle) {
     WaitForSingleObject(handle, INFINITE);
 #else
     int reason; 
-    wait4(handle, &reason,WNOHANG, NULL);
+    wait4(handle, &reason, WNOHANG, NULL);
 #endif
 }

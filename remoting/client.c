@@ -1,3 +1,5 @@
+#include "config.h"
+
 #ifdef WIN32
 #   include <io.h>
 #endif
@@ -12,7 +14,6 @@
 #include "client.h"
 #include "communication.h"
 #include "process.h"
-#include "version.h"
 
 
 //#define CLIENT_DEBUG

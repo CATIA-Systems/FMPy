@@ -1,0 +1,8 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#   define REMOTING_VERSION "${VERSION}"
+
+#cmakedefine HAVE_SEM_TIMEDWAIT
+
+#endif

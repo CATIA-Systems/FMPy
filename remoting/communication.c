@@ -1,7 +1,14 @@
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
 #ifndef WIN32
+#   include <errno.h>
 #   include <unistd.h>
+#   include <sys/time.h>
+#   ifdef __APPLE__
+#       include <signal.h>
+#   endif
 #endif
 
 //#define SHM_DEBUG
@@ -61,6 +68,12 @@ void communication_free(communication_t* communication) {
     free(communication);
 }
 
+
+#ifdef __APPLE__
+static void communication_alarm_handler(int sig) {
+    return;
+}
+#endif
 
 communication_t *communication_new(const char *prefix, int memory_size, communication_endpoint_t endpoint) {
     communication_t* communication = malloc(sizeof(*communication));
@@ -156,6 +169,15 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
     communication->data_size = memory_size;
 
 
+#ifdef __APPLE__
+    /* Make SIG_ALARM interrupt system call */
+    struct sigaction sa;
+    sa.sa_handler = communication_alarm_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGALRM, &sa, NULL);
+#endif
+
     return communication;
 }
 
@@ -206,8 +228,34 @@ int communication_timedwaitfor_client(const communication_t* communication, int 
 #ifdef WIN32
     return WaitForSingleObject(communication->client_ready, timeout) == WAIT_TIMEOUT;
 #else
-    (void)timeout;
-    sem_wait(communication->client_ready);
+#   ifdef HAVE_SEM_TIMEDWAIT
+    struct timespec ts;
+
+    clock_gettime(CLOCK_REALTIME, &ts);
+    ts.tv_sec  += timeout / 1000;
+    ts.tv_nsec += (timeout - ts.tv_sec * 1000) * 1000000;
+    if (sem_timedwait(communication->client_ready, &ts) < 0)
+        return errno == ETIMEDOUT;
+    return 0;
+
+#   else
+    struct itimerval value, old_value;
+
+    value.it_interval.tv_sec = 0;
+    value.it_interval.tv_usec = 0;
+    value.it_value.tv_sec = timeout / 1000;
+    value.it_value.tv_usec = (timeout - value.it_value.tv_sec * 1000) * 1000;
+
+    setitimer(ITIMER_REAL, &value, &old_value);
+    int status = sem_wait(communication->client_ready);
+    setitimer(ITIMER_REAL, &old_value, NULL);
+    
+    if (status < 0)
+        return errno == EINTR;
+    
+    return 0;
+
+#endif
     return 0;
 #endif
 }

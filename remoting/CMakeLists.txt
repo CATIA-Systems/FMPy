@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 project (remoting)
+set(VERSION "1.0")
 
 set (CMAKE_C_STANDARD 99)
 
@@ -12,8 +13,25 @@ if (WIN32)
 else ()
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)
-    set(FMI_PLATFORM linux64)
+    
+    include(CheckSymbolExists)
+    check_symbol_exists(sem_timedwait "semaphore.h" HAVE_SEM_TIMEDWAIT)
+
+    if (APPLE)
+        set(FMI_PLATFORM darwin64)
+        # Compilation in 32 bits mode is no longer supported in MacOS 
+    else ()
+        if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
+            set(FMI_PLATFORM linux64)
+        else ()
+           set(FMI_PLATFORM linux32)
+        endif ()
+    endif()
+
 endif ()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 message("FMI_PLATFORM: ${FMI_PLATFORM}")
 
@@ -29,10 +47,12 @@ add_executable(server_sm
     process.c process.h 
     remote.c remote.h
     server.c server.h
+    ${CMAKE_CURRENT_BINARY_DIR}/config.h
 )
 
 target_include_directories(server_sm PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code)
+    ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code
+    ${CMAKE_CURRENT_BINARY_DIR})
 
 if (UNIX)
     target_link_libraries(server_sm ${CMAKE_DL_LIBS})
@@ -55,11 +75,12 @@ add_library(client_sm SHARED
     communication.c communication.h
     process.c process.h 
     remote.c remote.h
-    version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/config.h
 )
 
 target_include_directories(client_sm PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code)
+    ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code
+    ${CMAKE_CURRENT_BINARY_DIR})
 
 if (UNIX AND NOT APPLE)
         target_link_libraries(client_sm rt Threads::Threads)
@@ -81,11 +102,6 @@ add_executable(test_sizeof
 
 target_include_directories(test_sizeof PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code
-)
-
-add_custom_command(TARGET test_sizeof POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
-    "$<TARGET_FILE:test_sizeof>"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/remoting/${FMI_PLATFORM}"
 )
 
 add_custom_command(OUTPUT test_sizeof.c

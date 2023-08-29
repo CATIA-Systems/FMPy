@@ -1,1 +1,0 @@
-#define REMOTING_VERSION "1.0"

@@ -1,4 +1,13 @@
-# Generate test_sizeof.c for basic sanity checks.
+#    ___                                               __   __              
+#  .'  _|.--------.--.--.  .----.-----.--------.-----.|  |_|__|.-----.-----.
+#  |   _||        |  |  |  |   _|  -__|        |  _  ||   _|  ||     |  _  |
+#  |__|  |__|__|__|_____|  |__| |_____|__|__|__|_____||____|__||__|__|___  |
+#  Copyright 2023 Renault SAS                                        |_____|
+#  The remoting code is written by Nicolas.LAURENT@Renault.com. 
+#  This code is released under the 2-Clause BSD license.
+#
+
+ # Generate test_sizeof.c for basic sanity checks.
  
 import sys
 import os

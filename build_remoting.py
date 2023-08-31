@@ -50,7 +50,7 @@ elif os.name == 'linux':
         'cmake',
         '-G', 'Unix Makefiles',
         '-B', 'remoting/linux32',
-        '-DBUILD_32',
+        '-DBUILD_32=ON',
         'remoting'
     ])
 

@@ -52,7 +52,7 @@ add_executable(server_sm
     ${CMAKE_CURRENT_BINARY_DIR}/config.h
 )
 
-set_target_properties(server_sm, PROPERTIES COMPILE_OPTIONS "${BITNESS}" LINK_FLAGS "${BITNESS})
+set_target_properties(server_sm, PROPERTIES COMPILE_OPTIONS "${BITNESS}" LINK_FLAGS "${BITNESS}")
 target_include_directories(server_sm PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code
     ${CMAKE_CURRENT_BINARY_DIR})

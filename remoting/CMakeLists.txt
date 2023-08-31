@@ -3,6 +3,7 @@ project (remoting)
 set(VERSION "1.0")
 
 set (CMAKE_C_STANDARD 99)
+option(BUILD_32 "Build for 32bits target" OFF)
 
 if (WIN32)
     if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
@@ -21,10 +22,11 @@ else ()
         set(FMI_PLATFORM darwin64)
         # Compilation in 32 bits mode is no longer supported in MacOS 
     else ()
-        if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
-            set(FMI_PLATFORM linux64)
-        else ()
+        if (BUILD_32)
            set(FMI_PLATFORM linux32)
+           set(BITNESS "-m32")
+        else ()
+           set(FMI_PLATFORM linux64)
         endif ()
     endif()
 
@@ -50,6 +52,7 @@ add_executable(server_sm
     ${CMAKE_CURRENT_BINARY_DIR}/config.h
 )
 
+set_target_properties(server_sm, PROPERTIES COMPILE_OPTIONS "${BITNESS}" LINK_FLAGS "${BITNESS})
 target_include_directories(server_sm PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code
     ${CMAKE_CURRENT_BINARY_DIR})
@@ -78,7 +81,7 @@ add_library(client_sm SHARED
     ${CMAKE_CURRENT_BINARY_DIR}/config.h
 )
 
-set_target_properties(client_sm PROPERTIES PREFIX "")
+set_target_properties(client_sm PROPERTIES PREFIX "" COMPILE_OPTIONS "${BITNESS}" LINK_FLAGS "${BITNESS}")
 
 target_include_directories(client_sm PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code

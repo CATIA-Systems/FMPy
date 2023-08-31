@@ -6,7 +6,7 @@ from fmpy.util import download_file
 
 
 # build configuration
-config = 'Debug'
+config = 'Release'
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 if os.name == 'nt':
@@ -20,7 +20,6 @@ if os.name == 'nt':
 
         check_call(args=[
             'cmake',
-            '-B', 'remoting/' + bitness,
             '-G', 'Visual Studio 17 2022',
             '-A', architecture,
             '-B', 'remoting/' + bitness,
@@ -29,8 +28,7 @@ if os.name == 'nt':
 
         check_call(['cmake', '--build', 'remoting/' + bitness, '--config', config])
 
-else:
-
+elif os.name == 'linux':
     # clean up
     shutil.rmtree(os.path.join(basedir, 'remoting', 'linux64'), ignore_errors=True)
 
@@ -38,9 +36,37 @@ else:
 
     check_call(args=[
         'cmake',
-        '-B', 'remoting/' + 'linux64',
         '-G', 'Unix Makefiles',
-        '-B', 'remoting/linux64', 'remoting'
+        '-B', 'remoting/linux64',
+        'remoting'
     ])
 
     check_call(['cmake', '--build', 'remoting/linux64', '--config', config])
+
+    shutil.rmtree(os.path.join(basedir, 'remoting', 'linux32'), ignore_errors=True)
+    print("Building remoting binaries...")
+
+    check_call(args=[
+        'cmake',
+        '-G', 'Unix Makefiles',
+        '-B', 'remoting/linux32',
+        '-DBUILD_32',
+        'remoting'
+    ])
+
+    check_call(['cmake', '--build', 'remoting/linux32', '--config', config])
+
+else:
+    # clean up
+    shutil.rmtree(os.path.join(basedir, 'remoting', 'darwin64'), ignore_errors=True)
+
+    print("Building remoting binaries...")
+
+    check_call(args=[
+        'cmake',
+        '-G', 'Unix Makefiles',
+        '-B', 'remoting/darwin64',
+        'remoting'
+    ])
+
+    check_call(['cmake', '--build', 'remoting/darwin64', '--config', config])

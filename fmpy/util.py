@@ -1370,6 +1370,8 @@ def can_simulate(platforms, remote_platform='auto'):
 
         if remote_platform == 'win32' and platform == 'win64':
             return True, remote_platform
+        elif remote_platform == 'linux32' and platform == 'linux64':
+            return True, remote_platform
         elif remote_platform == 'win64' and has_wine64():
             return True, remote_platform
         elif remote_platform == 'linux64' and has_wsl():

@@ -188,10 +188,24 @@ static int get_server_argv(client_t *client, char *argv[]) {
     char sep = '/';
 #endif
 
+#ifdef WIN32
     snprintf(argv[0], MAX_PATH, "%s%c%s%cserver_sm.exe", path, sep, get_server_arch(), sep);
+#else
+    snprintf(argv[0], MAX_PATH, "%s%c%s%cserver_sm", path, sep, get_server_arch(), sep);
+#endif
+
     snprintf(argv[1], 16, "%lu", process_current_id());
     strcpy(argv[2], client->shared_key);
+
+#ifdef WIN32
     snprintf(argv[3], MAX_PATH, "%s%c%s%c%s.dll", path, sep, get_server_arch(), sep, model_identifier);
+#endif
+#ifdef __linux__
+    snprintf(argv[3], MAX_PATH, "%s%c%s%c%s.so", path, sep, get_server_arch(), sep, model_identifier);
+#endif
+#ifdef __APPLE__
+    snprintf(argv[3], MAX_PATH, "%s%c%s%c%s.dylib", path, sep, get_server_arch(), sep, model_identifier);
+#endif
 
     return 0;
 }

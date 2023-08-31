@@ -975,8 +975,7 @@ def remove_source_code(filename):
 def add_remoting(filename, host_platform, remote_platform):
     """
         win32 on win64 (SM)
-        linux64 on win64 (WSL + TCP)
-        win64 on linux64 (wine + TCP)
+        linux32 on linux64 (SM)
     """
 
     from . import extract, read_model_description, supported_platforms
@@ -989,8 +988,7 @@ def add_remoting(filename, host_platform, remote_platform):
 
     methods = {
         ('win64', 'win32'): 'sm',
-        ('win64', 'linux64'): 'tcp',
-        ('linux64', 'win64'): 'tcp'
+        ('linux64', 'linux32'): 'sm',
     }
 
     if (host_platform, remote_platform) not in methods:
@@ -1018,8 +1016,14 @@ def add_remoting(filename, host_platform, remote_platform):
     else:
         model_identifier = model_description.modelExchange.modelIdentifier
 
-    sl_ext = {'linux64': '.so', 'win32': '.dll', 'win64': '.dll'}
-    ex_ext = {'linux64': '', 'win32': '.exe', 'win64': '.exe'}
+    sl_ext = {'linux64': '.so',
+              'linux32': '.so',
+              'win32': '.dll',
+              'win64': '.dll'}
+    ex_ext = {'linux64': '',
+              'linux32': '',
+              'win32': '.exe',
+              'win64': '.exe'}
 
     # copy the binaries & license
     os.makedirs(join(tempdir, 'binaries', host_platform), exist_ok=True)

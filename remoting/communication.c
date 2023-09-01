@@ -14,7 +14,7 @@
 #   include <errno.h>
 #   include <unistd.h>
 #   include <sys/time.h>
-#   ifdef __APPLE__
+#   ifndef HAVE_SEM_TIMEDWAIT
 #       include <signal.h>
 #   endif
 #endif

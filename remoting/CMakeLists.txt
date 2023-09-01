@@ -4,6 +4,7 @@ set(VERSION "1.0")
 
 set (CMAKE_C_STANDARD 99)
 option(BUILD_32 "Build for 32bits target" OFF)
+option(BUILD_TESTER "Build tester executbale" OFF)
 
 if (WIN32)
     if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
@@ -100,17 +101,31 @@ add_custom_command(TARGET client_sm POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
 #
 # test_sizeof
 #
-add_executable(test_sizeof
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_sizeof.c
-    remote.h
-)
+if (BUILD_TESTER)
+    add_executable(test_sizeof
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_sizeof.c
+        remote.h
+    )
 
-target_include_directories(test_sizeof PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code
-)
+    target_include_directories(test_sizeof PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code
+    )
 
-add_custom_command(OUTPUT test_sizeof.c
-    COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/gen_sizeof.py
-    DEPENDS gen_sizeof.py
-)
+    add_custom_command(OUTPUT test_sizeof.c
+        COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/gen_sizeof.py
+        DEPENDS gen_sizeof.py
+    )
 
+
+    add_executable(test_server
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_server.c
+    )
+    target_link_libraries(test_server client_sm)
+    target_include_directories(test_server PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code)
+        
+    target_include_directories(test_sizeof PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code
+    )
+
+endif ()

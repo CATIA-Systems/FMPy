@@ -48,7 +48,7 @@ int process_module_path(char path[MAX_PATH])  {
     }
 #else
     Dl_info info;
-    if (dladdr(process_module_path, &info))
+    if (dladdr(process_module_path, &info) == 0)
         return -1;
     strncpy(path, info.dli_fname, MAX_PATH);
 #endif

@@ -83,6 +83,18 @@ static void communication_alarm_handler(int sig) {
 }
 #endif
 
+static sem_handle_t communication_sem(const char *name) {
+    sem_handle_t sem;
+
+#ifdef WIN32
+    sem = CreateSemaphoreA(NULL, 0, 1, name);
+#else
+    sem = sem_open(name, O_RDWR | O_CREAT, 0600, 0);
+#endif
+
+    return sem;
+} 
+
 communication_t *communication_new(const char *prefix, int memory_size, communication_endpoint_t endpoint) {
     communication_t* communication = malloc(sizeof(*communication));
     if (!communication)
@@ -92,22 +104,14 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
     communication->event_server_name = concat(prefix, "_server");
     communication->memory_name = concat(prefix, "_memory");
 
-#ifdef WIN32
-    communication->client_ready = CreateSemaphoreA(NULL, 0, 1, communication->event_client_name);
-#else
-    communication->client_ready = sem_open(communication->event_client_name, O_RDWR | O_CREAT);
-#endif
+    communication->client_ready = communication_sem(communication->event_client_name);
     if (!communication->client_ready) {
         SHM_LOG("*** Cannot CreateSemaphore(%s)\n", communication->event_client_name);
         communication_free(communication);
         return NULL;
     }
-    
-#ifdef WIN32
-    communication->server_ready = CreateSemaphoreA(NULL, 0, 1, communication->event_server_name);
-#else
-    communication->server_ready = sem_open(communication->event_server_name, O_RDWR | O_CREAT);
-#endif
+
+    communication->server_ready = communication_sem(communication->event_server_name);
     if (!communication->server_ready) {
         SHM_LOG("*** Cannot CreateSemaphore(%s)\n", communication->event_server_name);
         communication_free(communication);
@@ -152,7 +156,7 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
             O_RDWR,
             0600);
 #endif
-        SHM_LOG("SHM `%s' joint.\n", communication->memory_name);
+        SHM_LOG("SHM `%s' joint\n", communication->memory_name);
         communication_server_ready(communication);
     }
 
@@ -176,6 +180,9 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
     }
     communication->data_size = memory_size;
 
+    /* Paranoia: initialize shared memory */
+    if (endpoint == COMMUNICATION_CLIENT)
+        memset(communication->data, 0, communication->data_size);
 
 #ifndef HAVE_SEM_TIMEDWAIT
     /* Make SIG_ALARM interrupt system call */

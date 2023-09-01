@@ -146,29 +146,14 @@ static char *basename(char* path) {
         }
     return path;
 }
-
-
-static const char* get_server_arch(void) {
+ 
+ 
+static int get_server_bitness(void) {
     /* current process (calling this dll) is 64bits, the server is 32 bits */
-#if defined WIN32
     if (sizeof(void*) == 8)
-        return "win32";
+        return 32;
     else
-        return "win64";
-#elif defined __linux__
-    if (sizeof(void*) == 8)
-        return "linux32";
-    else
-        return "linux64";
-#elif defined __APPLE__
-    if (sizeof(void*) == 8)
-        return "darwin32";
-    else
-        return "darwin64";
-#else
-#   error "Architecture not supported"
-    return "__never_reached__";
-#endif
+        return 64;
 }
 
 
@@ -186,30 +171,13 @@ static int get_server_argv(client_t *client, char *argv[]) {
     argv[1] = malloc(16);
     argv[2] = malloc(16);
     argv[3] = malloc(MAX_PATH);
-#ifdef WIN32
-    char sep = '\\';
-#else
-    char sep = '/';
-#endif
 
-#ifdef WIN32
-    snprintf(argv[0], MAX_PATH, "%s%c%s%cserver_sm.exe", path, sep, get_server_arch(), sep);
-#else
-    snprintf(argv[0], MAX_PATH, "%s%c%s%cserver_sm", path, sep, get_server_arch(), sep);
-#endif
-
+    snprintf(argv[0], MAX_PATH, "%s" CONFIG_DIR_SEP CONFIG_FMI_BIN "%d" CONFIG_DIR_SEP "server_sm" CONFIG_EXE_SUFFIXE,
+             path, get_server_bitness());    
     snprintf(argv[1], 16, "%lu", process_current_id());
     strcpy(argv[2], client->shared_key);
-
-#ifdef WIN32
-    snprintf(argv[3], MAX_PATH, "%s%c%s%c%s.dll", path, sep, get_server_arch(), sep, model_identifier);
-#endif
-#ifdef __linux__
-    snprintf(argv[3], MAX_PATH, "%s%c%s%c%s.so", path, sep, get_server_arch(), sep, model_identifier);
-#endif
-#ifdef __APPLE__
-    snprintf(argv[3], MAX_PATH, "%s%c%s%c%s.dylib", path, sep, get_server_arch(), sep, model_identifier);
-#endif
+    snprintf(argv[3], MAX_PATH, "%s" CONFIG_DIR_SEP CONFIG_FMI_BIN "%d" CONFIG_DIR_SEP "%s" CONFIG_LIB_SUFFIXE,
+             path, get_server_bitness(), model_identifier);
 
     return 0;
 }

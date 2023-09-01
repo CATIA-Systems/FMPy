@@ -5,4 +5,24 @@
 
 #cmakedefine HAVE_SEM_TIMEDWAIT
 
+
+#if defined WIN32
+#   define CONFIG_DIR_SEP       "\\"
+#   define CONFIG_EXE_SUFFIXE   ".exe"
+#   define CONFIG_LIB_SUFFIXE   ".dll"
+#   define CONFIG_FMI_BIN       "win"
+#elif defined __APPLE__
+#   define CONFIG_DIR_SEP       "/"
+#   define CONFIG_EXE_SUFFIXE   ""
+#   define CONFIG_LIB_SUFFIXE   ".dylib"
+#   define CONFIG_FMI_BIN       "darwin"
+#elif defined __linux__
+#   define CONFIG_DIR_SEP       "/"
+#   define CONFIG_EXE_SUFFIXE   ""
+#   define CONFIG_LIB_SUFFIXE   ".so"
+#   define CONFIG_FMI_BIN       "linux"
+#else
+#   error "Architecture not supported"
+#endif
+
 #endif

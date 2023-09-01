@@ -16,7 +16,7 @@ else ()
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)
     
-    include(CheckSymbolExists)
+    include(CheckFunctionExists)
     check_function_exists(sem_timedwait HAVE_SEM_TIMEDWAIT)
 
     if (APPLE)

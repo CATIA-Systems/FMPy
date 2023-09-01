@@ -17,7 +17,7 @@ else ()
     find_package(Threads REQUIRED)
     
     include(CheckSymbolExists)
-    check_symbol_exists(sem_timedwait "semaphore.h" HAVE_SEM_TIMEDWAIT)
+    check_function_exists(sem_timedwait HAVE_SEM_TIMEDWAIT)
 
     if (APPLE)
         set(FMI_PLATFORM darwin64)
@@ -123,7 +123,7 @@ if (BUILD_TESTER)
     target_link_libraries(test_server client_sm)
     target_include_directories(test_server PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code)
-        
+
     target_include_directories(test_sizeof PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code
     )

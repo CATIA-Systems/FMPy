@@ -184,7 +184,8 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
     if (endpoint == COMMUNICATION_CLIENT)
         memset(communication->data, 0, communication->data_size);
 
-#ifndef HAVE_SEM_TIMEDWAIT
+
+#if !defined WIN32 && !defined HAVE_SEM_TIMEDWAIT
     /* Make SIG_ALARM interrupt system call */
     struct sigaction sa;
     sa.sa_handler = communication_alarm_handler;

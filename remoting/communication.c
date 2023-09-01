@@ -77,7 +77,7 @@ void communication_free(communication_t* communication) {
 }
 
 
-#ifdef __APPLE__
+#ifndef HAVE_SEM_TIMEDWAIT
 static void communication_alarm_handler(int sig) {
     return;
 }
@@ -177,7 +177,7 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
     communication->data_size = memory_size;
 
 
-#ifdef __APPLE__
+#ifndef HAVE_SEM_TIMEDWAIT
     /* Make SIG_ALARM interrupt system call */
     struct sigaction sa;
     sa.sa_handler = communication_alarm_handler;

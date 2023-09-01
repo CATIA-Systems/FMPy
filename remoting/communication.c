@@ -215,6 +215,17 @@ int communication_timedwaitfor_server(const communication_t* communication, int 
 #ifdef WIN32
     return WaitForSingleObject(communication->server_ready, timeout) == WAIT_TIMEOUT;
 #else
+#   ifdef HAVE_SEM_TIMEDWAIT
+    struct timespec ts;
+
+    clock_gettime(CLOCK_REALTIME, &ts);
+    ts.tv_sec  += timeout / 1000;
+    ts.tv_nsec += (timeout - ts.tv_sec * 1000) * 1000000;
+    if (sem_timedwait(communication->client_ready, &ts) < 0)
+        return errno == ETIMEDOUT;
+    return 0;
+
+#   else
     struct itimerval value, old_value;
 
     value.it_interval.tv_sec = 0;
@@ -230,6 +241,7 @@ int communication_timedwaitfor_server(const communication_t* communication, int 
         return errno == EINTR;
     
     return 0;
+#   endif
 #endif
 }
 

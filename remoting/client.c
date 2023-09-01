@@ -126,7 +126,11 @@ static fmi2Status make_rpc(client_t* client, remote_function_t function) {
 
 static char* dirname(char* path) {
     for(size_t i = strlen(path); i > 0; i -= 1)
+#ifdef WIN32
         if (path[i] == '\\') {
+#else
+        if (path[i] == '/') {
+#endif
             path[i] = '\0';
             return path + i + 1;
         }

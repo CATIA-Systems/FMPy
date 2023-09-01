@@ -86,7 +86,7 @@ static library_t library_load(const char* library_filename) {
 #ifdef WIN32
     handle = LoadLibraryA(library_filename);
 #else
-    handle = dlopen(library_filename, RTLD_LOCAL);
+    handle = dlopen(library_filename, RTLD_GLOBAL);
 #endif
 
 #ifdef SERVER_DEBUG

@@ -276,7 +276,8 @@ static client_t* client_new(const char *instanceName, const fmi2CallbackFunction
         return NULL;
 
     CLIENT_LOG("Waiting for server to be ready...\n");
-    communication_waitfor_server(client->communication);
+    if (communication_timedwaitfor_server(client->communication, 15000))
+        return NULL; /* Cannot launch server */
     
     return client;
 }

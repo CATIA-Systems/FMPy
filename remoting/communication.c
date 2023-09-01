@@ -215,8 +215,20 @@ int communication_timedwaitfor_server(const communication_t* communication, int 
 #ifdef WIN32
     return WaitForSingleObject(communication->server_ready, timeout) == WAIT_TIMEOUT;
 #else
-    (void)timeout;
-    sem_wait(communication->server_ready);
+    struct itimerval value, old_value;
+
+    value.it_interval.tv_sec = 0;
+    value.it_interval.tv_usec = 0;
+    value.it_value.tv_sec = timeout / 1000;
+    value.it_value.tv_usec = (timeout - value.it_value.tv_sec * 1000) * 1000;
+
+    setitimer(ITIMER_REAL, &value, &old_value);
+    int status = sem_wait(communication->server_ready);
+    setitimer(ITIMER_REAL, &old_value, NULL);
+    
+    if (status < 0)
+        return errno == EINTR;
+    
     return 0;
 #endif
 }

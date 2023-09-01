@@ -136,18 +136,8 @@ static char* dirname(char* path) {
         }
     return path;
 }
-
-
-static char *basename(char* path) {
-    for(size_t i = strlen(path); i> 0; i -= 1)
-        if (path[i] == '.') {
-            path[i] = '\0';
-            break;
-        }
-    return path;
-}
  
- 
+
 static int get_server_bitness(void) {
     /* current process (calling this dll) is 64bits, the server is 32 bits */
     if (sizeof(void*) == 8)
@@ -164,7 +154,7 @@ static int get_server_argv(client_t *client, char *argv[]) {
     if (process_module_path(path))
         return -1;
 
-    model_identifier = basename(dirname(path));
+    model_identifier = dirname(path);
     dirname(path);
 
     argv[0] = malloc(MAX_PATH);
@@ -176,7 +166,7 @@ static int get_server_argv(client_t *client, char *argv[]) {
              path, get_server_bitness());    
     snprintf(argv[1], 16, "%lu", process_current_id());
     strcpy(argv[2], client->shared_key);
-    snprintf(argv[3], MAX_PATH, "%s" CONFIG_DIR_SEP CONFIG_FMI_BIN "%d" CONFIG_DIR_SEP "%s" CONFIG_LIB_SUFFIXE,
+    snprintf(argv[3], MAX_PATH, "%s" CONFIG_DIR_SEP CONFIG_FMI_BIN "%d" CONFIG_DIR_SEP "%s",
              path, get_server_bitness(), model_identifier);
 
     return 0;

@@ -249,7 +249,7 @@ static void client_new_key(client_t *client) {
 
 static client_t* client_new(const char *instanceName, const fmi2CallbackFunctions* functions,
     int loggingOn) {
-    client_t* client = functions->allocateMemory(1, sizeof(*client));
+    client_t* client = malloc(sizeof(*client));
     client->functions = functions;
     client->instance_name = strdup(instanceName);
     client->is_debug = loggingOn;
@@ -279,7 +279,7 @@ static void client_free(client_t *client) {
     process_close_handle(client->server_handle);
     free(client->instance_name);
     communication_free(client->communication);
-    client->functions->freeMemory(client);
+    free(client);
 
     return;
 }

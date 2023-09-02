@@ -199,7 +199,7 @@ static void server_free(server_t* server) {
 }
     
 
-static server_t* server_new(const char *library_filename, long int ppid, const char *secret) {
+static server_t* server_new(const char *library_filename, unsigned long ppid, const char *secret) {
     server_t* server;
     server = malloc(sizeof(*server));
     if (!server)
@@ -244,7 +244,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    server_t* server = server_new(argv[3], atol(argv[1]), argv[2]);
+    server_t* server = server_new(argv[3], strtoul(argv[1], NULL, 10), argv[2]);
     if (!server) {
         SERVER_LOG("Initialize server. Exit.\n");
         return -1;

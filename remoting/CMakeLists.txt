@@ -121,7 +121,7 @@ if (BUILD_TESTER)
     add_executable(test_server
         ${CMAKE_CURRENT_SOURCE_DIR}/test_server.c
     )
-    target_link_libraries(test_server client_sm)
+    #target_link_libraries(test_server client_sm)
     target_include_directories(test_server PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code)
 

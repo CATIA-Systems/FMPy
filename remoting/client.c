@@ -62,7 +62,7 @@ static void client_logger(const client_t* client, fmi2Status level, const char* 
     if (client->functions->logger) {
         char full_message[REMOTE_MESSAGE_SIZE];
         va_list ap;
-        
+
         va_start(ap, message);
         vsnprintf(full_message, REMOTE_MESSAGE_SIZE, message, ap);
         full_message[REMOTE_MESSAGE_SIZE - 1] = '\0';
@@ -196,7 +196,7 @@ static int get_server_argv(client_t *client, char *argv[]) {
 
     argv[0] = malloc(MAX_PATH*2);
     argv[1] = malloc(16);
-    argv[2] = malloc(16);
+    argv[2] = malloc(COMMUNICATION_KEY_LEN);
     argv[3] = malloc(MAX_PATH*2);
 
     snprintf(argv[0], MAX_PATH*2, "%s" CONFIG_DIR_SEP CONFIG_FMI_BIN "%d" CONFIG_DIR_SEP "server_sm" CONFIG_EXE_SUFFIXE,
@@ -317,8 +317,10 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
     
     fmi2Status status = make_rpc(client, REMOTE_fmi2Instantiate);
 
-    if (status > fmi2Warning)
+    if ((status != fmi2Warning) && (status != fmi2OK)) {
+        client_free(client);
         return NULL;
+    }
 
     return (fmi2Component)client;
 }

@@ -313,7 +313,6 @@ int communication_timedwaitfor_client(const communication_t* communication, int 
     if (sem_timedwait(communication->client_ready, &ts) < 0)
         return errno == ETIMEDOUT;
     return 0;
-
 #   else
     struct itimerval value, old_value;
 
@@ -331,8 +330,7 @@ int communication_timedwaitfor_client(const communication_t* communication, int 
     
     return 0;
 
-#endif
-    return 0;
+#   endif
 #endif
 }
 

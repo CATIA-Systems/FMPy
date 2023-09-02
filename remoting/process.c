@@ -23,6 +23,8 @@
 #   include <sys/wait.h>
 #endif
 
+#include <fmi2Functions.h> /* for fmi2Instanciate symbol */
+
 #include "process.h"
 
 
@@ -34,26 +36,6 @@ int process_is_alive(process_handle_t handle) {
 #endif
 }
 
-int process_module_path(char path[MAX_PATH])  {
-#ifdef WIN32
-    HMODULE hm = NULL;
-
-    if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-        GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-        (LPCSTR)&process_module_path, &hm) == 0) {
-            return -1;
-    }
-    if (GetModuleFileName(hm, path, MAX_PATH) == 0) {
-            return -2;
-    }
-#else
-    Dl_info info;
-    if (dladdr(process_module_path, &info) == 0)
-        return -1;
-    strncpy(path, info.dli_fname, MAX_PATH);
-#endif
-    return 0;
-}
 
 process_handle_t process_spawn(char *const argv[])  {
     process_handle_t handle;

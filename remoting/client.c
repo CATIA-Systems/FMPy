@@ -10,6 +10,9 @@
 
 #ifdef WIN32
 #   include <io.h>
+#else
+#   define _GNU_SOURCE  /* to access to dladdr */
+#   include <dlfcn.h>
 #endif
 #include <stdarg.h>
 #include <stdio.h>
@@ -147,11 +150,35 @@ static int get_server_bitness(void) {
 }
 
 
+static int client_module_path(char path[MAX_PATH])  {
+#ifdef WIN32
+    HMODULE hm = NULL;
+
+    if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+        GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+        (LPCSTR)&fmi2Instantiate, &hm) == 0) {
+            return -1;
+    }
+    if (GetModuleFileName(hm, path, MAX_PATH) == 0) {
+            return -2;
+    }
+#else
+    Dl_info info;
+    if (dladdr(fmi2Instantiate, &info) == 0)
+        return -1;
+    strncpy(path, info.dli_fname, MAX_PATH);
+#endif
+    return 0;
+}
+
+
+
+
 static int get_server_argv(client_t *client, char *argv[]) {
     char* model_identifier;
     char path[MAX_PATH];
 
-    if (process_module_path(path))
+    if (client_module_path(path))
         return -1;
 
     model_identifier = dirname(path);
@@ -162,11 +189,11 @@ static int get_server_argv(client_t *client, char *argv[]) {
     argv[2] = malloc(16);
     argv[3] = malloc(MAX_PATH*2);
 
-    snprintf(argv[0], MAX_PATH, "%s" CONFIG_DIR_SEP CONFIG_FMI_BIN "%d" CONFIG_DIR_SEP "server_sm" CONFIG_EXE_SUFFIXE,
+    snprintf(argv[0], MAX_PATH*2, "%s" CONFIG_DIR_SEP CONFIG_FMI_BIN "%d" CONFIG_DIR_SEP "server_sm" CONFIG_EXE_SUFFIXE,
              path, get_server_bitness());    
     snprintf(argv[1], 16, "%lu", process_current_id());
     strcpy(argv[2], client->shared_key);
-    snprintf(argv[3], MAX_PATH, "%s" CONFIG_DIR_SEP CONFIG_FMI_BIN "%d" CONFIG_DIR_SEP "%s",
+    snprintf(argv[3], MAX_PATH*2, "%s" CONFIG_DIR_SEP CONFIG_FMI_BIN "%d" CONFIG_DIR_SEP "%s",
              path, get_server_bitness(), model_identifier);
 
     return 0;

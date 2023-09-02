@@ -31,8 +31,7 @@ typedef pid_t process_handle_t;
 -----------------------------------------------------------------------------*/
 
 extern int process_is_alive(process_handle_t handle);
-extern int process_module_path(char path[MAX_PATH]);
-process_handle_t process_spawn(char *const argv[]);
+extern process_handle_t process_spawn(char *const argv[]);
 extern unsigned long int process_current_id(void);
 extern void process_close_handle(process_handle_t handle);
 void process_waitfor(process_handle_t handle);

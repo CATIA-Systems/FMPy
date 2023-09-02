@@ -45,23 +45,31 @@ static void server_logger(fmi2ComponentEnvironment componentEnvironment,
     fmi2String category,
     fmi2String message,
     ...) {
-    va_list params;
     server_t *server = (server_t*)componentEnvironment;
-    remote_data_t* remote_data = server->communication->data;
-    const size_t offset = strlen(remote_data->message);
+    va_list params;
 
-    (void)category;
-    (void)status;
-    (void)instanceName;
+    if (server) {
+        remote_data_t* remote_data = server->communication->data;
+        const size_t offset = strlen(remote_data->message);
+        
 
-    va_start(params, message);
-    vsnprintf(remote_data->message + offset, REMOTE_MESSAGE_SIZE - offset, message, params);
-    strncat(remote_data->message + offset, "\n", REMOTE_MESSAGE_SIZE - offset - strlen(remote_data->message + offset));
-    remote_data->message[REMOTE_MESSAGE_SIZE-1] = '\0'; /* paranoia */
-    va_end(params);
+        va_start(params, message);
+        vsnprintf(remote_data->message + offset, REMOTE_MESSAGE_SIZE - offset, message, params);
+        va_end(params);
 
-    SERVER_LOG("LOG: %s\n", remote_data->message + offset);
+        strncat(remote_data->message + offset, "\n", REMOTE_MESSAGE_SIZE - offset - strlen(remote_data->message + offset));
+        remote_data->message[REMOTE_MESSAGE_SIZE-1] = '\0'; /* paranoia */
+        
 
+        SERVER_LOG("LOG: %s\n", remote_data->message + offset);
+    } else {
+        /* Early log message sent buggy FMU */
+        printf("Buggy FMU message: ");
+        va_start(params, message);
+        vprintf(message, params);
+        va_end(params);
+        printf("\n");
+    }
     return;
 }
 

@@ -7,8 +7,9 @@
  *  This code is released under the 2-Clause BSD license.
  */
 
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #ifdef WIN32
 #   include <windows.h>
@@ -36,6 +37,7 @@
 #define LOG_DEBUG(server, ...)      _LOG(server, fmi2OK, "[SERVER]", ##__VA_ARGS__)
 #define LOG_WARNING(server, ...)    _LOG(server, fmi2Warning, "SERVER", ##__VA_ARGS__)
 #define LOG_ERROR(server, ...)      _LOG(server, fmi2Error, "SERVER]", ##__VA_ARGS__)
+
 
 static void server_logger(fmi2ComponentEnvironment componentEnvironment,
     fmi2String instanceName,
@@ -86,7 +88,7 @@ static library_t library_load(const char* library_filename) {
 #ifdef WIN32
     handle = LoadLibraryA(library_filename);
 #else
-    handle = dlopen(library_filename, RTLD_GLOBAL);
+    handle = dlopen(library_filename, RTLD_LAZY | RTLD_LOCAL);
 #endif
 
 #ifdef SERVER_DEBUG

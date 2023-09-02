@@ -166,7 +166,14 @@ static int client_module_path(char path[MAX_PATH])  {
     Dl_info info;
     if (dladdr(fmi2Instantiate, &info) == 0)
         return -1;
-    strncpy(path, info.dli_fname, MAX_PATH);
+
+    /* on linux, sometime info.dli does not contain an absolute path */
+    if (info.dli_fname[0] != '/') {
+        getcwd(path, MAX_PATH);
+        strncat(path, "/", MAX_PATH - strlen(path));
+        strncat(path, info.dli_fname, MAX_PATH - strlen(path));
+    } else
+        strncpy(path, info.dli_fname, MAX_PATH);
 #endif
     return 0;
 }

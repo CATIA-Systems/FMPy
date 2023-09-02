@@ -59,24 +59,27 @@ static char *next_cr(char *message) {
 
 
 static void client_logger(const client_t* client, fmi2Status level, const char* message, ...) {
-    char full_message[REMOTE_MESSAGE_SIZE];
+    if (client->functions->logger) {
+        char full_message[REMOTE_MESSAGE_SIZE];
+        va_list ap;
+        
+        va_start(ap, message);
+        vsnprintf(full_message, REMOTE_MESSAGE_SIZE, message, ap);
+        full_message[REMOTE_MESSAGE_SIZE - 1] = '\0';
+        va_end(ap);
 
-    va_list ap;
-    va_start(ap, message);
-    vsnprintf(full_message, REMOTE_MESSAGE_SIZE, message, ap);
-    full_message[REMOTE_MESSAGE_SIZE - 1] = '\0';
-    va_end(ap);
-
-    if ((level != fmi2OK) || (client->is_debug)) {
-        char* line = full_message;
-        while (line[0]) {
-            char* next_line = next_cr(line);
-            CLIENT_LOG("LOG: %s\n", line);
-            client->functions->logger(client->functions->componentEnvironment, client->instance_name,
-                level, NULL, "%s", line);
-            line = next_line;
+        if ((level != fmi2OK) || (client->is_debug)) {
+            char* line = full_message;
+            while (line[0]) {
+                char* next_line = next_cr(line);
+                CLIENT_LOG("LOG: %s\n", line);
+                client->functions->logger(client->functions->componentEnvironment, client->instance_name,
+                    level, NULL, "%s", line);
+                line = next_line;
+            }
         }
     }
+
     return;
 }
 

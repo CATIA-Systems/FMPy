@@ -157,10 +157,10 @@ static int get_server_argv(client_t *client, char *argv[]) {
     model_identifier = dirname(path);
     dirname(path);
 
-    argv[0] = malloc(MAX_PATH);
+    argv[0] = malloc(MAX_PATH*2);
     argv[1] = malloc(16);
     argv[2] = malloc(16);
-    argv[3] = malloc(MAX_PATH);
+    argv[3] = malloc(MAX_PATH*2);
 
     snprintf(argv[0], MAX_PATH, "%s" CONFIG_DIR_SEP CONFIG_FMI_BIN "%d" CONFIG_DIR_SEP "server_sm" CONFIG_EXE_SUFFIXE,
              path, get_server_bitness());    

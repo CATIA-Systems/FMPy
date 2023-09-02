@@ -58,7 +58,7 @@ typedef sem_t * sem_handle_t;
 typedef struct {
 	char				*event_client_name;
 	char				*event_server_name;
-	char				*memory_name;
+	char				*shm_name;
 	char				*sem_name;
 	shm_handle_t		map_file;
 	sem_handle_t		client_ready;

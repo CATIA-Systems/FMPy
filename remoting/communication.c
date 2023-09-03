@@ -243,15 +243,23 @@ void communication_client_ready(const communication_t* communication) {
 #ifdef WIN32
     ReleaseSemaphore(communication->client_ready, 1, NULL);
 #else
-    sem_post(communication->client_ready);
+    if (sem_post(communication->client_ready)<0)
+        SHM_LOG("**** communication_client_ready failed: errno=%d", errno);
 #endif
-
+    int value;
+    if (sem_getvalue(communication->client_ready, &value))
+        perror("sem_getvalue");
+    SHM_LOG("communication_client_ready() ---> %d\n", value);
     return;
 }
 
 
 void communication_waitfor_server(const communication_t* communication) {
     SHM_LOG("communication_waitfor_server()\n");
+    int value;
+    if (sem_getvalue(communication->server_ready, &value))
+        perror("sem_getvalue");
+    SHM_LOG("communication_waitfor_server() ---> %d....\n", value);
 #ifdef WIN32
     WaitForSingleObject(communication->server_ready, INFINITE);
 #else
@@ -300,6 +308,10 @@ int communication_timedwaitfor_server(const communication_t* communication, int 
 
 void communication_waitfor_client(const communication_t* communication) {
     SHM_LOG("communication_waitfor_client()\n");
+        int value;
+    if (sem_getvalue(communication->client_ready, &value))
+        perror("sem_getvalue");
+    SHM_LOG("communication_waitfor_client() ---> %d....\n", value);
 #ifdef WIN32
     WaitForSingleObject(communication->client_ready, INFINITE);
 #else
@@ -351,8 +363,11 @@ void communication_server_ready(const communication_t* communication) {
 #ifdef WIN32
     ReleaseSemaphore(communication->server_ready, 1, NULL);
 #else
-    sem_post(communication->server_ready);
+    if (sem_post(communication->server_ready) < 0)
+        SHM_LOG("******* communication_server_ready failed: errno=%d", errno);
 #endif
-
+    int value;
+    sem_getvalue(communication->server_ready, &value);
+    SHM_LOG("communication_server_ready() ---> %d\n", value);
     return;
 }

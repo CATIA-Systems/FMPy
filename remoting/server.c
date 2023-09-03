@@ -24,7 +24,7 @@
 #define SERVER_DEBUG
 #ifdef SERVER_DEBUG
 #   include <stdio.h>
-#   define SERVER_LOG(message, ...) printf("[SERVER] " message, ##__VA_ARGS__)
+#   define SERVER_LOG(message, ...) do { printf("[SERVER] " message, ##__VA_ARGS__); fflush(stdout); } while(0)
 #else
 #   define SERVER_LOG(message, ...)
 #endif

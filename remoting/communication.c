@@ -69,10 +69,10 @@ static sem_handle_t communication_sem_open(const char *name, int init, communica
 #else
     if (endpoint == COMMUNICATION_CLIENT) {
         SHM_LOG("Create SEM %s value=%d\n", name, init);
-        sem = sem_open(name, O_RDWR | O_CREAT | O_CLOEXEC | O_EXCL, S_IRWXU, init);
+        sem = sem_open(name, O_CREAT | O_EXCL, 0600, init);
     } else {
         SHM_LOG("Open SEM %s\n", name);
-        sem = sem_open(name, O_RDWR);
+        sem = sem_open(name, 0);
     }
 
     if (sem == SEM_FAILED)

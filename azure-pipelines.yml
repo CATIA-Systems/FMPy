@@ -14,7 +14,7 @@ jobs:
       sudo apt-get update
       sudo apt-get install libc6-dev:i386
       sudo apt install gcc-multilib
-      sudo mount -o remount,exec /tmp
+      sudo mount 
 
   - checkout: self
     submodules: true

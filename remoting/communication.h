@@ -23,8 +23,8 @@
 -----------------------------------------------------------------------------*/
 
 typedef enum {
-	COMMUNICATION_CLIENT,
-	COMMUNICATION_SERVER
+	COMMUNICATION_CLIENT=1,
+	COMMUNICATION_SERVER=5
 } communication_endpoint_t;
 
 

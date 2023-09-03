@@ -239,6 +239,7 @@ static int is_parent_still_alive(const server_t *server) {
 
 
 int main(int argc, char* argv[]) {
+    setlinebuf(stdout);
     SERVER_LOG("STARING...\n");
     if (argc != 4) {
         fprintf(stderr, "Usage: server <parent_process_id> <secret> <library_path>\n");

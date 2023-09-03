@@ -47,17 +47,20 @@ static void communication_alarm_handler(int sig) {
 }
 #endif
 
-static sem_handle_t communication_sem_create(const char *name) {
+static sem_handle_t communication_sem_open(const char *name, communication_endpoint_t endpoint) {
     sem_handle_t sem;
 
 #ifdef WIN32
     sem = CreateSemaphoreA(NULL, 0, 1, name);
 #else
-    sem = sem_open(name, O_RDWR | O_CREAT, 0660, 0);
+    if (endpoint == COMMUNICATION_CLIENT) 
+        sem = sem_open(name, O_RDWR | O_CREAT, 0600, 0);
+    else
+        sem = sem_open(name, O_RDWR);
 #endif
 
     return sem;
-} 
+}
 
 
 static void communication_sem_free(sem_handle_t sem) {
@@ -172,14 +175,14 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
     communication->event_server_name = concat(prefix, "_server");
     communication->shm_name = concat(prefix, "_memory");
 
-    communication->client_ready = communication_sem_create(communication->event_client_name);
+    communication->client_ready = communication_sem_open(communication->event_client_name, endpoint);
     if (!communication->client_ready) {
         SHM_LOG("*** Cannot CreateSemaphore(%s)\n", communication->event_client_name);
         communication_free(communication);
         return NULL;
     }
 
-    communication->server_ready = communication_sem_create(communication->event_server_name);
+    communication->server_ready = communication_sem_open(communication->event_server_name, endpoint);
     if (!communication->server_ready) {
         SHM_LOG("*** Cannot CreateSemaphore(%s)\n", communication->event_server_name);
         communication_free(communication);
@@ -198,6 +201,7 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
         /* 2nd. Server should wait for memory creation by client and connect to it */
         SHM_LOG("Wait for client to initialize SHM.\n");
         communication_waitfor_client(communication);
+        SHM_LOG("Client ready. Joining SHM\n");
         communication->map_file = communication_shm_join(communication->shm_name);
         communication_server_ready(communication);
     }

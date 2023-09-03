@@ -27,7 +27,7 @@
 #include "process.h"
 
 
-//#define CLIENT_DEBUG
+#define CLIENT_DEBUG
 #ifdef CLIENT_DEBUG
 #   include <stdio.h>
 #   define CLIENT_LOG(message, ...) printf("[CLIENT] " message, ##__VA_ARGS__)
@@ -217,6 +217,7 @@ static int spawn_server(client_t *client) {
         return -1;
     argv[4] = NULL;
 
+    CLIENT_LOG("Starting remoting server. (Command: %s %s %s %s)\n", argv[0], argv[1], argv[2], argv[3]);
     LOG_DEBUG(client, "Starting remoting server. (Command: %s %s %s %s)", argv[0], argv[1], argv[2], argv[3]);
 
     client->server_handle = process_spawn(argv);

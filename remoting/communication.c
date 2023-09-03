@@ -19,7 +19,7 @@
 #   endif
 #endif
 
-//#define SHM_DEBUG
+#define SHM_DEBUG
 #ifdef SHM_DEBUG
 #   include <stdio.h>
 #   define SHM_LOG(message, ...) printf("[SHM] " message, ##__VA_ARGS__)

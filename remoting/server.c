@@ -21,7 +21,7 @@
 #include "remote.h"
 #include "server.h"
 
-//#define SERVER_DEBUG
+#define SERVER_DEBUG
 #ifdef SERVER_DEBUG
 #   include <stdio.h>
 #   define SERVER_LOG(message, ...) printf("[SERVER] " message, ##__VA_ARGS__)
@@ -239,11 +239,13 @@ static int is_parent_still_alive(const server_t *server) {
 
 
 int main(int argc, char* argv[]) {
+    SERVER_LOG("STARING...\n");
     if (argc != 4) {
         fprintf(stderr, "Usage: server <parent_process_id> <secret> <library_path>\n");
         return 1;
     }
 
+    SERVER_LOG("Initializing...\n");
     server_t* server = server_new(argv[3], strtoul(argv[1], NULL, 10), argv[2]);
     if (!server) {
         SERVER_LOG("Initialize server. Exit.\n");

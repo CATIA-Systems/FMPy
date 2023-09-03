@@ -70,6 +70,7 @@ process_handle_t process_spawn(char *const argv[])  {
         handle = pi.hProcess;
     }
 #else
+    printf("FORKing...\n");
     handle = fork();
     switch(handle) {
         case -1:    /* error */

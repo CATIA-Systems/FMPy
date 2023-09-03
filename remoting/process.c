@@ -27,6 +27,7 @@
 
 #include <fmi2Functions.h> /* for fmi2Instanciate symbol */
 
+#include "communication.h"
 #include "process.h"
 
 
@@ -89,9 +90,9 @@ process_handle_t process_spawn(char *const argv[])  {
     } else {
         /* FATHER (client) */
         for(int i=0; i<5; i++) {
-            printf("Father here... sleep(5)\n"); fflush(stdout);
+            printf("Father here... sleep(5)\n");
             sleep(5);   
-            printf("Father BACK\n"); fflush(stdout);
+            printf("Father BACK\n");
         }
         signal(SIGCHLD, SIG_IGN);
     }

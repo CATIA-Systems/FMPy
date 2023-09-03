@@ -305,6 +305,8 @@ static void client_free(client_t *client) {
 fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2String fmuGUID,
                               fmi2String fmuResourceLocation, const fmi2CallbackFunctions* functions,
                               fmi2Boolean visible, fmi2Boolean loggingOn) {
+    setlinebuf(stdout);
+    setlinebuf(stderr);
     client_t *client = client_new(instanceName, functions, loggingOn);
     if (!client)
         return NULL;

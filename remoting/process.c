@@ -81,16 +81,19 @@ process_handle_t process_spawn(char *const argv[])  {
 
     if (handle == 0) {
         /* CHILD (server) */
-        printf("EXECV... %s\n", argv[0]);
+        printf("EXECV... %s\n", argv[0]); fflush(stdout);
         execv(argv[0], argv);
         printf("EXECV ERROR: Cannot launch '%s': errno=%d\n", argv[0], errno);
+        printf("EXECV... %s\n", argv[0]); fflush(stdout);
         exit(-1);
 
     } else {
         /* FATHER (client) */
-        printf("Father here... sleep(5)\n");
-        sleep(5);   
-        printf("Father BACK\n");
+        for(int i=0; i<5; i++) {
+            printf("Father here... sleep(5)\n"); fflush(stdout);
+            sleep(5);   
+            printf("Father BACK\n"); fflush(stdout);
+        }
         signal(SIGCHLD, SIG_IGN);
     }
 #endif

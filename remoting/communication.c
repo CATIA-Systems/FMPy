@@ -53,7 +53,7 @@ static sem_handle_t communication_sem_create(const char *name) {
 #ifdef WIN32
     sem = CreateSemaphoreA(NULL, 0, 1, name);
 #else
-    sem = sem_open(name, O_RDWR | O_CREAT, 0600, 0);
+    sem = sem_open(name, O_RDWR | O_CREAT, 0660, 0);
 #endif
 
     return sem;

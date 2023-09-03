@@ -47,6 +47,20 @@ static void communication_alarm_handler(int sig) {
 }
 #endif
 
+#ifndef WIN32
+static void display_sem(sem_handle_t sem, const char *sem_name) {
+    if (sem) {
+        int value;
+        if (sem_getvalue(sem, &value) < 0)
+            printf("[SHM] %d | Cannot get sem_value(%s): %s\n", getpid(), sem_name, strerror(errno));
+        else
+           printf("[SHM] %d | sem_value(%s) = %d\n", getpid(), sem_name, value);
+    } else
+        printf("[SHM] %d | %s is not valid\n", getpid(), sem_name);
+    return;
+}
+#endif
+
 static sem_handle_t communication_sem_open(const char *name, int init) {
     sem_handle_t sem;
 
@@ -58,6 +72,7 @@ static sem_handle_t communication_sem_open(const char *name, int init) {
 
     if (sem == SEM_FAILED)
         sem = NULL;
+    display_sem(sem, name);
 #endif
 
     return sem;
@@ -249,33 +264,27 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
 
 
 void communication_client_ready(const communication_t* communication) {
-    SHM_LOG("communication_client_ready()\n");
 #ifdef WIN32
     ReleaseSemaphore(communication->client_ready, 1, NULL);
 #else
+    SHM_LOG("communication_client_ready()\n");
     if (sem_post(communication->client_ready)<0)
         SHM_LOG("**** communication_client_ready failed: errno=%d", errno);
+    display_sem(communication->client_ready, communication->event_client_name);
 #endif
-    int value;
-    if (sem_getvalue(communication->client_ready, &value))
-        perror("sem_getvalue");
-    SHM_LOG("communication_client_ready() ---> %d\n", value);
     return;
 }
 
 
 void communication_waitfor_server(const communication_t* communication) {
-    SHM_LOG("communication_waitfor_server()\n");
-    int value;
-    if (sem_getvalue(communication->server_ready, &value))
-        perror("sem_getvalue");
-    SHM_LOG("communication_waitfor_server() ---> %d....\n", value);
 #ifdef WIN32
     WaitForSingleObject(communication->server_ready, INFINITE);
 #else
+    SHM_LOG("communication_waitfor_server()\n");
+    display_sem(communication->server_ready, communication->event_server_name);
     sem_wait(communication->server_ready);
-#endif
     SHM_LOG("communication_waitfor_server() --OK\n");
+#endif
     return;
 }
 
@@ -317,17 +326,14 @@ int communication_timedwaitfor_server(const communication_t* communication, int 
 
 
 void communication_waitfor_client(const communication_t* communication) {
-    SHM_LOG("communication_waitfor_client()\n");
-        int value;
-    if (sem_getvalue(communication->client_ready, &value))
-        perror("sem_getvalue");
-    SHM_LOG("communication_waitfor_client() ---> %d....\n", value);
 #ifdef WIN32
     WaitForSingleObject(communication->client_ready, INFINITE);
 #else
+    SHM_LOG("communication_waitfor_client()\n");
+    display_sem(communication->client_ready, communication->event_client_name);
     sem_wait(communication->client_ready);
-#endif
     SHM_LOG("communication_waitfor_client() --OK\n");
+#endif
     return;
 }
 
@@ -369,15 +375,13 @@ int communication_timedwaitfor_client(const communication_t* communication, int 
 
 
 void communication_server_ready(const communication_t* communication) {
-    SHM_LOG("communication_server_ready()\n");
 #ifdef WIN32
     ReleaseSemaphore(communication->server_ready, 1, NULL);
 #else
+    SHM_LOG("communication_server_ready()\n");
     if (sem_post(communication->server_ready) < 0)
         SHM_LOG("******* communication_server_ready failed: errno=%d", errno);
+    display_sem(communication->server_ready, communication->event_server_name);
 #endif
-    int value;
-    sem_getvalue(communication->server_ready, &value);
-    SHM_LOG("communication_server_ready() ---> %d\n", value);
     return;
 }

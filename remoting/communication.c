@@ -54,7 +54,7 @@ static sem_handle_t communication_sem_open(const char *name, communication_endpo
     sem = CreateSemaphoreA(NULL, 0, 1, name);
 #else
     if (endpoint == COMMUNICATION_CLIENT) 
-        sem = sem_open(name, O_CREAT | O_EXCL, 0600, 0);
+        sem = sem_open(name, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP, 0);
     else
         sem = sem_open(name, O_RDWR);
 #endif

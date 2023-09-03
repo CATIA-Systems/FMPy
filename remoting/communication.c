@@ -54,7 +54,7 @@ static sem_handle_t communication_sem_open(const char *name, communication_endpo
     sem = CreateSemaphoreA(NULL, 0, 1, name);
 #else
     if (endpoint == COMMUNICATION_CLIENT) 
-        sem = sem_open(name, O_RDWR | O_CREAT, 0600, 0);
+        sem = sem_open(name, O_CREAT | O_EXCL, 0600, 0);
     else
         sem = sem_open(name, O_RDWR);
 #endif
@@ -239,6 +239,7 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
 
 
 void communication_client_ready(const communication_t* communication) {
+    SHM_LOG("communication_client_ready()\n");
 #ifdef WIN32
     ReleaseSemaphore(communication->client_ready, 1, NULL);
 #else
@@ -250,16 +251,19 @@ void communication_client_ready(const communication_t* communication) {
 
 
 void communication_waitfor_server(const communication_t* communication) {
+    SHM_LOG("communication_waitfor_server()\n");
 #ifdef WIN32
     WaitForSingleObject(communication->server_ready, INFINITE);
 #else
     sem_wait(communication->server_ready);
 #endif
+    SHM_LOG("communication_waitfor_server() --OK\n");
     return;
 }
 
 
 int communication_timedwaitfor_server(const communication_t* communication, int timeout) {
+    SHM_LOG("communication_timedwaitfor_server()\n");
 #ifdef WIN32
     return WaitForSingleObject(communication->server_ready, timeout) == WAIT_TIMEOUT;
 #else
@@ -284,7 +288,7 @@ int communication_timedwaitfor_server(const communication_t* communication, int 
     setitimer(ITIMER_REAL, &value, &old_value);
     int status = sem_wait(communication->server_ready);
     setitimer(ITIMER_REAL, &old_value, NULL);
-    
+    SHM_LOG("communication_timedwaitfor_client()\n");
     if (status < 0)
         return errno == EINTR;
     
@@ -295,16 +299,19 @@ int communication_timedwaitfor_server(const communication_t* communication, int 
 
 
 void communication_waitfor_client(const communication_t* communication) {
+    SHM_LOG("communication_waitfor_client()\n");
 #ifdef WIN32
     WaitForSingleObject(communication->client_ready, INFINITE);
 #else
     sem_wait(communication->client_ready);
 #endif
+    SHM_LOG("communication_waitfor_client() --OK\n");
     return;
 }
 
 
 int communication_timedwaitfor_client(const communication_t* communication, int timeout) {
+    SHM_LOG("communication_timedwaitfor_client()\n");
 #ifdef WIN32
     return WaitForSingleObject(communication->client_ready, timeout) == WAIT_TIMEOUT;
 #else
@@ -340,6 +347,7 @@ int communication_timedwaitfor_client(const communication_t* communication, int 
 
 
 void communication_server_ready(const communication_t* communication) {
+    SHM_LOG("communication_server_ready()\n");
 #ifdef WIN32
     ReleaseSemaphore(communication->server_ready, 1, NULL);
 #else

@@ -22,7 +22,7 @@
 #define SHM_DEBUG
 #ifdef SHM_DEBUG
 #   include <stdio.h>
-#   define SHM_LOG(message, ...) printf("[SHM] " message, ##__VA_ARGS__)
+#   define SHM_LOG(message, ...) printf("[SHM] %d | " message, getpid(), ##__VA_ARGS__)
 #else
 #   define SHM_LOG(message, ...)
 #endif

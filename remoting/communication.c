@@ -55,7 +55,7 @@ static sem_handle_t communication_sem_open(const char *name, communication_endpo
 #else
     SHM_LOG("Opening SEM %s by %d\n", name, endpoint);
     if (endpoint == COMMUNICATION_CLIENT) 
-        sem = sem_open(name, O_RDWR | O_CREAT | O_EXCL, 0600, 0);
+        sem = sem_open(name, O_RDWR | O_CREAT | O_EXCL, 0600, 1);
     else
         sem = sem_open(name, O_RDWR);
     int value;

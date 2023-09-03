@@ -58,9 +58,9 @@ static sem_handle_t communication_sem_open(const char *name, communication_endpo
         sem = sem_open(name, O_RDWR | O_CREAT | O_EXCL, 0640, 0);
     else
         sem = sem_open(name, O_RDWR);
-    int value;
-    sem_getvalue(sem, &value);
-    SHM_LOG("SEM %s --> %d\n", name, value);
+
+    if (sem == SEM_FAILED)
+        sem = NULL;
 #endif
 
     return sem;
@@ -166,6 +166,14 @@ void communication_free(communication_t* communication) {
     communication_sem_free(communication->client_ready);
     communication_sem_free(communication->server_ready);
 
+#ifndef WIN32
+    if (communication->endpoint == COMMUNICATION_CLIENT) {
+        sem_unlink(communication->event_client_name);
+        sem_unlink(communication->event_server_name);
+    }
+#endif
+
+
     free(communication);
 }
 
@@ -175,20 +183,21 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
     if (!communication)
         return NULL;
 
+    communication->endpoint = endpoint;
     communication->event_client_name = concat(prefix, "_client");
     communication->event_server_name = concat(prefix, "_server");
     communication->shm_name = concat(prefix, "_memory");
 
     communication->client_ready = communication_sem_open(communication->event_client_name, endpoint);
     if (!communication->client_ready) {
-        SHM_LOG("*** Cannot CreateSemaphore(%s)\n", communication->event_client_name);
+        SHM_LOG("*** Cannot CreateSemaphore(%s). Errno=%d\n", communication->event_client_name, errno);
         communication_free(communication);
         return NULL;
     }
 
     communication->server_ready = communication_sem_open(communication->event_server_name, endpoint);
     if (!communication->server_ready) {
-        SHM_LOG("*** Cannot CreateSemaphore(%s)\n", communication->event_server_name);
+        SHM_LOG("*** Cannot CreateSemaphore(%s). Errno=%d\n", communication->event_server_name, errno);
         communication_free(communication);
         return NULL;
     }

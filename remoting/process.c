@@ -89,12 +89,7 @@ process_handle_t process_spawn(char *const argv[])  {
 
     } else {
         /* FATHER (client) */
-        for(int i=0; i<5; i++) {
-            printf("Father here... sleep(5)\n");
-            sleep(5);   
-            printf("Father BACK\n");
-        }
-        signal(SIGCHLD, SIG_IGN);
+        /* nop */
     }
 #endif
     return handle; /* Reached only by client */

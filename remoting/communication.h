@@ -56,15 +56,16 @@ typedef sem_t * sem_handle_t;
 #define COMMUNICATION_KEY_LEN         16
 #define COMMUNICATION_TIMEOUT_DEFAULT 3000
 typedef struct {
-	char				*event_client_name;
-	char				*event_server_name;
-	char				*shm_name;
-	char				*sem_name;
-	shm_handle_t		map_file;
-	sem_handle_t		client_ready;
-	sem_handle_t		server_ready;
-	size_t				data_size;
-	void				*data;
+	communication_endpoint_t	endpoint;
+	char						*event_client_name;
+	char						*event_server_name;
+	char						*shm_name;
+	char					*sem_name;
+	shm_handle_t			map_file;
+	sem_handle_t			client_ready;
+	sem_handle_t			server_ready;
+	size_t					data_size;
+	void					*data;
 } communication_t;
 
 

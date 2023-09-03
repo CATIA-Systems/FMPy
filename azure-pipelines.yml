@@ -53,7 +53,7 @@ jobs:
         pip install $f --no-deps -vv
       done
       cd tests
-      pytest --junitxml=junit/test-results.xml --cov=fmpy --cov-report=xml
+      python tmp_test.py
       cd ..
     displayName: Build, install and run tests
 

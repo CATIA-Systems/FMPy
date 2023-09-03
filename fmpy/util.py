@@ -1036,6 +1036,7 @@ def add_remoting(filename, host_platform, remote_platform):
              dst=server_dst_file)
 
     os.chmod(server_dst_file, 0o755)
+    print(f"UTIL.PY: chmod on {server_dst_file}")
     import subprocess
     result = subprocess.run(server_dst_file)
     #result.check_returncode()

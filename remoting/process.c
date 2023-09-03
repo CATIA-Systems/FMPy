@@ -12,9 +12,11 @@
 #else
 #   define _GNU_SOURCE  /* to access to dladdr */
 #   include <dlfcn.h>
+#   include <stdio.h>
 #   include <stdlib.h> 
 #   include <signal.h>
 #   include <string.h>
+#   include <errno.h>
 #   include <unistd.h>
 #   define _BSD_SOURCE  /* to access wait4 */
 #   include <sys/types.h>
@@ -74,6 +76,7 @@ process_handle_t process_spawn(char *const argv[])  {
             return -1;
         case 0:     /* child */
             execv(argv[0], argv);
+            printf("EXECV ERROR: Cannot launch '%s': errno=%d", argv[0], errno);
             exit(-1);
         default:    /* father */
             signal(SIGCHLD, SIG_IGN);

@@ -88,7 +88,9 @@ process_handle_t process_spawn(char *const argv[])  {
 
     } else {
         /* FATHER (client) */
-        printf("Father here...\n");   
+        printf("Father here... sleep(5)\n");
+        sleep(5);   
+        printf("Father BACK\n");
         signal(SIGCHLD, SIG_IGN);
     }
 #endif

@@ -1037,9 +1037,6 @@ def add_remoting(filename, host_platform, remote_platform):
 
     os.chmod(server_dst_file, 0o755)
     print(f"UTIL.PY: chmod on {server_dst_file}")
-    import subprocess
-    result = subprocess.run(server_dst_file)
-    #result.check_returncode()
 
     licenses_dir = join(tempdir, 'documentation', 'licenses')
     os.makedirs(licenses_dir, exist_ok=True)

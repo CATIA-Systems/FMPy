@@ -77,8 +77,9 @@ process_handle_t process_spawn(char *const argv[])  {
             printf("FORK() FAILED: errno=%d\n", errno);
             return -1;
         case 0:     /* child */
+            printf("EXECV... %s\n", argv[0]);
             execv(argv[0], argv);
-            printf("EXECV ERROR: Cannot launch '%s': errno=%d", argv[0], errno);
+            printf("EXECV ERROR: Cannot launch '%s': errno=%d\n", argv[0], errno);
             exit(-1);
         default:    /* father */
             printf("FORK() OK\n");

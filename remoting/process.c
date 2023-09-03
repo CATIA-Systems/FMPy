@@ -81,10 +81,9 @@ process_handle_t process_spawn(char *const argv[])  {
 
     if (handle == 0) {
         /* CHILD (server) */
-        printf("EXECV... %s\n", argv[0]); fflush(stdout);
+        printf("EXECV... %s\n", argv[0]);
         execv(argv[0], argv);
         printf("EXECV ERROR: Cannot launch '%s': errno=%d\n", argv[0], errno);
-        printf("EXECV... %s\n", argv[0]); fflush(stdout);
         exit(-1);
 
     } else {

@@ -53,10 +53,14 @@ static sem_handle_t communication_sem_open(const char *name, communication_endpo
 #ifdef WIN32
     sem = CreateSemaphoreA(NULL, 0, 1, name);
 #else
+    SHM_LOG("Opening SEM %s by %d\n", name, endpoint);
     if (endpoint == COMMUNICATION_CLIENT) 
         sem = sem_open(name, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP, 0);
     else
         sem = sem_open(name, O_RDWR);
+    int value;
+    sem_getvalue(sem, &value);
+    SHM_LOG("SEM %s --> %d\n", name, value);
 #endif
 
     return sem;

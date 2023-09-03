@@ -47,17 +47,14 @@ static void communication_alarm_handler(int sig) {
 }
 #endif
 
-static sem_handle_t communication_sem_open(const char *name, communication_endpoint_t endpoint) {
+static sem_handle_t communication_sem_open(const char *name, int init) {
     sem_handle_t sem;
 
 #ifdef WIN32
     sem = CreateSemaphoreA(NULL, 0, 1, name);
 #else
-    SHM_LOG("Opening SEM %s by %d\n", name, endpoint);
-    if (endpoint == COMMUNICATION_CLIENT) 
-        sem = sem_open(name, O_RDWR | O_CREAT | O_EXCL, 0640, 0);
-    else
-        sem = sem_open(name, O_RDWR);
+    SHM_LOG("Opening SEM %s value=%d\n", name, init);
+    sem = sem_open(name, O_RDWR | O_CREAT, 0600, init);
 
     if (sem == SEM_FAILED)
         sem = NULL;
@@ -188,14 +185,14 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
     communication->event_server_name = concat(prefix, "_server");
     communication->shm_name = concat(prefix, "_memory");
 
-    communication->client_ready = communication_sem_open(communication->event_client_name, endpoint);
+    communication->client_ready = communication_sem_open(communication->event_client_name, 1);
     if (!communication->client_ready) {
         SHM_LOG("*** Cannot CreateSemaphore(%s). Errno=%d\n", communication->event_client_name, errno);
         communication_free(communication);
         return NULL;
     }
 
-    communication->server_ready = communication_sem_open(communication->event_server_name, endpoint);
+    communication->server_ready = communication_sem_open(communication->event_server_name, 0);
     if (!communication->server_ready) {
         SHM_LOG("*** Cannot CreateSemaphore(%s). Errno=%d\n", communication->event_server_name, errno);
         communication_free(communication);
@@ -209,7 +206,7 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
     if (endpoint == COMMUNICATION_CLIENT) {
         /* 1st. CLIENT should create memory and notify the client */
         communication->map_file = communication_shm_create(communication->shm_name, memory_size);
-        communication_client_ready(communication);
+        //communication_client_ready(communication);
     } else {
         /* 2nd. Server should wait for memory creation by client and connect to it */
         SHM_LOG("Wait for client to initialize SHM.\n");

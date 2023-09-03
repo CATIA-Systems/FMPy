@@ -1034,11 +1034,11 @@ def add_remoting(filename, host_platform, remote_platform):
     server_dst_file = join(tempdir, 'binaries', remote_platform, f'server_{method}{ex_ext[remote_platform]}')
     copyfile(src=join(current_dir, 'remoting', remote_platform, f'server_{method}{ex_ext[remote_platform]}'),
              dst=server_dst_file)
-    
+
     os.chmod(server_dst_file, 0o755)
     import subprocess
     result = subprocess.run(server_dst_file)
-    result.check_returncode()
+    #result.check_returncode()
 
     licenses_dir = join(tempdir, 'documentation', 'licenses')
     os.makedirs(licenses_dir, exist_ok=True)

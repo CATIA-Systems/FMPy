@@ -19,7 +19,7 @@
 #   endif
 #endif
 
-#define SHM_DEBUG
+//#define SHM_DEBUG
 #ifdef SHM_DEBUG
 #   include <stdio.h>
 #   define SHM_LOG(message, ...) printf("[SHM] %d | " message, getpid(), ##__VA_ARGS__)
@@ -49,6 +49,7 @@ static void communication_alarm_handler(int sig) {
 
 #ifndef WIN32
 static void display_sem(sem_handle_t sem, const char *sem_name) {
+#ifdef SHM_DEBUG
     if (sem) {
         int value;
         if (sem_getvalue(sem, &value) < 0)
@@ -58,6 +59,7 @@ static void display_sem(sem_handle_t sem, const char *sem_name) {
     } else
         printf("[SHM] %d | %s is not valid\n", getpid(), sem_name);
     return;
+#endif
 }
 #endif
 

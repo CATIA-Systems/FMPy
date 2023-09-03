@@ -21,7 +21,7 @@
 #include "remote.h"
 #include "server.h"
 
-#define SERVER_DEBUG
+//#define SERVER_DEBUG
 #ifdef SERVER_DEBUG
 #   include <stdio.h>
 #   define SERVER_LOG(message, ...) do { printf("[SERVER] " message, ##__VA_ARGS__); fflush(stdout); } while(0)
@@ -239,8 +239,10 @@ static int is_parent_still_alive(const server_t *server) {
 
 
 int main(int argc, char* argv[]) {
+#ifndef WIN32
     setlinebuf(stdout);
     setlinebuf(stderr);
+#endif
     SERVER_LOG("STARING...\n");
     if (argc != 4) {
         fprintf(stderr, "Usage: server <parent_process_id> <secret> <library_path>\n");

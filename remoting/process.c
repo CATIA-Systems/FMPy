@@ -72,21 +72,27 @@ process_handle_t process_spawn(char *const argv[])  {
 #else
     printf("FORKing...\n");
     handle = fork();
-    switch(handle) {
-        case -1:    /* error */
-            printf("FORK() FAILED: errno=%d\n", errno);
+    if (handle == -1) {
+        printf("FORK() FAILED: errno=%d\n", errno);
             return -1;
-        case 0:     /* child */
-            printf("EXECV... %s\n", argv[0]);
-            execv(argv[0], argv);
-            printf("EXECV ERROR: Cannot launch '%s': errno=%d\n", argv[0], errno);
-            exit(-1);
-        default:    /* father */
-            printf("FORK() OK\n");
-            signal(SIGCHLD, SIG_IGN);
+    }
+
+    printf("FORK() OK\n"); /* Should appear twice */
+
+    if (handle == 0) {
+        /* CHILD (server) */
+        printf("EXECV... %s\n", argv[0]);
+        execv(argv[0], argv);
+        printf("EXECV ERROR: Cannot launch '%s': errno=%d\n", argv[0], errno);
+        exit(-1);
+
+    } else {
+        /* FATHER (client) */
+        printf("Father here...\n");   
+        signal(SIGCHLD, SIG_IGN);
     }
 #endif
-    return handle;
+    return handle; /* Reached only by client */
 }
 
 

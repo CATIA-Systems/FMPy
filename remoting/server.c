@@ -21,7 +21,7 @@
 #include "remote.h"
 #include "server.h"
 
-#define SERVER_DEBUG
+//#define SERVER_DEBUG
 #ifdef SERVER_DEBUG
 #   include <stdio.h>
 #   define SERVER_LOG(message, ...) do { printf("[SERVER] " message, ##__VA_ARGS__); fflush(stdout); } while(0)

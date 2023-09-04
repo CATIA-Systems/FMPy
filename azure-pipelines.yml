@@ -14,8 +14,6 @@ jobs:
       sudo apt-get update
       sudo apt-get install libc6-dev:i386
       sudo apt install gcc-multilib
-      sudo df /tmp
-      sudo mount 
 
   - checkout: self
     submodules: true
@@ -53,7 +51,7 @@ jobs:
         pip install $f --no-deps -vv
       done
       cd tests
-      python tmp_test.py
+      pytest --junitxml=junit/test-results.xml --cov=fmpy --cov-report=xml
       cd ..
     displayName: Build, install and run tests
 

@@ -12,7 +12,6 @@
 #else
 #   define _GNU_SOURCE  /* to access to dladdr */
 #   include <dlfcn.h>
-#   include <stdio.h>
 #   include <stdlib.h> 
 #   include <signal.h>
 #   include <string.h>
@@ -71,25 +70,19 @@ process_handle_t process_spawn(char *const argv[])  {
         handle = pi.hProcess;
     }
 #else
-    printf("FORKing...\n");
-    handle = fork();
-    if (handle == -1) {
-        printf("FORK() FAILED: errno=%d\n", errno);
+    switch(handle = fork()) {
+        case -1:
             return -1;
-    }
+        
+        case 0:
+            /* CHILD (server) */
+            execv(argv[0], argv);
+            exit(-1);
 
-    printf("FORK() OK\n"); /* Should appear twice */
-
-    if (handle == 0) {
-        /* CHILD (server) */
-        printf("EXECV... %s\n", argv[0]);
-        execv(argv[0], argv);
-        printf("EXECV ERROR: Cannot launch '%s': errno=%d\n", argv[0], errno);
-        exit(-1);
-
-    } else {
-        /* FATHER (client) */
-        /* nop */
+        default:
+            /* FATHER (client) */
+            /* NOP */
+            break;
     }
 #endif
     return handle; /* Reached only by client */

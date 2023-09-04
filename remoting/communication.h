@@ -13,7 +13,6 @@
 #ifdef WIN32
 #	include <windows.h>
 #else
-#	include <semaphore.h>
 #	include <fcntl.h>
 #	include <sys/mman.h>
 #endif
@@ -45,8 +44,10 @@ typedef int shm_handle_t;
 -----------------------------------------------------------------------------*/
 #ifdef WIN32
 typedef HANDLE sem_handle_t;
+#	define SEM_INVALID	NULL
 #else
-typedef sem_t * sem_handle_t;
+typedef int sem_handle_t;
+#	define SEM_INVALID	-1
 #endif
 
 
@@ -60,12 +61,12 @@ typedef struct {
 	char						*event_client_name;
 	char						*event_server_name;
 	char						*shm_name;
-	char					*sem_name;
-	shm_handle_t			map_file;
-	sem_handle_t			client_ready;
-	sem_handle_t			server_ready;
-	size_t					data_size;
-	void					*data;
+	char						*sem_name;
+	shm_handle_t				map_file;
+	sem_handle_t				client_ready;
+	sem_handle_t				server_ready;
+	size_t						data_size;
+	void						*data;
 } communication_t;
 
 

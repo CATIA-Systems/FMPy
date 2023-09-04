@@ -12,17 +12,19 @@
 #include <string.h>
 #ifndef WIN32
 #   include <errno.h>
+#   include <stdio.h>
 #   include <unistd.h>
-#   include <sys/time.h>
-#   ifndef HAVE_SEM_TIMEDWAIT
+#   ifndef HAVE_SEMTIMEDOP
 #       include <signal.h>
 #   endif
+#   include <sys/time.h>
+#   include <sys/sem.h>
 #endif
 
-//#define SHM_DEBUG
+#define SHM_DEBUG
 #ifdef SHM_DEBUG
 #   include <stdio.h>
-#   define SHM_LOG(message, ...) printf("[SHM] %d | " message, getpid(), ##__VA_ARGS__)
+#   define SHM_LOG(message, ...) printf("[SHM] " message, ##__VA_ARGS__)
 #else
 #   define SHM_LOG(message, ...)
 #endif
@@ -40,58 +42,48 @@ static char* concat(const char* prefix, const char* name) {
 }
 
 
-#ifndef HAVE_SEM_TIMEDWAIT
+#if !defined WIN32 && !defined HAVE_SEMTIMEDOP
 static void communication_alarm_handler(int sig) {
     /* nop */
     return;
 }
 #endif
 
-#ifndef WIN32
-static void display_sem(sem_handle_t sem, const char *sem_name) {
-#ifdef SHM_DEBUG
-    if (sem) {
-        int value;
-        if (sem_getvalue(sem, &value) < 0)
-            printf("[SHM] %d | Cannot get sem_value(%s): %s\n", getpid(), sem_name, strerror(errno));
-        else
-           printf("[SHM] %d | sem_value(%s) = %d\n", getpid(), sem_name, value);
-    } else
-        printf("[SHM] %d | %s is not valid\n", getpid(), sem_name);
-    return;
-#endif
-}
-#endif
 
-static sem_handle_t communication_sem_open(const char *name, int init, communication_endpoint_t endpoint) {
+static sem_handle_t communication_sem_open(const char *name, communication_endpoint_t endpoint) {
     sem_handle_t sem;
 
 #ifdef WIN32
     sem = CreateSemaphoreA(NULL, init, 1, name);
 #else
+    SHM_LOG("Create SEM %s from=%d\n", name, endpoint);
+    int flags = 0600;
     if (endpoint == COMMUNICATION_CLIENT) {
-        SHM_LOG("Create SEM %s value=%d\n", name, init);
-        sem = sem_open(name, O_CREAT | O_EXCL, 0600, init);
-    } else {
-        SHM_LOG("Open SEM %s\n", name);
-        sem = sem_open(name, 0);
+        flags |=  IPC_CREAT | IPC_EXCL;
+        FILE *sem_file = fopen(name, "w");
+        if (!sem_file) 
+            return SEM_INVALID;
+       fclose(sem_file);
     }
-
-    if (sem == SEM_FAILED)
-        sem = NULL;
-    display_sem(sem, name);
+    sem = semget(ftok(name, 0), 1, flags);
 #endif
 
     return sem;
 }
 
 
-static void communication_sem_free(sem_handle_t sem) {
+static void communication_sem_free(sem_handle_t sem, const char *sem_name) {
     if (sem)
 #ifdef WIN32
        CloseHandle(sem);
 #else
-        sem_close(sem);
+        SHM_LOG("communication_sem_free(%s)\n", sem_name);
+        if (semctl(sem, 0, IPC_RMID)<0) {
+            perror("semctl");
+        }
+        if (unlink(sem_name) < 0) {
+            perror("unlink");
+        }
 #endif
 
     return;
@@ -175,23 +167,16 @@ static void communication_shm_unmap(void *addr, size_t len) {
 
 
 void communication_free(communication_t* communication) {
-    free(communication->event_client_name);
-    free(communication->event_server_name);
-    free(communication->shm_name);
 
     communication_shm_unmap(communication->data, communication->data_size);
     communication_shm_free(communication->map_file, communication->shm_name);
 
-    communication_sem_free(communication->client_ready);
-    communication_sem_free(communication->server_ready);
+    communication_sem_free(communication->server_ready, communication->event_server_name);
+    communication_sem_free(communication->client_ready, communication->event_client_name);
 
-#ifndef WIN32
-    if (communication->endpoint == COMMUNICATION_CLIENT) {
-        sem_unlink(communication->event_client_name);
-        sem_unlink(communication->event_server_name);
-    }
-#endif
-
+    free(communication->event_client_name);
+    free(communication->event_server_name);
+    free(communication->shm_name);
 
     free(communication);
 }
@@ -203,20 +188,30 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
         return NULL;
 
     communication->endpoint = endpoint;
+#ifdef WIN32
     communication->event_client_name = concat(prefix, "_client");
     communication->event_server_name = concat(prefix, "_server");
+#else
+    /* on Unix, semaphores require an existing file
+       it will be created in following function */
+    char *tmp_prefix = concat("/tmp", prefix);
+    communication->event_client_name = concat(tmp_prefix, "_client");
+    communication->event_server_name = concat(tmp_prefix, "_server");
+    free(tmp_prefix);
+#endif
+
     communication->shm_name = concat(prefix, "_memory");
 
-    communication->client_ready = communication_sem_open(communication->event_client_name, 1, endpoint);
-    if (!communication->client_ready) {
-        SHM_LOG("*** Cannot CreateSemaphore(%s). Errno=%d\n", communication->event_client_name, errno);
+    communication->client_ready = communication_sem_open(communication->event_client_name, endpoint);
+    if (communication->client_ready == SEM_INVALID) {
+        SHM_LOG("Cannot CreateSemaphore(%s): %s\n", communication->event_client_name, strerror(errno));
         communication_free(communication);
         return NULL;
     }
 
-    communication->server_ready = communication_sem_open(communication->event_server_name, 0, endpoint);
-    if (!communication->server_ready) {
-        SHM_LOG("*** Cannot CreateSemaphore(%s). Errno=%d\n", communication->event_server_name, errno);
+    communication->server_ready = communication_sem_open(communication->event_server_name, endpoint);
+    if (communication->server_ready == SEM_INVALID) {
+        SHM_LOG("Cannot CreateSemaphore(%s): %s\n", communication->event_server_name, strerror(errno));
         communication_free(communication);
         return NULL;
     }
@@ -228,7 +223,7 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
     if (endpoint == COMMUNICATION_CLIENT) {
         /* 1st. CLIENT should create memory and notify the client */
         communication->map_file = communication_shm_create(communication->shm_name, memory_size);
-        //communication_client_ready(communication);
+        communication_client_ready(communication);
     } else {
         /* 2nd. Server should wait for memory creation by client and connect to it */
         SHM_LOG("Wait for client to initialize SHM.\n");
@@ -257,7 +252,7 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
         memset(communication->data, 0, communication->data_size);
 
 
-#if !defined WIN32 && !defined HAVE_SEM_TIMEDWAIT
+    #if !defined WIN32 && !defined HAVE_SEMTIMEDOP
     /* Make SIG_ALARM interrupt system call without other side effect */
     struct sigaction sa;
     sa.sa_handler = communication_alarm_handler;
@@ -275,9 +270,8 @@ void communication_client_ready(const communication_t* communication) {
     ReleaseSemaphore(communication->client_ready, 1, NULL);
 #else
     SHM_LOG("communication_client_ready()\n");
-    if (sem_post(communication->client_ready)<0)
-        SHM_LOG("**** communication_client_ready failed: errno=%d", errno);
-    display_sem(communication->client_ready, communication->event_client_name);
+    struct sembuf up = {0,1,0};
+    semop(communication->client_ready, &up, 1);
 #endif
     return;
 }
@@ -288,8 +282,8 @@ void communication_waitfor_server(const communication_t* communication) {
     WaitForSingleObject(communication->server_ready, INFINITE);
 #else
     SHM_LOG("communication_waitfor_server()\n");
-    display_sem(communication->server_ready, communication->event_server_name);
-    sem_wait(communication->server_ready);
+    struct sembuf down = {0,-1,0};
+    semop(communication->server_ready, &down, 1);
     SHM_LOG("communication_waitfor_server() --OK\n");
 #endif
     return;
@@ -297,20 +291,22 @@ void communication_waitfor_server(const communication_t* communication) {
 
 
 int communication_timedwaitfor_server(const communication_t* communication, int timeout) {
-    SHM_LOG("communication_timedwaitfor_server()\n");
 #ifdef WIN32
     return WaitForSingleObject(communication->server_ready, timeout) == WAIT_TIMEOUT;
 #else
-#   ifdef HAVE_SEM_TIMEDWAIT
-    struct timespec ts;
-
-    clock_gettime(CLOCK_REALTIME, &ts);
-    ts.tv_sec  += timeout / 1000;
-    ts.tv_nsec += (timeout - ts.tv_sec * 1000) * 1000000;
-    if (sem_timedwait(communication->client_ready, &ts) < 0)
-        return errno == ETIMEDOUT;
+    SHM_LOG("communication_timedwaitfor_server(%d)\n", timeout);
+    struct sembuf down = {0,-1,0};
+#   ifdef HAVE_SEMTIMEDOP
+    const struct timespec timeout;
+    int status = semtimedop(communication->server_ready, &down, 1, &timeout);
+        SHM_LOG("communication_timedwaitfor_server() --DONE\n");
+    if (status<0) {
+        if (errno == EAGAIN)
+            return 1;
+        else
+            return -1;
+    }
     return 0;
-
 #   else
     struct itimerval value, old_value;
 
@@ -320,9 +316,9 @@ int communication_timedwaitfor_server(const communication_t* communication, int 
     value.it_value.tv_usec = (timeout - value.it_value.tv_sec * 1000) * 1000;
 
     setitimer(ITIMER_REAL, &value, &old_value);
-    int status = sem_wait(communication->server_ready);
+    int status = semop(communication->server_ready, &down, 1);
+    SHM_LOG("communication_timedwaitfor_server() --DONE\n");
     setitimer(ITIMER_REAL, &old_value, NULL);
-    SHM_LOG("communication_timedwaitfor_server -- END()\n");
     if (status < 0)
         return errno == EINTR;
     
@@ -337,8 +333,8 @@ void communication_waitfor_client(const communication_t* communication) {
     WaitForSingleObject(communication->client_ready, INFINITE);
 #else
     SHM_LOG("communication_waitfor_client()\n");
-    display_sem(communication->client_ready, communication->event_client_name);
-    sem_wait(communication->client_ready);
+    struct sembuf down = {0,-1,0};
+    semop(communication->client_ready, &down, 1);
     SHM_LOG("communication_waitfor_client() --OK\n");
 #endif
     return;
@@ -346,18 +342,21 @@ void communication_waitfor_client(const communication_t* communication) {
 
 
 int communication_timedwaitfor_client(const communication_t* communication, int timeout) {
-    SHM_LOG("communication_timedwaitfor_client()\n");
 #ifdef WIN32
     return WaitForSingleObject(communication->client_ready, timeout) == WAIT_TIMEOUT;
 #else
-#   ifdef HAVE_SEM_TIMEDWAIT
-    struct timespec ts;
-
-    clock_gettime(CLOCK_REALTIME, &ts);
-    ts.tv_sec  += timeout / 1000;
-    ts.tv_nsec += (timeout - ts.tv_sec * 1000) * 1000000;
-    if (sem_timedwait(communication->client_ready, &ts) < 0)
-        return errno == ETIMEDOUT;
+    SHM_LOG("communication_timedwaitfor_client(%d)\n", timeout);
+    struct sembuf down = {0,-1,0};
+#   ifdef HAVE_SEMTIMEDOP
+    const struct timespec timeout;
+    int status = semtimedop(communication->client_ready, &down, 1, &timeout);
+        SHM_LOG("communication_timedwaitfor_client() --DONE\n");
+    if (status<0) {
+        if (errno == EAGAIN)
+            return 1;
+        else
+            return -1;
+    }
     return 0;
 #   else
     struct itimerval value, old_value;
@@ -368,14 +367,13 @@ int communication_timedwaitfor_client(const communication_t* communication, int 
     value.it_value.tv_usec = (timeout - value.it_value.tv_sec * 1000) * 1000;
 
     setitimer(ITIMER_REAL, &value, &old_value);
-    int status = sem_wait(communication->client_ready);
+    int status = semop(communication->client_ready, &down, 1);
+    SHM_LOG("communication_timedwaitfor_client() --DONE\n");
     setitimer(ITIMER_REAL, &old_value, NULL);
-    SHM_LOG("communication_timedwaitfor_client --END()\n");
     if (status < 0)
         return errno == EINTR;
     
     return 0;
-
 #   endif
 #endif
 }
@@ -386,9 +384,8 @@ void communication_server_ready(const communication_t* communication) {
     ReleaseSemaphore(communication->server_ready, 1, NULL);
 #else
     SHM_LOG("communication_server_ready()\n");
-    if (sem_post(communication->server_ready) < 0)
-        SHM_LOG("******* communication_server_ready failed: errno=%d", errno);
-    display_sem(communication->server_ready, communication->event_server_name);
+    struct sembuf up = {0,1,0};
+    semop(communication->server_ready, &up, 1);
 #endif
     return;
 }

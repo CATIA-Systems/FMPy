@@ -21,7 +21,7 @@
 #include "remote.h"
 #include "server.h"
 
-//#define SERVER_DEBUG
+#define SERVER_DEBUG
 #ifdef SERVER_DEBUG
 #   include <stdio.h>
 #   define SERVER_LOG(message, ...) do { printf("[SERVER] " message, ##__VA_ARGS__); fflush(stdout); } while(0)
@@ -182,16 +182,12 @@ static void map_entries(fmu_entries_t* entries, library_t library) {
 
 
 static void server_free(server_t* server) {
-    SERVER_LOG("server_free()\n");
     if (server->communication)
         communication_free(server->communication);
-    SERVER_LOG("server_free() 1\n");
     library_unload(server->library);
-    SERVER_LOG("server_free() 2\n");
 #ifdef WIN32
     CloseHandle(server->parent_handle);
 #endif
-    SERVER_LOG("server_free() 3\n");
     free(server->instance_name);
     free(server);
 
@@ -637,6 +633,7 @@ int main(int argc, char* argv[]) {
     /*
      * End of loop
      */
+    server_free(server);
     SERVER_LOG("Exit.\n");
 
 

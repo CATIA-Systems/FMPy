@@ -27,7 +27,7 @@
 #include "process.h"
 
 
-//#define CLIENT_DEBUG
+#define CLIENT_DEBUG
 #ifdef CLIENT_DEBUG
 #   include <stdio.h>
 #   define CLIENT_LOG(message, ...) printf("[CLIENT] " message, ##__VA_ARGS__)

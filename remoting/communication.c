@@ -54,7 +54,7 @@ static sem_handle_t communication_sem_open(const char *name, communication_endpo
     sem_handle_t sem;
 
 #ifdef WIN32
-    sem = CreateSemaphoreA(NULL, init, 1, name);
+    sem = CreateSemaphoreA(NULL, 0, 1, name);
 #else
     SHM_LOG("Create SEM %s from=%d\n", name, endpoint);
     int flags = 0600;

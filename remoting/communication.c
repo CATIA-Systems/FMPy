@@ -297,8 +297,10 @@ int communication_timedwaitfor_server(const communication_t* communication, int 
     SHM_LOG("communication_timedwaitfor_server(%d)\n", timeout);
     struct sembuf down = {0,-1,0};
 #   ifdef HAVE_SEMTIMEDOP
-    const struct timespec timeout;
-    int status = semtimedop(communication->server_ready, &down, 1, &timeout);
+    struct timespec ts_timeout;
+    ts_timeout.tv_sec = timeout / 1000;
+    ts_timeout.tv_nsec = (timeout - ts_timeout.tv_sec * 1000) * 1000000;
+    int status = semtimedop(communication->server_ready, &down, 1, &ts_timeout);
         SHM_LOG("communication_timedwaitfor_server() --DONE\n");
     if (status<0) {
         if (errno == EAGAIN)
@@ -348,8 +350,10 @@ int communication_timedwaitfor_client(const communication_t* communication, int 
     SHM_LOG("communication_timedwaitfor_client(%d)\n", timeout);
     struct sembuf down = {0,-1,0};
 #   ifdef HAVE_SEMTIMEDOP
-    const struct timespec timeout;
-    int status = semtimedop(communication->client_ready, &down, 1, &timeout);
+    struct timespec ts_timeout;
+    ts_timeout.tv_sec = timeout / 1000;
+    ts_timeout.tv_nsec = (timeout - ts_timeout.tv_sec * 1000) * 1000000;
+    int status = semtimedop(communication->client_ready, &down, 1, &ts_timeout);
         SHM_LOG("communication_timedwaitfor_client() --DONE\n");
     if (status<0) {
         if (errno == EAGAIN)

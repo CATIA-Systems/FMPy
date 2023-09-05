@@ -16,9 +16,8 @@ else ()
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)
     
-    include(CheckSymbolExists)
-    set(CMAKE_REQUIRED_LINK_OPTIONS Threads::Threads)
-    check_symbol_exists(sem_timedwait "semaphore.h" HAVE_SEM_TIMEDWAIT)
+    include(CheckFunctionExists)
+    check_function_exists(semtimedop HAVE_SEMTIMEDOP)
 
     if (APPLE)
         set(FMI_PLATFORM darwin64)

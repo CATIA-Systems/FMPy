@@ -3,7 +3,7 @@
 
 #   define REMOTING_VERSION "${VERSION}"
 
-#cmakedefine HAVE_SEM_TIMEDWAIT
+#cmakedefine HAVE_SEMTIMEDOP
 
 
 #if defined WIN32

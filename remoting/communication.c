@@ -241,8 +241,8 @@ communication_t *communication_new(const char *prefix, size_t memory_size, commu
 
     communication->endpoint = endpoint;
 #ifdef WIN32
-    communication->event_client_name = concat(prefix, "_client");
-    communication->event_server_name = concat(prefix, "_server");
+    communication->sem_name_client = concat(prefix, "_client");
+    communication->sem_name_server = concat(prefix, "_server");
 #else
     /* on Unix, semaphores require an existing file
        it will be created in sem_create() functions */

@@ -11,14 +11,16 @@
 #include <stdlib.h>
 #include <string.h>
 #ifndef WIN32
+#   define _GNU_SOURCE  /* to access to semtimedop() if available */
 #   include <errno.h>
 #   include <stdio.h>
 #   include <unistd.h>
 #   ifndef HAVE_SEMTIMEDOP
 #       include <signal.h>
 #   endif
-#   include <sys/time.h>
+#   include <sys/ipc.h>
 #   include <sys/sem.h>
+#   include <sys/time.h>
 #endif
 
 //#define SHM_DEBUG

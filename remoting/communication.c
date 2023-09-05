@@ -44,28 +44,38 @@ static char* concat(const char* prefix, const char* name) {
 
 #if !defined WIN32 && !defined HAVE_SEMTIMEDOP
 static void communication_alarm_handler(int sig) {
-    /* nop */
+    /* this nop signal handler is needed to make semop() interruptible */
     return;
 }
 #endif
 
 
-static sem_handle_t communication_sem_open(const char *name, communication_endpoint_t endpoint) {
+static sem_handle_t communication_sem_create(const char *name) {
     sem_handle_t sem;
 
 #ifdef WIN32
     sem = CreateSemaphoreA(NULL, 0, 1, name);
 #else
-    SHM_LOG("Create SEM %s from=%d\n", name, endpoint);
-    int flags = 0600;
-    if (endpoint == COMMUNICATION_CLIENT) {
-        flags |=  IPC_CREAT | IPC_EXCL;
-        FILE *sem_file = fopen(name, "w");
-        if (!sem_file) 
-            return SEM_INVALID;
-       fclose(sem_file);
-    }
-    sem = semget(ftok(name, 0), 1, flags);
+    SHM_LOG("Create SEM %s\n", name);
+    FILE *sem_file = fopen(name, "w");
+    if (!sem_file) 
+        return SEM_INVALID;
+    fclose(sem_file);
+    sem = semget(ftok(name, 0), 1, IPC_CREAT | IPC_EXCL | 0600);
+#endif
+
+    return sem;
+}
+
+
+static sem_handle_t communication_sem_join(const char *name) {
+    sem_handle_t sem;
+
+#ifdef WIN32
+    sem = CreateSemaphoreA(NULL, 0, 1, name);
+#else
+    SHM_LOG("Join SEM %s\n", name);
+    sem = semget(ftok(name, 0), 1, 0600);
 #endif
 
     return sem;
@@ -78,12 +88,8 @@ static void communication_sem_free(sem_handle_t sem, const char *sem_name) {
        CloseHandle(sem);
 #else
         SHM_LOG("communication_sem_free(%s)\n", sem_name);
-        if (semctl(sem, 0, IPC_RMID)<0) {
-            perror("semctl");
-        }
-        if (unlink(sem_name) < 0) {
-            perror("unlink");
-        }
+        semctl(sem, 0, IPC_RMID); /* silently ignore error if any */
+        unlink(sem_name);  /* silently ignore error if any */
 #endif
 
     return;
@@ -182,7 +188,51 @@ void communication_free(communication_t* communication) {
 }
 
 
-communication_t *communication_new(const char *prefix, int memory_size, communication_endpoint_t endpoint) {
+static int communication_new_client(communication_t *communication) {
+    communication->client_ready = communication_sem_create(communication->event_client_name);
+    if (communication->client_ready == SEM_INVALID) {
+        SHM_LOG("Client: Cannot Create Semaphore(%s): %s\n", communication->event_client_name, strerror(errno));
+        return -1;
+    }
+
+    communication->server_ready = communication_sem_create(communication->event_server_name);
+    if (communication->server_ready == SEM_INVALID) {
+        SHM_LOG("Client: Cannot Create Semaphore(%s): %s\n", communication->event_server_name, strerror(errno));
+        return -1;
+    }
+
+    /* 1st. CLIENT should create memory and notify the client */
+    communication->map_file = communication_shm_create(communication->shm_name, communication->data_size);
+    communication_client_ready(communication);
+    return 0;
+}
+
+
+static int communication_new_server(communication_t *communication) {
+    communication->client_ready = communication_sem_join(communication->event_client_name);
+    if (communication->client_ready == SEM_INVALID) {
+        SHM_LOG("Server: Cannot Join Semaphore(%s): %s\n", communication->event_client_name, strerror(errno));
+        return -1;
+    }
+
+    communication->server_ready = communication_sem_join(communication->event_server_name);
+    if (communication->server_ready == SEM_INVALID) {
+        SHM_LOG("Server: Cannot Join Semaphore(%s): %s\n", communication->event_server_name, strerror(errno));
+        return -1;
+    }
+
+    /* 2nd. Server should wait for memory creation by client and connect to it */
+    SHM_LOG("Wait for client to initialize SHM.\n");
+    communication_waitfor_client(communication);
+    SHM_LOG("Client ready. Joining SHM\n");
+    communication->map_file = communication_shm_join(communication->shm_name);
+    communication_server_ready(communication);
+
+    return 0;
+}
+
+
+communication_t *communication_new(const char *prefix, size_t memory_size, communication_endpoint_t endpoint) {
     communication_t* communication = malloc(sizeof(*communication));
     if (!communication)
         return NULL;
@@ -193,7 +243,7 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
     communication->event_server_name = concat(prefix, "_server");
 #else
     /* on Unix, semaphores require an existing file
-       it will be created in following function */
+       it will be created in sem_create() functions */
     char *tmp_prefix = concat("/tmp", prefix);
     communication->event_client_name = concat(tmp_prefix, "_client");
     communication->event_server_name = concat(tmp_prefix, "_server");
@@ -201,36 +251,20 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
 #endif
 
     communication->shm_name = concat(prefix, "_memory");
-
-    communication->client_ready = communication_sem_open(communication->event_client_name, endpoint);
-    if (communication->client_ready == SEM_INVALID) {
-        SHM_LOG("Cannot CreateSemaphore(%s): %s\n", communication->event_client_name, strerror(errno));
-        communication_free(communication);
-        return NULL;
-    }
-
-    communication->server_ready = communication_sem_open(communication->event_server_name, endpoint);
-    if (communication->server_ready == SEM_INVALID) {
-        SHM_LOG("Cannot CreateSemaphore(%s): %s\n", communication->event_server_name, strerror(errno));
-        communication_free(communication);
-        return NULL;
-    }
-
     communication->data = NULL;
     communication->map_file = SHM_INVALID;
+    communication->data_size = memory_size;
 
-    SHM_LOG("Initialize SHM size=%d\n", memory_size);
-    if (endpoint == COMMUNICATION_CLIENT) {
-        /* 1st. CLIENT should create memory and notify the client */
-        communication->map_file = communication_shm_create(communication->shm_name, memory_size);
-        communication_client_ready(communication);
-    } else {
-        /* 2nd. Server should wait for memory creation by client and connect to it */
-        SHM_LOG("Wait for client to initialize SHM.\n");
-        communication_waitfor_client(communication);
-        SHM_LOG("Client ready. Joining SHM\n");
-        communication->map_file = communication_shm_join(communication->shm_name);
-        communication_server_ready(communication);
+    SHM_LOG("Initialize SHM size=%ld\n", memory_size);
+    int status;
+    if (endpoint == COMMUNICATION_CLIENT)
+        status = communication_new_client(communication);
+    else
+        status = communication_new_server(communication);
+    
+    if (status) {
+        communication_free(communication);
+        return NULL;
     }
 
     if (communication->map_file == SHM_INVALID) {
@@ -245,14 +279,13 @@ communication_t *communication_new(const char *prefix, int memory_size, communic
         SHM_LOG("ERROR: Cannot map SHM.\n");
         return NULL;
     }
-    communication->data_size = memory_size;
+
 
     /* Paranoia: initialize shared memory */
     if (endpoint == COMMUNICATION_CLIENT)
         memset(communication->data, 0, communication->data_size);
 
-
-    #if !defined WIN32 && !defined HAVE_SEMTIMEDOP
+#if !defined WIN32 && !defined HAVE_SEMTIMEDOP
     /* Make SIG_ALARM interrupt system call without other side effect */
     struct sigaction sa;
     sa.sa_handler = communication_alarm_handler;

@@ -75,7 +75,7 @@ typedef struct {
 -----------------------------------------------------------------------------*/
 
 extern void communication_free(communication_t* communication);
-extern communication_t* communication_new(const char* prefix, int memory_size, communication_endpoint_t endpoint);
+extern communication_t *communication_new(const char *prefix, size_t memory_size, communication_endpoint_t endpoint);
 extern void communication_client_ready(const communication_t* communication);
 extern void communication_waitfor_server(const communication_t* communication);
 extern int communication_timedwaitfor_server(const communication_t* communication, int timeout);

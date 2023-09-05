@@ -21,7 +21,7 @@
 #   include <sys/sem.h>
 #endif
 
-//#define SHM_DEBUG
+#define SHM_DEBUG
 #ifdef SHM_DEBUG
 #   include <stdio.h>
 #   define SHM_LOG(message, ...) printf("[SHM] " message, ##__VA_ARGS__)
@@ -177,11 +177,11 @@ void communication_free(communication_t* communication) {
     communication_shm_unmap(communication->data, communication->data_size);
     communication_shm_free(communication->map_file, communication->shm_name);
 
-    communication_sem_free(communication->server_ready, communication->event_server_name);
-    communication_sem_free(communication->client_ready, communication->event_client_name);
+    communication_sem_free(communication->server_ready, communication->sem_name_server);
+    communication_sem_free(communication->client_ready, communication->sem_name_client);
 
-    free(communication->event_client_name);
-    free(communication->event_server_name);
+    free(communication->sem_name_client);
+    free(communication->sem_name_server);
     free(communication->shm_name);
 
     free(communication);
@@ -189,15 +189,15 @@ void communication_free(communication_t* communication) {
 
 
 static int communication_new_client(communication_t *communication) {
-    communication->client_ready = communication_sem_create(communication->event_client_name);
+    communication->client_ready = communication_sem_create(communication->sem_name_client);
     if (communication->client_ready == SEM_INVALID) {
-        SHM_LOG("Client: Cannot Create Semaphore(%s): %s\n", communication->event_client_name, strerror(errno));
+        SHM_LOG("Client: Cannot Create Semaphore(%s): %s\n", communication->sem_name_client, strerror(errno));
         return -1;
     }
 
-    communication->server_ready = communication_sem_create(communication->event_server_name);
+    communication->server_ready = communication_sem_create(communication->sem_name_server);
     if (communication->server_ready == SEM_INVALID) {
-        SHM_LOG("Client: Cannot Create Semaphore(%s): %s\n", communication->event_server_name, strerror(errno));
+        SHM_LOG("Client: Cannot Create Semaphore(%s): %s\n", communication->sem_name_server, strerror(errno));
         return -1;
     }
 
@@ -209,15 +209,15 @@ static int communication_new_client(communication_t *communication) {
 
 
 static int communication_new_server(communication_t *communication) {
-    communication->client_ready = communication_sem_join(communication->event_client_name);
+    communication->client_ready = communication_sem_join(communication->sem_name_client);
     if (communication->client_ready == SEM_INVALID) {
-        SHM_LOG("Server: Cannot Join Semaphore(%s): %s\n", communication->event_client_name, strerror(errno));
+        SHM_LOG("Server: Cannot Join Semaphore(%s): %s\n", communication->sem_name_client, strerror(errno));
         return -1;
     }
 
-    communication->server_ready = communication_sem_join(communication->event_server_name);
+    communication->server_ready = communication_sem_join(communication->sem_name_server);
     if (communication->server_ready == SEM_INVALID) {
-        SHM_LOG("Server: Cannot Join Semaphore(%s): %s\n", communication->event_server_name, strerror(errno));
+        SHM_LOG("Server: Cannot Join Semaphore(%s): %s\n", communication->sem_name_server, strerror(errno));
         return -1;
     }
 
@@ -245,8 +245,8 @@ communication_t *communication_new(const char *prefix, size_t memory_size, commu
     /* on Unix, semaphores require an existing file
        it will be created in sem_create() functions */
     char *tmp_prefix = concat("/tmp", prefix);
-    communication->event_client_name = concat(tmp_prefix, "_client");
-    communication->event_server_name = concat(tmp_prefix, "_server");
+    communication->sem_name_client = concat(tmp_prefix, "_client");
+    communication->sem_name_server = concat(tmp_prefix, "_server");
     free(tmp_prefix);
 #endif
 

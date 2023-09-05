@@ -58,10 +58,9 @@ typedef int sem_handle_t;
 #define COMMUNICATION_TIMEOUT_DEFAULT 3000
 typedef struct {
 	communication_endpoint_t	endpoint;
-	char						*event_client_name;
-	char						*event_server_name;
+	char						*sem_name_client;
+	char						*sem_name_server;
 	char						*shm_name;
-	char						*sem_name;
 	shm_handle_t				map_file;
 	sem_handle_t				client_ready;
 	sem_handle_t				server_ready;

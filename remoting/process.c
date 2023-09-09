@@ -11,13 +11,13 @@
 #   include <windows.h>
 #else
 #   define _GNU_SOURCE  /* to access to dladdr */
+#   define _BSD_SOURCE  /* to access wait4 */
 #   include <dlfcn.h>
 #   include <stdlib.h> 
 #   include <signal.h>
 #   include <string.h>
 #   include <errno.h>
 #   include <unistd.h>
-#   define _BSD_SOURCE  /* to access wait4 */
 #   include <sys/types.h>
 #   include <sys/time.h>
 #   include <sys/resource.h>

@@ -10,8 +10,6 @@
 #ifdef WIN32
 #   include <windows.h>
 #else
-#   define _GNU_SOURCE  /* to access to dladdr */
-#   define _BSD_SOURCE  /* to access wait4 */
 #   include <dlfcn.h>
 #   include <stdlib.h> 
 #   include <signal.h>
@@ -111,6 +109,6 @@ void process_waitfor(process_handle_t handle) {
     WaitForSingleObject(handle, INFINITE);
 #else
     int reason; 
-    wait4(handle, &reason, WNOHANG, NULL);
+    waitpid(handle, &reason, WNOHANG);
 #endif
 }

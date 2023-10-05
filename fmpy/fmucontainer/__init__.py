@@ -40,15 +40,25 @@ class Connection(object):
     endConnector: str
 
 
+@attrs(eq=False, auto_attribs=True)
+class DefaultExperiment(object):
+
+    startTime: str = None
+    stopTime: str = None
+    tolerance: str = None
+    stepSize: str = None
+
+
 @attrs(eq=False)
 class Configuration(object):
 
     fmiVersion = attrib(type=str, default=None, repr=False)
-
-    parallelDoStep = attrib(type=bool, default=False, repr=False)
-
     description = attrib(type=str, default=None, repr=False)
     variableNamingConvention = attrib(type=str, default='flat', repr=False)
+
+    defaultExperiment = attrib(type=DefaultExperiment, default=None, repr=False)
+
+    parallelDoStep = attrib(type=bool, default=False, repr=False)
 
     unitDefinitions = attrib(type=List[Unit], default=Factory(list), repr=False)
     typeDefinitions = attrib(type=List[SimpleType], default=Factory(list), repr=False)

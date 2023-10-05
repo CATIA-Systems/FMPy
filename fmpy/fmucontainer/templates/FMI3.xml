@@ -58,6 +58,13 @@
   </TypeDefinitions>
 
 {% endif %}
+{% if system.defaultExperiment %}
+  <DefaultExperiment{% if system.defaultExperiment.startTime %} startTime="{{system.defaultExperiment.startTime}}"{% endif %}
+{% if system.defaultExperiment.stopTime %} stopTime="{{system.defaultExperiment.stopTime}}"{% endif %}
+{% if system.defaultExperiment.tolerance %} tolerance="{{system.defaultExperiment.tolerance}}"{% endif %}
+{% if system.defaultExperiment.stepSize %} stepSize="{{system.defaultExperiment.stepSize}}"{% endif %}/>
+
+{% endif %}
   <ModelVariables>
     <Float64 name="time" valueReference="0" causality="independent" variability="continuous"/>
 {% for variable in system.variables %}

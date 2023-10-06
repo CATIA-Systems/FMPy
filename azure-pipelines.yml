@@ -218,14 +218,10 @@ jobs:
       downloadPath: windows
 
   - bash: |
-      unzip -o linux/*.whl -d merged
-      unzip -o macosx/*.whl -d merged
-      unzip -o windows/*.whl -d merged
-      cd merged
-      zip -r FMPy-x.x.x-py3-none-any.whl .
+      python3 merge_wheels.py
     displayName: Merge Python Wheels
 
   - task: PublishBuildArtifacts@1
     inputs:
-      pathtoPublish: merged/FMPy-x.x.x-py3-none-any.whl
+      pathtoPublish: merged
       artifactName: merged

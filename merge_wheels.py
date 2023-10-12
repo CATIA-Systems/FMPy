@@ -42,7 +42,8 @@ for wheel in wheels:
 with open(merge / record, 'w') as record:
     lines = [line.decode('utf-8') for line in records]
     lines.sort()
+    lines = list(filter(lambda line: line != "", lines))
     record.writelines('\n'.join(lines))
 
-make_archive(merged / wheels[0].stem, 'zip', merge)
+make_archive(str(merged / wheels[0].stem), 'zip', merge)
 os.rename(merged / (wheels[0].stem + '.zip'), merged / wheels[0].name)

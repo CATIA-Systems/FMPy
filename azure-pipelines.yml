@@ -41,7 +41,7 @@ jobs:
 
   - bash: |
       source activate fmpy-env
-      python setup.py bdist_wheel --universal
+      python setup.py bdist_wheel
       for f in dist/FMPy-*.whl; do
         pip install $f --no-deps -vv
       done
@@ -100,7 +100,7 @@ jobs:
 
   - bash: |
       source activate fmpy-env
-      python setup.py bdist_wheel --universal
+      python setup.py bdist_wheel
       for f in dist/FMPy-*.whl; do
         pip install $f --no-deps -vv
       done
@@ -159,7 +159,7 @@ jobs:
 
   - script: |
       call activate fmpy-env
-      python setup.py bdist_wheel --universal
+      python setup.py bdist_wheel
     displayName: Build wheel
 
   - task: PublishPipelineArtifact@1

@@ -6,7 +6,7 @@ This header file defines the data types of FMI 3.0.
 It must be used by both FMU and FMI master.
 
 Copyright (C) 2008-2011 MODELISAR consortium,
-              2012-2022 Modelica Association Project "FMI"
+              2012-2023 Modelica Association Project "FMI"
               All rights reserved.
 
 This file is licensed by the copyright holders under the 2-Clause BSD License

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    elementFormDefault="qualified" attributeFormDefault="qualified"
+    xmlns:fmi-ls="http://fmi-standard.org/fmi-ls-manifest"
+    targetNamespace="http://fmi-standard.org/fmi-ls-manifest">
+    <xs:annotation>
+        <xs:documentation>
+Copyright(c) 2023 Modelica Association Project "FMI".
+             All rights reserved.
+
+This file is licensed by the copyright holders under the 2-Clause BSD License
+(https://opensource.org/licenses/BSD-2-Clause):
+
+----------------------------------------------------------------------------
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+- Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+
+- Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+----------------------------------------------------------------------------
+        </xs:documentation>
+    </xs:annotation>
+    
+    <xs:attribute name="fmi-ls-name" type="xs:normalizedString">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                This attribute gives the name, in reverse domain name notation,
+                of the layered standard.
+            </xs:documentation>
+        </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="fmi-ls-version" type="xs:normalizedString">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                This attribute gives the version of the layered standard. The use
+                of semantic versioning is highly recommended. In case of semantic
+                versioning it is up to the layered standard to define whether only
+                major and minor version are included in the version attribute,
+                or the full version is to be included.
+            </xs:documentation>
+        </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="fmi-ls-description" type="xs:normalizedString">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                This attribute gives a string with a brief description of the
+                layered standard that is suitable for display to users.
+            </xs:documentation>
+        </xs:annotation>
+    </xs:attribute>
+    
+    <xs:attributeGroup name="ALayeredStandardManifest">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                This attribute group specifies the required root element attributes
+                of the fmi-ls-manifest.xml file in the sub-directory of extra
+                mandated by a layered standard.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute ref="fmi-ls:fmi-ls-name" use="required"/>
+        <xs:attribute ref="fmi-ls:fmi-ls-version" use="required"/>
+        <xs:attribute ref="fmi-ls:fmi-ls-description" use="required"/>
+    </xs:attributeGroup>
+
+    <xs:element name="fmiLayeredStandardManifest">
+        <xs:annotation>
+            <xs:documentation xml:lang="en">
+                This is the default root element to use in a layered standard for the mandated
+                fmi-ls-manifest.xml file, if no other suitable root element definition is provided
+                in the layered standard.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:attributeGroup ref="fmi-ls:ALayeredStandardManifest"/>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

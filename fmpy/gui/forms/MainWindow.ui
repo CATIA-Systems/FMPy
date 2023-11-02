@@ -85,7 +85,7 @@
     <normaloff>:/icons/app_icon.ico</normaloff>:/icons/app_icon.ico</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_12">
+   <layout class="QVBoxLayout" name="verticalLayout_5">
     <property name="leftMargin">
      <number>0</number>
     </property>
@@ -1323,8 +1323,62 @@ QToolButton:checked, QToolButton:hover:pressed {
         <property name="bottomMargin">
          <number>0</number>
         </property>
-        <item row="0" column="0">
-         <widget class="GraphicsLayoutWidget" name="plotWidget"/>
+        <item row="1" column="0">
+         <widget class="QStackedWidget" name="resultStackedWidget">
+          <widget class="QWidget" name="noResultPage">
+           <layout class="QGridLayout" name="gridLayout_7">
+            <item row="0" column="1">
+             <widget class="QLabel" name="noVariablesSelectedLabel">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>no variables to plot selected</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <spacer name="horizontalSpacer_5">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="0" column="2">
+             <spacer name="horizontalSpacer_7">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="resultViewPage">
+           <layout class="QGridLayout" name="gridLayout_8">
+            <item row="0" column="0">
+             <widget class="QWebEngineView" name="resultWebEngineView">
+              <property name="url">
+               <url>
+                <string>about:blank</string>
+               </url>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -2086,11 +2140,6 @@ QToolButton::menu-button {
    <extends>QWidget</extends>
    <header location="global">QtWebEngineWidgets/QWebEngineView</header>
    <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>GraphicsLayoutWidget</class>
-   <extends>QGraphicsView</extends>
-   <header>pyqtgraph</header>
   </customwidget>
  </customwidgets>
  <resources>

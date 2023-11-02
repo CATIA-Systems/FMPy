@@ -309,7 +309,7 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None, marke
             for index in np.ndindex(y.shape[1:]):
                 trajectories.append((name, index))
 
-    fig = make_subplots(rows=len(trajectories), cols=1, shared_xaxes=True)
+    fig = make_subplots(rows=len(trajectories), cols=1, shared_xaxes=True, vertical_spacing=0.05)
 
     for i, (name, index) in enumerate(trajectories):
 
@@ -349,7 +349,7 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None, marke
         for t_event in time[np.argwhere(np.diff(time) == 0).flatten()]:
             fig.add_vline(x=t_event, line={'color': '#fbe424', 'width': 1})
 
-    fig['layout']['height'] = 160 * len(trajectories) + 30 * max(0, 5 - len(trajectories))
+    # fig['layout']['height'] = 160 * len(trajectories) + 30 * max(0, 5 - len(trajectories))
     fig['layout'][f'xaxis{len(trajectories)}'].update(title=f'time [{time_unit}]')
 
     axes_attrs = dict(showgrid=True, gridwidth=1, ticklen=0, gridcolor='LightGrey', linecolor='black', showline=True,
@@ -357,7 +357,7 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None, marke
     fig.update_xaxes(range=(time[0], time[-1]), **axes_attrs)
     fig.update_yaxes(**axes_attrs)
 
-    fig.update_layout(showlegend=False, margin=dict(t=30, b=0, r=30), plot_bgcolor='rgba(0,0,0,0)')
+    fig.update_layout(showlegend=False, margin=dict(t=30, r=10, b=0, l=0), plot_bgcolor='rgba(0,0,0,0)')
 
     return fig
 

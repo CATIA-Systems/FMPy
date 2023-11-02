@@ -333,8 +333,8 @@ class MainWindow(QMainWindow):
         self.ui.actionShowResults.triggered.connect(lambda: self.setCurrentPage(self.ui.resultPage))
         self.fmiTypeComboBox.currentTextChanged.connect(self.updateSimulationSettings)
         self.ui.solverComboBox.currentTextChanged.connect(self.updateSimulationSettings)
-        self.variableSelected.connect(self.updatePlotLayout)
-        self.variableDeselected.connect(self.updatePlotLayout)
+        self.variableSelected.connect(self.updatePlotData)
+        self.variableDeselected.connect(self.updatePlotData)
         self.tableModel.variableSelected.connect(self.selectVariable)
         self.tableModel.variableDeselected.connect(self.deselectVariable)
         self.treeModel.variableSelected.connect(self.selectVariable)
@@ -802,9 +802,9 @@ class MainWindow(QMainWindow):
         self.setCurrentPage(self.ui.resultPage)
 
         self.simulationThread.start()
-        self.plotUpdateTimer.start(100)
+        self.plotUpdateTimer.start(3000)
 
-        self.updatePlotLayout()
+        self.updatePlotData()
 
     def simulationFinished(self):
 
@@ -818,7 +818,7 @@ class MainWindow(QMainWindow):
         self.ui.actionShowResults.setEnabled(True)
         self.ui.actionShowSettings.setEnabled(True)
         self.setCurrentPage(self.ui.resultPage)
-        self.updatePlotLayout()
+        self.updatePlotData()
 
         if self.result is None:
             self.setCurrentPage(self.ui.logPage)
@@ -843,63 +843,24 @@ class MainWindow(QMainWindow):
         if self.result is None:
             return  # no results available yet
 
-        time = self.result['time']
+        import plotly
+        from ..util import create_plotly_figure
 
-        for variable, curve in self.curves:
+        filename = os.path.abspath(os.path.join(os.path.dirname(__file__), "plot.html"))
 
-            if variable.name not in self.result.dtype.names:
-                continue
-
-            y = self.result[variable.name]
-
-            if variable.type == 'Real':
-                curve.setData(x=time, y=y)
-            else:
-                curve.setData(x=np.repeat(time, 2)[1:], y=np.repeat(y, 2)[:-1])
-
-    def updatePlotLayout(self):
-
-        self.ui.plotWidget.clear()
-
-        self.curves[:] = []
-
-        if self.simulationThread is not None:
-            stop_time = self.simulationThread.stopTime
-        elif self.result is not None:
-            stop_time = self.result['time'][-1]
+        if len(self.selectedVariables) == 0:
+            self.ui.resultStackedWidget.setCurrentWidget(self.ui.noResultPage)
         else:
-            stop_time = 1.0
+            self.ui.resultStackedWidget.setCurrentWidget(self.ui.resultViewPage)
 
-        pen = (0, 0, 255)
+            names = [variable.name for variable in self.selectedVariables]
+            fig = create_plotly_figure(self.result, names=names)
 
-        for variable in self.selectedVariables:
+            fig.update_layout(font=dict(size=10))
 
-            self.ui.plotWidget.nextRow()
-            plot = self.ui.plotWidget.addPlot()
+            plotly.offline.plot(fig, filename=filename, auto_open=False)
 
-            if variable.type == 'Real':
-                curve = plot.plot(pen=pen)
-            else:
-                if variable.type == 'Boolean':
-                    plot.setYRange(0, 1, padding=0.2)
-                    plot.getAxis('left').setTicks([[(0, 'false'), (1, 'true')], []])
-                    curve = plot.plot(pen=pen, fillLevel=0, fillBrush=(0, 0, 255, 50), antialias=False)
-                else:
-                    curve = plot.plot(pen=pen, antialias=False)
-
-            plot.setXRange(0, stop_time, padding=0.05)
-
-            plot.setLabel('left', variable.name)
-            plot.showGrid(x=True, y=True, alpha=0.25)
-
-            # hide the auto-scale button and disable context menu and mouse interaction
-            plot.hideButtons()
-            plot.setMouseEnabled(False, False)
-            plot.setMenuEnabled(False)
-
-            self.curves.append((variable, curve))
-
-        self.updatePlotData()
+            self.ui.resultWebEngineView.load(QUrl.fromLocalFile(filename))
 
     def showColumn(self, name, show):
         if name in self.showColumnActions:
@@ -1119,7 +1080,7 @@ class MainWindow(QMainWindow):
     def clearPlots(self):
         """ Clear all plots """
         self.selectedVariables.clear()
-        self.updatePlotLayout()
+        self.updatePlotData()
 
     def createGraphics(self):
         """ Create the graphical representation of the FMU's inputs and outputs """

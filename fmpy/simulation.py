@@ -12,7 +12,7 @@ from . import fmi3
 from . import extract
 from .util import auto_interval, add_remoting
 import numpy as np
-from time import time as current_time
+from time import time as current_time, sleep
 from typing import Union, Any, Dict, Sequence, Callable
 
 # absolute tolerance for equality when comparing two floats
@@ -1230,6 +1230,8 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
 
     # simulation loop
     while True:
+
+        # sleep(0.01)
 
         recorder.sample(time, force=True)
 

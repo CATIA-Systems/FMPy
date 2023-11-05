@@ -1,11 +1,12 @@
 FMPy Remoting Binaries License
 ==============================
 
-The 32-bit remoting binaries (binaries/win64/<model_name>.dll and
-binaries/win64/server.exe) are part of FMPy (https://github.com/CATIA-Systems/FMPy)
+The remoting binaries (binaries/.../<model_name> and
+binaries/.../server_sm.exe) are part of FMPy (https://github.com/CATIA-Systems/FMPy)
 and released under the 2-Clause BSD license:
 
-Copyright (c) 2017-2020 Dassault Systemes. All rights reserved.
+FMPy  is Copyright (c) 2017-2020 Dassault Systemes. All rights reserved.
+Remoting code is Copyright (c) 2023 Renault SAS. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:

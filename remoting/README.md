@@ -8,8 +8,8 @@
 
 ## Purpose
 
-Run model contained inside FMU, which is a shared library, into a separate process.
-
+Run model contained inside FMU (which is a shared library) into a separate process.
+The calling process may be in different bitness than the model (shared library).
 
 ## Implementation
 
@@ -90,7 +90,7 @@ provided that the following conditions are met:
    and the following disclaimer in the documentation and/or other materials provided with 
    the distribution.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
 FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR 
 CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 

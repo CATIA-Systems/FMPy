@@ -47,3 +47,4 @@ _build
 # MacOS finder cache file
 .DS_Store
 fmpy/.DS_Store
+remoting/.vscode

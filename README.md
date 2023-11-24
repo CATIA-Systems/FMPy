@@ -86,6 +86,12 @@ Simulate the FMU and plot the results
 fmpy simulate Rectifier.fmu --show-plot
 ```
 
+Get the version
+
+```
+fmpy --version
+```
+
 Get more information about the available options
 
 ```

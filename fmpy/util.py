@@ -864,7 +864,7 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
 
         definitions = ' '.join(f' -D{d}' for d in preprocessor_definitions)
 
-        if target_platform in ['darwin64', 'x86_64-darwin']:
+        if target_platform in ['darwin64', 'x86_64-darwin', 'aarch64-darwin']:
 
             target = f'{model_identifier}.dylib'
 

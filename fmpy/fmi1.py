@@ -147,6 +147,7 @@ class _FMU(object):
 
         if libraryPath is None:
             library_dir = os.path.join(unzipDirectory, 'binaries', platform)
+            library_dir = os.path.abspath(library_dir)
             libraryPath = str(os.path.join(library_dir, self.modelIdentifier + sharedLibraryExtension))
         else:
             library_dir = os.path.dirname(libraryPath)

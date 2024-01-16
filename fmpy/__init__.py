@@ -2,6 +2,7 @@
 
 import sys
 import os
+from platform import machine
 from ctypes import *
 from typing import Union, IO, List
 
@@ -53,12 +54,19 @@ realloc.restype = c_void_p
 free.argtypes = [c_void_p]
 free.restype = None
 
-if sys.maxsize > 2**32:
+if machine().lower() in {'aarch64', 'arm64'}:
     platform += '64'
-    architecture = 'x86_64'
+    architecture = 'aarch64'
+elif machine().lower() in {'amd64', 'i386', 'i686', 'x86', 'x86_64', 'x86pc'}:
+    if sys.maxsize > 2 ** 32:
+        platform += '64'
+        architecture = 'x86_64'
+    else:
+        platform += '32'
+        architecture = 'x86'
 else:
-    platform += '32'
-    architecture = 'x86'
+    raise Exception(f"Unsupported architecture: {machine()}")
+
 
 platform_tuple = architecture + '-' + system
 
@@ -97,7 +105,7 @@ def supported_platforms(filename: Union[str, IO]):
     # check for *.dylib on Mac
     for name in names:
         head, tail = os.path.split(name)
-        if head in {'binaries/darwin64', 'binaries/x86_64-darwin'} and tail.endswith('.dylib'):
+        if head in {'binaries/darwin64', 'binaries/aarch64-darwin', 'binaries/x86_64-darwin'} and tail.endswith('.dylib'):
             platforms.append('darwin64')
             break
 

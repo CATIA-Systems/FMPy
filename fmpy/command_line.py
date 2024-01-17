@@ -41,6 +41,8 @@ Python version:     {sys.version}
 
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=description)
 
+    parser.add_argument('--version', action='version', version=f'FMPy version {fmpy.__version__}')
+
     parser.add_argument('command', choices=['info', 'validate', 'simulate', 'compile', 'remove-source-code',
                                             'add-cswrapper','add-remoting', 'create-cmake-project',
                                             'create-jupyter-notebook'],

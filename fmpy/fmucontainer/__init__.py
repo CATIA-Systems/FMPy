@@ -126,8 +126,7 @@ def create_fmu_container(configuration, output_filename):
     import fmpy
     from fmpy import read_model_description, extract
     import msgpack
-    from datetime import datetime
-    import pytz
+    from datetime import datetime, timezone
     from pathlib import Path
 
     if configuration.fmiVersion not in ['2.0', '3.0']:
@@ -297,7 +296,7 @@ def create_fmu_container(configuration, output_filename):
         system=configuration,
         modelName=model_name,
         description=configuration.description,
-        generationDateAndTime=datetime.now(pytz.utc).isoformat(),
+        generationDateAndTime=datetime.now(timezone.utc).isoformat(),
         fmpyVersion=fmpy.__version__
     )
 

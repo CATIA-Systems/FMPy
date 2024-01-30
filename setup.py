@@ -195,8 +195,7 @@ install_requires = [
     'lxml',
     'msgpack',
     'numpy',
-    'pywin32;platform_system=="Windows"',
-    'pytz'
+    'pywin32;platform_system=="Windows"'
 ]
 
 extras_require = {

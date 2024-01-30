@@ -534,13 +534,14 @@ class MainWindow(QMainWindow):
         self.ui.dockWidget.show()
 
         # files page
-        model = QFileSystemModel()
-        model.setRootPath(self.unzipdir)
-        self.ui.filesTreeView.setModel(model)
-        root_index = model.index(self.unzipdir)
+        self.fileSystemModel = QFileSystemModel()
+        self.fileSystemModel.setRootPath(self.unzipdir)
+        self.ui.filesTreeView.setModel(self.fileSystemModel)
+        root_index = self.fileSystemModel.index(self.unzipdir)
         self.ui.filesTreeView.setRootIndex(root_index)
         self.ui.filesTreeView.expandRecursively(root_index, 10)
-        model.directoryLoaded.connect(self.expand)
+        self.ui.filesTreeView.doubleClicked.connect(self.openFileInDefaultApplication)
+        self.fileSystemModel.directoryLoaded.connect(self.expand)
 
         # documentation page
         doc_file = os.path.join(self.unzipdir, 'documentation', '_main.html' if md.fmiVersion == '1.0' else 'index.html')
@@ -604,6 +605,10 @@ class MainWindow(QMainWindow):
 
         if filename:
             self.load(filename)
+
+    def openFileInDefaultApplication(self, index):
+        path = self.fileSystemModel.filePath(index)
+        QDesktopServices.openUrl(QUrl(path))
 
     def setCurrentPage(self, widget):
         """ Set the current page and the actions """

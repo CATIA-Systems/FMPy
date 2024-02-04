@@ -7,6 +7,7 @@ from ctypes import *
 from typing import Union, IO, List
 from tempfile import mkdtemp
 from stat import S_IXUSR
+import zipfile
 
 __version__ = '0.3.19'
 

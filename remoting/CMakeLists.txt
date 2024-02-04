@@ -10,40 +10,10 @@
 cmake_minimum_required(VERSION 3.18)
 project (remoting)
 set(VERSION "1.0")
-
 set (CMAKE_C_STANDARD 99)
-if (UNIX AND NOT APPLE)
-    set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-    set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
-    find_package(Threads REQUIRED)
-endif()
 
 option(BUILD_32 "Build for 32bits target" OFF)
 option(BUILD_TESTER "Build tester executbale" OFF)
-
-
-if (MSVC)
-  # link statically against the the Visual C runtime
-  set(variables
-    CMAKE_C_FLAGS_DEBUG
-    CMAKE_C_FLAGS_MINSIZEREL
-    CMAKE_C_FLAGS_RELEASE
-    CMAKE_C_FLAGS_RELWITHDEBINFO
-    CMAKE_CXX_FLAGS_DEBUG
-    CMAKE_CXX_FLAGS_MINSIZEREL
-    CMAKE_CXX_FLAGS_RELEASE
-    CMAKE_CXX_FLAGS_RELWITHDEBINFO
-  )
-
-  foreach(variable ${variables})
-    if(${variable} MATCHES "/MD")
-      string(REGEX REPLACE "/MD" "/MT" ${variable} "${${variable}}")
-    endif()
-  endforeach()
-
-  add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
-endif ()
-
 
 if (WIN32)
     if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
@@ -77,9 +47,36 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
 
 message("FMI_PLATFORM: ${FMI_PLATFORM}")
 
+# link statically against the runtime libraries
 if (MSVC)
-  add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+    set(variables
+       CMAKE_C_FLAGS_DEBUG
+       CMAKE_C_FLAGS_MINSIZEREL
+       CMAKE_C_FLAGS_RELEASE
+       CMAKE_C_FLAGS_RELWITHDEBINFO
+       CMAKE_CXX_FLAGS_DEBUG
+       CMAKE_CXX_FLAGS_MINSIZEREL
+       CMAKE_CXX_FLAGS_RELEASE
+       CMAKE_CXX_FLAGS_RELWITHDEBINFO
+    )
+
+    foreach(variable ${variables})
+        if(${variable} MATCHES "/MD")
+            string(REGEX REPLACE "/MD" "/MT" ${variable} "${${variable}}")
+        endif()
+    endforeach()
+
+    message("CMAKE_CXX_FLAGS_RELEASE = ${CMAKE_CXX_FLAGS_RELEASE}")
+    message("CMAKE_CXX_FLAGS_DEBUG   = ${CMAKE_CXX_FLAGS_DEBUG}")
+    
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 endif ()
+
+if (UNIX AND NOT APPLE)
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+    set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+    find_package(Threads REQUIRED)
+endif()
 
 ################################################################################
 #                 S H A R E D   M E M O R Y   R E M O T I N G                  #

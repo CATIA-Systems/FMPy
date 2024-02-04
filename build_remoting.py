@@ -81,7 +81,7 @@ if os.name == 'nt':
             'cmake',
             '-G', 'Visual Studio 17 2022',
             '-A', architecture,
-            '-D', 'RPCLIB=' + os.path.join(rpclib_dir, bitness, 'install'),
+            '-D', 'RPCLIB=' + os.path.join(rpclib_dir, directory, 'install'),
             '-B', 'remoting/' + directory,
             'remoting'
         ])

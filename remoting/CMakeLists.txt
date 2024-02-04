@@ -204,6 +204,7 @@ if (WIN32)
     target_link_libraries(server_tcp
       "${RPCLIB}/lib/rpc.lib"
     )
+    target_compile_options(server_tcp PRIVATE "/MT")
 else ()
     target_link_libraries(server_tcp
       "${RPCLIB}/lib/librpc.a"
@@ -245,6 +246,7 @@ if (WIN32)
     target_link_libraries(client_tcp
       "${RPCLIB}/lib/rpc.lib"
     )
+    target_compile_options(client_tcp PRIVATE "/MT")
 else ()
     target_link_libraries(client_tcp
       "${RPCLIB}/lib/librpc.a"

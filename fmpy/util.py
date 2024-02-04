@@ -975,6 +975,8 @@ def remove_source_code(filename):
 def add_remoting(filename, host_platform, remote_platform):
     """
         win32 on win64 (SM)
+        linux64 on win64 (WSL + TCP)
+        win64 on linux64 (wine + TCP)
         linux32 on linux64 (SM)
     """
 
@@ -988,6 +990,8 @@ def add_remoting(filename, host_platform, remote_platform):
 
     methods = {
         ('win64', 'win32'): 'sm',
+        ('win64', 'linux64'): 'tcp',
+        ('linux64', 'win64'): 'tcp',
         ('linux64', 'linux32'): 'sm',
     }
 

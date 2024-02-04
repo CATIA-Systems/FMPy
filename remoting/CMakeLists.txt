@@ -12,6 +12,12 @@ project (remoting)
 set(VERSION "1.0")
 
 set (CMAKE_C_STANDARD 99)
+if (UNIX AND NOT APPLE)
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+    set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+    find_package(Threads REQUIRED)
+endif()
+
 option(BUILD_32 "Build for 32bits target" OFF)
 option(BUILD_TESTER "Build tester executbale" OFF)
 
@@ -51,8 +57,12 @@ if (MSVC)
   add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 endif ()
 
+################################################################################
+#                 S H A R E D   M E M O R Y   R E M O T I N G                  #
+################################################################################
+
 #
-# shared memory server
+# SERVER
 #
 add_executable(server_sm
     communication.c communication.h
@@ -81,7 +91,7 @@ add_custom_command(TARGET server_sm POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
 
 
 #
-# shared memory client_sm #
+# CLIENT
 #
 add_library(client_sm SHARED
 	client.c client.h
@@ -129,7 +139,6 @@ if (BUILD_TESTER)
     add_executable(test_server
         ${CMAKE_CURRENT_SOURCE_DIR}/test_server.c
     )
-    #target_link_libraries(test_server client_sm)
     target_include_directories(test_server PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code)
 
@@ -138,3 +147,91 @@ if (BUILD_TESTER)
     )
 
 endif ()
+
+
+################################################################################
+#                         T C P   R E M O T I N G                              #
+################################################################################
+
+set(RPCLIB "" CACHE STRING "RPCLIB installation directory")
+
+#
+# SERVER
+# 
+add_executable(server_tcp
+    ../fmpy/c-code/fmi2Functions.h
+    ../fmpy/c-code/fmi2FunctionTypes.h
+    ../fmpy/c-code/fmi2TypesPlatform.h
+    ../thirdparty/Reference-FMUs/include/FMI.h
+    ../thirdparty/Reference-FMUs/include/FMI2.h
+    ../thirdparty/Reference-FMUs/src/FMI.c
+    ../thirdparty/Reference-FMUs/src/FMI2.c
+    remoting_tcp.h
+    server_tcp.cpp
+)
+
+set_property(TARGET server_tcp PROPERTY CXX_STANDARD 11)
+
+target_include_directories(server_tcp PUBLIC
+    ../thirdparty/Reference-FMUs/include
+    ../fmpy/c-code
+    ../src/fmucontainer
+    "${RPCLIB}/include"
+)
+
+if (WIN32)
+    target_link_libraries(server_tcp
+      "${RPCLIB}/lib/rpc.lib"
+    )
+else ()
+    target_link_libraries(server_tcp
+      "${RPCLIB}/lib/librpc.a"
+      ${CMAKE_DL_LIBS}
+      Threads::Threads
+    )
+endif ()
+
+add_custom_command(TARGET server_tcp POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+  "$<TARGET_FILE:server_tcp>"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/remoting/${FMI_PLATFORM}"
+)
+
+#
+# CLIENT
+#
+add_library(client_tcp SHARED
+  ../fmpy/c-code/fmi2Functions.h
+  ../fmpy/c-code/fmi2FunctionTypes.h
+  ../fmpy/c-code/fmi2TypesPlatform.h
+  remoting_tcp.h
+  client_tcp.cpp
+)
+
+set_property(TARGET client_tcp PROPERTY CXX_STANDARD 11)
+set_target_properties(client_tcp PROPERTIES LINK_SEARCH_START_STATIC 1)
+set_target_properties(client_tcp PROPERTIES LINK_SEARCH_END_STATIC 1)
+
+set_target_properties(client_tcp PROPERTIES PREFIX "")
+
+target_include_directories(client_tcp PRIVATE
+  ..
+  ../fmpy/c-code
+  ../src/fmucontainer
+  "${RPCLIB}/include"
+)
+
+if (WIN32)
+    target_link_libraries(client_tcp
+      "${RPCLIB}/lib/rpc.lib"
+    )
+else ()
+    target_link_libraries(client_tcp
+      "${RPCLIB}/lib/librpc.a"
+      Threads::Threads
+    )
+endif ()
+
+add_custom_command(TARGET client_tcp POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+  "$<TARGET_FILE:client_tcp>"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/remoting/${FMI_PLATFORM}"
+)

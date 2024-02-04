@@ -11,8 +11,6 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 # RPC-LIB
-basedir = os.path.abspath(os.path.dirname(__file__))
-
 rpclib_dir = os.path.join(basedir, 'rpclib-2.3.0').replace('\\', '/')
 
 if not os.path.isdir(rpclib_dir):

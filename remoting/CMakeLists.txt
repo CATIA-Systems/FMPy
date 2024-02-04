@@ -21,6 +21,30 @@ endif()
 option(BUILD_32 "Build for 32bits target" OFF)
 option(BUILD_TESTER "Build tester executbale" OFF)
 
+
+if (MSVC)
+  # link statically against the the Visual C runtime
+  set(variables
+    CMAKE_C_FLAGS_DEBUG
+    CMAKE_C_FLAGS_MINSIZEREL
+    CMAKE_C_FLAGS_RELEASE
+    CMAKE_C_FLAGS_RELWITHDEBINFO
+    CMAKE_CXX_FLAGS_DEBUG
+    CMAKE_CXX_FLAGS_MINSIZEREL
+    CMAKE_CXX_FLAGS_RELEASE
+    CMAKE_CXX_FLAGS_RELWITHDEBINFO
+  )
+
+  foreach(variable ${variables})
+    if(${variable} MATCHES "/MD")
+      string(REGEX REPLACE "/MD" "/MT" ${variable} "${${variable}}")
+    endif()
+  endforeach()
+
+  add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+endif ()
+
+
 if (WIN32)
     if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
         set(FMI_PLATFORM win64)

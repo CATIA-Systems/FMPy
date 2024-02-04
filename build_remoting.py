@@ -57,12 +57,12 @@ if os.name == 'nt':
         # clean up
         shutil.rmtree(os.path.join(basedir, 'remoting', directory), ignore_errors=True)
 
-        print(f"Building rpclib for {bitness}...")
+        print(f"Building rpclib for {architecture}...")
         check_call(args=[
             'cmake',
-            '-B', rpclib_dir + '/' + bitness,
+            '-B', rpclib_dir + '/' + directory,
             '-D', 'RPCLIB_MSVC_STATIC_RUNTIME=ON',
-            '-D', 'CMAKE_INSTALL_PREFIX=' + os.path.join(rpclib_dir, bitness, 'install'),
+            '-D', 'CMAKE_INSTALL_PREFIX=' + os.path.join(rpclib_dir, directory, 'install'),
             '-G', 'Visual Studio 17 2022',
             '-A', architecture,
             rpclib_dir
@@ -70,7 +70,7 @@ if os.name == 'nt':
 
         check_call(args=[
             'cmake',
-            '--build', os.path.join(rpclib_dir, bitness),
+            '--build', os.path.join(rpclib_dir, directory),
             '--target', 'install',
             '--config', config
         ])

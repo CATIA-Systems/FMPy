@@ -992,7 +992,7 @@ def add_remoting(filename, host_platform, remote_platform):
         ('win64', 'win32'): 'sm',
         ('win64', 'linux64'): 'tcp',
         ('linux64', 'win64'): 'tcp',
-        ('linux64', 'linux32'): 'sm',
+        #('linux64', 'linux32'): 'sm',
     }
 
     if (host_platform, remote_platform) not in methods:

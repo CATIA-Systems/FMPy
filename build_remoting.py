@@ -90,9 +90,13 @@ else:
     import platform
 
     if platform.system() == 'Linux':
-        compilation = [('linux64', 'OFF'), ('linux32', 'ON')]
+        # To enable Linux32, use the following line and adjust setup.py
+        # compilation = [('linux64', 'OFF'), ('linux32', 'ON')]
+        compilation = [('linux64', 'OFF')]
     else:
-        compilation = [('darwin64', 'OFF')]
+        # To enable Darwin64, use the following line and adjust setup.py
+        #compilation = [('darwin64', 'OFF')]
+        compilation = []
 
     for directory, build_32 in compilation:
         # clean up

@@ -1,13 +1,5 @@
-/*    ___                                               __   __
- *  .'  _|.--------.--.--.  .----.-----.--------.-----.|  |_|__|.-----.-----.
- *  |   _||        |  |  |  |   _|  -__|        |  _  ||   _|  ||     |  _  |
- *  |__|  |__|__|__|_____|  |__| |_____|__|__|__|_____||____|__||__|__|___  |
- *  Copyright 2023 Renault SAS                                        |_____|
- *  The remoting code is written by Nicolas.LAURENT@Renault.com.
- *  This code is released under the 2-Clause BSD license.
- */
-
 #include <string.h>
+
 #if WIN32
 #   pragma warning(disable: 4996) /* Stop complaining about strdup() */
 #endif
@@ -45,6 +37,7 @@ void remote_decode_strings(const char* src, const char* dst[], size_t ns) {
 const char *remote_function_name(remote_function_t function) {
 
 #define CASE(x) case REMOTE_ ## x: return #x
+
     switch (function) {
         CASE(fmi2GetTypesPlatform);
         CASE(fmi2GetVersion);
@@ -94,4 +87,6 @@ const char *remote_function_name(remote_function_t function) {
         CASE(fmi2GetStringStatus);
 	}
 	return "UNKNOWN";
+
+#undef CASE
 }

@@ -1,12 +1,3 @@
-/*    ___                                               __   __
- *  .'  _|.--------.--.--.  .----.-----.--------.-----.|  |_|__|.-----.-----.
- *  |   _||        |  |  |  |   _|  -__|        |  _  ||   _|  ||     |  _  |
- *  |__|  |__|__|__|_____|  |__| |_____|__|__|__|_____||____|__||__|__|___  |
- *  Copyright 2023 Renault SAS                                        |_____|
- *  The remoting code is written by Nicolas.LAURENT@Renault.com.
- *  This code is released under the 2-Clause BSD license.
- */
-
 #ifdef WIN32
 #   include <windows.h>
 #else
@@ -22,7 +13,7 @@
 #   include <sys/wait.h>
 #endif
 
-#include <fmi2Functions.h> /* for fmi2Instanciate symbol */
+#include <fmi2Functions.h> /* for fmi2Instantiate symbol */
 
 #include "communication.h"
 #include "process.h"

@@ -7,6 +7,7 @@ from fmpy.util import download_file
 
 # build configuration
 config = 'Release'
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 rpclib_dir = os.path.join(basedir, 'rpclib-2.3.0').replace('\\', '/')
@@ -51,6 +52,7 @@ if os.name == 'nt':
         shutil.rmtree(os.path.join(basedir, 'remoting', bitness), ignore_errors=True)
 
         print(f"Building rpclib for {bitness}...")
+
         check_call(args=[
             'cmake',
             '-B', rpclib_dir + '/' + bitness,
@@ -72,6 +74,7 @@ if os.name == 'nt':
 
         check_call(args=[
             'cmake',
+            '-B', 'remoting/' + bitness,
             '-G', 'Visual Studio 17 2022',
             '-A', architecture,
             '-D', 'RPCLIB=' + os.path.join(rpclib_dir, bitness, 'install'),
@@ -111,8 +114,7 @@ else:
         '-B', 'remoting/' + 'linux64',
         '-G', 'Unix Makefiles',
         '-D', 'RPCLIB=' + os.path.join(rpclib_dir, 'linux64', 'install'),
-        '-DBUILD_32=linux64',
-        'remoting'
+        '-B', 'remoting/linux64', 'remoting'
     ])
 
     check_call(['cmake', '--build', 'remoting/linux64', '--config', config])

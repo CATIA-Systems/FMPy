@@ -38,8 +38,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
 
 message("FMI_PLATFORM: ${FMI_PLATFORM}")
 
-# link statically against the runtime libraries
 if (MSVC)
+    # link statically against the runtime libraries
     set(variables
        CMAKE_C_FLAGS_DEBUG
        CMAKE_C_FLAGS_MINSIZEREL

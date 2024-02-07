@@ -191,7 +191,7 @@ static int get_server_argv(client_t *client, char *argv[]) {
     argv[2] = malloc(COMMUNICATION_KEY_LEN);
     argv[3] = malloc(MAX_PATH*2);
 
-    snprintf(argv[0], MAX_PATH*2, "%s" CONFIG_DIR_SEP CONFIG_FMI_BIN "%d" CONFIG_DIR_SEP "server_sm" CONFIG_EXE_SUFFIXE,
+    snprintf(argv[0], MAX_PATH*2, "%s" CONFIG_DIR_SEP CONFIG_FMI_BIN "%d" CONFIG_DIR_SEP "server_sm" CONFIG_EXE_SUFFIX,
              path, get_server_bitness());    
     snprintf(argv[1], 16, "%lu", process_current_id());
     strcpy(argv[2], client->shared_key);

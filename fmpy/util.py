@@ -99,7 +99,7 @@ def write_csv(filename, result, columns=None):
     result = np.array(list(zip(*data)), dtype=np.dtype(cols))
 
     header = ','.join(map(lambda s: '"' + s + '"', result.dtype.names))
-    np.savetxt(filename, result, delimiter=',', header=header, comments='', fmt='%g')
+    np.savetxt(filename, result, delimiter=',', header=header, comments='', fmt='%.16g')
 
 
 def read_ref_opt_file(filename):

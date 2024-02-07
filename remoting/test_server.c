@@ -1,4 +1,3 @@
-
 #include <dlfcn.h>
 #include <fmi2Functions.h>
 #include <stdio.h>
@@ -22,13 +21,15 @@ fmi2String message, ...) {
 
 int main(int argc, char **argv) {
 
-    void *lib=dlopen(argv[1], RTLD_LAZY);
-    if (! lib) {
+    void *lib = dlopen(argv[1], RTLD_LAZY);
+
+    if (!lib) {
         printf("Cannot open %s: %s\n", argv[1], dlerror());
         return -1;
     }
 
     fmi2InstantiateTYPE *instantiate = dlsym(lib, "fmi2Instantiate");
+
     if (! instantiate) {
         printf("Cannot find fmi2Instantiate\n");
         return -2;

@@ -7,10 +7,9 @@ from fmpy.util import download_file
 
 # build configuration
 config = 'Release'
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-
-# RPC-LIB
 rpclib_dir = os.path.join(basedir, 'rpclib-2.3.0').replace('\\', '/')
 
 if not os.path.isdir(rpclib_dir):
@@ -52,7 +51,8 @@ if os.name == 'nt':
         # clean up
         shutil.rmtree(os.path.join(basedir, 'remoting', bitness), ignore_errors=True)
 
-        print(f"Building rpclib for {architecture}...")
+        print(f"Building rpclib for {bitness}...")
+
         check_call(args=[
             'cmake',
             '-B', rpclib_dir + '/' + bitness,
@@ -74,6 +74,7 @@ if os.name == 'nt':
 
         check_call(args=[
             'cmake',
+            '-B', 'remoting/' + bitness,
             '-G', 'Visual Studio 17 2022',
             '-A', architecture,
             '-D', 'RPCLIB=' + os.path.join(rpclib_dir, bitness, 'install'),
@@ -84,49 +85,36 @@ if os.name == 'nt':
         check_call(['cmake', '--build', 'remoting/' + bitness, '--config', config])
 
 else:
-    import platform
 
-    if platform.system() == 'Linux':
-        # To enable Linux32, use the following line and adjust setup.py
-        # compilation = [('linux64', 'OFF'), ('linux32', 'ON')]
-        compilation = [('linux64', 'OFF')]
-    else:
-        # To enable Darwin64, use the following line and adjust setup.py
-        #compilation = [('darwin64', 'OFF')]
-        compilation = []
+    # clean up
+    shutil.rmtree(os.path.join(basedir, 'remoting', 'linux64'), ignore_errors=True)
 
-    for bitness, build_32 in compilation:
-        # clean up
-        shutil.rmtree(os.path.join(basedir, 'remoting', bitness), ignore_errors=True)
+    print("Building rpclib...")
 
-        print("Building rpclib...")
+    check_call(args=[
+        'cmake',
+        '-B', os.path.join(rpclib_dir, 'linux64'),
+        '-D', 'CMAKE_INSTALL_PREFIX=' + os.path.join(rpclib_dir, 'linux64', 'install'),
+        '-D', 'CMAKE_POSITION_INDEPENDENT_CODE=ON',
+        '-G', 'Unix Makefiles',
+        rpclib_dir
+    ])
 
-        check_call(args=[
-            'cmake',
-            '-B', os.path.join(rpclib_dir, bitness),
-            '-D', 'CMAKE_INSTALL_PREFIX=' + os.path.join(rpclib_dir, bitness, 'install'),
-            '-D', 'CMAKE_POSITION_INDEPENDENT_CODE=ON',
-            '-G', 'Unix Makefiles',
-            rpclib_dir
-        ])
+    check_call(args=[
+        'cmake',
+        '--build', os.path.join(rpclib_dir, 'linux64'),
+        '--target', 'install',
+        '--config', config
+    ])
 
-        check_call(args=[
-            'cmake',
-            '--build', os.path.join(rpclib_dir, bitness),
-            '--target', 'install',
-            '--config', config
-        ])
+    print("Building remoting binaries...")
 
+    check_call(args=[
+        'cmake',
+        '-B', 'remoting/' + 'linux64',
+        '-G', 'Unix Makefiles',
+        '-D', 'RPCLIB=' + os.path.join(rpclib_dir, 'linux64', 'install'),
+        '-B', 'remoting/linux64', 'remoting'
+    ])
 
-        print("Building remoting binaries...")
-
-        check_call(args=[
-            'cmake',
-            '-G', 'Unix Makefiles',
-            '-B', f'remoting/{bitness}',
-            '-D', 'RPCLIB=' + os.path.join(rpclib_dir, bitness, 'install'),
-            f'-DBUILD_32={build_32}',
-            'remoting'
-        ])
-
-        check_call(['cmake', '--build', f'remoting/{bitness}', '--config', config])
+    check_call(['cmake', '--build', 'remoting/linux64', '--config', config])

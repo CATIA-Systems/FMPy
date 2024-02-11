@@ -10,11 +10,6 @@ jobs:
     vmImage: 'ubuntu-20.04'
   steps:
 
-  - bash: |
-      sudo apt-get update
-      sudo apt-get install libc6-dev:i386
-      sudo apt install gcc-multilib
-
   - checkout: self
     submodules: true
 

@@ -1,4 +1,3 @@
-
 #include <dlfcn.h>
 #include <fmi2Functions.h>
 #include <stdio.h>

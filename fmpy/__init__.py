@@ -5,9 +5,6 @@ import os
 from platform import machine
 from ctypes import *
 from typing import Union, IO, List
-from tempfile import mkdtemp
-from stat import S_IXUSR
-import zipfile
 
 __version__ = '0.3.19'
 
@@ -178,21 +175,6 @@ def fmi_info(filename):
     return fmi_version, fmi_types
 
 
-def _extract_all_with_executable_permission(zf: zipfile.ZipFile, target_dir, include=None):
-    ZIP_UNIX_SYSTEM = 3
-
-    for info in zf.infolist():
-        if include and not include(info.filename):
-            continue
-
-        extracted_path = zf.extract(info, target_dir)
-
-        if info.create_system == ZIP_UNIX_SYSTEM and os.path.isfile(extracted_path):
-            unix_attributes = info.external_attr >> 16
-            if unix_attributes & S_IXUSR:
-                os.chmod(extracted_path, os.stat(extracted_path).st_mode | S_IXUSR)
-
-
 def extract(filename, unzipdir=None, include=None):
     """ Extract a ZIP archive to a temporary directory
 
@@ -203,6 +185,9 @@ def extract(filename, unzipdir=None, include=None):
     Returns:
         unzipdir    path to the directory that contains the extracted files
     """
+
+    from tempfile import mkdtemp
+    import zipfile
 
     if unzipdir is None:
         unzipdir = mkdtemp()
@@ -225,11 +210,10 @@ def extract(filename, unzipdir=None, include=None):
             if ':' in name or name.startswith('/'):
                 raise Exception("Illegal path %s found in %s. The path must not contain a drive or device letter, or a leading slash." % (name, filename))
 
-        #members = filter(include, zf.namelist()) if include else None
-        # extract the archive
-        #zf.extractall(unzipdir, members=members)
+        members = filter(include, zf.namelist()) if include else None
 
-        _extract_all_with_executable_permission(zf, unzipdir, include)
+        # extract the archive
+        zf.extractall(unzipdir, members=members)
 
     return unzipdir
 

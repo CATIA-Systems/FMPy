@@ -6,7 +6,7 @@ from fmpy.util import download_file
 
 
 # build configuration
-config = 'Debug'
+config = 'Release'
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 

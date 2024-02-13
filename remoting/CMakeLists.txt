@@ -133,27 +133,25 @@ add_custom_command(TARGET client_tcp POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
   "${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/remoting/${FMI_PLATFORM}"
 )
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+
+
 if (WIN32)
 
     # shared memory server
     add_executable(server_sm
-        ../fmpy/c-code/fmi2Functions.h
-        ../fmpy/c-code/fmi2FunctionTypes.h
-        ../fmpy/c-code/fmi2TypesPlatform.h
-        ../thirdparty/Reference-FMUs/include/FMI.h
-        ../thirdparty/Reference-FMUs/include/FMI2.h
-        ../thirdparty/Reference-FMUs/src/FMI.c
-        ../thirdparty/Reference-FMUs/src/FMI2.c
-        remoting_sm.h
-        server_sm.cpp
+        communication.c communication.h
+        process.c process.h 
+        remote.c remote.h
+        server.c server.h
+        ${CMAKE_CURRENT_BINARY_DIR}/config.h
     )
 
-    set_property(TARGET server_sm PROPERTY CXX_STANDARD 11)
+    set (CMAKE_C_STANDARD 99)
 
     target_include_directories(server_sm PUBLIC
-        ../thirdparty/Reference-FMUs/include
-        ../fmpy/c-code
-        ../src/fmucontainer
+        ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code
+        ${CMAKE_CURRENT_BINARY_DIR}
     )
 
     add_custom_command(TARGET server_sm POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
@@ -163,16 +161,16 @@ if (WIN32)
 
     # shared memory client_sm
     add_library(client_sm SHARED
-        ../fmpy/c-code/fmi2Functions.h
-        ../fmpy/c-code/fmi2FunctionTypes.h
-        ../fmpy/c-code/fmi2TypesPlatform.h
-        remoting_sm.h
-        client_sm.cpp
+        client.c client.h
+        communication.c communication.h
+        process.c process.h 
+        remote.c remote.h
+        ${CMAKE_CURRENT_BINARY_DIR}/config.h
     )
 
     target_include_directories(client_sm PRIVATE
-        ..
-        ../fmpy/c-code
+        ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code
+        ${CMAKE_CURRENT_BINARY_DIR}
     )
 
     add_custom_command(TARGET client_sm POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
@@ -197,3 +195,33 @@ target_include_directories(client_test PUBLIC
 target_link_libraries(client_test
   ${CMAKE_DL_LIBS}
 )
+
+
+
+if (BUILD_TESTER)
+    add_executable(test_sizeof
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_sizeof.c
+        remote.h
+    )
+
+    target_include_directories(test_sizeof PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code
+    )
+
+    add_custom_command(OUTPUT test_sizeof.c
+        COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/gen_sizeof.py
+        DEPENDS gen_sizeof.py
+    )
+
+
+    add_executable(test_server
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_server.c
+    )
+    target_include_directories(test_server PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code)
+
+    target_include_directories(test_sizeof PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/c-code
+    )
+
+endif ()

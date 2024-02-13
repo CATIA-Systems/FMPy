@@ -1,0 +1,25 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#   define REMOTING_VERSION "${VERSION}"
+
+#cmakedefine HAVE_SEMTIMEDOP
+
+
+#if defined WIN32
+#   define CONFIG_DIR_SEP       "\\"
+#   define CONFIG_EXE_SUFFIX    ".exe"
+#   define CONFIG_FMI_BIN       "win"
+#elif defined __APPLE__
+#   define CONFIG_DIR_SEP       "/"
+#   define CONFIG_EXE_SUFFIX    ""
+#   define CONFIG_FMI_BIN       "darwin"
+#elif defined __linux__
+#   define CONFIG_DIR_SEP       "/"
+#   define CONFIG_EXE_SUFFIX    ""
+#   define CONFIG_FMI_BIN       "linux"
+#else
+#   error "Architecture not supported"
+#endif
+
+#endif

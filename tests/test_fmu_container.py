@@ -1,5 +1,6 @@
 import pytest
 from itertools import product
+from os import PathLike
 from fmpy import simulate_fmu, plot_result
 from fmpy.fmucontainer import create_fmu_container, Variable, Connection, Configuration, Component, DefaultExperiment
 from fmpy.util import compile_platform_binary
@@ -8,7 +9,7 @@ from fmpy.model_description import Unit, BaseUnit, SimpleType, DisplayUnit, Item
 
 
 @pytest.mark.parametrize('fmi_version, parallelDoStep', product([2, 3], [False, True]))
-def test_create_fmu_container(reference_fmus_dist_dir, fmi_version, parallelDoStep):
+def test_create_fmu_container(reference_fmus_dist_dir: PathLike, fmi_version: int, parallelDoStep: bool):
 
     if fmi_version == 2:
         real_type = 'Real'
@@ -17,8 +18,9 @@ def test_create_fmu_container(reference_fmus_dist_dir, fmi_version, parallelDoSt
         real_type = 'Float64'
         integer_type = 'Int32'
 
+    fmi_version_str = f'{fmi_version}.0',
     configuration = Configuration(
-        fmiVersion=f'{fmi_version}.0',
+        fmiVersion=fmi_version_str,
         parallelDoStep=parallelDoStep,
         unitDefinitions=[
             Unit(name="rad/s", baseUnit=BaseUnit(rad=1, s=-1), displayUnits=[DisplayUnit(name='rpm', factor=9.549296585513721)]),
@@ -107,11 +109,11 @@ def test_create_fmu_container(reference_fmus_dist_dir, fmi_version, parallelDoSt
         ],
         components=[
             Component(
-                filename=reference_fmus_dist_dir / '2.0' / 'Feedthrough.fmu',
+                filename=reference_fmus_dist_dir / fmi_version_str / 'Feedthrough.fmu',
                 name='instance1'
             ),
             Component(
-                filename=reference_fmus_dist_dir / '2.0' / 'Feedthrough.fmu',
+                filename=reference_fmus_dist_dir / fmi_version_str / 'Feedthrough.fmu',
                 name='instance2'
             ),
         ],

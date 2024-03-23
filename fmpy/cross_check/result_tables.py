@@ -184,7 +184,7 @@ def generate_result_tables(repo_dir, data_dir):
         writer.writerows(rows)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
 
     import argparse
 

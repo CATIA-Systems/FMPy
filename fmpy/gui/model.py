@@ -68,7 +68,7 @@ class VariablesModel(QAbstractItemModel):
             if type.startswith(('float', 'real')):
                 type = 'float'
 
-            if type.startswith(('enumeration', 'int', 'uint')):
+            if type.startswith(('enumeration', 'int', 'uint', 'clock')):
                 type = 'integer'
 
             return QIcon(f':/icons/light/{type}_{causality}.svg')
@@ -194,8 +194,6 @@ class VariablesTableModel(VariablesModel):
     def index(self, row, column, parent):
         variable = self.modelDescription.modelVariables[row]
         return self.createIndex(row, column, variable)
-
-        return QModelIndex()
 
     def parent(self, index):
         return QModelIndex()

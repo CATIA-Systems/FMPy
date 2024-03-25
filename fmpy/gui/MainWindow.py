@@ -1132,7 +1132,7 @@ class MainWindow(QMainWindow):
         def variableColor(variable):
             if variable.type.startswith(('Float', 'Real')):
                 return QColor.fromRgb(26, 77, 179)
-            elif variable.type.startswith(('Enumeration', 'Int', 'UInt')):
+            elif variable.type.startswith(('Enumeration', 'Int', 'UInt', 'Clock')):
                 return QColor.fromRgb(179, 77, 26)
             elif variable.type == 'Boolean':
                 return QColor.fromRgb(255, 0, 255)

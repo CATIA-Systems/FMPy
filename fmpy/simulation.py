@@ -1069,12 +1069,15 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
         # apply continuous inputs
         input.apply(time, discrete=False)
 
-        # check for step event, e.g.dynamic state selection
-        if is_fmi1:
-            step_event = fmu.completedIntegratorStep()
+        if model_description.modelExchange.needsCompletedIntegratorStep:
+            # check for step event, e.g. dynamic state selection
+            if is_fmi1:
+                step_event = fmu.completedIntegratorStep()
+            else:
+                step_event, _ = fmu.completedIntegratorStep()
+                step_event = step_event != fmi2False
         else:
-            step_event, _ = fmu.completedIntegratorStep()
-            step_event = step_event != fmi2False
+            step_event = False
 
         # handle events
         if input_event or time_event or state_event or step_event:

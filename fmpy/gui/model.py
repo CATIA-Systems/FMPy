@@ -60,7 +60,7 @@ class VariablesModel(QAbstractItemModel):
 
             causality = v.causality
 
-            if causality in ['parameter', 'calculatedParameter']:
+            if causality in ['parameter', 'calculatedParameter', 'structuralParameter']:
                 causality = 'parameter'
             elif causality in ['local', 'independent']:
                 causality = 'variable'

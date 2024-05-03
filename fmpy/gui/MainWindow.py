@@ -877,7 +877,7 @@ class MainWindow(QMainWindow):
 
         pen = (0, 0, 255)
 
-        for variable in self.selectedVariables:
+        for variable in sorted(self.selectedVariables, key=lambda v: v.name):
 
             self.ui.plotWidget.nextRow()
             plot = self.ui.plotWidget.addPlot()

@@ -91,6 +91,7 @@ class Dimension(object):
 
     start = attrib(type=str)
     valueReference = attrib(type=int)
+    variable = attrib(type='ScalarVariable', default=None)
 
 
 @attrs(eq=False)
@@ -791,18 +792,18 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
 
     variables = dict((v.valueReference, v) for v in modelDescription.modelVariables)
 
-    # calculate initial shape
+    # resolve dimension variables and calculate initial shape
     for variable in modelDescription.modelVariables:
 
         shape = []
 
-        for d in variable.dimensions:
+        for dimension in variable.dimensions:
 
-            if d.start is not None:
-                shape.append(int(d.start))
+            if dimension.start is not None:
+                shape.append(int(dimension.start))
             else:
-                v = variables[d.valueReference]
-                shape.append(int(v.start))
+                dimension.variable = variables[dimension.valueReference]
+                shape.append(int(dimension.variable.start))
 
         variable.shape = tuple(shape)
 

@@ -29,8 +29,8 @@ class TreeItem(object):
 
 class VariablesModel(QAbstractItemModel):
 
-    COLUMN_NAMES = ['Name', 'Type', 'Value Reference', 'Initial', 'Causality', 'Variability', 'Start', 'Nominal', 'Min', 'Max', 'Unit', 'Plot', 'Description']
-    COLUMN_WIDTHS = [200, 50, 100, 70, 70, 70, 70, 70, 70, 70, 40, 40]
+    COLUMN_NAMES = ['Name', 'Type', 'Dimensions', 'Value Reference', 'Initial', 'Causality', 'Variability', 'Start', 'Nominal', 'Min', 'Max', 'Unit', 'Plot', 'Description']
+    COLUMN_WIDTHS = [200, 50, 70, 100, 70, 70, 70, 70, 70, 70, 70, 40, 40]
     variableSelected = pyqtSignal(ScalarVariable, name='variableSelected')
     variableDeselected = pyqtSignal(ScalarVariable, name='variableDeselected')
 
@@ -87,6 +87,8 @@ class VariablesModel(QAbstractItemModel):
                 return v.name
             elif column == 'Type':
                 return v.type
+            elif column == 'Dimensions':
+                return ', '.join(str(d.start) if d.start else d.variable.name for d in v.dimensions)
             elif column == 'Value Reference':
                 return v.valueReference
             elif column == 'Initial':

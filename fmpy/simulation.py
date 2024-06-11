@@ -1037,7 +1037,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
             if time + eps >= t_next:  # t_next has been reached
                 # integrate to the next grid point
                 t_next = np.floor(time / output_interval) * output_interval + output_interval
-                if t_next < time + eps:
+                if t_next <= time + eps:
                     t_next += output_interval
 
         # get the next input event

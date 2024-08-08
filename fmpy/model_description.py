@@ -528,6 +528,8 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
                               'canGetAndSetFMUstate',
                               'canSerializeFMUstate',
                               'providesDirectionalDerivative'])
+            modelDescription.modelExchange.needsCompletedIntegratorStep \
+                = not me.get('completedIntegratorStepNotNeeded') in {'true', '1'}
 
         for cs in root.findall('CoSimulation'):
             modelDescription.coSimulation = CoSimulation()

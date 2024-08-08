@@ -68,9 +68,9 @@ jobs:
       artifact: 'linux'
 
 - job: macosx
-  displayName: 'macOS 11'
+  displayName: 'macOS 12'
   pool:
-    vmImage: 'macOS-11'
+    vmImage: 'macOS-12'
 
   steps:
 

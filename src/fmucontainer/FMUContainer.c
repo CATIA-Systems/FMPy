@@ -379,6 +379,7 @@ FMIStatus doStep(
         fmi2Real realValue;
         fmi2Integer integerValue;
         fmi2Boolean booleanValue;
+        fmi2String stringValue;
         Connection* k = &(s->connections[i]);
         FMIInstance* m1 = s->components[k->startComponent]->instance;
         FMIInstance* m2 = s->components[k->endComponent]->instance;
@@ -398,6 +399,11 @@ FMIStatus doStep(
             CHECK_STATUS(FMI2GetBoolean(m1, &(vr1), 1, &booleanValue));
             CHECK_STATUS(FMI2SetBoolean(m2, &(vr2), 1, &booleanValue));
             break;
+        case FMIStringType:
+            CHECK_STATUS(FMI2GetString(m1, &(vr1), 1, &stringValue));
+            CHECK_STATUS(FMI2SetString(m2, &(vr2), 1, &stringValue));
+            break;
+
         default:
             break;
         }

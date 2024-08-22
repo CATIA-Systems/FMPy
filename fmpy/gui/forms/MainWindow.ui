@@ -1411,7 +1411,6 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="actionCreateCMakeProject"/>
     <addaction name="menuAddRemoting"/>
     <addaction name="actionAddCoSimulationWrapper"/>
-    <addaction name="actionImportToModelica"/>
    </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_Tools"/>
@@ -2032,11 +2031,6 @@ QToolButton::menu-button {
    </property>
    <property name="text">
     <string>Windows 32-bit on &amp;Windows 64-bit</string>
-   </property>
-  </action>
-  <action name="actionImportToModelica">
-   <property name="text">
-    <string>Import to Modelica...</string>
    </property>
   </action>
   <action name="actionShowDocumentation">

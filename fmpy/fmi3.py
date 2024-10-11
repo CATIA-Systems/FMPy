@@ -993,11 +993,11 @@ class FMU3Slave(_FMU3):
         self.fmi3SetInputDerivatives(self.component, vr, len(vr), order, value)
 
     def getOutputDerivatives(self, vr, order):
-        vr = (fmi3ValueReference * len(vr))(*vr)
-        order = (fmi3Int32 * len(vr))(*order)
-        value = (fmi3Float64 * len(vr))()
-        self.fmi3GetOutputDerivatives(self.component, vr, len(vr), order, value)
-        return list(value)
+        valueReferences = (fmi3ValueReference * len(vr))(*vr)
+        orders = (fmi3Int32 * len(vr))(*order)
+        values = (fmi3Float64 * len(vr))()
+        self.fmi3GetOutputDerivatives(self.component, valueReferences, len(valueReferences), orders, values, len(values))
+        return list(values)
 
     def doStep(self, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint=True) -> Tuple[bool, bool, bool, float]:
 

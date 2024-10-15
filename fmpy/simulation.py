@@ -1,6 +1,7 @@
 # noinspection PyPep8
 
 import shutil
+from math import isclose
 
 from fmpy.model_description import ModelDescription
 
@@ -1184,6 +1185,8 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
     is_fmi1 = model_description.fmiVersion == '1.0'
     is_fmi2 = model_description.fmiVersion == '2.0'
 
+    can_handle_variable_step_size = model_description.coSimulation.canHandleVariableCommunicationStepSize
+
     input = Input(fmu=fmu, modelDescription=model_description, signals=input_signals, set_input_derivatives=set_input_derivatives)
 
     time = start_time
@@ -1227,93 +1230,117 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
 
     recorder = Recorder(fmu=fmu, modelDescription=model_description, variableNames=output, interval=output_interval)
 
-    n_steps = time / output_interval
+    recorder.sample(time, force=True)
 
-    terminate_simulation = False
+    n_steps = 0
 
     # simulation loop
     while True:
 
-        recorder.sample(time, force=True)
-
         if timeout is not None and (current_time() - sim_start) > timeout:
             break
 
-        if terminate_simulation or time >= stop_time:
+        if time > stop_time or isclose(time, stop_time):
             break
 
-        input.apply(time)
+        next_regular_point = start_time + (n_steps + 1) * output_interval
+
+        next_communication_point = next_regular_point
+
+        next_input_event_time = input.nextEvent(time)
+
+        if (can_handle_variable_step_size and
+            next_communication_point > next_input_event_time and
+            not isclose(next_communication_point, next_input_event_time)):
+            next_communication_point = next_input_event_time
+
+        if (next_communication_point > stop_time and
+            not isclose(next_communication_point, stop_time)):
+
+            if can_handle_variable_step_size:
+                next_communication_point = stop_time
+            else:
+                break
+
+        input_event = isclose(next_communication_point, next_input_event_time)
+
+        step_size = next_communication_point - time
+
+        input.apply(time, continuous=True, discrete=use_event_mode, after_event=use_event_mode)
 
         if is_fmi1:
 
-            if time + output_interval <= stop_time:
-                fmu.doStep(currentCommunicationPoint=time, communicationStepSize=output_interval)
-                n_steps += 1
-                time = n_steps * output_interval
-            else:
-                fmu.doStep(currentCommunicationPoint=time, communicationStepSize=stop_time - time)
-                time = stop_time
+            fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
+
+            # TODO: handle fmi1Discard
+
+            time = next_communication_point
 
         elif is_fmi2:
 
             try:
-                if time + output_interval <= stop_time:
-                    fmu.doStep(currentCommunicationPoint=time, communicationStepSize=output_interval)
-                    n_steps += 1
-                    time = n_steps * output_interval
-                else:
-                    fmu.doStep(currentCommunicationPoint=time, communicationStepSize=stop_time - time)
-                    time = stop_time
-            except FMICallException as e:
-                if e.status == fmi2Discard:
-                    terminated = fmu.getBooleanStatus(fmi2Terminated)
-                    if terminated:
+                fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
+
+                time = next_communication_point
+
+            except FMICallException as exception:
+
+                if exception.status == fmi2Discard:
+
+                    terminate_simulation = fmu.getBooleanStatus(fmi2Terminated)
+
+                    if terminate_simulation:
                         time = fmu.getRealStatus(fmi2LastSuccessfulTime)
                         recorder.sample(time, force=True)
                         break
                 else:
-                    raise e
+                    raise exception
+
         else:
-
-            t_input_event = input.nextEvent(time)
-
-            t_next = (n_steps + 1) * output_interval
-
-            input_event = t_next > t_input_event
-
-            step_size = t_input_event - time if input_event else t_next - time
 
             event_encountered, terminate_simulation, early_return, last_successful_time = fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
 
             if early_return and not early_return_allowed:
                 raise Exception("FMU returned early from doStep() but Early Return is not allowed.")
 
-            if early_return and last_successful_time < t_next:
+            if early_return and last_successful_time < next_communication_point:
                 time = last_successful_time
             else:
-                time = t_next
+                time = next_communication_point
+
+            if isclose(time, next_regular_point):
                 n_steps += 1
+
+            recorder.sample(time)
+
+            if terminate_simulation:
+                break
 
             if use_event_mode and (input_event or event_encountered):
 
-                recorder.sample(last_successful_time, force=True)
-
                 fmu.enterEventMode()
 
-                input.apply(last_successful_time, after_event=True)
+                input.apply(time, after_event=True)
 
                 update_discrete_states = True
 
-                while update_discrete_states and not terminate_simulation:
+                while update_discrete_states:
+
                     update_discrete_states, terminate_simulation, _, _, _, _ = fmu.updateDiscreteStates()
 
-                if terminate_simulation:
-                    break
+                    if terminate_simulation:
+                        break
 
                 fmu.enterStepMode()
 
+                recorder.sample(time)
+
+        if isclose(time, next_regular_point):
+            n_steps += 1
+
+        recorder.sample(time)
+
         if step_finished is not None and not step_finished(time, recorder):
-            recorder.sample(time, force=True)
             break
 
     if terminate:

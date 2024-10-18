@@ -16,8 +16,12 @@ import numpy as np
 from time import time as current_time
 from typing import Union, Any, Dict, Sequence, Callable
 
-# absolute tolerance for equality when comparing two floats
-eps = 1e-13
+
+def isclose(a, b):
+
+    import math
+
+    return math.isclose(a, b)
 
 
 class SimulationResult(np.ndarray):
@@ -153,10 +157,10 @@ class Recorder(object):
     def sample(self, time, force=False):
         """ Record the variables """
 
-        if not force and self.interval is not None and len(self.rows) > 0:
-            last = self.rows[-1][0]
-            if time - last + eps < self.interval:
-                return
+        # if not force and self.interval is not None and len(self.rows) > 0:
+        #     last = self.rows[-1][0]
+        #     if time - last + eps < self.interval:
+        #         return
 
         row = [time]
 
@@ -347,8 +351,13 @@ class Input(object):
             return float('Inf')
 
         # find the next event
-        i = np.argmax(self.t_events > time)
-        return self.t_events[i]
+        # i = np.argmax(self.t_events > time and not isclose(self.t_events, time))
+
+        for i, t in enumerate(self.t_events):
+            if t > time and not isclose(t, time):
+                return self.t_events[i]
+
+        return float('Inf')
 
     @staticmethod
     def findEvents(signals, model_description):
@@ -392,13 +401,14 @@ class Input(object):
             return values, np.zeros_like(values)
 
         # check for event
-        if time == t[i0] and i0 < len(t) - 1 and t[i0] == t[i0 + 1]:
+        # if time == t[i0] and i0 < len(t) - 1 and t[i0] == t[i0 + 1]:
+        if isclose(time, t[i0]) and i0 < len(t) - 1 and isclose(t[i0], t[i0 + 1]):
 
             der_v = np.zeros((table.shape[0],))
 
             if after_event:
                 # take the value after the event
-                while i0 < len(t) - 1 and t[i0] == t[i0 + 1]:
+                while i0 < len(t) - 1 and isclose(t[i0], t[i0 + 1]):
                     i0 += 1
                 if i0 < len(t) - 1:
                     v0 = table[:, i0]
@@ -905,18 +915,18 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
     input = Input(fmu, model_description, input_signals)
 
-    # initialize
     if is_fmi1:
+
         start_values = apply_start_values(fmu, model_description, start_values, settable=has_start_value)
 
         input.apply(time)
 
-        (iterationConverged,
-         stateValueReferencesChanged,
-         stateValuesChanged,
+        (iteration_converged,
+         state_value_references_changed,
+         state_values_changed,
          terminate_simulation,
-         nextEventTimeDefined,
-         nextEventTime) = fmu.initialize()
+         next_event_time_defined,
+         next_event_time) = fmu.initialize()
 
         if terminate_simulation:
             raise Exception('Model requested termination during initial event update.')
@@ -933,16 +943,16 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
         fmu.exitInitializationMode()
 
-        newDiscreteStatesNeeded = True
+        new_discrete_states_needed = True
         terminate_simulation = False
 
-        while newDiscreteStatesNeeded and not terminate_simulation:
-            (newDiscreteStatesNeeded,
+        while new_discrete_states_needed and not terminate_simulation:
+            (new_discrete_states_needed,
              terminate_simulation,
-             nominalsOfContinuousStatesChanged,
-             valuesOfContinuousStatesChanged,
-             nextEventTimeDefined,
-             nextEventTime) = fmu.newDiscreteStates()
+             nominals_of_continuous_states_changed,
+             values_of_continuous_states_changed,
+             next_event_time_defined,
+             next_event_time) = fmu.newDiscreteStates()
 
         if terminate_simulation:
             raise Exception('Model requested termination during initial event update.')
@@ -961,17 +971,19 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
         fmu.exitInitializationMode()
 
-        discreteStatesNeedUpdate = True
+        discrete_states_need_update = True
         terminate_simulation = False
 
-        while discreteStatesNeedUpdate and not terminate_simulation:
-            # update discrete states
-            (discreteStatesNeedUpdate,
+        while discrete_states_need_update and not terminate_simulation:
+            (discrete_states_need_update,
              terminate_simulation,
-             nominalsOfContinuousStatesChanged,
-             valuesOfContinuousStatesChanged,
-             nextEventTimeDefined,
-             nextEventTime) = fmu.updateDiscreteStates()
+             nominals_of_continuous_states_changed,
+             values_of_continuous_states_changed,
+             next_event_time_defined,
+             next_event_time) = fmu.updateDiscreteStates()
+
+        if terminate_simulation:
+            raise Exception('Model requested termination during initial event update.')
 
         fmu.enterContinuousTimeMode()
 
@@ -1016,75 +1028,72 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                         variableNames=output,
                         interval=output_interval)
 
-    # record the values for time == start_time
-    recorder.sample(time)
+    n_steps = 0
 
-    t_next = start_time
+    terminate_simulation = False
 
-    n_fixed_steps = 0
+    next_regular_point = time
 
     # simulation loop
-    while time < stop_time:
+    while True:
+
+        if record_events or isclose(time, next_regular_point):
+            recorder.sample(time)
 
         if timeout is not None and (current_time() - sim_start) > timeout:
             break
 
-        if fixed_step:
-            t_next = start_time + n_fixed_steps * step_size
-            if t_next > stop_time:
-                break
-            n_fixed_steps += 1
-        else:
-            if time + eps >= t_next:  # t_next has been reached
-                # integrate to the next grid point
-                t_next = np.floor(time / output_interval) * output_interval + output_interval
-                if t_next <= time + eps:
-                    t_next += output_interval
+        if time > stop_time or isclose(time, stop_time):
+            break
 
-        # get the next input event
-        t_input_event = input.nextEvent(time)
+        next_regular_point = start_time + (n_steps + 1) * output_interval
 
-        # check for input event
-        input_event = t_input_event <= t_next
+        next_communication_point = next_regular_point
 
-        if input_event:
-            t_next = t_input_event
+        next_input_event_time = input.nextEvent(time)
 
-        time_event = nextEventTimeDefined and nextEventTime <= t_next
+        if next_communication_point > next_input_event_time and not isclose(next_communication_point, next_input_event_time):
+            next_communication_point = next_input_event_time
 
-        if time_event and not fixed_step:
-            t_next = nextEventTime
+        if next_event_time_defined and next_communication_point > next_event_time and not isclose(next_communication_point, next_event_time):
+            next_communication_point = next_input_event_time
 
-        if t_next - time > eps:
-            # do one step
-            state_event, roots_found, time = solver.step(time, t_next)
-        else:
-            # skip
-            state_event = False
-            roots_found = []
-            time = t_next
+        if next_communication_point > stop_time and not isclose(next_communication_point, stop_time):
+            next_communication_point = stop_time
 
-        # set the time
+        input_event = isclose(next_communication_point, next_input_event_time)
+
+        time_event = next_event_time_defined and isclose(next_communication_point, next_event_time)
+
+        state_event, roots_found, time = solver.step(time, next_communication_point)
+
         fmu.setTime(time)
 
-        # apply continuous inputs
         input.apply(time, discrete=False)
 
+        if isclose(time, next_regular_point):
+            n_steps += 1
+
         if model_description.modelExchange.needsCompletedIntegratorStep:
-            # check for step event, e.g. dynamic state selection
+
             if is_fmi1:
                 step_event = fmu.completedIntegratorStep()
+            elif is_fmi2:
+                step_event, terminate_simulation = fmu.completedIntegratorStep()
             else:
-                step_event, _ = fmu.completedIntegratorStep()
-                step_event = step_event != fmi2False
+                step_event, terminate_simulation = fmu.completedIntegratorStep()
+
+            if terminate_simulation:
+                break
+
         else:
             step_event = False
 
-        # handle events
         if input_event or time_event or state_event or step_event:
 
+            reset_solver = False
+
             if record_events:
-                # record the values before the event
                 recorder.sample(time, force=True)
 
             if is_fmi1:
@@ -1092,16 +1101,16 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                 if input_event:
                     input.apply(time=time, after_event=True)
 
-                iterationConverged = False
+                iteration_converged = False
 
                 # update discrete states
-                while not iterationConverged and not terminate_simulation:
-                    (iterationConverged,
-                     stateValueReferencesChanged,
-                     stateValuesChanged,
+                while not iteration_converged and not terminate_simulation:
+                    (iteration_converged,
+                     state_value_references_changed,
+                     state_values_changed,
                      terminate_simulation,
-                     nextEventTimeDefined,
-                     nextEventTime) = fmu.eventUpdate()
+                     next_event_time_defined,
+                     next_event_time) = fmu.eventUpdate()
 
                 if terminate_simulation:
                     break
@@ -1113,16 +1122,17 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                 if input_event:
                     input.apply(time=time, after_event=True)
 
-                newDiscreteStatesNeeded = True
+                new_discrete_states_needed = True
 
-                # update discrete states
-                while newDiscreteStatesNeeded and not terminate_simulation:
-                    (newDiscreteStatesNeeded,
+                while new_discrete_states_needed and not terminate_simulation:
+                    (new_discrete_states_needed,
                      terminate_simulation,
-                     nominalsOfContinuousStatesChanged,
-                     valuesOfContinuousStatesChanged,
-                     nextEventTimeDefined,
-                     nextEventTime) = fmu.newDiscreteStates()
+                     nominals_of_continuous_states_changed,
+                     values_of_continuous_states_changed,
+                     next_event_time_defined,
+                     next_event_time) = fmu.newDiscreteStates()
+
+                    reset_solver |= nominals_of_continuous_states_changed or values_of_continuous_states_changed
 
                 if terminate_simulation:
                     break
@@ -1136,31 +1146,30 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                 if input_event:
                     input.apply(time=time, after_event=True)
 
-                newDiscreteStatesNeeded = True
+                new_discrete_states_needed = True
 
-                # update discrete states
-                while newDiscreteStatesNeeded and not terminate_simulation:
-                    (newDiscreteStatesNeeded,
+                while new_discrete_states_needed and not terminate_simulation:
+                    (new_discrete_states_needed,
                      terminate_simulation,
-                     nominalsOfContinuousStatesChanged,
-                     valuesOfContinuousStatesChanged,
-                     nextEventTimeDefined,
-                     nextEventTime) = fmu.updateDiscreteStates()
+                     nominals_of_continuous_states_changed,
+                     values_of_continuous_states_changed,
+                     next_event_time_defined,
+                     next_event_time) = fmu.updateDiscreteStates()
+
+                    reset_solver |= nominals_of_continuous_states_changed or values_of_continuous_states_changed
 
                 if terminate_simulation:
                     break
 
                 fmu.enterContinuousTimeMode()
 
-            solver.reset(time)
+            if reset_solver:
+                solver.reset(time)
 
-            if record_events:
-                # record values after the event
-                recorder.sample(time, force=True)
-
-        if abs(time - round(time / output_interval) * output_interval) < eps and time > recorder.lastSampleTime + eps:
-            # record values for this step
-            recorder.sample(time, force=True)
+            # TODO: necessary?
+            # if record_events:
+            #     # record values after the event
+            #     recorder.sample(time, force=True)
 
         if step_finished is not None and not step_finished(time, recorder):
             break
@@ -1272,8 +1281,6 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
 
             fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
 
-            # TODO: handle fmi1Discard
-
             time = next_communication_point
 
         elif is_fmi2:
@@ -1307,11 +1314,6 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
                 time = last_successful_time
             else:
                 time = next_communication_point
-
-            if isclose(time, next_regular_point):
-                n_steps += 1
-
-            recorder.sample(time)
 
             if terminate_simulation:
                 break

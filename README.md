@@ -136,4 +136,4 @@ Please send an e-mail to support@ltx.de for a quote.
 
 ------------------------------------
 
-&copy; 2023 Dassault Syst&egrave;mes
+&copy; 2024 Dassault Syst&egrave;mes

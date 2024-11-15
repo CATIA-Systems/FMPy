@@ -1,4 +1,4 @@
-""" This package contains the graphical user interface based on PyQt5 """
+""" This package contains the graphical user interface based on PySide6 """
 
 
 def compile_resources():
@@ -28,7 +28,7 @@ def compile_resources():
             if os.path.isfile(ui_file):
                 if not os.path.isfile(py_file) or os.path.getmtime(ui_file) > os.path.getmtime(py_file):
                     print("UIC'ing %s" % ui_file)
-                    os.system('pyuic5 %s -o %s --import-from .' % (ui_file, py_file))
+                    os.system(r'E:\Development\FMPy\.venv\Lib\site-packages\PySide6\uic.exe %s -o %s -g python --from-imports' % (ui_file, py_file))
 
     icons_qrc = os.path.join(gui_dir, 'icons', 'icons.qrc')
     icons_rc_py = os.path.join(generated_dir, 'icons_rc.py')
@@ -37,4 +37,4 @@ def compile_resources():
     if os.path.isfile(icons_qrc):
         if not os.path.isfile(icons_rc_py) or os.path.getmtime(icons_qrc) > os.path.getmtime(icons_rc_py):
             print("RCC'ing %s" % icons_qrc)
-            os.system('pyrcc5 %s -o %s' % (icons_qrc, icons_rc_py))
+            os.system(r'E:\Development\FMPy\.venv\Lib\site-packages\PySide6\rcc.exe %s -o %s -g python' % (icons_qrc, icons_rc_py))

@@ -1,6 +1,5 @@
 """ Entry point for the graphical user interface """
 import shutil
-from os.path import dirname
 
 try:
     from . import compile_resources
@@ -11,12 +10,13 @@ except Exception as e:
 import os
 import sys
 
-from PyQt5.QtCore import QCoreApplication, QDir, Qt, pyqtSignal, QUrl, QSettings, QPoint, QTimer, QStandardPaths, \
+from PySide6.QtCore import QCoreApplication, QDir, Qt, QUrl, QSettings, QPoint, QTimer, QStandardPaths, \
     QPointF, QBuffer, QIODevice, QSize
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, \
-    QMenu, QMessageBox, QProgressDialog, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, \
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, \
+    QMenu, QMessageBox, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, \
     QGraphicsTextItem, QGraphicsPathItem, QFileSystemModel
-from PyQt5.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, QPolygonF, QPainterPath
+from PySide6.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, QPolygonF, QPainterPath
+from PySide6.QtCore import Signal as pyqtSignal
 
 from fmpy.gui.generated.MainWindow import Ui_MainWindow
 import fmpy
@@ -125,10 +125,10 @@ class MainWindow(QMainWindow):
         self.ui.logTreeView.setAttribute(Qt.WA_MacShowFocusRect, False)
 
         # set the window size to 85% of the available space
-        geo = QApplication.desktop().availableGeometry()
-        width = min(geo.width() * 0.85, 1100.0)
-        height = min(geo.height() * 0.85, 900.0)
-        self.resize(int(width), int(height))
+        # geo = QApplication.desktop().availableGeometry()
+        # width = min(geo.width() * 0.85, 1100.0)
+        # height = min(geo.height() * 0.85, 900.0)
+        # self.resize(int(width), int(height))
 
         # hide the variables
         self.ui.dockWidget.hide()
@@ -646,7 +646,7 @@ class MainWindow(QMainWindow):
         start_dir = os.path.dirname(self.filename)
         filename, _ = QFileDialog.getOpenFileName(parent=self,
                                                   caption="Select Input File",
-                                                  directory=start_dir,
+                                                  dir=start_dir,
                                                   filter="FMUs (*.csv);;All Files (*.*)")
         if filename:
             self.ui.inputFilenameLineEdit.setText(filename)
@@ -1157,10 +1157,10 @@ class MainWindow(QMainWindow):
                 outputVariables.append(variable)
 
         for variable in inputVariables:
-            maxInputLabelWidth = max(maxInputLabelWidth, fontMetrics.width(variable.name))
+            maxInputLabelWidth = max(maxInputLabelWidth, fontMetrics.horizontalAdvance(variable.name))
 
         for variable in outputVariables:
-            maxOutputLabelWidth = max(maxOutputLabelWidth, fontMetrics.width(variable.name))
+            maxOutputLabelWidth = max(maxOutputLabelWidth, fontMetrics.horizontalAdvance(variable.name))
 
         from math import floor
 

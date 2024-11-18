@@ -140,7 +140,6 @@ dependencies = [
     { name = "lxml" },
     { name = "msgpack" },
     { name = "numpy" },
-    { name = "pywin32", marker = "sys_platform == 'win32'" },
 ]
 
 [package.optional-dependencies]
@@ -151,6 +150,7 @@ examples = [
 gui = [
     { name = "pyqtgraph" },
     { name = "pyside6" },
+    { name = "pywin32", marker = "sys_platform == 'win32'" },
 ]
 plot = [
     { name = "matplotlib" },
@@ -169,7 +169,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.1.3" },
     { name = "pyqtgraph", marker = "extra == 'gui'", specifier = ">=0.13.7" },
     { name = "pyside6", marker = "extra == 'gui'", specifier = ">=6.8.0.2" },
-    { name = "pywin32", marker = "sys_platform == 'win32'", specifier = ">=308" },
+    { name = "pywin32", marker = "sys_platform == 'win32' and extra == 'gui'", specifier = ">=308" },
     { name = "requests", marker = "extra == 'examples'", specifier = ">=2.32.3" },
     { name = "scipy", marker = "extra == 'plot'", specifier = ">=1.14.1" },
 ]

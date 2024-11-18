@@ -1,5 +1,20 @@
 <RCC>
   <qresource prefix="icons">
+    <file>dark/arrow-clockwise.svg</file>
+    <file>dark/book.svg</file>
+    <file>dark/debug.svg</file>
+    <file>dark/error.svg</file>
+    <file>dark/file-earmark-zip.svg</file>
+    <file>dark/filter.svg</file>
+    <file>dark/folder-open.svg</file>
+    <file>dark/gear.svg</file>
+    <file>dark/graph.svg</file>
+    <file>dark/info.svg</file>
+    <file>dark/list.svg</file>
+    <file>dark/list-task.svg</file>
+    <file>dark/play.svg</file>
+    <file>dark/stop.svg</file>
+    <file>dark/warning.svg</file>
     <file>light/filter.svg</file>
     <file>light/list.svg</file>
     <file>light/debug.svg</file>

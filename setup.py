@@ -126,7 +126,7 @@ install_requires = [
 extras_require = {
     'examples': ['dask[bag]', 'requests'],
     'plot': ['matplotlib', 'scipy'],
-    'gui': ['PyQt5', 'pyqtgraph', 'PyQtWebEngine'],
+    'gui': ['PySide6', 'pyqtgraph'],
     'notebook': ['kaleido', 'notebook', 'plotly'],
     'webapp': ['dash-bootstrap-components>=1.0.0']
 }
@@ -143,7 +143,7 @@ setup(name='FMPy',
       license="Standard 2-clause BSD",
       packages=packages,
       package_data=package_data,
-      python_requires='>=3.5',
+      python_requires='>=3.10',
       install_requires=install_requires,
       extras_require=extras_require,
       entry_points={'console_scripts': ['fmpy=fmpy.command_line:main']})

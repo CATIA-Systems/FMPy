@@ -1,0 +1,24 @@
+name: Build FMPy
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - name: x86_64-windows
+            image: windows-2022
+            arch: x86_64
+    runs-on: ${{ matrix.image }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    - run: which python

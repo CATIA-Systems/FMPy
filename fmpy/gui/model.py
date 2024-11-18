@@ -1,6 +1,6 @@
 from PySide6.QtCore import QAbstractItemModel, QModelIndex, Qt, QSortFilterProxyModel
 from PySide6.QtGui import QFont, QIcon
-from PySide6.QtCore import Signal as pyqtSignal
+from PySide6.QtCore import Signal
 
 from ..model_description import ScalarVariable
 
@@ -32,8 +32,8 @@ class VariablesModel(QAbstractItemModel):
 
     COLUMN_NAMES = ['Name', 'Type', 'Dimensions', 'Value Reference', 'Initial', 'Causality', 'Variability', 'Start', 'Nominal', 'Min', 'Max', 'Unit', 'Plot', 'Description']
     COLUMN_WIDTHS = [200, 50, 70, 100, 70, 70, 70, 70, 70, 70, 70, 40, 40]
-    variableSelected = pyqtSignal(ScalarVariable, name='variableSelected')
-    variableDeselected = pyqtSignal(ScalarVariable, name='variableDeselected')
+    variableSelected = Signal(ScalarVariable, name='variableSelected')
+    variableDeselected = Signal(ScalarVariable, name='variableDeselected')
 
     def __init__(self, selectedVariables, startValues, parent=None):
         super(VariablesModel, self).__init__(parent)

@@ -1,5 +1,5 @@
 from PySide6.QtCore import QThread, QDateTime
-from PySide6.QtCore import Signal as pyqtSignal
+from PySide6.QtCore import Signal
 
 from fmpy import simulate_fmu
 from fmpy.fmi2 import fmi2Warning
@@ -7,8 +7,8 @@ from fmpy.fmi2 import fmi2Warning
 
 class SimulationThread(QThread):
 
-    progressChanged = pyqtSignal(int)
-    messageChanged = pyqtSignal(str, str)
+    progressChanged = Signal(int)
+    messageChanged = Signal(str, str)
 
     def __init__(self, filename, fmiType, stopTime, solver, stepSize, relativeTolerance, outputInterval, startValues, applyDefaultStartValues, input, output, debugLogging, fmiLogging, parent=None):
 

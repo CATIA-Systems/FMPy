@@ -16,7 +16,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QCo
     QMenu, QMessageBox, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, \
     QGraphicsTextItem, QGraphicsPathItem, QFileSystemModel
 from PySide6.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, QPolygonF, QPainterPath
-from PySide6.QtCore import Signal as pyqtSignal
+from PySide6.QtCore import Signal
 
 from fmpy.gui.generated.MainWindow import Ui_MainWindow
 import fmpy
@@ -41,7 +41,7 @@ COLLAPSABLE_COLUMNS = ['Type', 'Dimensions', 'Value Reference', 'Initial', 'Caus
 class ClickableLabel(QLabel):
     """ A QLabel that shows a pointing hand cursor and emits a *clicked* event when clicked """
 
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(self, parent=None):
         super(ClickableLabel, self).__init__(parent)
@@ -80,8 +80,8 @@ class AboutDialog(QDialog):
 
 class MainWindow(QMainWindow):
 
-    variableSelected = pyqtSignal(ScalarVariable, name='variableSelected')
-    variableDeselected = pyqtSignal(ScalarVariable, name='variableDeselected')
+    variableSelected = Signal(ScalarVariable, name='variableSelected')
+    variableDeselected = Signal(ScalarVariable, name='variableDeselected')
     windows = []
     windowOffset = QPoint()
 

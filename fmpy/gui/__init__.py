@@ -5,14 +5,18 @@ def compile_resources():
     """ Compile the .ui and .qrc files if they are available and newer than the compiled .py files """
 
     import os
+    from pathlib import Path
+    from subprocess import check_call
+    from os.path import getmtime
+    import PySide6
 
-    gui_dir = os.path.dirname(__file__)
-
-    forms_dir = os.path.join(gui_dir, 'forms')
-    generated_dir = os.path.join(gui_dir, 'generated')
+    pyside_dir = Path(PySide6.__file__).parent
+    gui_dir = Path(__file__).parent
+    forms_dir = gui_dir / 'forms'
+    generated_dir = gui_dir / 'generated'
 
     # compile the forms
-    if os.path.isdir(forms_dir):
+    if forms_dir.is_dir():
 
         for file in os.listdir(forms_dir):
 
@@ -22,19 +26,21 @@ def compile_resources():
             form = os.path.basename(file)
             form, _ = os.path.splitext(form)
 
-            ui_file = os.path.join(forms_dir, form + '.ui')
-            py_file = os.path.join(generated_dir, form + '.py')
+            ui_file = forms_dir / f'{form}.ui'
+            py_file = generated_dir / f'{form}.py'
 
             if os.path.isfile(ui_file):
-                if not os.path.isfile(py_file) or os.path.getmtime(ui_file) > os.path.getmtime(py_file):
-                    print("UIC'ing %s" % ui_file)
-                    os.system(r'E:\Development\FMPy\.venv\Lib\site-packages\PySide6\uic.exe %s -o %s -g python --from-imports' % (ui_file, py_file))
+                if not py_file.is_file() or getmtime(ui_file) > os.path.getmtime(py_file):
+                    print("UIC'ing {ui_file}")
+                    uic = pyside_dir / 'uic'
+                    check_call([uic, ui_file, '-o', py_file, '-g', 'python', '--from-imports'])
 
-    icons_qrc = os.path.join(gui_dir, 'icons', 'icons.qrc')
-    icons_rc_py = os.path.join(generated_dir, 'icons_rc.py')
+    icons_qrc = gui_dir / 'icons' / 'icons.qrc'
+    icons_rc_py = generated_dir / 'icons_rc.py'
 
     # compile the resources
-    if os.path.isfile(icons_qrc):
-        if not os.path.isfile(icons_rc_py) or os.path.getmtime(icons_qrc) > os.path.getmtime(icons_rc_py):
-            print("RCC'ing %s" % icons_qrc)
-            os.system(r'E:\Development\FMPy\.venv\Lib\site-packages\PySide6\rcc.exe %s -o %s -g python' % (icons_qrc, icons_rc_py))
+    if icons_qrc.is_file():
+        if not icons_rc_py.is_file() or getmtime(icons_qrc) > getmtime(icons_rc_py):
+            print(f"RCC'ing {icons_qrc}")
+            rcc = pyside_dir / 'rcc'
+            check_call([rcc, icons_qrc, '-o', icons_rc_py, '-g', 'python'])

@@ -1,4 +1,6 @@
-from PySide6.QtCore import QAbstractItemModel, QModelIndex, Qt, QSortFilterProxyModel
+from typing import Any
+
+from PySide6.QtCore import QAbstractItemModel, QModelIndex, Qt, QSortFilterProxyModel, QPersistentModelIndex
 from PySide6.QtGui import QFont, QIcon
 from PySide6.QtCore import Signal
 
@@ -145,7 +147,7 @@ class VariablesModel(QAbstractItemModel):
         else:
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
-    def setData(self, index, value, role):
+    def setData(self, index: QModelIndex | QPersistentModelIndex, value: Any, role: int):
 
         if not index.isValid():
             return False
@@ -159,8 +161,8 @@ class VariablesModel(QAbstractItemModel):
             else:
                 self.startValues.pop(variable.name, None)
             return True
-        elif column == 'Plot' and role == Qt.CheckStateRole:
-            if value == Qt.Checked:
+        elif column == 'Plot' and role == Qt.CheckStateRole.value:
+            if value == Qt.Checked.value:
                 self.variableSelected.emit(variable)
             else:
                 self.variableDeselected.emit(variable)

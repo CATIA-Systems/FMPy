@@ -15,7 +15,8 @@ from PySide6.QtCore import QCoreApplication, QDir, Qt, QUrl, QSettings, QPoint, 
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, \
     QMenu, QMessageBox, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, \
     QGraphicsTextItem, QGraphicsPathItem, QFileSystemModel
-from PySide6.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, QPolygonF, QPainterPath
+from PySide6.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, \
+    QPolygonF, QPainterPath, QGuiApplication
 from PySide6.QtCore import Signal
 
 from fmpy.gui.generated.MainWindow import Ui_MainWindow
@@ -33,7 +34,7 @@ QCoreApplication.setApplicationName("FMPy")
 
 import pyqtgraph as pg
 
-pg.setConfigOptions(background='w', foreground='k', antialias=True)
+# pg.setConfigOptions(foreground='r', antialias=True)
 
 COLLAPSABLE_COLUMNS = ['Type', 'Dimensions', 'Value Reference', 'Initial', 'Causality', 'Variability', 'Nominal', 'Min', 'Max']
 
@@ -110,6 +111,8 @@ class MainWindow(QMainWindow):
         # UI
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
+        self.setColorScheme(QGuiApplication.styleHints().colorScheme())
 
         self.showColumnActions = {}
 
@@ -200,7 +203,7 @@ class MainWindow(QMainWindow):
         if recent_files:
             added = set()
             for file in recent_files[:5]:
-                link = QLabel('<a href="%s" style="text-decoration: none">%s</a>' % (file, os.path.basename(file)))
+                link = QLabel('<a href="%s" style="text-decoration: none; color: #548AF7">%s</a>' % (file, os.path.basename(file)))
                 link.setToolTip(file)
                 link.linkActivated.connect(self.load)
                 vbox.addWidget(link)
@@ -599,7 +602,7 @@ class MainWindow(QMainWindow):
 
         filename, _ = QFileDialog.getOpenFileName(parent=self,
                                                   caption="Open File",
-                                                  directory=start_dir,
+                                                  dir=start_dir,
                                                   filter="FMUs (*.fmu);;All Files (*.*)")
 
         if filename:
@@ -647,7 +650,7 @@ class MainWindow(QMainWindow):
         filename, _ = QFileDialog.getOpenFileName(parent=self,
                                                   caption="Select Input File",
                                                   dir=start_dir,
-                                                  filter="FMUs (*.csv);;All Files (*.*)")
+                                                  filter="CSV Files (*.csv);;All Files (*.*)")
         if filename:
             self.ui.inputFilenameLineEdit.setText(filename)
 
@@ -670,8 +673,8 @@ class MainWindow(QMainWindow):
 
         filename, _ = QFileDialog.getSaveFileName(parent=self,
                                                   caption="Save Input File",
-                                                  directory=filename + '_in.csv',
-                                                  filter="Comma Separated Values (*.csv);;All Files (*.*)")
+                                                  dir=filename + '_in.csv',
+                                                  filter="CSV Files (*.csv);;All Files (*.*)")
 
         if not filename:
             return
@@ -815,7 +818,7 @@ class MainWindow(QMainWindow):
         # update UI
         self.ui.actionSimulate.triggered.disconnect(self.simulationThread.stop)
         self.ui.actionSimulate.triggered.connect(self.startSimulation)
-        self.ui.actionSimulate.setIcon(QIcon(':/icons/light/play.svg'))
+        self.ui.actionSimulate.setIcon(QIcon(':/icons/dark/play.svg'))
         self.ui.actionSimulate.setToolTip("Start simulation")
         self.plotUpdateTimer.stop()
         self.simulationProgressBar.setVisible(False)
@@ -865,6 +868,15 @@ class MainWindow(QMainWindow):
 
         self.ui.plotWidget.clear()
 
+        color_scheme = QGuiApplication.styleHints().colorScheme()
+
+        if color_scheme == Qt.ColorScheme.Dark:
+            self.ui.plotWidget.setBackground(None)
+            pg.setConfigOptions(foreground='w')
+        else:
+            self.ui.plotWidget.setBackground('w')
+            pg.setConfigOptions(foreground='k')
+
         self.curves[:] = []
 
         if self.simulationThread is not None:
@@ -874,7 +886,7 @@ class MainWindow(QMainWindow):
         else:
             stop_time = 1.0
 
-        pen = (0, 0, 255)
+        pen = pg.mkPen('#548AF7')
 
         for variable in sorted(self.selectedVariables, key=lambda v: v.name):
 
@@ -956,8 +968,8 @@ class MainWindow(QMainWindow):
 
         filename, _ = QFileDialog.getSaveFileName(parent=self,
                                                   caption="Save Result",
-                                                  directory=filename + '_out.csv',
-                                                  filter="Comma Separated Values (*.csv);;All Files (*.*)")
+                                                  dir=filename + '_out.csv',
+                                                  filter="CSV Files (*.csv);;All Files (*.*)")
 
         if filename:
             from ..util import write_csv
@@ -1034,7 +1046,7 @@ class MainWindow(QMainWindow):
                 filename, _ = os.path.splitext(self.filename)
                 filename, _ = QFileDialog.getSaveFileName(parent=self,
                                                           caption="Save validation messages",
-                                                          directory=filename + '_validation.txt',
+                                                          dir=filename + '_validation.txt',
                                                           filter="Text Files (*.txt);;All Files (*.*)")
                 if filename:
                     with open(filename, 'w') as f:
@@ -1367,3 +1379,19 @@ class MainWindow(QMainWindow):
                                 "Failed to add Co-Simulation Wrapper %s. %s" % (self.filename, e))
 
         self.load(self.filename)
+
+
+    def setColorScheme(self, colorScheme: Qt.ColorScheme):
+
+        theme = 'dark' if colorScheme == Qt.ColorScheme.Dark else 'light'
+
+        self.ui.actionOpen.setIcon(QIcon(f':/icons/{theme}/folder-open.svg'))
+        self.ui.actionReload.setIcon(QIcon(f':/icons/{theme}/arrow-clockwise.svg'))
+        self.ui.actionShowSettings.setIcon(QIcon(f':/icons/{theme}/gear.svg'))
+        self.ui.actionShowFiles.setIcon(QIcon(f':/icons/{theme}/file-earmark-zip.svg'))
+        self.ui.actionShowDocumentation.setIcon(QIcon(f':/icons/{theme}/book.svg'))
+        self.ui.actionShowLog.setIcon(QIcon(f':/icons/{theme}/list-task.svg'))
+        self.ui.actionShowResults.setIcon(QIcon(f':/icons/{theme}/graph.svg'))
+
+        self.ui.filterToolButton.setIcon(QIcon(f':/icons/{theme}/filter.svg'))
+        self.ui.tableViewToolButton.setIcon(QIcon(f':/icons/{theme}/list.svg'))

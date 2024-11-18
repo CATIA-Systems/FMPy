@@ -1425,16 +1425,6 @@ QToolButton:checked, QToolButton:hover:pressed {
         </property>
         <item>
          <widget class="QLineEdit" name="filterLineEdit">
-          <property name="styleSheet">
-           <string notr="true">QLineEdit {
-     border: 1px solid #ddd;
-	 border-radius: 2px;
-     padding: 1px 5px 2px 5px;
-     background: transparent;
-	font-size: 11px;
- }
-</string>
-          </property>
           <property name="placeholderText">
            <string>filter variables</string>
           </property>
@@ -1449,24 +1439,7 @@ QToolButton:checked, QToolButton:hover:pressed {
            <string>Filter variables</string>
           </property>
           <property name="styleSheet">
-           <string notr="true">
-QToolButton {
-	width: 20px;
-	padding-right: 10px;
-}
-
-QToolButton::menu-arrow {
-    image: url(:/icons/down_arrow.png);
-}
-
-QToolButton::menu-button {
-    border: 1px transparent #76797C;
-    border-top-right-radius: 6px;
-    border-bottom-right-radius: 6px;
-    width: 16px;
-    outline: none;
-}
-</string>
+           <string notr="true">padding-right: 10px;</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -1495,7 +1468,7 @@ QToolButton::menu-button {
            <string>Toggle list view</string>
           </property>
           <property name="styleSheet">
-           <string notr="true"/>
+           <string notr="true">text-align:left;</string>
           </property>
           <property name="icon">
            <iconset resource="../icons/icons.qrc">

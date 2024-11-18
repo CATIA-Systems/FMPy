@@ -10,8 +10,8 @@ if __name__ == '__main__':
     from PySide6.QtWidgets import QApplication
     from fmpy.gui.MainWindow import MainWindow
 
-    if os.name == 'nt' and int(platform.release()) >= 8:
-        ctypes.windll.shcore.SetProcessDpiAwareness(True)
+    # if os.name == 'nt' and int(platform.release()) >= 8:
+    #     ctypes.windll.shcore.SetProcessDpiAwareness(True)
 
     # QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     # QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)

@@ -8,7 +8,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build-wheels:
     strategy:
       matrix:
         include:
@@ -26,7 +26,6 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.10'
-    - run: python --version
     - run: python -m pip install setuptools wheel attrs numpy pyqt5 requests
 #    - run: python -m pip install attrs dask jinja2 lark lxml matplotlib notebook numpy plotly pyqt5 pyqtgraph requests scipy wheel
 #    - run: python -m pip install attrs Jinja2 lark lxml msgpack numpy pywin32 dask[bag] requests matplotlib scipy PyQt5 pyqtgraph PyQtWebEngine kaleido notebook plotly dash-bootstrap-components setuptools wheel
@@ -66,3 +65,29 @@ jobs:
        name: merged
        path: wheels/merged
        if-no-files-found: error
+  run-tests:
+    strategy:
+      matrix:
+        include:
+          - name: windows
+            image: windows-2022
+          - name: linux
+            image: ubuntu-22.04
+          - name: darwin
+            image: macos-13
+    runs-on: ${{ matrix.image }}
+    needs: [ merge-wheels ]
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'true'
+    - uses: actions/download-artifact@v4
+      with:
+        name: merged
+        path: .
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    - run: python -m pip install FMPy-0.3.21-py3-none-any.whl[complete]
+    - run: python -m pip install pytest
+    - run: pytest tests

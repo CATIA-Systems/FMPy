@@ -10,7 +10,12 @@ def compile_resources():
     from os.path import getmtime
     import PySide6
 
+    
     pyside_dir = Path(PySide6.__file__).parent
+
+    if os.name == 'posix':
+        pyside_dir = pyside_dir / 'Qt' / 'libexec'  # Path('/Users/tors10/Development/FMPy/.venv/lib/python3.10/site-packages/PySide6/Qt/libexec')
+
     gui_dir = Path(__file__).parent
     forms_dir = gui_dir / 'forms'
     generated_dir = gui_dir / 'generated'
@@ -31,7 +36,7 @@ def compile_resources():
 
             if os.path.isfile(ui_file):
                 if not py_file.is_file() or getmtime(ui_file) > os.path.getmtime(py_file):
-                    print("UIC'ing {ui_file}")
+                    print(f"UIC'ing {ui_file}")
                     uic = pyside_dir / 'uic'
                     check_call([uic, ui_file, '-o', py_file, '-g', 'python', '--from-imports'])
 

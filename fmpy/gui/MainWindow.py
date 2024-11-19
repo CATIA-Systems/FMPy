@@ -1180,14 +1180,19 @@ class MainWindow(QMainWindow):
         self.ui.graphicsView.setScene(scene)
         group = QGraphicsItemGroup()
         scene.addItem(group)
-        group.setPos(200.5, -50.5)
         lh = 15  # line height
 
         w = max(150., maxInputLabelWidth + maxOutputLabelWidth + 20)
         h = max(50., 10 + lh * max(len(inputVariables), len(outputVariables)))
 
         block = QGraphicsRectItem(0, 0, w, h, group)
-        block.setPen(QColor.fromRgb(0, 0, 0))
+
+        if QGuiApplication.styleHints().colorScheme() == Qt.ColorScheme.Dark:
+            textColor = QColor.fromRgb(255, 255, 255)
+        else:
+            textColor = QColor.fromRgb(0, 0, 0)
+
+        block.setPen(textColor)
 
         pen = QPen()
         pen.setWidthF(1)
@@ -1197,9 +1202,11 @@ class MainWindow(QMainWindow):
 
         # inputs
         y = floor((h - len(inputVariables) * lh) / 2 - 2)
+
         for variable in inputVariables:
-            text = QGraphicsTextItem(variable.name, group)
-            text.setDefaultTextColor(QColor.fromRgb(0, 0, 0))
+
+            text = QGraphicsTextItem(variable.name)
+            group.addToGroup(text)
             text.setFont(font)
             text.setX(3)
             text.setY(y)
@@ -1221,9 +1228,11 @@ class MainWindow(QMainWindow):
 
         # outputs
         y = floor((h - len(outputVariables) * lh) / 2 - 2)
+
         for variable in outputVariables:
-            text = QGraphicsTextItem(variable.name, group)
-            text.setDefaultTextColor(QColor.fromRgb(0, 0, 0))
+
+            text = QGraphicsTextItem(variable.name)
+            group.addToGroup(text)
             text.setFont(font)
             text.setX(w - 3 - text.boundingRect().width())
             text.setY(y)

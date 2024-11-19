@@ -698,7 +698,7 @@
                <widget class="QComboBox" name="solverComboBox">
                 <property name="minimumSize">
                  <size>
-                  <width>90</width>
+                  <width>100</width>
                   <height>0</height>
                  </size>
                 </property>

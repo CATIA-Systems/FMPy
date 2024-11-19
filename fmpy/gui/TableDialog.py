@@ -1,6 +1,6 @@
-from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex
-from PyQt5.QtGui import QFont, QIcon
-from PyQt5.QtWidgets import QDialog, QHeaderView
+from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex
+from PySide6.QtGui import QFont, QIcon
+from PySide6.QtWidgets import QDialog, QHeaderView
 import pyqtgraph as pg
 import numpy as np
 
@@ -172,8 +172,6 @@ class TableDialog(QDialog):
             return 0 < len(subs) <= 2
         except:
             return False
-
-        return False
 
     @staticmethod
     def subscripts(name):

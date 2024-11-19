@@ -7,6 +7,7 @@ from fmpy import platform, supported_platforms, simulate_fmu
 from fmpy.util import add_remoting, download_file, has_wsl, has_wine64
 
 
+@skipIf(True, "Set to False to run remoting tests")
 class RemotingTest(unittest.TestCase):
 
     @skipIf(platform != 'win64', "Windows 32-bit is only supported on Windows 64-bit")

@@ -5,14 +5,14 @@ from pathlib import Path
 from shutil import make_archive, unpack_archive
 
 root = Path(__file__).parent
-merge = root / 'merge'
-merged = root / 'merged'
+temp = root / 'wheels' / 'temp'
+merged = root / 'wheels' / 'merged'
 
 
-if merge.exists():
-    shutil.rmtree(merge)
+if temp.exists():
+    shutil.rmtree(temp)
 
-os.makedirs(merge)
+os.makedirs(temp)
 
 if merged.exists():
     shutil.rmtree(merged)
@@ -21,7 +21,7 @@ os.makedirs(merged)
 
 wheels = []
 
-for dirpath, dirnames, filenames in os.walk(root):
+for dirpath, _, filenames in os.walk(root / 'wheels'):
     for filename in filenames:
         if filename.endswith('.whl'):
             wheels.append(root / dirpath / filename)
@@ -35,15 +35,15 @@ for wheel in wheels:
                 record = info.filename
                 break
         records.update(archive.read(record).split(b'\n'))
-        archive.extractall(merge)
+        archive.extractall(temp)
 
-    unpack_archive(wheel, merge, 'zip')
+    unpack_archive(wheel, temp, 'zip')
 
-with open(merge / record, 'w') as record:
+with open(temp / record, 'w') as record:
     lines = [line.decode('utf-8') for line in records]
     lines.sort()
     lines = list(filter(lambda line: line != "", lines))
     record.writelines('\n'.join(lines))
 
-make_archive(str(merged / wheels[0].stem), 'zip', merge)
+make_archive(str(merged / wheels[0].stem), 'zip', temp)
 os.rename(merged / (wheels[0].stem + '.zip'), merged / wheels[0].name)

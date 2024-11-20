@@ -1232,6 +1232,7 @@ def create_jupyter_notebook(filename, notebook_filename=None):
         output_variables.append((variable.name, variable.description))
 
     for variable in model_description.modelVariables:
+
         if variable.causality == 'parameter' and variable.variability in ['fixed', 'tunable']:
 
             name, start, unit, description = variable.name, variable.start, variable.unit, variable.description
@@ -1252,10 +1253,12 @@ def create_jupyter_notebook(filename, notebook_filename=None):
 
             if unit is None and variable.declaredType is not None:
                 unit = variable.declaredType.unit
+
             max_name = max(max_name, len(name))
             max_start = max(max_start, len(start))
             max_unit = max(max_unit, len(unit)) if unit else max_unit
-            parameters.append((name, start, unit, description))
+
+            parameters.append((name, start, unit, ' '.join(description.splitlines())))
 
     code = "import fmpy\n"
     code += "from fmpy import *\n"
@@ -1279,7 +1282,7 @@ def create_jupyter_notebook(filename, notebook_filename=None):
         else:
             code += start.rjust(max_start + 1) + "," + " " * (max_unit + 5)
         if description:
-            code += "  # " + description
+            code += "  # " + ' '.join(description.splitlines())
         code += "\n"
 
     code += "}\n"
@@ -1288,7 +1291,7 @@ def create_jupyter_notebook(filename, notebook_filename=None):
     for name, description in output_variables:
         code += "    " + ("'%s'," % name.replace("'", "\\'")).ljust(max_output + 3)
         if description:
-            code += "  # " + description
+            code += "  # " + ' '.join(description.splitlines())
         code += "\n"
     code += "]\n"
     code += "\n"

@@ -1322,7 +1322,7 @@ class MainWindow(QMainWindow):
             self.load(self.filename)
 
     def createJupyterNotebook(self):
-        """ Create a Juypyter Notebook to simulate the FMU """
+        """ Create a Jupyter Notebook to simulate the FMU """
 
         from fmpy.util import create_jupyter_notebook
 
@@ -1330,7 +1330,7 @@ class MainWindow(QMainWindow):
 
         filename, _ = QFileDialog.getSaveFileName(
             parent=self,
-            directory=filename + '.ipynb',
+            dir=f'{filename}.ipynb',
             filter='Jupyter Notebooks (*.ipynb);;All Files (*)'
         )
 
@@ -1358,7 +1358,7 @@ class MainWindow(QMainWindow):
         project_dir = QFileDialog.getExistingDirectory(
             parent=self,
             caption='Select CMake Project Folder',
-            directory=os.path.dirname(self.filename))
+            dir=os.path.dirname(self.filename))
 
         if project_dir:
             create_cmake_project(self.filename, project_dir)

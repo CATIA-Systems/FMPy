@@ -1303,6 +1303,8 @@ QToolButton:checked, QToolButton:hover:pressed {
      <property name="title">
       <string>FMI &amp;Specifications</string>
      </property>
+     <addaction name="actionOpenFMI3Spec"/>
+     <addaction name="separator"/>
      <addaction name="actionOpenFMI2Spec"/>
      <addaction name="separator"/>
      <addaction name="actionOpenFMI1SpecCS"/>
@@ -1725,20 +1727,26 @@ QToolButton:checked, QToolButton:hover:pressed {
   </action>
   <action name="actionOpenFMI2Spec">
    <property name="text">
-    <string>FMI 2.0.3</string>
+    <string>FMI 2.0.4</string>
    </property>
    <property name="toolTip">
-    <string>FMI 2.0.2</string>
+    <string>Open FMI Specification 2.0.4</string>
    </property>
   </action>
   <action name="actionOpenFMI1SpecCS">
    <property name="text">
-    <string>FMI 1.0.1 Co-Simulation</string>
+    <string>FMI 1.0.1 for Co-Simulation</string>
+   </property>
+   <property name="toolTip">
+    <string>Open FMI 1.0.1 Specification for Co-Simulation</string>
    </property>
   </action>
   <action name="actionOpenFMI1SpecME">
    <property name="text">
     <string>FMI 1.0.1 for Model Exchange</string>
+   </property>
+   <property name="toolTip">
+    <string>Open FMI Specification 1.0.1 for Model Exchange</string>
    </property>
   </action>
   <action name="actionClose">
@@ -1979,6 +1987,17 @@ QToolButton:checked, QToolButton:hover:pressed {
    </property>
    <property name="text">
     <string>&amp;Remove Source Code</string>
+   </property>
+  </action>
+  <action name="actionOpenFMI3Spec">
+   <property name="text">
+    <string>FMI 3.0.1</string>
+   </property>
+   <property name="toolTip">
+    <string>Open FMI Specification 3.0.1</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
  </widget>

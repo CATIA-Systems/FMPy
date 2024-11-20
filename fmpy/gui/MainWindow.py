@@ -179,13 +179,13 @@ class MainWindow(QMainWindow):
         self.tableModel = VariablesTableModel(self.selectedVariables, self.startValues)
         self.tableFilterModel = VariablesFilterModel()
         self.tableFilterModel.setSourceModel(self.tableModel)
-        self.tableFilterModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self.tableFilterModel.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.ui.tableView.setModel(self.tableFilterModel)
 
         self.treeModel = VariablesTreeModel(self.selectedVariables, self.startValues)
         self.treeFilterModel = VariablesFilterModel()
         self.treeFilterModel.setSourceModel(self.treeModel)
-        self.treeFilterModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self.treeFilterModel.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.ui.treeView.setModel(self.treeFilterModel)
 
         for i, (w, n) in enumerate(zip(VariablesModel.COLUMN_WIDTHS, VariablesModel.COLUMN_NAMES)):

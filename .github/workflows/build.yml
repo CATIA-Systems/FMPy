@@ -26,9 +26,7 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.10'
-    - run: python -m pip install setuptools wheel attrs numpy pyqt5 requests
-#    - run: python -m pip install attrs dask jinja2 lark lxml matplotlib notebook numpy plotly pyqt5 pyqtgraph requests scipy wheel
-#    - run: python -m pip install attrs Jinja2 lark lxml msgpack numpy pywin32 dask[bag] requests matplotlib scipy PyQt5 pyqtgraph PyQtWebEngine kaleido notebook plotly dash-bootstrap-components setuptools wheel
+    - run: python -m pip install setuptools wheel attrs numpy PySide6 requests
     - run: python build_cvode.py
     - run: python build_binaries.py
     - if: matrix.name == 'linux' || matrix.name == 'windows'
@@ -88,9 +86,10 @@ jobs:
       with:
         name: merged
         path: .
+    - run: ls
     - uses: actions/setup-python@v5
       with:
         python-version: '3.10'
-    - run: python -m pip install FMPy-0.3.21-py3-none-any.whl[complete]
+    - run: python -m pip install fmpy-0.3.21-py3-none-any.whl[complete]
     - run: python -m pip install pytest
     - run: pytest tests

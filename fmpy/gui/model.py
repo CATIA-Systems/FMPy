@@ -1,5 +1,8 @@
-from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, pyqtSignal, QSortFilterProxyModel
-from PyQt5.QtGui import QPixmap, QFont, QIcon
+from typing import Any
+
+from PySide6.QtCore import QAbstractItemModel, QModelIndex, Qt, QSortFilterProxyModel, QPersistentModelIndex
+from PySide6.QtGui import QFont, QIcon
+from PySide6.QtCore import Signal
 
 from ..model_description import ScalarVariable
 
@@ -31,8 +34,8 @@ class VariablesModel(QAbstractItemModel):
 
     COLUMN_NAMES = ['Name', 'Type', 'Dimensions', 'Value Reference', 'Initial', 'Causality', 'Variability', 'Start', 'Nominal', 'Min', 'Max', 'Unit', 'Plot', 'Description']
     COLUMN_WIDTHS = [200, 50, 70, 100, 70, 70, 70, 70, 70, 70, 70, 40, 40]
-    variableSelected = pyqtSignal(ScalarVariable, name='variableSelected')
-    variableDeselected = pyqtSignal(ScalarVariable, name='variableDeselected')
+    variableSelected = Signal(ScalarVariable, name='variableSelected')
+    variableDeselected = Signal(ScalarVariable, name='variableDeselected')
 
     def __init__(self, selectedVariables, startValues, parent=None):
         super(VariablesModel, self).__init__(parent)
@@ -144,7 +147,7 @@ class VariablesModel(QAbstractItemModel):
         else:
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
-    def setData(self, index, value, role):
+    def setData(self, index: QModelIndex | QPersistentModelIndex, value: Any, role: int):
 
         if not index.isValid():
             return False
@@ -158,8 +161,8 @@ class VariablesModel(QAbstractItemModel):
             else:
                 self.startValues.pop(variable.name, None)
             return True
-        elif column == 'Plot' and role == Qt.CheckStateRole:
-            if value == Qt.Checked:
+        elif column == 'Plot' and role == Qt.CheckStateRole.value:
+            if value == Qt.Checked.value:
                 self.variableSelected.emit(variable)
             else:
                 self.variableDeselected.emit(variable)

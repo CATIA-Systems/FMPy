@@ -10,70 +10,6 @@
     <height>836</height>
    </rect>
   </property>
-  <property name="palette">
-   <palette>
-    <active>
-     <colorrole role="Base">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-     <colorrole role="Window">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-    </active>
-    <inactive>
-     <colorrole role="Base">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-     <colorrole role="Window">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-    </inactive>
-    <disabled>
-     <colorrole role="Base">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-     <colorrole role="Window">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-    </disabled>
-   </palette>
-  </property>
   <property name="acceptDrops">
    <bool>true</bool>
   </property>
@@ -108,10 +44,10 @@
         <item>
          <spacer name="verticalSpacer_4">
           <property name="orientation">
-           <enum>Qt::Vertical</enum>
+           <enum>Qt::Orientation::Vertical</enum>
           </property>
           <property name="sizeType">
-           <enum>QSizePolicy::Fixed</enum>
+           <enum>QSizePolicy::Policy::Fixed</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -124,7 +60,7 @@
         <item>
          <spacer name="verticalSpacer_2">
           <property name="orientation">
-           <enum>Qt::Vertical</enum>
+           <enum>Qt::Orientation::Vertical</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -170,7 +106,7 @@
            <item>
             <spacer name="horizontalSpacer_9">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -193,15 +129,14 @@
               <string>open an FMU</string>
              </property>
              <property name="icon">
-              <iconset theme="folder-open">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset theme="folder-open"/>
              </property>
             </widget>
            </item>
            <item>
             <spacer name="horizontalSpacer_10">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -217,10 +152,10 @@
         <item>
          <spacer name="verticalSpacer">
           <property name="orientation">
-           <enum>Qt::Vertical</enum>
+           <enum>Qt::Orientation::Vertical</enum>
           </property>
           <property name="sizeType">
-           <enum>QSizePolicy::Fixed</enum>
+           <enum>QSizePolicy::Policy::Fixed</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -242,7 +177,7 @@
            <item>
             <spacer name="horizontalSpacer">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -271,7 +206,7 @@
            <item>
             <spacer name="horizontalSpacer_2">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -287,7 +222,7 @@
         <item>
          <spacer name="verticalSpacer_3">
           <property name="orientation">
-           <enum>Qt::Vertical</enum>
+           <enum>Qt::Orientation::Vertical</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -346,7 +281,7 @@
               <bool>true</bool>
              </property>
              <property name="textInteractionFlags">
-              <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+              <set>Qt::TextInteractionFlag::LinksAccessibleByMouse|Qt::TextInteractionFlag::TextSelectableByMouse</set>
              </property>
             </widget>
            </item>
@@ -382,7 +317,7 @@
               <string/>
              </property>
              <property name="textInteractionFlags">
-              <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+              <set>Qt::TextInteractionFlag::LinksAccessibleByMouse|Qt::TextInteractionFlag::TextSelectableByMouse</set>
              </property>
             </widget>
            </item>
@@ -425,7 +360,7 @@
               <string/>
              </property>
              <property name="textInteractionFlags">
-              <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+              <set>Qt::TextInteractionFlag::LinksAccessibleByMouse|Qt::TextInteractionFlag::TextSelectableByMouse</set>
              </property>
             </widget>
            </item>
@@ -467,7 +402,7 @@
               <string>Model Name</string>
              </property>
              <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+              <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
              </property>
             </widget>
            </item>
@@ -490,7 +425,7 @@
               <string/>
              </property>
              <property name="textInteractionFlags">
-              <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+              <set>Qt::TextInteractionFlag::LinksAccessibleByMouse|Qt::TextInteractionFlag::TextSelectableByMouse</set>
              </property>
             </widget>
            </item>
@@ -520,7 +455,7 @@
               <string/>
              </property>
              <property name="textInteractionFlags">
-              <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+              <set>Qt::TextInteractionFlag::LinksAccessibleByMouse|Qt::TextInteractionFlag::TextSelectableByMouse</set>
              </property>
             </widget>
            </item>
@@ -539,7 +474,7 @@
               <bool>true</bool>
              </property>
              <property name="textInteractionFlags">
-              <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+              <set>Qt::TextInteractionFlag::LinksAccessibleByMouse|Qt::TextInteractionFlag::TextSelectableByMouse</set>
              </property>
             </widget>
            </item>
@@ -555,7 +490,7 @@
               <string>Description</string>
              </property>
              <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+              <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
              </property>
             </widget>
            </item>
@@ -574,7 +509,7 @@
               <bool>true</bool>
              </property>
              <property name="textInteractionFlags">
-              <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+              <set>Qt::TextInteractionFlag::LinksAccessibleByMouse|Qt::TextInteractionFlag::TextSelectableByMouse</set>
              </property>
             </widget>
            </item>
@@ -590,14 +525,14 @@
               <string>Generation Tool</string>
              </property>
              <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+              <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
              </property>
             </widget>
            </item>
            <item row="0" column="2" rowspan="8">
             <widget class="QLabel" name="modelImageLabel">
              <property name="frameShadow">
-              <enum>QFrame::Sunken</enum>
+              <enum>QFrame::Shadow::Sunken</enum>
              </property>
             </widget>
            </item>
@@ -659,7 +594,7 @@
               <string>...</string>
              </property>
              <property name="popupMode">
-              <enum>QToolButton::MenuButtonPopup</enum>
+              <enum>QToolButton::ToolButtonPopupMode::MenuButtonPopup</enum>
              </property>
             </widget>
            </item>
@@ -731,7 +666,7 @@
               <item>
                <spacer name="horizontalSpacer_4">
                 <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+                 <enum>Qt::Orientation::Horizontal</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -763,7 +698,7 @@
                <widget class="QComboBox" name="solverComboBox">
                 <property name="minimumSize">
                  <size>
-                  <width>90</width>
+                  <width>100</width>
                   <height>0</height>
                  </size>
                 </property>
@@ -771,7 +706,7 @@
                  <number>1</number>
                 </property>
                 <property name="sizeAdjustPolicy">
-                 <enum>QComboBox::AdjustToContents</enum>
+                 <enum>QComboBox::SizeAdjustPolicy::AdjustToContents</enum>
                 </property>
                 <item>
                  <property name="text">
@@ -788,7 +723,7 @@
               <item>
                <spacer name="horizontalSpacer_11">
                 <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+                 <enum>Qt::Orientation::Horizontal</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -838,7 +773,7 @@
               <item>
                <spacer name="horizontalSpacer_12">
                 <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+                 <enum>Qt::Orientation::Horizontal</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -903,7 +838,7 @@
                  <item>
                   <spacer name="horizontalSpacer_6">
                    <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
+                    <enum>Qt::Orientation::Horizontal</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -969,7 +904,7 @@
               <item>
                <spacer name="horizontalSpacer_3">
                 <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+                 <enum>Qt::Orientation::Horizontal</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -1019,7 +954,7 @@
            <item>
             <widget class="QGraphicsView" name="graphicsView">
              <property name="frameShape">
-              <enum>QFrame::NoFrame</enum>
+              <enum>QFrame::Shape::NoFrame</enum>
              </property>
             </widget>
            </item>
@@ -1064,7 +999,7 @@
         <item row="0" column="0">
          <widget class="QTreeView" name="filesTreeView">
           <property name="frameShape">
-           <enum>QFrame::NoFrame</enum>
+           <enum>QFrame::Shape::NoFrame</enum>
           </property>
          </widget>
         </item>
@@ -1206,7 +1141,7 @@ QToolButton:checked, QToolButton:hover:pressed {
               <bool>false</bool>
              </property>
              <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonTextBesideIcon</enum>
+              <enum>Qt::ToolButtonStyle::ToolButtonTextBesideIcon</enum>
              </property>
              <property name="autoRaise">
               <bool>true</bool>
@@ -1232,7 +1167,7 @@ QToolButton:checked, QToolButton:hover:pressed {
               <bool>true</bool>
              </property>
              <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonTextBesideIcon</enum>
+              <enum>Qt::ToolButtonStyle::ToolButtonTextBesideIcon</enum>
              </property>
              <property name="autoRaise">
               <bool>true</bool>
@@ -1258,7 +1193,7 @@ QToolButton:checked, QToolButton:hover:pressed {
               <bool>true</bool>
              </property>
              <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonTextBesideIcon</enum>
+              <enum>Qt::ToolButtonStyle::ToolButtonTextBesideIcon</enum>
              </property>
              <property name="autoRaise">
               <bool>true</bool>
@@ -1284,7 +1219,7 @@ QToolButton:checked, QToolButton:hover:pressed {
               <bool>true</bool>
              </property>
              <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonTextBesideIcon</enum>
+              <enum>Qt::ToolButtonStyle::ToolButtonTextBesideIcon</enum>
              </property>
              <property name="autoRaise">
               <bool>true</bool>
@@ -1297,7 +1232,7 @@ QToolButton:checked, QToolButton:hover:pressed {
         <item>
          <widget class="QTreeView" name="logTreeView">
           <property name="frameShape">
-           <enum>QFrame::NoFrame</enum>
+           <enum>QFrame::Shape::NoFrame</enum>
           </property>
           <property name="rootIsDecorated">
            <bool>false</bool>
@@ -1338,7 +1273,7 @@ QToolButton:checked, QToolButton:hover:pressed {
      <x>0</x>
      <y>0</y>
      <width>1125</width>
-     <height>22</height>
+     <height>33</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -1490,16 +1425,6 @@ QToolButton:checked, QToolButton:hover:pressed {
         </property>
         <item>
          <widget class="QLineEdit" name="filterLineEdit">
-          <property name="styleSheet">
-           <string notr="true">QLineEdit {
-     border: 1px solid #ddd;
-	 border-radius: 2px;
-     padding: 1px 5px 2px 5px;
-     background: transparent;
-	font-size: 11px;
- }
-</string>
-          </property>
           <property name="placeholderText">
            <string>filter variables</string>
           </property>
@@ -1514,40 +1439,23 @@ QToolButton:checked, QToolButton:hover:pressed {
            <string>Filter variables</string>
           </property>
           <property name="styleSheet">
-           <string notr="true">
-QToolButton {
-	width: 20px;
-	padding-right: 10px;
-}
-
-QToolButton::menu-arrow {
-    image: url(:/icons/down_arrow.png);
-}
-
-QToolButton::menu-button {
-    border: 1px transparent #76797C;
-    border-top-right-radius: 6px;
-    border-bottom-right-radius: 6px;
-    width: 16px;
-    outline: none;
-}
-</string>
+           <string notr="true">padding-right: 10px;</string>
           </property>
           <property name="text">
            <string>...</string>
           </property>
           <property name="icon">
-           <iconset theme="filter">
-            <normaloff>.</normaloff>.</iconset>
+           <iconset resource="../icons/icons.qrc">
+            <normaloff>:/icons/dark/filter.svg</normaloff>:/icons/dark/filter.svg</iconset>
           </property>
           <property name="checkable">
            <bool>true</bool>
           </property>
           <property name="popupMode">
-           <enum>QToolButton::MenuButtonPopup</enum>
+           <enum>QToolButton::ToolButtonPopupMode::MenuButtonPopup</enum>
           </property>
           <property name="toolButtonStyle">
-           <enum>Qt::ToolButtonIconOnly</enum>
+           <enum>Qt::ToolButtonStyle::ToolButtonIconOnly</enum>
           </property>
           <property name="autoRaise">
            <bool>true</bool>
@@ -1560,11 +1468,11 @@ QToolButton::menu-button {
            <string>Toggle list view</string>
           </property>
           <property name="styleSheet">
-           <string notr="true"/>
+           <string notr="true">text-align:left;</string>
           </property>
           <property name="icon">
-           <iconset theme="list">
-            <normaloff>.</normaloff>.</iconset>
+           <iconset resource="../icons/icons.qrc">
+            <normaloff>:/icons/dark/list.svg</normaloff>:/icons/dark/list.svg</iconset>
           </property>
           <property name="checkable">
            <bool>true</bool>
@@ -1599,13 +1507,13 @@ QToolButton::menu-button {
          <item row="0" column="0">
           <widget class="QTreeView" name="treeView">
            <property name="contextMenuPolicy">
-            <enum>Qt::CustomContextMenu</enum>
+            <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
            </property>
            <property name="frameShape">
-            <enum>QFrame::NoFrame</enum>
+            <enum>QFrame::Shape::NoFrame</enum>
            </property>
            <property name="selectionMode">
-            <enum>QAbstractItemView::ExtendedSelection</enum>
+            <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
            </property>
           </widget>
          </item>
@@ -1628,13 +1536,13 @@ QToolButton::menu-button {
          <item row="0" column="0">
           <widget class="QTreeView" name="tableView">
            <property name="contextMenuPolicy">
-            <enum>Qt::CustomContextMenu</enum>
+            <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
            </property>
            <property name="frameShape">
-            <enum>QFrame::NoFrame</enum>
+            <enum>QFrame::Shape::NoFrame</enum>
            </property>
            <property name="selectionMode">
-            <enum>QAbstractItemView::ExtendedSelection</enum>
+            <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
            </property>
            <property name="rootIsDecorated">
             <bool>false</bool>
@@ -1677,8 +1585,8 @@ QToolButton::menu-button {
   </widget>
   <action name="actionSimulate">
    <property name="icon">
-    <iconset theme="play">
-     <normaloff>:/icons/play.svg</normaloff>:/icons/play.svg</iconset>
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/icons/dark/play.svg</normaloff>:/icons/dark/play.svg</iconset>
    </property>
    <property name="text">
     <string>Simulate</string>
@@ -1692,8 +1600,8 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="gear">
-     <normaloff>:/icons/gear.svg</normaloff>:/icons/gear.svg</iconset>
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/icons/dark/gear.svg</normaloff>:/icons/dark/gear.svg</iconset>
    </property>
    <property name="text">
     <string>Settings</string>
@@ -1704,8 +1612,8 @@ QToolButton::menu-button {
   </action>
   <action name="actionOpen">
    <property name="icon">
-    <iconset theme="folder-open">
-     <normaloff>:/icons/folder-open.svg</normaloff>:/icons/folder-open.svg</iconset>
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/icons/dark/folder-open.svg</normaloff>:/icons/dark/folder-open.svg</iconset>
    </property>
    <property name="text">
     <string>&amp;Open</string>
@@ -1722,8 +1630,8 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="graph">
-     <normaloff>:/icons/graph.svg</normaloff>:/icons/graph.svg</iconset>
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/icons/dark/graph.svg</normaloff>:/icons/dark/graph.svg</iconset>
    </property>
    <property name="text">
     <string>Results</string>
@@ -1857,8 +1765,8 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="list-task">
-     <normaloff>:/icons/list-task.svg</normaloff>:/icons/list-task.svg</iconset>
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/icons/dark/list-task.svg</normaloff>:/icons/dark/list-task.svg</iconset>
    </property>
    <property name="text">
     <string>Log</string>
@@ -1921,8 +1829,8 @@ QToolButton::menu-button {
   </action>
   <action name="actionReload">
    <property name="icon">
-    <iconset theme="arrow-clockwise">
-     <normaloff>:/icons/arrow-clockwise.svg</normaloff>:/icons/arrow-clockwise.svg</iconset>
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/icons/dark/arrow-clockwise.svg</normaloff>:/icons/dark/arrow-clockwise.svg</iconset>
    </property>
    <property name="text">
     <string>&amp;Reload</string>
@@ -2038,8 +1946,8 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="book">
-     <normaloff>:/icons/book.svg</normaloff>:/icons/book.svg</iconset>
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/icons/dark/book.svg</normaloff>:/icons/dark/book.svg</iconset>
    </property>
    <property name="text">
     <string>Show documentation</string>
@@ -2050,8 +1958,8 @@ QToolButton::menu-button {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="file-earmark-zip">
-     <normaloff>:/icons/file-earmark-zip.svg</normaloff>:/icons/file-earmark-zip.svg</iconset>
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/icons/dark/file-earmark-zip.svg</normaloff>:/icons/dark/file-earmark-zip.svg</iconset>
    </property>
    <property name="text">
     <string>Show archive contents</string>

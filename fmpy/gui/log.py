@@ -1,21 +1,22 @@
-from PyQt5.QtCore import QAbstractTableModel, Qt, QModelIndex, pyqtSignal, QSortFilterProxyModel
-from PyQt5.QtGui import QIcon
+from PySide6.QtCore import QAbstractTableModel, Qt, QModelIndex, QSortFilterProxyModel
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import Signal
 
 
 class Log(QAbstractTableModel):
 
-    currentMessageChanged = pyqtSignal(str, str)
-    numberOfDebugMessagesChanged = pyqtSignal(int)
-    numberOfInfoMessagesChanged = pyqtSignal(int)
-    numberOfWarningMessagesChanged = pyqtSignal(int)
-    numberOfErrorMessagesChanged = pyqtSignal(int)
+    currentMessageChanged = Signal(str, str)
+    numberOfDebugMessagesChanged = Signal(int)
+    numberOfInfoMessagesChanged = Signal(int)
+    numberOfWarningMessagesChanged = Signal(int)
+    numberOfErrorMessagesChanged = Signal(int)
 
     @staticmethod
     def severity(level):
         return ['debug', 'info', 'warning', 'error'].index(level)
 
     def __init__(self, parent=None):
-        super(QAbstractTableModel, self).__init__(parent)
+        super().__init__(parent)
         self.messages = []
         self.currentLevel = 'debug'
         self.numberOfDebugMessages = 0
@@ -90,7 +91,7 @@ class Log(QAbstractTableModel):
 class LogMessagesFilterProxyModel(QSortFilterProxyModel):
 
     def __init__(self, parent=None):
-        super(QSortFilterProxyModel, self).__init__(parent)
+        super().__init__(parent)
         self.showDebugMessages = False
         self.showInfoMessages = True
         self.showWarningMessages = True

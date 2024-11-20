@@ -401,7 +401,10 @@ class VariablesFilterModel(QSortFilterProxyModel):
                     return False
 
         if self.fixedFilterString:
-            return self.fixedFilterString in variable.name
+            if self.filterCaseSensitivity() == Qt.CaseSensitivity.CaseSensitive:
+                return self.fixedFilterString in variable.name
+            else:
+                return self.fixedFilterString.lower() in variable.name.lower()
         else:
             return True
         # return super(VariablesFilterModel, self).filterAcceptsColumn(source_row, source_parent)

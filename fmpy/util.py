@@ -1237,6 +1237,9 @@ def create_jupyter_notebook(filename, notebook_filename=None):
 
             name, start, unit, description = variable.name, variable.start, variable.unit, variable.description
 
+            if description:
+                description = ' '.join(description.splitlines())
+
             def fix(v):
                 if variable.type == 'String':
                     return f"'%s'" % v.replace("'", "\\'")
@@ -1258,7 +1261,7 @@ def create_jupyter_notebook(filename, notebook_filename=None):
             max_start = max(max_start, len(start))
             max_unit = max(max_unit, len(unit)) if unit else max_unit
 
-            parameters.append((name, start, unit, ' '.join(description.splitlines())))
+            parameters.append((name, start, unit, description))
 
     code = "import fmpy\n"
     code += "from fmpy import *\n"

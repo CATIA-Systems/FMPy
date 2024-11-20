@@ -126,7 +126,8 @@ class VariablesModel(QAbstractItemModel):
                 elif v.declaredType is not None and v.declaredType.unit is not None:
                     return v.declaredType.unit
             elif column == 'Description':
-                return ' '.join(v.description.splitlines())
+                if v.description is not None:
+                    return ' '.join(v.description.splitlines())
 
         return None
 

@@ -41,7 +41,7 @@ def continue_simulation(fmu_filename):
         filename=unzipdir,
         model_description=model_description,
         fmu_instance=fmu_instance,
-        initialize=False,  # the FMU instance is already instantiated
+        initialize=False,  # the FMU instance is already initialized
         start_time=1,  # start where we left off
         stop_time=2,
         terminate=False

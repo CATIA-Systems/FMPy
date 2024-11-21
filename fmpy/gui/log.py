@@ -52,7 +52,7 @@ class Log(QAbstractTableModel):
         import re
 
         last = len(self.messages)
-        simplified = re.sub('\s+', ' ', text).strip()
+        simplified = re.sub(r'\s+', ' ', text).strip()
         self.beginInsertRows(QModelIndex(), last, last)
         self.messages.append((level, simplified, text))
         self.endInsertRows()

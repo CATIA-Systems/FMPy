@@ -150,11 +150,6 @@ class Recorder(object):
     def sample(self, time, force=False):
         """ Record the variables """
 
-        # if not force and self.interval is not None and len(self.rows) > 0:
-        #     last = self.rows[-1][0]
-        #     if time - last + eps < self.interval:
-        #         return
-
         row = [time]
 
         for t in self.types:
@@ -344,8 +339,6 @@ class Input(object):
             return float('Inf')
 
         # find the next event
-        # i = np.argmax(self.t_events > time and not isclose(self.t_events, time))
-
         for i, t in enumerate(self.t_events):
             if t > time and not isclose(t, time):
                 return self.t_events[i]
@@ -394,7 +387,6 @@ class Input(object):
             return values, np.zeros_like(values)
 
         # check for event
-        # if time == t[i0] and i0 < len(t) - 1 and t[i0] == t[i0 + 1]:
         if isclose(time, t[i0]) and i0 < len(t) - 1 and isclose(t[i0], t[i0 + 1]):
 
             der_v = np.zeros((table.shape[0],))
@@ -1158,11 +1150,6 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
             if reset_solver:
                 solver.reset(time)
-
-            # TODO: necessary?
-            # if record_events:
-            #     # record values after the event
-            #     recorder.sample(time, force=True)
 
         if step_finished is not None and not step_finished(time, recorder):
             break

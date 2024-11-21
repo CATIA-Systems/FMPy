@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex
-from PySide6.QtGui import QFont, QIcon
+from PySide6.QtGui import QFont, QIcon, QGuiApplication
 from PySide6.QtWidgets import QDialog, QHeaderView
 import pyqtgraph as pg
 import numpy as np
@@ -14,7 +14,7 @@ class TableModel(QAbstractTableModel):
     def __init__(self, size, data, startValues, parent=None):
         super(TableModel, self).__init__(parent)
         self.size = size
-        self.data = data
+        self._data = data
         self.startValues = startValues
         self.boldFont = QFont()
         self.boldFont.setBold(True)
@@ -50,7 +50,7 @@ class TableModel(QAbstractTableModel):
             return None
 
         subs = self.ind2sub(index)
-        sv = self.data[subs]
+        sv = self._data[subs]
 
         if role == Qt.DisplayRole or role == Qt.EditRole:
             if sv.name in self.startValues:
@@ -68,7 +68,7 @@ class TableModel(QAbstractTableModel):
 
     def setData(self, index, value, role):
         subs = self.ind2sub(index)
-        sv = self.data[subs]
+        sv = self._data[subs]
 
         if value:
             self.startValues[sv.name] = value
@@ -124,7 +124,7 @@ class TableDialog(QDialog):
         variable_name = variable_name[:i]
 
         for sv in self.modelVariables:
-            if sv.name.startswith(variable_name):
+            if sv.name.startswith(variable_name + '['):
                 i = sv.name.rfind('[')
                 subs = sv.name[i+1:-1]
                 subs = subs.split(',')
@@ -194,6 +194,15 @@ class TableDialog(QDialog):
                     data[subs] = float(variable.start)
                 else:
                     data[subs] = np.nan
+
+        color_scheme = QGuiApplication.styleHints().colorScheme()
+
+        if color_scheme == Qt.ColorScheme.Dark:
+            self.ui.graphicsView.setBackground(None)
+            pg.setConfigOptions(foreground='w')
+        else:
+            self.ui.graphicsView.setBackground('w')
+            pg.setConfigOptions(foreground='k')
 
         self.ui.graphicsView.clear()
         plot = self.ui.graphicsView.addPlot()

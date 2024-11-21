@@ -17,13 +17,6 @@ from time import time as current_time
 from typing import Union, Any, Dict, Sequence, Callable
 
 
-def isclose(a, b):
-
-    import math
-
-    return math.isclose(a, b)
-
-
 class SimulationResult(np.ndarray):
 
     def __new__(subtype, shape, dtype=float, buffer=None, offset=0, strides=None, order=None, modelDescription=None):

@@ -10,70 +10,6 @@
     <height>561</height>
    </rect>
   </property>
-  <property name="palette">
-   <palette>
-    <active>
-     <colorrole role="Base">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-     <colorrole role="Window">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-    </active>
-    <inactive>
-     <colorrole role="Base">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-     <colorrole role="Window">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-    </inactive>
-    <disabled>
-     <colorrole role="Base">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-     <colorrole role="Window">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>255</red>
-        <green>255</green>
-        <blue>255</blue>
-       </color>
-      </brush>
-     </colorrole>
-    </disabled>
-   </palette>
-  </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <property name="spacing">
     <number>15</number>
@@ -86,11 +22,11 @@
 }</string>
      </property>
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <widget class="QTableView" name="tableView">
       <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
+       <enum>QFrame::Shape::NoFrame</enum>
       </property>
      </widget>
      <widget class="QFrame" name="frame">
@@ -101,7 +37,7 @@
        </sizepolicy>
       </property>
       <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
+       <enum>QFrame::Shape::NoFrame</enum>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <property name="leftMargin">
@@ -162,7 +98,7 @@
           <item row="0" column="2">
            <spacer name="horizontalSpacer">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Orientation::Horizontal</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -185,10 +121,10 @@
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
      </property>
     </widget>
    </item>

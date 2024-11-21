@@ -152,7 +152,7 @@ def validate_signal(t, y, t_ref, y_ref, num=1000, dx=20, dy=0.1):
         i_out   indices of the values in y outside the band
     """
 
-    from scipy.ndimage.filters import maximum_filter1d, minimum_filter1d
+    from scipy.ndimage import maximum_filter1d, minimum_filter1d
     from scipy.interpolate import interp1d
 
     # re-sample the reference signal into a uniform grid

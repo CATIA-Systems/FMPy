@@ -872,10 +872,10 @@ class MainWindow(QMainWindow):
         color_scheme = QGuiApplication.styleHints().colorScheme()
 
         if color_scheme == Qt.ColorScheme.Dark:
-            self.ui.plotWidget.setBackground(None)
+            self.ui.plotWidget.setBackground('#1e1e1e')
             pg.setConfigOptions(foreground='w')
         else:
-            self.ui.plotWidget.setBackground('w')
+            self.ui.plotWidget.setBackground('#fbfbfb')
             pg.setConfigOptions(foreground='k')
 
         self.curves[:] = []

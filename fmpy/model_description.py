@@ -1,6 +1,7 @@
 """ Object model and loader for the modelDescription.xml """
 
-from typing import List, Union, IO
+from os import PathLike
+from typing import List, IO
 from attr import attrs, attrib, Factory
 
 
@@ -420,7 +421,7 @@ def read_build_description(filename, validate=True):
     return build_configurations
 
 
-def read_model_description(filename: Union[str, IO], validate: bool = True, validate_variable_names: bool = False, validate_model_structure: bool = False) -> ModelDescription:
+def read_model_description(filename: str | PathLike | IO, validate: bool = True, validate_variable_names: bool = False, validate_model_structure: bool = False) -> ModelDescription:
     """ Read the model description from an FMU without extracting it
 
     Parameters:
@@ -436,16 +437,17 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
     import zipfile
     from lxml import etree
     import os
+    from os.path import isdir, isfile
     from . import validation
     import numpy as np
 
     # remember the original filename
     _filename = filename
 
-    if isinstance(filename, (str, os.PathLike)) and os.path.isdir(filename):  # extracted FMU
+    if isinstance(filename, (str, PathLike)) and isdir(filename):  # extracted FMU
         filename = os.path.join(filename, 'modelDescription.xml')
         tree = etree.parse(filename)
-    elif isinstance(filename, str) and os.path.isfile(filename) and filename.lower().endswith('.xml'):  # XML file
+    elif isinstance(filename, (str, PathLike)) and isfile(filename) and filename.lower().endswith('.xml'):  # XML file
         tree = etree.parse(filename)
     else:  # FMU as path or file like object
         with zipfile.ZipFile(filename, 'r') as zf:

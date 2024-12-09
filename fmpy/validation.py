@@ -161,6 +161,11 @@ def validate_model_description(model_description: ModelDescription, validate_var
             if v.displayUnit is not None and v.displayUnit not in unit_definitions[unit]:
                 problems.append(f'The display unit "{v.displayUnit}" of variable "{v.name}" (line {v.sourceline}) is not defined.')
 
+            for a in v.aliases:
+                if a.displayUnit is not None and a.displayUnit not in unit_definitions[unit]:
+                    problems.append(f'The display unit "{a.displayUnit}" of the variable alias "{a.name}" of '
+                                    f'variable "{v.name}" (line {v.sourceline}) is not defined.')
+
         if validate_model_structure:
             problems += _validate_model_structure(model_description)
 

@@ -152,6 +152,14 @@ class BaseUnit(object):
 
 
 @attrs(eq=False)
+class VariableAlias(object):
+
+    name = attrib(type=str)
+    description = attrib(type=str, default=None, repr=False)
+    displayUnit = attrib(type=str, default=None, repr=False)
+
+
+@attrs(eq=False)
 class ScalarVariable(object):
 
     name = attrib(type=str)
@@ -244,6 +252,8 @@ class ScalarVariable(object):
     intervalCounter = attrib(type=int, default=None, repr=False)
 
     shiftCounter = attrib(type=int, default=0, repr=False)
+
+    aliases = attrib(type=List[VariableAlias], default=Factory(list))
 
 
 @attrs(eq=False)
@@ -708,6 +718,14 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
                 sv.start = start.get('value')
         else:
             sv.start = value.get('start')
+
+        # add variable aliases
+        for alias in filter(lambda child: getattr(child, 'tag') == 'Alias', variable):
+            sv.aliases.append(VariableAlias(
+                name=alias.get('name'),
+                description=alias.get('description'),
+                displayUnit=alias.get('displayUnit')
+            ))
 
         type_map = {
             'Real':        float,

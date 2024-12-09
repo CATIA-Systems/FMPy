@@ -209,6 +209,7 @@ def create_fmu_container(configuration, output_filename):
     platform_map = {
         'darwin64': 'x86_64-darwin',
         'linux64': 'x86_64-linux',
+        'win32': 'x86-windows',
         'win64': 'x86_64-windows',
     }
 

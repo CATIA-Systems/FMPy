@@ -438,8 +438,9 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
     from lxml import etree
     import os
     from os.path import isdir, isfile
-    from . import validation
     import numpy as np
+    from pathlib import Path
+    from . import validation
 
     # remember the original filename
     _filename = filename
@@ -447,7 +448,7 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
     if isinstance(filename, (str, PathLike)) and isdir(filename):  # extracted FMU
         filename = os.path.join(filename, 'modelDescription.xml')
         tree = etree.parse(filename)
-    elif isinstance(filename, (str, PathLike)) and isfile(filename) and filename.lower().endswith('.xml'):  # XML file
+    elif isinstance(filename, (str, PathLike)) and Path(filename).is_file() and Path(filename).name.lower().endswith('.xml'):  # XML file
         tree = etree.parse(filename)
     else:  # FMU as path or file like object
         with zipfile.ZipFile(filename, 'r') as zf:

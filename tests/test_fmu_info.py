@@ -1,37 +1,34 @@
-import unittest
+import pytest
 from fmpy import platform, dump, simulate_fmu
 from fmpy.util import download_test_file, fmu_info
 
 
-class FMUInfoTest(unittest.TestCase):
+# download the FMU
+download_test_file('2.0', 'me', 'MapleSim', '2016.2', 'CoupledClutches', 'CoupledClutches.fmu')
 
-    @classmethod
-    def setUpClass(cls):
-        # download the FMU
-        download_test_file('2.0', 'me', 'MapleSim', '2016.2', 'CoupledClutches', 'CoupledClutches.fmu')
 
-    def test_illegal_fmi_type(self):
-        with self.assertRaises(Exception) as context:
-            simulate_fmu('CoupledClutches.fmu', fmi_type='Hybrid')
-        self.assertEqual('fmi_type must be one of "ModelExchange" or "CoSimulation"', str(context.exception))
+def test_illegal_fmi_type():
+    with pytest.raises(Exception) as context:
+        simulate_fmu('CoupledClutches.fmu', fmi_type='Hybrid')
+    assert 'fmi_type must be one of "ModelExchange" or "CoSimulation"' == str(context.value)
 
-    def test_unsupported_fmi_type(self):
-        with self.assertRaises(Exception) as context:
-            simulate_fmu('CoupledClutches.fmu', fmi_type='CoSimulation')
-        self.assertEqual('FMI type "CoSimulation" is not supported by the FMU', str(context.exception))
+def test_unsupported_fmi_type():
+    with pytest.raises(Exception) as context:
+        simulate_fmu('CoupledClutches.fmu', fmi_type='CoSimulation')
+    assert 'FMI type "CoSimulation" is not supported by the FMU' == str(context.value)
 
-    def test_fmu_info(self):
+def test_fmu_info():
 
-        info = fmu_info('CoupledClutches.fmu')
+    info = fmu_info('CoupledClutches.fmu')
 
-        generation_dates = {
-            'darwin64': '2017-01-19T17:56:19Z',
-            'linux64':  '2017-01-19T18:38:03Z',
-            'win32':    '2017-01-19T18:48:24Z',
-            'win64':    '2017-01-19T18:42:35Z',
-        }
+    generation_dates = {
+        'darwin64': '2017-01-19T17:56:19Z',
+        'linux64':  '2017-01-19T18:38:03Z',
+        'win32':    '2017-01-19T18:48:24Z',
+        'win64':    '2017-01-19T18:42:35Z',
+    }
 
-        expected = f"""
+    expected = f"""
 Model Info
 
   FMI Version        2.0
@@ -59,8 +56,8 @@ Variables (input, output)
   outputs[3]         output     0.00000000000000000e+00  rad/s    J3.w
   outputs[4]         output     0.00000000000000000e+00  rad/s    J4.w"""
 
-        self.assertEqual(expected, info)
+    assert expected == info
 
-    def test_dump(self):
-        # dump the FMU info
-        dump('CoupledClutches.fmu')
+def test_dump():
+    # dump the FMU info
+    dump('CoupledClutches.fmu')

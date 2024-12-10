@@ -1,56 +1,40 @@
+# Test the validation of model description
+
+import pytest
 from fmpy import read_model_description, simulate_fmu
-
-import unittest
-
 from fmpy.model_description import ValidationError
 from fmpy.util import download_file, download_test_file
 
 
-class ValidationTest(unittest.TestCase):
-    """ Test the validation of model description """
+def test_validate_derivatives():
 
+    filename = download_file(
+        url='https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/me/win64/MapleSim/2015.1/CoupledClutches/CoupledClutches.fmu',
+        checksum='af8f8ca4d7073b2d6207d8eea4a3257e3a23a69089f03181236ee3ecf13ff77f'
+    )
 
-    def test_validate_derivatives(self):
+    with pytest.raises(ValidationError) as exception_info:
+        read_model_description(filename, validate=True, validate_variable_names=False)
 
-        filename = download_file(
-            url='https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/me/win64/MapleSim/2015.1/CoupledClutches/CoupledClutches.fmu',
-            checksum='af8f8ca4d7073b2d6207d8eea4a3257e3a23a69089f03181236ee3ecf13ff77f'
-        )
+    assert exception_info.value.problems[0] == 'The unit "" of variable "inputs" (line 183) is not defined.'
 
-        problems = []
+def test_validate_variable_names():
 
-        try:
-            read_model_description(filename, validate=True, validate_variable_names=False)
-        except ValidationError as e:
-            problems = e.problems
+    filename = download_file(
+        url='https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/me/win64/MapleSim/2015.1/CoupledClutches/CoupledClutches.fmu',
+        checksum='af8f8ca4d7073b2d6207d8eea4a3257e3a23a69089f03181236ee3ecf13ff77f'
+    )
 
-        self.assertEqual(problems[0], 'The unit "" of variable "inputs" (line 183) is not defined.')
+    with pytest.raises(ValidationError) as exception_info:
+        read_model_description(filename, validate=True, validate_variable_names=True)
 
-    def test_validate_variable_names(self):
+    assert len(exception_info.value.problems) == 124
 
-        filename = download_file(
-            url='https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/me/win64/MapleSim/2015.1/CoupledClutches/CoupledClutches.fmu',
-            checksum='af8f8ca4d7073b2d6207d8eea4a3257e3a23a69089f03181236ee3ecf13ff77f'
-        )
+def test_validate_start_values():
 
-        problems = []
+    filename = download_test_file('2.0', 'ModelExchange', 'MapleSim', '2016.2', 'CoupledClutches', 'CoupledClutches.fmu')
 
-        try:
-            read_model_description(filename, validate=True, validate_variable_names=True)
-        except ValidationError as e:
-            problems = e.problems
+    with pytest.raises(Exception) as exception_info:
+        simulate_fmu(filename, start_values={'clutch1.sa': 0.0})
 
-        self.assertEqual(len(problems), 124)
-
-    def test_validate_start_values(self):
-
-        filename = download_test_file('2.0', 'ModelExchange', 'MapleSim', '2016.2', 'CoupledClutches', 'CoupledClutches.fmu')
-
-        with self.assertRaises(Exception) as context:
-            simulate_fmu(filename, start_values={'clutch1.sa': 0.0})
-
-        self.assertEqual('The start values for the following variables could not be set: clutch1.sa', str(context.exception))
-
-
-if __name__ == '__main__':
-    unittest.main()
+    assert 'The start values for the following variables could not be set: clutch1.sa' == str(exception_info.value)

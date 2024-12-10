@@ -1,25 +1,31 @@
 import pytest
-from fmpy import platform, dump, simulate_fmu
-from fmpy.util import download_test_file, fmu_info
+from fmpy import dump, simulate_fmu
+from fmpy.util import fmu_info
 
 
-# download the FMU
-download_test_file('2.0', 'me', 'MapleSim', '2016.2', 'CoupledClutches', 'CoupledClutches.fmu')
+def test_illegal_fmi_type(reference_fmus_dist_dir):
 
+    filename = reference_fmus_dist_dir / '2.0' / 'BouncingBall.fmu'
 
-def test_illegal_fmi_type():
     with pytest.raises(Exception) as context:
-        simulate_fmu('CoupledClutches.fmu', fmi_type='Hybrid')
+        simulate_fmu(filename, fmi_type='Hybrid')
+
     assert 'fmi_type must be one of "ModelExchange" or "CoSimulation"' == str(context.value)
 
-def test_unsupported_fmi_type():
+def test_unsupported_fmi_type(reference_fmus_dist_dir):
+
+    filename = reference_fmus_dist_dir / '1.0' / 'me' / 'BouncingBall.fmu'
+
     with pytest.raises(Exception) as context:
-        simulate_fmu('CoupledClutches.fmu', fmi_type='CoSimulation')
+        simulate_fmu(filename, fmi_type='CoSimulation')
+
     assert 'FMI type "CoSimulation" is not supported by the FMU' == str(context.value)
 
-def test_fmu_info():
+def test_fmu_info(reference_fmus_dist_dir):
 
-    info = fmu_info('CoupledClutches.fmu')
+    filename = reference_fmus_dist_dir / '2.0' / 'BouncingBall.fmu'
+
+    info = fmu_info(filename)
 
     generation_dates = {
         'darwin64': '2017-01-19T17:56:19Z',
@@ -28,36 +34,36 @@ def test_fmu_info():
         'win64':    '2017-01-19T18:42:35Z',
     }
 
-    expected = f"""
+    expected = """
 Model Info
 
   FMI Version        2.0
-  FMI Type           Model Exchange
-  Model Name         CoupledClutches
-  Description        Model CoupledClutches
-  Platforms          {platform}
-  Continuous States  18
-  Event Indicators   25
-  Variables          178
-  Generation Tool    MapleSim (1196527/1196706/1196706)
-  Generation Date    {generation_dates[platform]}
+  FMI Type           Model Exchange, Co-Simulation
+  Model Name         BouncingBall
+  Description        This model calculates the trajectory, over time, of a ball dropped from a height of 1 m.
+  Platforms          c-code, darwin64, linux64, win64
+  Continuous States  2
+  Event Indicators   1
+  Variables          8
+  Generation Tool    Reference FMUs (v0.0.25)
+  Generation Date    2023-08-04T08:43:49.469027+00:00
 
 Default Experiment
 
-  Stop Time          1.5
-  Tolerance          0.0001
+  Stop Time          3.0
+  Step Size          0.01
 
 Variables (input, output)
 
   Name               Causality              Start Value  Unit     Description
-  inputs             input      0.00000000000000000e+00           RI1
-  outputs[1]         output     1.00000000000000000e+01  rad/s    J1.w
-  outputs[2]         output     0.00000000000000000e+00  rad/s    J2.w
-  outputs[3]         output     0.00000000000000000e+00  rad/s    J3.w
-  outputs[4]         output     0.00000000000000000e+00  rad/s    J4.w"""
+  h                  output                           1  m        Position of the ball
+  v                  output                           0  m/s      Velocity of the ball"""
 
     assert expected == info
 
-def test_dump():
+def test_dump(reference_fmus_dist_dir):
+
+    filename = reference_fmus_dist_dir / '2.0' / 'BouncingBall.fmu'
+
     # dump the FMU info
-    dump('CoupledClutches.fmu')
+    dump(filename)

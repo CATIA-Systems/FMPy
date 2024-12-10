@@ -5,10 +5,10 @@ from fmpy import platform, supported_platforms, simulate_fmu
 from fmpy.util import add_remoting, download_file, has_wsl, has_wine64
 
 
-# pytest.skip(
-#     reason="Comment out to run remoting test",
-#     allow_module_level=True
-# )
+pytest.skip(
+    reason="Comment out to run remoting test",
+    allow_module_level=True
+)
 
 @pytest.mark.skipif(platform != 'win64', reason="Windows 32-bit is only supported on Windows 64-bit")
 def test_remoting_win32_on_win64_cs():

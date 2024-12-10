@@ -4,7 +4,7 @@ from fmpy.util import download_test_file
 
 
 if platform not in ['win32', 'win64']:
-    pytest.skip(reason="FMU only available for Windows")
+    pytest.skip(reason="FMU only available for Windows", allow_module_level=True)
 
 download_test_file('2.0', 'CoSimulation', 'Dymola', '2017', 'Rectifier', 'Rectifier.fmu')
 

@@ -1,23 +1,20 @@
-import unittest
 from fmpy import read_model_description, simulate_fmu
 from fmpy.util import download_test_file
 from fmpy.cswrapper import add_cswrapper
 
 
-class CSWrapperTest(unittest.TestCase):
+def test_cswrapper():
 
-    def test_cswrapper(self):
+    filename = 'CoupledClutches.fmu'
 
-        filename = 'CoupledClutches.fmu'
+    download_test_file('2.0', 'ModelExchange', 'MapleSim', '2016.2', 'CoupledClutches', filename)
 
-        download_test_file('2.0', 'ModelExchange', 'MapleSim', '2016.2', 'CoupledClutches', filename)
+    model_description = read_model_description(filename)
 
-        model_description = read_model_description(filename)
+    assert model_description.coSimulation is None
 
-        self.assertIsNone(model_description.coSimulation)
+    outfilename = filename[:-4] + '_cs.fmu'
 
-        outfilename = filename[:-4] + '_cs.fmu'
+    add_cswrapper(filename, outfilename=outfilename)
 
-        add_cswrapper(filename, outfilename=outfilename)
-
-        simulate_fmu(outfilename, fmi_type='CoSimulation')
+    simulate_fmu(outfilename, fmi_type='CoSimulation')

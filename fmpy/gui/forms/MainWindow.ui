@@ -1727,10 +1727,10 @@ QToolButton:checked, QToolButton:hover:pressed {
   </action>
   <action name="actionOpenFMI2Spec">
    <property name="text">
-    <string>FMI 2.0.4</string>
+    <string>FMI 2.0.5</string>
    </property>
    <property name="toolTip">
-    <string>Open FMI Specification 2.0.4</string>
+    <string>Open FMI Specification 2.0.5</string>
    </property>
   </action>
   <action name="actionOpenFMI1SpecCS">
@@ -1991,10 +1991,10 @@ QToolButton:checked, QToolButton:hover:pressed {
   </action>
   <action name="actionOpenFMI3Spec">
    <property name="text">
-    <string>FMI 3.0.1</string>
+    <string>FMI 3.0.2</string>
    </property>
    <property name="toolTip">
-    <string>Open FMI Specification 3.0.1</string>
+    <string>Open FMI Specification 3.0.2</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

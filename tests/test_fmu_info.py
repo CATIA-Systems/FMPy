@@ -40,13 +40,13 @@ Model Info
   FMI Version        2.0
   FMI Type           Model Exchange, Co-Simulation
   Model Name         BouncingBall
-  Description        This model calculates the trajectory, over time, of a ball dropped from a height of 1 m.
-  Platforms          c-code, darwin64, linux64, win64
+  Description        This model calculates the trajectory, over time, of a ball dropped from a height of 1 m
+  Platforms          c-code, darwin64, linux64, win32, win64
   Continuous States  2
   Event Indicators   1
   Variables          8
-  Generation Tool    Reference FMUs (v0.0.25)
-  Generation Date    2023-08-04T08:43:49.469027+00:00
+  Generation Tool    Reference FMUs (v0.0.37)
+  Generation Date    2024-12-09T07:40:34.834298+00:00
 
 Default Experiment
 

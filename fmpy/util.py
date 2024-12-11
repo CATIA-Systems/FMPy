@@ -689,11 +689,16 @@ Model Info
         if v.causality not in causalities:
             continue
 
+        name = v.name
+
+        if len(name) > 18:
+            name = '...' + name[-15:]
+
         start = str(v.start) if v.start is not None else ''
 
         unit = v.declaredType.unit if v.declaredType else v.unit
-
-        args = ['' if s is None else str(s) for s in [v.name, v.causality, start, unit, v.description]]
+        
+        args = ['' if s is None else str(s) for s in [name, v.causality, start, unit, v.description]]
 
         l.append('  {:18} {:10} {:>23}  {:8} {}'.format(*args))
 

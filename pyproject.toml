@@ -48,6 +48,10 @@ include = [
 exclude = [
      ".gitignore",
      "*.ui",
+     "*.qrc",
+     "*.theme",
+     "*.afdesign",
+     "*.svg",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -71,10 +75,35 @@ packages = ["src/fmpy"]
 "src/fmpy/remoting/win32/server_tcp.exe" = "fmpy/remoting/win32/server_tcp.exe"
 "src/fmpy/remoting/win32/server_sm.exe"  = "fmpy/remoting/win32/server_sm.exe"
 
+"src/fmpy/remoting/win64/client_sm.dll"  = "fmpy/remoting/win64/client_sm.dll"
+"src/fmpy/remoting/win64/client_tcp.dll" = "fmpy/remoting/win64/client_tcp.dll"
+"src/fmpy/remoting/win64/server_tcp.exe" = "fmpy/remoting/win64/server_tcp.exe"
+"src/fmpy/remoting/win64/server_sm.exe"  = "fmpy/remoting/win64/server_sm.exe"
+
 "src/fmpy/logging/darwin64/logging.dylib" = "fmpy/logging/darwin64/logging.dylib"
 "src/fmpy/logging/linux64/logging.so"     = "fmpy/logging/linux64/logging.so"
 "src/fmpy/logging/win32/logging.dll"      = "fmpy/logging/win32/logging.dll"
 "src/fmpy/logging/win64/logging.dll"      = "fmpy/logging/win64/logging.dll"
+
+"src/fmpy/sundials/i686-windows/sundials_cvode.dll"          = "fmpy/sundials/i686-windows/sundials_cvode.dll"
+"src/fmpy/sundials/i686-windows/sundials_nvecserial.dll"     = "fmpy/sundials/i686-windows/sundials_nvecserial.dll"
+"src/fmpy/sundials/i686-windows/sundials_sunlinsoldense.dll" = "fmpy/sundials/i686-windows/sundials_sunlinsoldense.dll"
+"src/fmpy/sundials/i686-windows/sundials_sunmatrixdense.dll" = "fmpy/sundials/i686-windows/sundials_sunmatrixdense.dll"
+
+"src/fmpy/sundials/x86_64-darwin/sundials_cvode.dylib"          = "fmpy/sundials/x86_64-darwin/sundials_cvode.dylib"
+"src/fmpy/sundials/x86_64-darwin/sundials_nvecserial.dylib"     = "fmpy/sundials/x86_64-darwin/sundials_nvecserial.dylib"
+"src/fmpy/sundials/x86_64-darwin/sundials_sunlinsoldense.dylib" = "fmpy/sundials/x86_64-darwin/sundials_sunlinsoldense.dylib"
+"src/fmpy/sundials/x86_64-darwin/sundials_sunmatrixdense.dylib" = "fmpy/sundials/x86_64-darwin/sundials_sunmatrixdense.dylib"
+
+"src/fmpy/sundials/x86_64-linux/sundials_cvode.so"          = "fmpy/sundials/x86_64-linux/sundials_cvode.so"
+"src/fmpy/sundials/x86_64-linux/sundials_nvecserial.so"     = "fmpy/sundials/x86_64-linux/sundials_nvecserial.so"
+"src/fmpy/sundials/x86_64-linux/sundials_sunlinsoldense.so" = "fmpy/sundials/x86_64-linux/sundials_sunlinsoldense.so"
+"src/fmpy/sundials/x86_64-linux/sundials_sunmatrixdense.so" = "fmpy/sundials/x86_64-linux/sundials_sunmatrixdense.so"
+
+"src/fmpy/sundials/x86_64-windows/sundials_cvode.dll"          = "fmpy/sundials/x86_64-windows/sundials_cvode.dll"
+"src/fmpy/sundials/x86_64-windows/sundials_nvecserial.dll"     = "fmpy/sundials/x86_64-windows/sundials_nvecserial.dll"
+"src/fmpy/sundials/x86_64-windows/sundials_sunlinsoldense.dll" = "fmpy/sundials/x86_64-windows/sundials_sunlinsoldense.dll"
+"src/fmpy/sundials/x86_64-windows/sundials_sunmatrixdense.dll" = "fmpy/sundials/x86_64-windows/sundials_sunmatrixdense.dll"
 
 [build-system]
 requires = ["hatchling"]

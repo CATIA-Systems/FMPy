@@ -64,7 +64,7 @@ packages = ["src/fmpy"]
 #"src/fmpy/fmucontainer/binaries/linux64/FMUContainer.so" = "fmpy/fmucontainer/binaries/linux64/FMUContainer.so"
 
 "src/fmpy/remoting/linux64/client_tcp.so" = "fmpy/remoting/linux64/client_tcp.so"
-"src/fmpy/remoting/linux64/server_tcp" = "fmpy/remoting/linux64/server_tcp"
+"src/fmpy/remoting/linux64/server_tcp"    = "fmpy/remoting/linux64/server_tcp"
 
 "src/fmpy/remoting/win32/client_sm.dll"  = "fmpy/remoting/win32/client_sm.dll"
 "src/fmpy/remoting/win32/client_tcp.dll" = "fmpy/remoting/win32/client_tcp.dll"

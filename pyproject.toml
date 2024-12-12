@@ -29,6 +29,9 @@ gui = [
     "pywin32>=308; sys_platform == 'win32'",
 ]
 
+[project.scripts]
+fmpy = "fmpy.command_line:main"
+
 [tool.uv]
 dev-dependencies = [
     "pytest",

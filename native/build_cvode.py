@@ -75,7 +75,7 @@ for platform, cmake_options, platform_tuple in generators:
 
     check_call(['cmake', '--build', f'sundials-5.3.0/{platform}/dynamic', '--target', 'install', '--config', configuration])
 
-    sundials_binary_dir = os.path.join('fmpy', 'sundials', platform_tuple)
+    sundials_binary_dir = os.path.join('..', 'src', 'fmpy', 'sundials', platform_tuple)
 
     os.makedirs(sundials_binary_dir, exist_ok=True)
 

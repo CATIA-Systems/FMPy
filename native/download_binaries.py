@@ -5,7 +5,7 @@ from zipfile import ZipFile
 from pathlib import Path
 import requests
 
-src_dir = Path(__file__).parent / 'src'
+src_dir = Path(__file__).absolute().parent.parent / 'src'
 
 url = 'https://files.pythonhosted.org/packages/d0/86/87a735aa1177be40e0fdc01ba87509eec6f5a80d7738cd84a732ba3bae23/FMPy-0.3.22-py3-none-any.whl'
 
@@ -27,3 +27,5 @@ with ZipFile(BytesIO(response.content), 'r') as zf:
         print(member)
 
     zf.extractall(src_dir, members=members)
+
+    print(f"{len(members)} binaries installed.")

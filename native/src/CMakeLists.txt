@@ -35,22 +35,22 @@ endif ()
 
 add_library(logging SHARED logging/logging.c)
 
-target_include_directories(logging PUBLIC ../fmpy/c-code)
+target_include_directories(logging PUBLIC ../../src/fmpy/c-code)
 
 set_target_properties(logging PROPERTIES PREFIX "")
 
 add_custom_command(TARGET logging POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
   "$<TARGET_FILE:logging>"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/logging/${FMI_PLATFORM}"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../src/fmpy/logging/${FMI_PLATFORM}"
 )
 
 add_library(FMUContainer SHARED
-  ../fmpy/c-code/fmi2Functions.h
-  ../fmpy/c-code/fmi2FunctionTypes.h
-  ../fmpy/c-code/fmi2TypesPlatform.h
-  ../fmpy/c-code/fmi3Functions.h
-  ../fmpy/c-code/fmi3FunctionTypes.h
-  ../fmpy/c-code/fmi3PlatformTypes.h
+  ../../src/fmpy/c-code/fmi2Functions.h
+  ../../src/fmpy/c-code/fmi2FunctionTypes.h
+  ../../src/fmpy/c-code/fmi2TypesPlatform.h
+  ../../src/fmpy/c-code/fmi3Functions.h
+  ../../src/fmpy/c-code/fmi3FunctionTypes.h
+  ../../src/fmpy/c-code/fmi3PlatformTypes.h
   ../thirdparty/Reference-FMUs/include/FMI.h
   ../thirdparty/Reference-FMUs/include/FMI2.h
   ../thirdparty/Reference-FMUs/src/FMI.c
@@ -62,16 +62,16 @@ add_library(FMUContainer SHARED
   ../thirdparty/mpack/src/mpack/mpack-platform.c
   ../thirdparty/mpack/src/mpack/mpack-reader.c
   ../thirdparty/mpack/src/mpack/mpack-writer.c
-  fmucontainer/FMUContainer.h
-  fmucontainer/FMUContainer.c
-  fmucontainer/fmi2Functions.c
-  fmucontainer/fmi3Functions.c
+  ../fmucontainer/FMUContainer.h
+  ../fmucontainer/FMUContainer.c
+  ../fmucontainer/fmi2Functions.c
+  ../fmucontainer/fmi3Functions.c
 )
 
 SET_TARGET_PROPERTIES(FMUContainer PROPERTIES PREFIX "")
 
 target_include_directories(FMUContainer PUBLIC
-  ../fmpy/c-code
+  ../../src/fmpy/c-code
   ../thirdparty/Reference-FMUs/include
   ../thirdparty/mpack/src/mpack
 )
@@ -82,20 +82,20 @@ target_link_libraries(FMUContainer
 
 add_custom_command(TARGET FMUContainer POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
   "$<TARGET_FILE:FMUContainer>"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/fmucontainer/binaries/${FMI_PLATFORM}"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../src/fmpy/fmucontainer/binaries/${FMI_PLATFORM}"
 )
 
 add_library(cswrapper SHARED
-  ../fmpy/c-code/fmi2Functions.h
-  ../fmpy/c-code/fmi2FunctionTypes.h
-  ../fmpy/c-code/fmi2TypesPlatform.h
+  ../../src/fmpy/c-code/fmi2Functions.h
+  ../../src/fmpy/c-code/fmi2FunctionTypes.h
+  ../../src/fmpy/c-code/fmi2TypesPlatform.h
   cswrapper/cswrapper.c
 )
 
 SET_TARGET_PROPERTIES(cswrapper PROPERTIES PREFIX "")
 
 target_include_directories(cswrapper PUBLIC
-  ../fmpy/c-code
+  ../../src/fmpy/c-code
   ${CVODE_INSTALL_DIR}/include
 )
 
@@ -106,5 +106,5 @@ target_link_libraries(cswrapper
 
 add_custom_command(TARGET cswrapper POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
   "$<TARGET_FILE:cswrapper>"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/cswrapper"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../src/fmpy/cswrapper"
 )

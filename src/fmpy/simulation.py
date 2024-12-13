@@ -652,15 +652,17 @@ def simulate_fmu(filename,
     from fmpy.model_description import read_model_description
     from fmpy.util import can_simulate
 
-    platforms = supported_platforms(filename)
+    if fmu_instance is not None:
 
-    if fmu_instance is None and platform not in platforms and remote_platform is None:
-        raise Exception(f"The current platform ({platform}) is not supported by the FMU.")
+        platforms = supported_platforms(filename)
 
-    can_sim, remote_platform = can_simulate(platforms, remote_platform)
+        if fmu_instance is None and platform not in platforms and remote_platform is None:
+            raise Exception(f"The current platform ({platform}) is not supported by the FMU.")
 
-    if not can_sim:
-        raise Exception(f"The FMU cannot be simulated on the current platform ({platform}).")
+        can_sim, remote_platform = can_simulate(platforms, remote_platform)
+
+        if not can_sim:
+            raise Exception(f"The FMU cannot be simulated on the current platform ({platform}).")
 
     if model_description is None:
         model_description = read_model_description(filename, validate=validate)

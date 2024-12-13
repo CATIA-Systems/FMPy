@@ -1,17 +1,31 @@
-# download and install the binaries from the latest wheel
+# install the binaries from the wheel that matches the project version
 
 from io import BytesIO
 from zipfile import ZipFile
 from pathlib import Path
 import requests
+import toml
+import json
+import urllib.request
 
-src_dir = Path(__file__).absolute().parent.parent / 'src'
 
-url = 'https://files.pythonhosted.org/packages/d0/86/87a735aa1177be40e0fdc01ba87509eec6f5a80d7738cd84a732ba3bae23/FMPy-0.3.22-py3-none-any.whl'
+project_root = Path(__file__).parent.parent
 
-print(f'Downloading {url}...')
+with open(project_root / 'pyproject.toml', 'r') as f:
+    project_data = toml.load(f)
 
-response = requests.get(url)
+fmpy_version = project_data['project']['version']
+
+with urllib.request.urlopen("https://pypi.org/pypi/fmpy/json") as url:
+    pypi_data = json.load(url)
+
+wheel_url = pypi_data['releases'][fmpy_version][0]['url']
+
+src_dir = project_root / 'src'
+
+print(f'Downloading {wheel_url}...')
+
+response = requests.get(wheel_url)
 
 with ZipFile(BytesIO(response.content), 'r') as zf:
 

@@ -81,11 +81,6 @@ packages = ["src/fmpy"]
 "src/fmpy/logging/win32/logging.dll"      = "fmpy/logging/win32/logging.dll"
 "src/fmpy/logging/win64/logging.dll"      = "fmpy/logging/win64/logging.dll"
 
-"src/fmpy/sundials/i686-windows/sundials_cvode.dll"          = "fmpy/sundials/i686-windows/sundials_cvode.dll"
-"src/fmpy/sundials/i686-windows/sundials_nvecserial.dll"     = "fmpy/sundials/i686-windows/sundials_nvecserial.dll"
-"src/fmpy/sundials/i686-windows/sundials_sunlinsoldense.dll" = "fmpy/sundials/i686-windows/sundials_sunlinsoldense.dll"
-"src/fmpy/sundials/i686-windows/sundials_sunmatrixdense.dll" = "fmpy/sundials/i686-windows/sundials_sunmatrixdense.dll"
-
 "src/fmpy/sundials/x86_64-darwin/sundials_cvode.dylib"          = "fmpy/sundials/x86_64-darwin/sundials_cvode.dylib"
 "src/fmpy/sundials/x86_64-darwin/sundials_nvecserial.dylib"     = "fmpy/sundials/x86_64-darwin/sundials_nvecserial.dylib"
 "src/fmpy/sundials/x86_64-darwin/sundials_sunlinsoldense.dylib" = "fmpy/sundials/x86_64-darwin/sundials_sunlinsoldense.dylib"

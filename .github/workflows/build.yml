@@ -42,6 +42,7 @@ jobs:
       with:
        name: ${{ matrix.name }}
        path: |
+         src/fmpy/cswrapper/cswrapper.dylib
          src/fmpy/fmucontainer/binaries/darwin64/FMUContainer.dylib
          src/fmpy/logging/darwin64/logging.dylib
          src/fmpy/sundials/x86_64-darwin/sundials_cvode.dylib
@@ -54,6 +55,7 @@ jobs:
       with:
         name: ${{ matrix.name }}
         path: |
+          src/fmpy/cswrapper/cswrapper.so
           src/fmpy/fmucontainer/binaries/linux64/FMUContainer.so
           src/fmpy/remoting/linux64/client_tcp.so
           src/fmpy/remoting/linux64/server_tcp
@@ -68,6 +70,7 @@ jobs:
       with:
         name: ${{ matrix.name }}
         path: |
+          src/fmpy/cswrapper/cswrapper.dll
           src/fmpy/fmucontainer/binaries/win32/FMUContainer.dll
           src/fmpy/fmucontainer/binaries/win64/FMUContainer.dll
           src/fmpy/remoting/win32/client_sm.dll

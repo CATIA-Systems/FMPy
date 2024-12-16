@@ -125,7 +125,7 @@ jobs:
           - name: darwin
             image: macos-13
     runs-on: ${{ matrix.image }}
-    needs: [ merge-wheels ]
+    needs: [ build-wheel ]
     steps:
     - uses: actions/checkout@v4
       with:

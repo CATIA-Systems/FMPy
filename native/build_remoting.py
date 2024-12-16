@@ -21,29 +21,6 @@ if not os.path.isdir(rpclib_dir):
     with tarfile.open(filename, 'r:gz') as tar:
         tar.extractall()
 
-    # patch the CMake project to link static against the MSVC runtime
-    with open(os.path.join(rpclib_dir, 'CMakeLists.txt'), 'a') as file:
-        file.write('''
-            
-    message(${CMAKE_CXX_FLAGS_RELEASE})
-    message(${CMAKE_CXX_FLAGS_DEBUG})
-    
-    set(CompilerFlags
-            CMAKE_CXX_FLAGS
-            CMAKE_CXX_FLAGS_DEBUG
-            CMAKE_CXX_FLAGS_RELEASE
-            CMAKE_C_FLAGS
-            CMAKE_C_FLAGS_DEBUG
-            CMAKE_C_FLAGS_RELEASE
-            )
-    foreach(CompilerFlag ${CompilerFlags})
-      string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
-    endforeach()
-    
-    message(${CMAKE_CXX_FLAGS_RELEASE})
-    message(${CMAKE_CXX_FLAGS_DEBUG})
-    ''')
-
 if os.name == 'nt':
 
     for bitness, architecture in [('win32', 'Win32'), ('win64', 'x64')]:
@@ -57,6 +34,8 @@ if os.name == 'nt':
             'cmake',
             '-B', rpclib_dir + '/' + bitness,
             '-D', 'RPCLIB_MSVC_STATIC_RUNTIME=ON',
+            '-D', 'CMAKE_POLICY_DEFAULT_CMP0091=NEW',
+            '-D', 'CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded',
             '-D', 'CMAKE_INSTALL_PREFIX=' + os.path.join(rpclib_dir, bitness, 'install'),
             '-G', 'Visual Studio 17 2022',
             '-A', architecture,

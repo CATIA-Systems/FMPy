@@ -85,32 +85,27 @@ jobs:
           src/fmpy/sundials/x86_64-windows/sundials_sunlinsoldense.dll
           src/fmpy/sundials/x86_64-windows/sundials_sunmatrixdense.dll
         if-no-files-found: error
-#  merge-wheels:
-#    runs-on: ubuntu-22.04
-#    needs: [ build-wheels ]
-#    steps:
-#    - uses: actions/checkout@v4
-#    - uses: actions/download-artifact@v4
-#      with:
-#        name: linux
-#        path: wheels/linux
-#    - uses: actions/download-artifact@v4
-#      with:
-#        name: darwin
-#        path: wheels/darwin
-#    - uses: actions/download-artifact@v4
-#      with:
-#        name: windows
-#        path: wheels/windows
-#    - uses: actions/setup-python@v5
-#      with:
-#        python-version: '3.10'
-#    - run: python merge_wheels.py
-#    - uses: actions/upload-artifact@v4
-#      with:
-#       name: merged
-#       path: wheels/merged
-#       if-no-files-found: error
+  build-wheel:
+    runs-on: ubuntu-22.04
+    needs: [ build-binaries ]
+    steps:
+    - uses: actions/checkout@v4
+    - uses: astral-sh/setup-uv@v4
+    - uses: actions/download-artifact@v4
+      with:
+        name: linux
+    - uses: actions/download-artifact@v4
+      with:
+        name: darwin
+    - uses: actions/download-artifact@v4
+      with:
+        name: windows
+    - run: uv build --wheel
+    - uses: actions/upload-artifact@v4
+      with:
+       name: dist
+       path: dist
+       if-no-files-found: error
 #  run-tests:
 #    strategy:
 #      matrix:

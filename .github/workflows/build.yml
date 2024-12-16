@@ -106,6 +106,8 @@ jobs:
       with:
         name: windows
         path: src/fmpy
+    - run: uv sync --all-extras
+    - run: uv run python -m fmpy.gui
     - run: uv build --wheel
     - uses: actions/upload-artifact@v4
       with:

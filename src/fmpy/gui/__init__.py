@@ -14,7 +14,7 @@ def compile_resources():
     pyside_dir = Path(PySide6.__file__).parent
 
     if os.name == 'posix':
-        pyside_dir = pyside_dir / 'Qt' / 'libexec'  # Path('/Users/tors10/Development/FMPy/.venv/lib/python3.10/site-packages/PySide6/Qt/libexec')
+        pyside_dir = pyside_dir / 'Qt' / 'libexec'
 
     gui_dir = Path(__file__).parent
     forms_dir = gui_dir / 'forms'

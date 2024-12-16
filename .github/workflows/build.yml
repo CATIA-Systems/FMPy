@@ -37,16 +37,54 @@ jobs:
       run: |
         cd native
         python build_remoting.py
-    - uses: actions/upload-artifact@v4
+    - if: matrix.name == 'darwin'
+      uses: actions/upload-artifact@v4
       with:
        name: ${{ matrix.name }}
        path: |
-         *.exe
-         *.dll
-         *.dylib
-         *.so
-         server_tcp
+         src/fmpy/fmucontainer/binaries/darwin64/FMUContainer.dylib
+         src/fmpy/logging/darwin64/logging.dylib
+         src/fmpy/sundials/x86_64-darwin/sundials_cvode.dylib
+         src/fmpy/sundials/x86_64-darwin/sundials_nvecserial.dylib
+         src/fmpy/sundials/x86_64-darwin/sundials_sunlinsoldense.dylib
+         src/fmpy/sundials/x86_64-darwin/sundials_sunmatrixdense.dylib
        if-no-files-found: error
+    - if: matrix.name == 'linux'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.name }}
+        path: |
+          src/fmpy/fmucontainer/binaries/linux64/FMUContainer.so
+          src/fmpy/remoting/linux64/client_tcp.so
+          src/fmpy/remoting/linux64/server_tcp
+          src/fmpy/logging/linux64/logging.so
+          src/fmpy/sundials/x86_64-linux/sundials_cvode.so
+          src/fmpy/sundials/x86_64-linux/sundials_nvecserial.so
+          src/fmpy/sundials/x86_64-linux/sundials_sunlinsoldense.so
+          src/fmpy/sundials/x86_64-linux/sundials_sunmatrixdense.so
+        if-no-files-found: error
+    - if: matrix.name == 'windows'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.name }}
+        path: |
+          src/fmpy/fmucontainer/binaries/win32/FMUContainer.dll
+          src/fmpy/fmucontainer/binaries/win64/FMUContainer.dll
+          src/fmpy/remoting/win32/client_sm.dll
+          src/fmpy/remoting/win32/client_tcp.dll
+          src/fmpy/remoting/win32/server_tcp.exe
+          src/fmpy/remoting/win32/server_sm.exe
+          src/fmpy/remoting/win64/client_sm.dll
+          src/fmpy/remoting/win64/client_tcp.dll
+          src/fmpy/remoting/win64/server_tcp.exe
+          src/fmpy/remoting/win64/server_sm.exe
+          src/fmpy/logging/win32/logging.dll
+          src/fmpy/logging/win64/logging.dll
+          src/fmpy/sundials/x86_64-windows/sundials_cvode.dll
+          src/fmpy/sundials/x86_64-windows/sundials_nvecserial.dll
+          src/fmpy/sundials/x86_64-windows/sundials_sunlinsoldense.dll
+          src/fmpy/sundials/x86_64-windows/sundials_sunmatrixdense.dll
+        if-no-files-found: error
 #  merge-wheels:
 #    runs-on: ubuntu-22.04
 #    needs: [ build-wheels ]

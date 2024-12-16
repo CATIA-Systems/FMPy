@@ -1,5 +1,5 @@
 [project]
-name = "fmpy"
+name = "FMPy"
 version = "0.3.22"
 description = "Simulate Functional Mock-up Units (FMUs) in Python"
 readme = "README.md"
@@ -63,7 +63,6 @@ exclude = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/fmpy"]
-#ignore-vcs = true
 
 [tool.hatch.build.targets.wheel.force-include]
 "src/fmpy/cswrapper/cswrapper.dll"   = "fmpy/cswrapper/cswrapper.dll"

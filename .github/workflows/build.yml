@@ -30,9 +30,13 @@ jobs:
     - run: |
         cd native
         python build_cvode.py
-    - run: python build_binaries.py
+    - run: |
+        cd native
+        python build_binaries.py
     - if: matrix.name == 'linux' || matrix.name == 'windows'
-      run: python build_remoting.py
+      run: |
+        cd native
+        python build_remoting.py
     - uses: actions/upload-artifact@v4
       with:
        name: ${{ matrix.name }}

@@ -140,12 +140,12 @@ jobs:
         python-version: '3.10'
     - if: matrix.name == 'linux' || matrix.name == 'darwin'
       run: |
-        for f in FMPy-*.whl; do
+        for f in fmpy-*.whl; do
           python -m pip install $f[complete]
         done
     - if: matrix.name == 'windows'
       run: |
-        $files = Get-ChildItem "FMPy-*.whl"
+        $files = Get-ChildItem "fmpy-*.whl"
         foreach ($f in $files) {
           $name =  $f.FullName + "[complete]"
           python -m pip install $name

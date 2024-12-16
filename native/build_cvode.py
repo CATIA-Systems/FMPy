@@ -49,6 +49,7 @@ for platform, cmake_options, platform_tuple in generators:
         '-D', 'CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded',
         '-D', 'EXAMPLES_ENABLE_C=OFF',
         '-D', 'CMAKE_OSX_ARCHITECTURES=arm64;x86_64',
+        '-D', 'CMAKE_POSITION_INDEPENDENT_CODE=ON',
         '-S', 'sundials-5.3.0',
         '-B', f'sundials-5.3.0/{platform}/static'
     ] + cmake_options)

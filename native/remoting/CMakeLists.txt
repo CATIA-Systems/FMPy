@@ -81,7 +81,7 @@ endif ()
 
 add_custom_command(TARGET server_tcp POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
   "$<TARGET_FILE:server_tcp>"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../fmpy/remoting/${FMI_PLATFORM}"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../src/fmpy/remoting/${FMI_PLATFORM}"
 )
 
 if (UNIX)

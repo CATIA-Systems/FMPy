@@ -1,0 +1,112 @@
+[project]
+name = "FMPy"
+version = "0.3.22"
+description = "Simulate Functional Mock-up Units (FMUs) in Python"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "attrs>=24.2.0",
+    "jinja2>=3.1.4",
+    "lark>=1.2.2",
+    "lxml>=5.3.0",
+    "msgpack>=1.1.0",
+    "numpy>=2.1.3",
+]
+
+[project.optional-dependencies]
+examples = [
+    "dask[bag]>=2024.11.2",
+    "requests>=2.32.3",
+]
+plot = [
+    "matplotlib>=3.9.2",
+    "plotly>=5.24.1",
+    "scipy>=1.14.1",
+]
+gui = [
+    "pyqtgraph>=0.13.7",
+    "pyside6>=6.8.0.2",
+    "pywin32>=308; sys_platform == 'win32'",
+]
+complete = [
+    "dask[bag]>=2024.11.2",
+    "requests>=2.32.3",
+    "matplotlib>=3.9.2",
+    "plotly>=5.24.1",
+    "scipy>=1.14.1",
+    "pyqtgraph>=0.13.7",
+    "pyside6>=6.8.0.2",
+    "pywin32>=308; sys_platform == 'win32'",
+]
+
+[project.scripts]
+fmpy = "fmpy.command_line:main"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest",
+    "pyside6>=6.8.0.2",
+]
+
+[tool.hatch.build]
+include = [
+    "fmpy/**/*.py",
+]
+exclude = [
+     ".gitignore",
+     "*.ui",
+     "*.qrc",
+     "*.theme",
+     "*.afdesign",
+     "*.svg",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fmpy"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/fmpy/cswrapper/cswrapper.dll"   = "fmpy/cswrapper/cswrapper.dll"
+"src/fmpy/cswrapper/cswrapper.dylib" = "fmpy/cswrapper/cswrapper.dylib"
+"src/fmpy/cswrapper/cswrapper.so"    = "fmpy/cswrapper/cswrapper.so"
+
+"src/fmpy/fmucontainer/binaries/darwin64/FMUContainer.dylib" = "fmpy/fmucontainer/binaries/darwin64/FMUContainer.dylib"
+"src/fmpy/fmucontainer/binaries/linux64/FMUContainer.so"     = "fmpy/fmucontainer/binaries/linux64/FMUContainer.so"
+"src/fmpy/fmucontainer/binaries/win32/FMUContainer.dll"      = "fmpy/fmucontainer/binaries/win32/FMUContainer.dll"
+"src/fmpy/fmucontainer/binaries/win64/FMUContainer.dll"      = "fmpy/fmucontainer/binaries/win64/FMUContainer.dll"
+
+"src/fmpy/remoting/linux64/client_tcp.so" = "fmpy/remoting/linux64/client_tcp.so"
+"src/fmpy/remoting/linux64/server_tcp"    = "fmpy/remoting/linux64/server_tcp"
+
+"src/fmpy/remoting/win32/client_sm.dll"  = "fmpy/remoting/win32/client_sm.dll"
+"src/fmpy/remoting/win32/client_tcp.dll" = "fmpy/remoting/win32/client_tcp.dll"
+"src/fmpy/remoting/win32/server_tcp.exe" = "fmpy/remoting/win32/server_tcp.exe"
+"src/fmpy/remoting/win32/server_sm.exe"  = "fmpy/remoting/win32/server_sm.exe"
+
+"src/fmpy/remoting/win64/client_sm.dll"  = "fmpy/remoting/win64/client_sm.dll"
+"src/fmpy/remoting/win64/client_tcp.dll" = "fmpy/remoting/win64/client_tcp.dll"
+"src/fmpy/remoting/win64/server_tcp.exe" = "fmpy/remoting/win64/server_tcp.exe"
+"src/fmpy/remoting/win64/server_sm.exe"  = "fmpy/remoting/win64/server_sm.exe"
+
+"src/fmpy/logging/darwin64/logging.dylib" = "fmpy/logging/darwin64/logging.dylib"
+"src/fmpy/logging/linux64/logging.so"     = "fmpy/logging/linux64/logging.so"
+"src/fmpy/logging/win32/logging.dll"      = "fmpy/logging/win32/logging.dll"
+"src/fmpy/logging/win64/logging.dll"      = "fmpy/logging/win64/logging.dll"
+
+"src/fmpy/sundials/x86_64-darwin/sundials_cvode.dylib"          = "fmpy/sundials/x86_64-darwin/sundials_cvode.dylib"
+"src/fmpy/sundials/x86_64-darwin/sundials_nvecserial.dylib"     = "fmpy/sundials/x86_64-darwin/sundials_nvecserial.dylib"
+"src/fmpy/sundials/x86_64-darwin/sundials_sunlinsoldense.dylib" = "fmpy/sundials/x86_64-darwin/sundials_sunlinsoldense.dylib"
+"src/fmpy/sundials/x86_64-darwin/sundials_sunmatrixdense.dylib" = "fmpy/sundials/x86_64-darwin/sundials_sunmatrixdense.dylib"
+
+"src/fmpy/sundials/x86_64-linux/sundials_cvode.so"          = "fmpy/sundials/x86_64-linux/sundials_cvode.so"
+"src/fmpy/sundials/x86_64-linux/sundials_nvecserial.so"     = "fmpy/sundials/x86_64-linux/sundials_nvecserial.so"
+"src/fmpy/sundials/x86_64-linux/sundials_sunlinsoldense.so" = "fmpy/sundials/x86_64-linux/sundials_sunlinsoldense.so"
+"src/fmpy/sundials/x86_64-linux/sundials_sunmatrixdense.so" = "fmpy/sundials/x86_64-linux/sundials_sunmatrixdense.so"
+
+"src/fmpy/sundials/x86_64-windows/sundials_cvode.dll"          = "fmpy/sundials/x86_64-windows/sundials_cvode.dll"
+"src/fmpy/sundials/x86_64-windows/sundials_nvecserial.dll"     = "fmpy/sundials/x86_64-windows/sundials_nvecserial.dll"
+"src/fmpy/sundials/x86_64-windows/sundials_sunlinsoldense.dll" = "fmpy/sundials/x86_64-windows/sundials_sunlinsoldense.dll"
+"src/fmpy/sundials/x86_64-windows/sundials_sunmatrixdense.dll" = "fmpy/sundials/x86_64-windows/sundials_sunmatrixdense.dll"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

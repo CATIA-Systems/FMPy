@@ -153,5 +153,5 @@ jobs:
           $name =  $f.FullName + "[complete]"
           python -m pip install $name
         }
-    - run: python -m pip install pytest
+    - run: python -m pip install pytest nbformat nbclient
     - run: pytest tests

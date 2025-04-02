@@ -51,8 +51,7 @@ for platform, cmake_options, platform_tuple in generators:
         '-D', 'CMAKE_OSX_ARCHITECTURES=arm64;x86_64',
         '-D', 'CMAKE_POSITION_INDEPENDENT_CODE=ON',
         '-S', 'sundials-5.3.0',
-        '-B', f'sundials-5.3.0/{platform}/static',
-        '-D', 'CMAKE_POLICY_VERSION_MINIMUM=3.5'  # workaround to build with newer CMake versions
+        '-B', f'sundials-5.3.0/{platform}/static'
     ] + cmake_options)
 
     check_call(['cmake', '--build', f'sundials-5.3.0/{platform}/static', '--target', 'install', '--config', configuration])
@@ -74,8 +73,7 @@ for platform, cmake_options, platform_tuple in generators:
         '-D', 'CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded',
         '-D', 'CMAKE_OSX_ARCHITECTURES=arm64;x86_64',
         '-S', 'sundials-5.3.0',
-        '-B', f'sundials-5.3.0/{platform}/dynamic',
-        '-D', 'CMAKE_POLICY_VERSION_MINIMUM=3.5'  # workaround to build with newer CMake versions
+        '-B', f'sundials-5.3.0/{platform}/dynamic'
    ] + cmake_options)
 
     check_call(['cmake', '--build', f'sundials-5.3.0/{platform}/dynamic', '--target', 'install', '--config', configuration])

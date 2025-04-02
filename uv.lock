@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.10"
 
 [[package]]
@@ -93,7 +94,7 @@ name = "click"
 version = "8.1.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "platform_system == 'Windows'" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/96/d3/f04c7bfcf5c1862a2a5b845c6b2b360488cf47af55dfa79c98f6a6bf98b5/click-8.1.7.tar.gz", hash = "sha256:ca9853ad459e787e2192211578cc907e7594e294c7ccc834310722b41b9ca6de", size = 336121 }
 wheels = [
@@ -233,6 +234,16 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+complete = [
+    { name = "dask" },
+    { name = "matplotlib" },
+    { name = "plotly" },
+    { name = "pyqtgraph" },
+    { name = "pyside6" },
+    { name = "pywin32", marker = "sys_platform == 'win32'" },
+    { name = "requests" },
+    { name = "scipy" },
+]
 examples = [
     { name = "dask" },
     { name = "requests" },
@@ -257,20 +268,29 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "attrs", specifier = ">=24.2.0" },
+    { name = "dask", extras = ["bag"], marker = "extra == 'complete'", specifier = ">=2024.11.2" },
     { name = "dask", extras = ["bag"], marker = "extra == 'examples'", specifier = ">=2024.11.2" },
     { name = "jinja2", specifier = ">=3.1.4" },
     { name = "lark", specifier = ">=1.2.2" },
     { name = "lxml", specifier = ">=5.3.0" },
+    { name = "matplotlib", marker = "extra == 'complete'", specifier = ">=3.9.2" },
     { name = "matplotlib", marker = "extra == 'plot'", specifier = ">=3.9.2" },
     { name = "msgpack", specifier = ">=1.1.0" },
     { name = "numpy", specifier = ">=2.1.3" },
+    { name = "plotly", marker = "extra == 'complete'", specifier = ">=5.24.1" },
     { name = "plotly", marker = "extra == 'plot'", specifier = ">=5.24.1" },
+    { name = "pyqtgraph", marker = "extra == 'complete'", specifier = ">=0.13.7" },
     { name = "pyqtgraph", marker = "extra == 'gui'", specifier = ">=0.13.7" },
+    { name = "pyside6", marker = "extra == 'complete'", specifier = ">=6.8.0.2" },
     { name = "pyside6", marker = "extra == 'gui'", specifier = ">=6.8.0.2" },
+    { name = "pywin32", marker = "sys_platform == 'win32' and extra == 'complete'", specifier = ">=308" },
     { name = "pywin32", marker = "sys_platform == 'win32' and extra == 'gui'", specifier = ">=308" },
+    { name = "requests", marker = "extra == 'complete'", specifier = ">=2.32.3" },
     { name = "requests", marker = "extra == 'examples'", specifier = ">=2.32.3" },
+    { name = "scipy", marker = "extra == 'complete'", specifier = ">=1.14.1" },
     { name = "scipy", marker = "extra == 'plot'", specifier = ">=1.14.1" },
 ]
+provides-extras = ["examples", "plot", "gui", "complete"]
 
 [package.metadata.requires-dev]
 dev = [

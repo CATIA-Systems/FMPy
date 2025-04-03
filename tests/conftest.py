@@ -46,8 +46,7 @@ def reference_fmus_dist_dir(resources_dir) -> Path:
 
 @pytest.fixture(scope='session')
 def reference_fmus_repo_dir(resources_dir):
-
-    yield Path(__file__).parent.parent / 'thirdparty' / 'Reference-FMUs'
+    yield Path(__file__).absolute().parent.parent / 'native' / 'thirdparty' / 'Reference-FMUs'
 
 
 @pytest.fixture(scope='session')

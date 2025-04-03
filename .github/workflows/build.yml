@@ -8,7 +8,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build-wheels:
+  build-binaries:
     strategy:
       matrix:
         include:
@@ -26,42 +26,100 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.10'
-    - run: python -m pip install setuptools wheel attrs numpy PySide6 requests
-    - run: python build_cvode.py
-    - run: python build_binaries.py
+    - uses: ssrobins/install-cmake@v1
+      with:
+        version: 3.31.6
+    - run: python -m pip install fmpy requests toml
+    - run: |
+        cmake --version
+        cd native
+        python build_cvode.py
+    - run: |
+        cd native
+        python build_binaries.py
     - if: matrix.name == 'linux' || matrix.name == 'windows'
-      run: python build_remoting.py
-    - run: python setup.py bdist_wheel
-    - uses: actions/upload-artifact@v4
+      run: |
+        cd native
+        python build_remoting.py
+    - if: matrix.name == 'darwin'
+      uses: actions/upload-artifact@v4
       with:
        name: ${{ matrix.name }}
-       path: dist
+       path: |
+         src/fmpy/cswrapper/cswrapper.dylib
+         src/fmpy/fmucontainer/binaries/darwin64/FMUContainer.dylib
+         src/fmpy/logging/darwin64/logging.dylib
+         src/fmpy/sundials/x86_64-darwin/sundials_cvode.dylib
+         src/fmpy/sundials/x86_64-darwin/sundials_nvecserial.dylib
+         src/fmpy/sundials/x86_64-darwin/sundials_sunlinsoldense.dylib
+         src/fmpy/sundials/x86_64-darwin/sundials_sunmatrixdense.dylib
        if-no-files-found: error
-  merge-wheels:
+    - if: matrix.name == 'linux'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.name }}
+        path: |
+          src/fmpy/cswrapper/cswrapper.so
+          src/fmpy/fmucontainer/binaries/linux64/FMUContainer.so
+          src/fmpy/remoting/linux64/client_tcp.so
+          src/fmpy/remoting/linux64/server_tcp
+          src/fmpy/logging/linux64/logging.so
+          src/fmpy/sundials/x86_64-linux/sundials_cvode.so
+          src/fmpy/sundials/x86_64-linux/sundials_nvecserial.so
+          src/fmpy/sundials/x86_64-linux/sundials_sunlinsoldense.so
+          src/fmpy/sundials/x86_64-linux/sundials_sunmatrixdense.so
+        if-no-files-found: error
+    - if: matrix.name == 'windows'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.name }}
+        path: |
+          src/fmpy/cswrapper/cswrapper.dll
+          src/fmpy/fmucontainer/binaries/win32/FMUContainer.dll
+          src/fmpy/fmucontainer/binaries/win64/FMUContainer.dll
+          src/fmpy/remoting/win32/client_sm.dll
+          src/fmpy/remoting/win32/client_tcp.dll
+          src/fmpy/remoting/win32/server_tcp.exe
+          src/fmpy/remoting/win32/server_sm.exe
+          src/fmpy/remoting/win64/client_sm.dll
+          src/fmpy/remoting/win64/client_tcp.dll
+          src/fmpy/remoting/win64/server_tcp.exe
+          src/fmpy/remoting/win64/server_sm.exe
+          src/fmpy/logging/win32/logging.dll
+          src/fmpy/logging/win64/logging.dll
+          src/fmpy/sundials/x86_64-windows/sundials_cvode.dll
+          src/fmpy/sundials/x86_64-windows/sundials_nvecserial.dll
+          src/fmpy/sundials/x86_64-windows/sundials_sunlinsoldense.dll
+          src/fmpy/sundials/x86_64-windows/sundials_sunmatrixdense.dll
+        if-no-files-found: error
+  build-wheel:
     runs-on: ubuntu-22.04
-    needs: [ build-wheels ]
+    needs: [ build-binaries ]
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: 'true'
+    - uses: astral-sh/setup-uv@v4
     - uses: actions/download-artifact@v4
       with:
         name: linux
-        path: wheels/linux
+        path: src/fmpy
     - uses: actions/download-artifact@v4
       with:
         name: darwin
-        path: wheels/darwin
+        path: src/fmpy
     - uses: actions/download-artifact@v4
       with:
         name: windows
-        path: wheels/windows
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-    - run: python merge_wheels.py
+        path: src/fmpy
+    - run: uv sync --all-extras
+    - run: uv run native/copy_sources.py
+    - run: uv run native/compile_resources.py
+    - run: uv build --wheel
     - uses: actions/upload-artifact@v4
       with:
-       name: merged
-       path: wheels/merged
+       name: dist
+       path: dist
        if-no-files-found: error
   run-tests:
     strategy:
@@ -74,17 +132,14 @@ jobs:
           - name: darwin
             image: macos-13
     runs-on: ${{ matrix.image }}
-    needs: [ merge-wheels ]
+    needs: [ build-wheel ]
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: 'true'
-    - uses: JesseTG/rm@b0586afffd89db69f7309bd44cc90209173fdbbe
-      with:
-        path: fmpy
     - uses: actions/download-artifact@v4
       with:
-        name: merged
+        name: dist
         path: .
     - run: ls
     - uses: actions/setup-python@v5
@@ -92,15 +147,15 @@ jobs:
         python-version: '3.10'
     - if: matrix.name == 'linux' || matrix.name == 'darwin'
       run: |
-        for f in FMPy-*.whl; do
+        for f in fmpy-*.whl; do
           python -m pip install $f[complete]
         done
     - if: matrix.name == 'windows'
       run: |
-        $files = Get-ChildItem "FMPy-*.whl"
+        $files = Get-ChildItem "fmpy-*.whl"
         foreach ($f in $files) {
           $name =  $f.FullName + "[complete]"
           python -m pip install $name
         }
-    - run: python -m pip install pytest
+    - run: python -m pip install pytest nbformat nbclient
     - run: pytest tests

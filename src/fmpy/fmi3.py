@@ -2,7 +2,7 @@
 
 import os
 from ctypes import *
-from typing import Tuple, Sequence, List
+from typing import Tuple, Sequence, List, Iterable
 
 from . import sharedLibraryExtension, platform_tuple
 from .fmi1 import _FMU, FMICallException, printLogMessage
@@ -25,8 +25,8 @@ fmi3UInt64              = c_uint64
 fmi3Boolean             = c_bool
 fmi3Char                = c_char
 fmi3String              = c_char_p
-fmi3Byte                = c_char
-fmi3Binary              = c_char_p
+fmi3Byte                = c_uint8
+fmi3Binary              = POINTER(fmi3Byte)
 fmi3Clock               = c_bool
 
 # values for fmi3Boolean
@@ -697,14 +697,29 @@ class _FMU3(_FMU):
         self.fmi3GetString(self.component, vr, len(vr), value, nValues)
         return list(map(lambda b: b.decode('utf-8'), value))
 
-    def getBinary(self, vr, nValues=None):
+    def getBinary(self, vr: Iterable[int], nValues: int = None) -> Iterable[bytes]:
+
         if nValues is None:
             nValues = len(vr)
+
         vr = (fmi3ValueReference * len(vr))(*vr)
+
         value = (fmi3Binary * nValues)()
+
         size = (c_size_t * len(vr))()
+
         self.fmi3GetBinary(self.component, vr, len(vr), size, value, nValues)
-        return list(value)
+
+        values = []
+
+        for i, pointer in enumerate(value):
+            if pointer is None:
+                values.append(None)
+            else:
+                data = cast(pointer, POINTER(c_uint8 * size[i]))
+                values.append(bytes(data.contents))
+
+        return values
 
     def getClock(self, vr, nValues=None):
         if nValues is None:
@@ -775,9 +790,16 @@ class _FMU3(_FMU):
         values = (fmi3String * len(values))(*values)
         self.fmi3SetString(self.component, vr, len(vr), values, len(values))
 
-    def setBinary(self, vr, values):
+    def setBinary(self, vr: Iterable[int], values: Iterable[bytes]):
+
         vr = (fmi3ValueReference * len(vr))(*vr)
-        values_ = (fmi3Binary * len(values))(*values)
+
+        values_ = (fmi3Binary * len(values))()
+
+        for i, v in enumerate(values):
+            b = (c_uint8 * len(v)).from_buffer(bytearray(v))
+            values_[i] = b
+
         size = (c_size_t * len(vr))(*[len(v) for v in values])
         self.fmi3SetBinary(self.component, vr, len(vr), size, values_, len(values))
 
@@ -788,18 +810,18 @@ class _FMU3(_FMU):
 
     # Getting and setting the internal FMU state
 
-    def getFMUState(self):
+    def getFMUState(self) -> fmi3FMUState:
         state = fmi3FMUState()
         self.fmi3GetFMUState(self.component, byref(state))
         return state
 
-    def setFMUState(self, state):
+    def setFMUState(self, state: fmi3FMUState):
         self.fmi3SetFMUState(self.component, state)
 
-    def freeFMUState(self, state):
+    def freeFMUState(self, state: fmi3FMUState):
         self.fmi3FreeFMUState(self.component, byref(state))
 
-    def serializeFMUState(self, state):
+    def serializeFMUState(self, state: fmi3FMUState) -> bytes:
         """ Serialize an FMU state
 
         Parameters:
@@ -812,10 +834,10 @@ class _FMU3(_FMU):
         size = c_size_t()
         self.fmi3SerializedFMUStateSize(self.component, state, byref(size))
         serializedState = create_string_buffer(size.value)
-        self.fmi3SerializeFMUState(self.component, state, serializedState, size)
+        self.fmi3SerializeFMUState(self.component, state, cast(serializedState, POINTER(fmi3Byte)), size)
         return serializedState.raw
 
-    def deserializeFMUState(self, serializedState, state=None):
+    def deserializeFMUState(self, serializedState: bytes, state: fmi3FMUState = None):
         """ De-serialize an FMU state
 
         Parameters:
@@ -825,7 +847,7 @@ class _FMU3(_FMU):
         if state is None:
             state = fmi3FMUState()
         buffer = create_string_buffer(serializedState, size=len(serializedState))
-        self.fmi3DeserializeFMUState(self.component, buffer, len(buffer), byref(state))
+        self.fmi3DeserializeFMUState(self.component, cast(buffer, POINTER(fmi3Byte)), len(buffer), byref(state))
         return state
 
     # Getting partial derivatives

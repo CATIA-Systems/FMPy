@@ -713,11 +713,11 @@ class _FMU3(_FMU):
         values = []
 
         for i, pointer in enumerate(value):
-            if pointer is None:
-                values.append(None)
-            else:
+            if pointer:
                 data = cast(pointer, POINTER(c_uint8 * size[i]))
                 values.append(bytes(data.contents))
+            else:
+                values.append(None)
 
         return values
 

@@ -706,7 +706,7 @@ class _FMU3(_FMU):
 
         value = (fmi3Binary * nValues)()
 
-        size = (c_size_t * len(vr))()
+        size = (c_size_t * nValues)()
 
         self.fmi3GetBinary(self.component, vr, len(vr), size, value, nValues)
 
@@ -791,16 +791,12 @@ class _FMU3(_FMU):
         self.fmi3SetString(self.component, vr, len(vr), values, len(values))
 
     def setBinary(self, vr: Iterable[int], values: Iterable[bytes]):
-
         vr = (fmi3ValueReference * len(vr))(*vr)
-
         values_ = (fmi3Binary * len(values))()
-
         for i, v in enumerate(values):
             b = (c_uint8 * len(v)).from_buffer(bytearray(v))
             values_[i] = b
-
-        size = (c_size_t * len(vr))(*[len(v) for v in values])
+        size = (c_size_t * len(values))(*[len(v) for v in values])
         self.fmi3SetBinary(self.component, vr, len(vr), size, values_, len(values))
 
     def setClock(self, vr, values):

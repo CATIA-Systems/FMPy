@@ -220,6 +220,8 @@ class _FMU(object):
             elif fname == 'fmi2NewDiscreteStates' and n == 'eventInfo':
                 from .fmi2 import fmi2EventInfo
                 a += struct_to_str(cast(v, POINTER(fmi2EventInfo)).contents)
+            elif fname in ['fmi3GetBinary', 'fmi3SetBinary'] and n == 'values':
+                a += '[' + ', '.join([hex(addressof(p.contents) if p else 0) for p in v]) + ']'
             elif t == c_void_p:
                 if isinstance(v, c_void_p):
                     v = v.value

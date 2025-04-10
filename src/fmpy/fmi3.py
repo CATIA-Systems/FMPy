@@ -698,27 +698,19 @@ class _FMU3(_FMU):
         return list(map(lambda b: b.decode('utf-8'), value))
 
     def getBinary(self, vr: Iterable[int], nValues: int = None) -> Iterable[bytes]:
-
         if nValues is None:
             nValues = len(vr)
-
         vr = (fmi3ValueReference * len(vr))(*vr)
-
         value = (fmi3Binary * nValues)()
-
         size = (c_size_t * nValues)()
-
         self.fmi3GetBinary(self.component, vr, len(vr), size, value, nValues)
-
         values = []
-
         for i, pointer in enumerate(value):
             if pointer:
                 data = cast(pointer, POINTER(c_uint8 * size[i]))
                 values.append(bytes(data.contents))
             else:
                 values.append(None)
-
         return values
 
     def getClock(self, vr, nValues=None):

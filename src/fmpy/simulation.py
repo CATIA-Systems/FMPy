@@ -246,10 +246,20 @@ class Input(object):
             setters['Boolean']     = (fmu.fmi3SetBoolean, fmi3.fmi3Boolean)
             setters['Enumeration'] = (fmu.fmi3SetInt64,   fmi3.fmi3Int64)
 
-        from collections import defaultdict
+        from collections import defaultdict, namedtuple
 
         continuous_inputs = defaultdict(list)
         discrete_inputs = defaultdict(list)
+
+        ContinuousVariableInfo = namedtuple(
+            typename='ContinuousVariableInfo',
+            field_names=('vrs', 'values', 'order', 'derivatives', 'table', 'setter')
+        )
+
+        DiscreteVariableInfo = namedtuple(
+            typename='DiscreteVariableInfo',
+            field_names=('vrs', 'values', 'table', 'setter')
+        )
 
         self.continuous = []
         self.discrete = []
@@ -265,31 +275,35 @@ class Input(object):
                 continue
 
             if variable.type in {'Float32', 'Float64', 'Real'} and variable.variability not in ['discrete', 'tunable']:
-                continuous_inputs[variable.type].append((variable.valueReference, variable.name))
+                continuous_inputs[variable.type].append(variable)
             else:
-                discrete_inputs[variable.type].append((variable.valueReference, variable.name))
+                discrete_inputs[variable.type].append(variable)
 
-        for type_, vrs_and_names in continuous_inputs.items():
-            vrs, names = zip(*vrs_and_names)
-            setter, value_type = setters[type_]
-            self.continuous.append((
-                (c_uint32 * len(vrs))(*vrs),
-                (value_type * len(vrs))(),
-                (c_int * len(vrs))(*([1] * len(vrs))),
-                (value_type * len(vrs))(),
-                np.asarray(np.stack(list(map(lambda n: signals[n], names))), dtype=value_type),
-                setter
-            ))
+        for variable_type, variables in continuous_inputs.items():
 
-        for type_, vrs_and_names in discrete_inputs.items():
-            vrs, names = zip(*vrs_and_names)
-            setter, value_type = setters[type_]
-            self.discrete.append((
-                (c_uint32 * len(vrs))(*vrs),
-                (value_type * len(vrs))(),
-                np.asarray(np.stack(list(map(lambda n: signals[n], names))), dtype=value_type),
-                setter
-            ))
+            names, vrs, sizes = zip(*((v.name, v.valueReference, signals[v.name][0].size) for v in variables))
+            setter, value_type = setters[variable_type]
+
+            self.continuous.append(ContinuousVariableInfo(
+                vrs=(c_uint32 * len(vrs))(*vrs),
+                values=(value_type * sum(sizes))(),
+                order=(c_int * len(vrs))(*([1] * len(vrs))),
+                derivatives=(value_type * 9)(),
+                table=np.asarray(np.stack(list(map(lambda n: signals[n], names))), dtype=value_type),
+                setter=setter)
+            )
+
+        for variable_type, variables in discrete_inputs.items():
+
+            names, vrs, sizes = zip(*((v.name, v.valueReference, signals[v.name][0].size) for v in variables))
+            setter, value_type = setters[variable_type]
+
+            self.discrete.append(DiscreteVariableInfo(
+                vrs=(c_uint32 * len(vrs))(*vrs),
+                values=(value_type * sum(sizes))(),
+                table=np.asarray(np.stack(list(map(lambda n: signals[n], names))), dtype=value_type),
+                setter=setter)
+            )
 
     def apply(self, time, continuous=True, discrete=True, after_event=False):
         """ Apply the input
@@ -309,18 +323,24 @@ class Input(object):
         # continuous
         if continuous:
             for vrs, values, order, derivatives, table, setter in self.continuous:
-                values[:], derivatives[:] = self.interpolate(time=time, t=self.t, table=table, discrete=False, after_event=after_event)
+
+                v, d = self.interpolate(time=time, t=self.t, table=table, discrete=False, after_event=after_event)
+
+                values[:] = v.flatten()
+
                 if is_fmi3:
                     setter(self.fmu.component, vrs, len(vrs), values, len(values))
                 else:
                     setter(self.fmu.component, vrs, len(vrs), values)
 
                 if self.set_input_derivatives:
+                    derivatives[:] = d
                     self.fmu.fmi2SetRealInputDerivatives(self.fmu.component, vrs, len(vrs), order, derivatives)
 
         # discrete
         if discrete:
             for vrs, values, table, setter in self.discrete:
+
                 values[:], der_values = self.interpolate(time=time, t=self.t, table=table, discrete=True, after_event=after_event)
 
                 if is_fmi1 and values._type_ == c_int8:

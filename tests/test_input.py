@@ -1,4 +1,7 @@
 import numpy as np
+import pytest
+
+from fmpy import simulate_fmu
 from fmpy.simulation import Input
 from fmpy.model_description import ModelDescription, ScalarVariable
 
@@ -112,3 +115,65 @@ def test_input_discrete():
     u, du = Input.interpolate(3, t, y)
     assert u == 3, "Expecting last value"
     assert du == 0
+
+@pytest.mark.parametrize('fmi_version, interface_type', [
+    ('2.0', 'ModelExchange'),
+    ('3.0', 'ModelExchange'),
+    ('3.0', 'CoSimulation'),
+])
+def test_discrete_input(reference_fmus_dist_dir, fmi_version, interface_type):
+
+    filename = reference_fmus_dist_dir / fmi_version / 'Feedthrough.fmu'
+
+    dtype = np.dtype([('time', np.float64), ('Float64_discrete_input', np.int32)])
+
+    input = np.array([
+        (0.0, 1),
+        (0.5, 2),
+        (1.0, 2),
+    ], dtype=dtype)
+
+    result = simulate_fmu(
+        filename=filename,
+        fmi_type=interface_type,
+        input=input,
+        stop_time=1,
+        output_interval=0.25,
+        output=['Float64_discrete_input'],
+        use_event_mode=True,
+    )
+
+    assert np.all(result['time'] == [0, 0.25, 0.5, 0.5, 0.75, 1])
+    assert np.all(result['Float64_discrete_input'] == [1, 1, 1, 2, 2, 2])
+
+@pytest.mark.parametrize('fmi_version, interface_type', [
+    ('2.0', 'ModelExchange'),
+    ('3.0', 'ModelExchange'),
+    ('3.0', 'CoSimulation'),
+])
+def test_discrete_change_in_continuous_input(reference_fmus_dist_dir, fmi_version, interface_type):
+
+    filename = reference_fmus_dist_dir / fmi_version / 'Feedthrough.fmu'
+
+    dtype = np.dtype([('time', np.float64), ('Float64_continuous_input', np.int32)])
+
+    input = np.array([
+        (0.0, 1),
+        (0.5, 1),
+        (0.5, 2),
+        (1.0, 2),
+    ], dtype=dtype)
+
+    result = simulate_fmu(
+        filename=filename,
+        fmi_type=interface_type,
+        input=input,
+        stop_time=1,
+        output_interval=0.25,
+        output=['Float64_continuous_input'],
+        use_event_mode=True,
+    )
+
+    assert np.all(result['time'] == [0, 0.25, 0.5, 0.5, 0.75, 1])
+    assert np.all(result['Float64_continuous_input'] == [1, 1, 1, 2, 2, 2])
+

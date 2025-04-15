@@ -406,7 +406,19 @@ class Input(object):
             values = table[:, -1]  # hold last value
             return values, np.zeros_like(values)
 
-        # check for event
+        if discrete:
+
+            i = i0 - 1
+
+            if after_event:
+                while i + 1 < t.size and (t[i + 1] < time or isclose(time, t[i + 1])):
+                    i += 1
+
+            values = table[:, i]
+
+            return values, np.zeros_like(values)
+
+        # check for time event
         if isclose(time, t[i0]) and i0 < len(t) - 1 and isclose(t[i0], t[i0 + 1]):
 
             der_v = np.zeros((table.shape[0],))
@@ -435,10 +447,6 @@ class Input(object):
 
         i0 -= 1  # interpolate
         i1 = i0 + 1
-
-        if discrete:
-            values = table[:, i1 if after_event else i0]
-            return values, np.zeros_like(values)
 
         t0 = t[i0]
         t1 = t[i1]
@@ -1247,6 +1255,8 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
 
     n_steps = 0
 
+    input_applied = False
+
     # simulation loop
     while True:
 
@@ -1279,15 +1289,19 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
 
         step_size = next_communication_point - time
 
-        input.apply(time, continuous=True, discrete=use_event_mode, after_event=use_event_mode)
-
         if is_fmi1:
+
+            input.apply(time, continuous=True, discrete=True, after_event=True)
 
             fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
 
             time = next_communication_point
 
+            recorder.sample(time)
+
         elif is_fmi2:
+
+            input.apply(time, continuous=True, discrete=True, after_event=True)
 
             try:
                 fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
@@ -1307,7 +1321,11 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
                 else:
                     raise exception
 
+            recorder.sample(time)
+
         else:
+
+            input.apply(time, continuous=not input_applied, discrete=not input_applied, after_event=not use_event_mode)
 
             event_encountered, terminate_simulation, early_return, last_successful_time = fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
 
@@ -1318,6 +1336,8 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
                 time = last_successful_time
             else:
                 time = next_communication_point
+
+            recorder.sample(time)
 
             if terminate_simulation:
                 break
@@ -1341,10 +1361,12 @@ def simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance
 
                 recorder.sample(time)
 
+                input_applied = True
+            else:
+                input_applied = False
+
         if isclose(time, next_regular_point):
             n_steps += 1
-
-        recorder.sample(time)
 
         if step_finished is not None and not step_finished(time, recorder):
             break

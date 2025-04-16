@@ -146,7 +146,7 @@
    <item row="9" column="1">
     <widget class="QLabel" name="label_8">
      <property name="text">
-      <string>© 2024 Dassault Systèmes. All rights reserved.</string>
+      <string>© 2025 Dassault Systèmes. All rights reserved.</string>
      </property>
     </widget>
    </item>

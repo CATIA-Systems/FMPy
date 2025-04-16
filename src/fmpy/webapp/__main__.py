@@ -235,13 +235,13 @@ def update_output_div(n_clicks, stop_time, *values):
 
 @app.server.route('/model.png')
 def send_static_resource():
-    return flask.send_from_directory(os.path.join(unzipdir), 'model.png', cache_timeout=0)
+    return flask.send_from_directory(unzipdir, 'model.png')
 
 
 @app.server.route('/documentation/<resource>')
 def serve_documentation(resource):
-    return flask.send_from_directory(os.path.join(unzipdir, 'documentation'), resource, cache_timeout=0)
+    return flask.send_from_directory(os.path.join(unzipdir, 'documentation'), resource)
 
 
 if __name__ == '__main__':
-    app.run_server(host=args.host, port=args.port, debug=args.debug)
+    app.run(host=args.host, port=args.port, debug=args.debug)

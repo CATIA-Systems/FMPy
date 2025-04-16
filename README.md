@@ -1,6 +1,4 @@
 [![PyPI](https://img.shields.io/pypi/dm/FMPy.svg?label=PyPI%20downloads)](https://pypi.org/project/FMPy/)
-[![Conda](https://img.shields.io/conda/dn/conda-forge/FMPy.svg?label=Conda%20downloads)](https://anaconda.org/conda-forge/fmpy)
-[![Read the Docs](https://readthedocs.org/projects/fmpy/badge/?version=latest)](https://fmpy.readthedocs.io/)
 
 # FMPy
 
@@ -15,13 +13,7 @@ FMPy is a free Python library to simulate [Functional Mock-up Units (FMUs)](http
 
 ## Installation
 
-Several options are available:
-
-- Install with conda: `conda install -c conda-forge fmpy`
-- Install with from PyPI: `python -m pip install fmpy[complete]`
-- [Install a development build](docs/faq.md)
-
-If you don't have Python on your machine you can install [Miniforge](https://github.com/conda-forge/miniforge).
+Install from PyPI with `python -m pip install fmpy[complete]`
 
 ## Start the Graphical User Interface
 

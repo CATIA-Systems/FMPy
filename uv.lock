@@ -279,7 +279,7 @@ wheels = [
 
 [[package]]
 name = "fmpy"
-version = "0.3.22"
+version = "0.3.23"
 source = { editable = "." }
 dependencies = [
     { name = "attrs" },
@@ -292,6 +292,7 @@ dependencies = [
 
 [package.optional-dependencies]
 complete = [
+    { name = "dash-bootstrap-components" },
     { name = "dask" },
     { name = "matplotlib" },
     { name = "plotly" },
@@ -328,6 +329,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "attrs", specifier = ">=24.2.0" },
+    { name = "dash-bootstrap-components", marker = "extra == 'complete'", specifier = ">=2.0.1" },
     { name = "dash-bootstrap-components", marker = "extra == 'webapp'", specifier = ">=2.0.1" },
     { name = "dask", extras = ["bag"], marker = "extra == 'complete'", specifier = ">=2024.11.2" },
     { name = "dask", extras = ["bag"], marker = "extra == 'examples'", specifier = ">=2024.11.2" },

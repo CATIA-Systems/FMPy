@@ -1,3 +1,4 @@
+import os
 from os import makedirs
 from shutil import rmtree
 
@@ -19,7 +20,10 @@ def root_dir():
 
 @pytest.fixture(scope='session')
 def work_dir():
-    yield Path(__file__).parent / 'work'
+    path = Path(__file__).parent / 'work'
+    if not path.exists():
+        os.makedirs(path)
+    yield path
 
 
 @pytest.fixture(scope='session')

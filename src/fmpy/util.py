@@ -1,71 +1,77 @@
+from collections.abc import Iterable
+
 import os
+from os import PathLike
 from typing import List, IO, Union
 
 import fmpy
 import numpy as np
+from numpy.typing import NDArray
 
 
-def read_csv(filename, variable_names=[], validate=True, structured=False):
+def read_csv(filename: str | PathLike, variable_names: Iterable[str] | None = None, validate: bool = True, structured: bool = False) -> NDArray:
     """ Read a CSV file that conforms to the FMI cross-check rules
 
     Parameters:
         filename         name of the CSV file to read
         variable_names   list of variables to read (default: read all)
-        structured       convert structured names to arrays
-
+        structured       convert structured names to arrays (deprecated)
     Returns:
         traj             the trajectories read from the CSV file
     """
 
-    # pass an empty string as deletechars to preserve special characters
-    traj = np.genfromtxt(filename, delimiter=',', names=True, deletechars='')
+    with open(filename, 'r') as csv:
+        lines = csv.readlines()
 
-    if structured:
-        arrays = {}
+    cols = []
 
-        cols = []
-        traj_ = []
+    names = lines[0].rstrip().split(',')
+    first = lines[1].rstrip().split(',')
 
-        for name, type_ in traj.dtype.descr:
-            if name.endswith(']'):
-                i = name.rfind('[')
-                basename = name[:i]
-                if basename not in arrays:
-                    arrays[basename] = []
-                arrays[basename].append((int(name[i + 1:-1]) - 1, traj[name]))
+    for name, literal in zip(names, first):
+        n = len(literal.split(' '))
+        cols.append((name.strip('"'), np.float64, (n,) if n > 1 else None))
+
+    rows = []
+
+    for line in lines[1:]:
+
+        row = []
+
+        for literal in line.rstrip().split(','):
+            values = literal.split(' ')
+            if len(values) > 1:
+                row.append(tuple(map(float, values)))
             else:
-                cols.append((name, type_))
-                traj_.append(traj[name].tolist())
+                row.append(float(literal))
+        rows.append(tuple(row))
 
-        for name, value in arrays.items():
-            subs, arrs = zip(*value)
-            cols.append((name, '<f8', (max(subs) + 1,)))
-            traj_.append(list(zip(*arrs)))
+    traj = np.array(rows, dtype=np.dtype(cols))
 
-        traj = np.array(list(zip(*traj_)), dtype=np.dtype(cols))
+    if variable_names:
+        traj = traj[['time'] + list(variable_names)]
 
-    if not validate:
-        return traj
+    if validate:
 
-    # get the time
-    time = traj[traj.dtype.names[0]]
+        names = traj.dtype.names
 
-    # check if the time is monotonically increasing
-    if traj.size > 1 and np.any(np.diff(time) < 0):
-        raise Exception("Values in first column (time) are not monotonically increasing")
+        time = traj[names[0]]
 
-    # get the trajectory names (without the time)
-    traj_names = traj.dtype.names[1:]
+        if traj.size > 1 and np.any(np.diff(time) < 0):
+            raise Exception("Values in first column (time) are not monotonically increasing")
 
-    # check if the variable names match the trajectory names
-    for variable_name in variable_names:
-        if variable_name not in traj_names:
-            raise Exception("Trajectory of '" + variable_name + "' is missing")
+        if variable_names:
+
+            traj_names = names[1:]
+
+            for variable_name in variable_names:
+                if variable_name not in traj_names:
+                    raise Exception("Trajectory of '" + variable_name + "' is missing")
 
     return traj
 
 
-def write_csv(filename, result, columns=None):
+def write_csv(filename: str | PathLike, result: NDArray, columns: [str] = None) -> None:
     """ Save a simulation result as a CSV file
 
     Parameters:
@@ -77,29 +83,21 @@ def write_csv(filename, result, columns=None):
     if columns is not None:
         result = result[['time'] + columns]
 
-    # serialize multi-dimensional signals
-    cols = []
-    data = []
+    with open(filename, 'w') as csv:
 
-    for name in result.dtype.names:
-        dtype = result.dtype[name]
-        if len(dtype.shape) > 0:
-            subtype = dtype.subdtype[0].type
-            y = result[name]
-            for i in np.ndindex(dtype.shape):
-                # convert index to 1-based subscripts
-                subs = ','.join(map(lambda sub: str(sub + 1), i))
-                cols.append(('%s[%s]' % (name, subs), subtype))
-                sl = tuple([slice(0, None)] + [slice(s, s + 1) for s in i])
-                data.append(y[sl].flatten())
-        else:
-            cols.append((name, dtype.type))
-            data.append(result[name])
+        csv.write(','.join(map(lambda n: f'"{n}"', result.dtype.names)) + '\n')
 
-    result = np.array(list(zip(*data)), dtype=np.dtype(cols))
-
-    header = ','.join(map(lambda s: '"' + s + '"', result.dtype.names))
-    np.savetxt(filename, result, delimiter=',', header=header, comments='', fmt='%.16g')
+        for i in range(len(result)):
+            for j, name in enumerate(result.dtype.names):
+                value = result[i][name]
+                if isinstance(value, Iterable):
+                    literal = ' '.join(map(lambda v: f'{v:.16g}', value.flatten()))
+                else:
+                    literal = str(value)
+                if j > 0:
+                    csv.write(',')
+                csv.write(literal)
+            csv.write('\n')
 
 
 def read_ref_opt_file(filename):

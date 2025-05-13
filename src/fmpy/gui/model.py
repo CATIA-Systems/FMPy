@@ -142,7 +142,7 @@ class VariablesModel(QAbstractItemModel):
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
         elif column == 'Plot':
             variable = self.variableForIndex(index)
-            if variable and not variable.dimensions:
+            if variable and not variable.type in {'Binary', 'String'}:
                 return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsUserCheckable
 
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable

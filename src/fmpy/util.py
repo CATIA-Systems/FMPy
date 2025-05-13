@@ -1,21 +1,18 @@
+from __future__ import annotations
 from collections.abc import Iterable
 
 import os
 from os import PathLike
+from numpy.typing import NDArray
 from typing import List, IO, Union
 
 import fmpy
 import numpy as np
-from numpy.typing import NDArray
 
 
-def read_csv(filename: str | PathLike, variable_names: Iterable[str] | None = None, validate: bool = True, structured: bool = False) -> NDArray:
+def read_csv(filename: str | PathLike, variable_names: [str] = None) -> np.typing.NDArray:
     """ Read a CSV file that conforms to the FMI cross-check rules
 
-    Parameters:
-        filename         name of the CSV file to read
-        variable_names   list of variables to read (default: read all)
-        structured       convert structured names to arrays (deprecated)
     Returns:
         traj             the trajectories read from the CSV file
     """
@@ -48,30 +45,13 @@ def read_csv(filename: str | PathLike, variable_names: Iterable[str] | None = No
 
     traj = np.array(rows, dtype=np.dtype(cols))
 
-    if variable_names:
-        traj = traj[['time'] + list(variable_names)]
-
-    if validate:
-
-        names = traj.dtype.names
-
-        time = traj[names[0]]
-
-        if traj.size > 1 and np.any(np.diff(time) < 0):
-            raise Exception("Values in first column (time) are not monotonically increasing")
-
-        if variable_names:
-
-            traj_names = names[1:]
-
-            for variable_name in variable_names:
-                if variable_name not in traj_names:
-                    raise Exception("Trajectory of '" + variable_name + "' is missing")
+    if variable_names is not None:
+        traj = traj[['time'] + variable_names]
 
     return traj
 
 
-def write_csv(filename: str | PathLike, result: NDArray, columns: [str] = None) -> None:
+def write_csv(filename: str | PathLike, result: np.typing.NDArray, columns: [str] = None) -> None:
     """ Save a simulation result as a CSV file
 
     Parameters:
@@ -227,7 +207,7 @@ def validate_result(result, reference, stop_time=None):
     return rel_out
 
 
-def create_plotly_figure(result, names=None, events=False, time_unit=None, markers=False):
+def create_plotly_figure(result: fmpy.simulation.SimulationResult | NDArray, names: Iterable[str] | None = None, events: bool =False, time_unit: str | None = None, markers: bool = False, height: int | None = None):
 
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
@@ -238,7 +218,7 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None, marke
     display_units = {}
 
     if model_description:
-        # get the units and display units
+
         for unit in model_description.unitDefinitions:
             if unit.displayUnits:
                 display_units[unit.name] = unit.displayUnits[0]
@@ -300,6 +280,9 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None, marke
     trajectories = []
 
     for name in names:
+        if not name in result.dtype.names:
+            print(f"Missing variable {name}...")
+            continue
         y = result[name]
         if y.ndim == 1:
             trajectories.append((name, ()))
@@ -307,7 +290,12 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None, marke
             for index in np.ndindex(y.shape[1:]):
                 trajectories.append((name, index))
 
-    fig = make_subplots(rows=len(trajectories), cols=1, shared_xaxes=True)
+    fig = make_subplots(
+        rows=len(trajectories),
+        cols=1,
+        vertical_spacing=0.06,
+        shared_xaxes=True
+    )
 
     for i, (name, index) in enumerate(trajectories):
 
@@ -326,9 +314,9 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None, marke
         args = dict(
             x=time,
             name=name,
-            line=dict(color='#636efa', width=1),
+            line=dict(color='#229AEB', width=1),
             mode='lines+markers' if markers else None,
-            marker=dict(color='#636efa', size=5)
+            marker=dict(color='#229AEB', size=5)
         )
 
         if y.dtype in [np.float32, np.float64]:
@@ -347,20 +335,29 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None, marke
         for t_event in time[np.argwhere(np.diff(time) == 0).flatten()]:
             fig.add_vline(x=t_event, line={'color': '#fbe424', 'width': 1})
 
-    fig['layout']['height'] = 160 * len(trajectories) + 30 * max(0, 5 - len(trajectories))
-    fig['layout'][f'xaxis{len(trajectories)}'].update(title=f'time [{time_unit}]')
+    if height:
+        fig['layout']['height'] = height  # 160 * len(trajectories) + 30 * max(0, 5 - len(trajectories))
+    else:
+        fig['layout'][f'xaxis{len(trajectories)}'].update(title=f'time [{time_unit}]')
 
     axes_attrs = dict(showgrid=True, gridwidth=1, ticklen=0, gridcolor='LightGrey', linecolor='black', showline=True,
                       zerolinewidth=1, zerolinecolor='LightGrey')
     fig.update_xaxes(range=(time[0], time[-1]), **axes_attrs)
     fig.update_yaxes(**axes_attrs)
 
-    fig.update_layout(showlegend=False, margin=dict(t=30, b=0, r=30), plot_bgcolor='rgba(0,0,0,0)')
+    fig.update_layout(showlegend=False, margin=dict(t=20, b=20, l=20, r=20), plot_bgcolor='rgba(0,0,0,0)')
 
     return fig
 
 
-def plot_result(result, reference=None, names=None, filename=None, window_title=None, events=False, markers=False):
+def plot_result(result: fmpy.simulation.SimulationResult | NDArray,
+                reference: fmpy.simulation.SimulationResult | NDArray | None = None,
+                names: Iterable[str] | None = None,
+                filename: str | PathLike | None = None,
+                window_title=None,
+                events: bool = False,
+                markers: bool = False,
+                height: int | None = None) -> None:
     """ Plot a collection of time series.
 
     Parameters:
@@ -371,154 +368,15 @@ def plot_result(result, reference=None, names=None, filename=None, window_title=
         window_title: title for the figure window
         events:       draw vertical lines at events
         markers:      show markers
+        height:       fixed height of the plot figure
     """
 
-    from . import plot_library
+    figure = create_plotly_figure(result, names=names, events=events, markers=markers, height=height)
 
-    if plot_library == 'plotly':
-        figure = create_plotly_figure(result, names=names, events=events, markers=markers)
-        if filename is None:
-            figure.show()
-        else:
-            figure.write_image(filename)
-        return
-
-    import matplotlib.pylab as pylab
-    import matplotlib.pyplot as plt
-    import matplotlib.transforms as mtransforms
-    from matplotlib.ticker import MaxNLocator
-    from collections.abc import Iterable
-
-    params = {
-        'legend.fontsize': 8,
-        'axes.labelsize': 8,
-        'xtick.labelsize': 8,
-        'ytick.labelsize': 8,
-        'axes.linewidth': 0.5,
-    }
-
-    pylab.rcParams.update(params)
-
-    time = result['time']
-
-    if names is None:
-
-        names = []
-
-        # plot at most 20 one-dimensional signals
-        for d in result.dtype.descr[1:]:
-            if len(d) < 3 and len(names) < 20:
-                names.append(d[0])
-
-    if len(names) > 0:
-
-        # indent label 0.015 inch / character
-        label_x = -0.015 * np.max(list(map(len, names)) + [8])
-
-        fig, axes = plt.subplots(len(names), sharex=True)
-
-        fig.set_facecolor('white')
-
-        if not isinstance(axes, Iterable):
-            axes = [axes]
-
-        if events:
-            t_event = time[np.argwhere(np.diff(time) == 0)]
-
-        for ax, name in zip(axes, names):
-
-            y = result[name]
-
-            ax.grid(b=True, which='both', color='0.8', linestyle='-', zorder=0)
-
-            ax.tick_params(direction='in')
-
-            if events:
-                for t in t_event:
-                    ax.axvline(x=t, color='y', linewidth=1)
-
-            if reference is not None and name in reference.dtype.names:
-                t_ref = reference[reference.dtype.names[0]]
-                y_ref = reference[name]
-
-                t_band, y_min, y_max, i_out = validate_signal(t=time, y=y, t_ref=t_ref, y_ref=y_ref)
-
-                ax.fill_between(t_band, y_min, y_max, facecolor=(0, 0.5, 0), alpha=0.1)
-                ax.plot(t_band, y_min, color=(0, 0.5, 0), linewidth=1, label='lower bound', zorder=101, alpha=0.5)
-                ax.plot(t_band, y_max, color=(0, 0.5, 0), linewidth=1, label='upper bound', zorder=101, alpha=0.5)
-
-                # mark the outliers
-                # use the data coordinates for the x-axis and the axes coordinates for the y-axis
-                trans = mtransforms.blended_transform_factory(ax.transData, ax.transAxes)
-                ax.fill_between(time, 0, 1, where=i_out, facecolor='red', alpha=0.5, transform=trans)
-
-            if y.dtype == np.float64:
-                # find left indices of discontinuities
-                i_disc = np.flatnonzero(np.diff(time) == 0)
-                i_disc = np.append(i_disc + 1, len(time))
-                i0 = 0
-                for i1 in i_disc:
-                    ax.plot(time[i0:i1], y[i0:i1], color='b', linewidth=0.9, label='result', zorder=101)
-                    i0 = i1
-            else:
-                ax.hlines(y[:-1], time[:-1], time[1:], colors='b', linewidth=1, label='result', zorder=101)
-                ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-
-            if y.dtype == bool:
-                # use fixed range and labels and fill area
-                ax.set_ylim(-0.25, 1.25)
-                ax.yaxis.set_ticks([0, 1])
-                ax.yaxis.set_ticklabels(['false', 'true'])
-                if y.ndim == 1:
-                    ax.fill_between(time, y, 0, step='post', facecolor='b', alpha=0.1)
-            else:
-                ax.margins(x=0, y=0.05)
-
-            if time.size < 200:
-                ax.scatter(time, y, color='b', s=5, zorder=101)
-
-            ax.set_ylabel(name, horizontalalignment='left', rotation=0)
-
-            # align the y-labels
-            ax.get_yaxis().set_label_coords(label_x, 0.5)
-
-        # set the window title
-        if window_title is not None:
-            fig.canvas.set_window_title(window_title)
-
-        def onresize(event):
-            fig = plt.gcf()
-
-            w = fig.get_figwidth()
-
-            # tight_layout() crashes on very small figures
-            if w < 3:
-                return
-
-            x = label_x * (8.0 / w)
-
-            # update label coordinates
-            for ax in fig.get_axes():
-                ax.get_yaxis().set_label_coords(x, 0.5)
-
-            # update layout
-            plt.tight_layout()
-
-        # update layout when the plot is re-sized
-        fig.canvas.mpl_connect('resize_event', onresize)
-
-        fig.set_size_inches(w=8, h=1.5 * len(names), forward=True)
-
-        plt.tight_layout()
-
-        if filename is None:
-            plt.show()
-        else:
-            dir, _ = os.path.split(filename)
-            if not os.path.isdir(dir):
-                os.makedirs(dir)
-            fig.savefig(filename)
-            plt.close(fig)
+    if filename is None:
+        figure.show()
+    else:
+        figure.write_image(filename)
 
 
 def fmu_path_info(path):

@@ -1,21 +1,15 @@
 from collections.abc import Iterable
 
 import os
-from os import PathLike
 from typing import List, IO, Union
 
 import fmpy
 import numpy as np
-from numpy.typing import NDArray
 
 
-def read_csv(filename: str | PathLike, variable_names: Iterable[str] | None = None, validate: bool = True, structured: bool = False) -> NDArray:
+def read_csv(filename: str | os.PathLike, variable_names: [str] = None) -> np.typing.NDArray:
     """ Read a CSV file that conforms to the FMI cross-check rules
 
-    Parameters:
-        filename         name of the CSV file to read
-        variable_names   list of variables to read (default: read all)
-        structured       convert structured names to arrays (deprecated)
     Returns:
         traj             the trajectories read from the CSV file
     """
@@ -48,30 +42,13 @@ def read_csv(filename: str | PathLike, variable_names: Iterable[str] | None = No
 
     traj = np.array(rows, dtype=np.dtype(cols))
 
-    if variable_names:
-        traj = traj[['time'] + list(variable_names)]
-
-    if validate:
-
-        names = traj.dtype.names
-
-        time = traj[names[0]]
-
-        if traj.size > 1 and np.any(np.diff(time) < 0):
-            raise Exception("Values in first column (time) are not monotonically increasing")
-
-        if variable_names:
-
-            traj_names = names[1:]
-
-            for variable_name in variable_names:
-                if variable_name not in traj_names:
-                    raise Exception("Trajectory of '" + variable_name + "' is missing")
+    if variable_names is not None:
+        traj = traj[['time'] + variable_names]
 
     return traj
 
 
-def write_csv(filename: str | PathLike, result: NDArray, columns: [str] = None) -> None:
+def write_csv(filename: str | os.PathLike, result: np.typing.NDArray, columns: [str] = None) -> None:
     """ Save a simulation result as a CSV file
 
     Parameters:
@@ -300,6 +277,9 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None, marke
     trajectories = []
 
     for name in names:
+        if not name in result.dtype.names:
+            print(f"Missing variable {name}...")
+            continue
         y = result[name]
         if y.ndim == 1:
             trajectories.append((name, ()))
@@ -307,7 +287,12 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None, marke
             for index in np.ndindex(y.shape[1:]):
                 trajectories.append((name, index))
 
-    fig = make_subplots(rows=len(trajectories), cols=1, shared_xaxes=True)
+    fig = make_subplots(
+        rows=len(trajectories),
+        cols=1,
+        vertical_spacing=0.06,
+        shared_xaxes=True
+    )
 
     for i, (name, index) in enumerate(trajectories):
 
@@ -326,9 +311,9 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None, marke
         args = dict(
             x=time,
             name=name,
-            line=dict(color='#636efa', width=1),
+            line=dict(color='#229AEB', width=1),
             mode='lines+markers' if markers else None,
-            marker=dict(color='#636efa', size=5)
+            marker=dict(color='#229AEB', size=5)
         )
 
         if y.dtype in [np.float32, np.float64]:
@@ -347,7 +332,7 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None, marke
         for t_event in time[np.argwhere(np.diff(time) == 0).flatten()]:
             fig.add_vline(x=t_event, line={'color': '#fbe424', 'width': 1})
 
-    fig['layout']['height'] = 160 * len(trajectories) + 30 * max(0, 5 - len(trajectories))
+    # fig['layout']['height'] = 160 * len(trajectories) + 30 * max(0, 5 - len(trajectories))
     fig['layout'][f'xaxis{len(trajectories)}'].update(title=f'time [{time_unit}]')
 
     axes_attrs = dict(showgrid=True, gridwidth=1, ticklen=0, gridcolor='LightGrey', linecolor='black', showline=True,
@@ -355,7 +340,7 @@ def create_plotly_figure(result, names=None, events=False, time_unit=None, marke
     fig.update_xaxes(range=(time[0], time[-1]), **axes_attrs)
     fig.update_yaxes(**axes_attrs)
 
-    fig.update_layout(showlegend=False, margin=dict(t=30, b=0, r=30), plot_bgcolor='rgba(0,0,0,0)')
+    fig.update_layout(showlegend=False, margin=dict(t=20, b=20, l=20, r=20), plot_bgcolor='rgba(0,0,0,0)')
 
     return fig
 

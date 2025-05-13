@@ -1,4 +1,6 @@
 """ Entry point for the graphical user interface """
+from pathlib import Path
+
 import shutil
 
 try:
@@ -336,8 +338,8 @@ class MainWindow(QMainWindow):
         self.ui.actionShowResults.triggered.connect(lambda: self.setCurrentPage(self.ui.resultPage))
         self.fmiTypeComboBox.currentTextChanged.connect(self.updateSimulationSettings)
         self.ui.solverComboBox.currentTextChanged.connect(self.updateSimulationSettings)
-        self.variableSelected.connect(self.updatePlotLayout)
-        self.variableDeselected.connect(self.updatePlotLayout)
+        self.variableSelected.connect(self.updatePlotData)
+        self.variableDeselected.connect(self.updatePlotData)
         self.tableModel.variableSelected.connect(self.selectVariable)
         self.tableModel.variableDeselected.connect(self.deselectVariable)
         self.treeModel.variableSelected.connect(self.selectVariable)
@@ -450,7 +452,7 @@ class MainWindow(QMainWindow):
 
         for v in md.modelVariables:
             self.variables[v.name] = v
-            if v.causality == 'output' and not v.dimensions:
+            if v.causality == 'output' and not v.type in {'String', 'Binary'}:
                 self.selectedVariables.add(v)
 
         fmi_types = []
@@ -812,7 +814,7 @@ class MainWindow(QMainWindow):
         self.simulationThread.start()
         self.plotUpdateTimer.start(100)
 
-        self.updatePlotLayout()
+        self.updatePlotData()
 
     def simulationFinished(self):
 
@@ -826,7 +828,7 @@ class MainWindow(QMainWindow):
         self.ui.actionShowResults.setEnabled(True)
         self.ui.actionShowSettings.setEnabled(True)
         self.setCurrentPage(self.ui.resultPage)
-        self.updatePlotLayout()
+        self.updatePlotData()
 
         if self.result is None:
             self.setCurrentPage(self.ui.logPage)
@@ -851,72 +853,50 @@ class MainWindow(QMainWindow):
         if self.result is None:
             return  # no results available yet
 
-        time = self.result['time']
+        import plotly
+        from ..util import create_plotly_figure
 
-        for variable, curve in self.curves:
+        if len(self.selectedVariables) == 0:
+            self.ui.resultStackedWidget.setCurrentWidget(self.ui.noResultPage)
 
-            if variable.name not in self.result.dtype.names:
-                continue
-
-            y = self.result[variable.name]
-
-            if variable.type == 'Real':
-                curve.setData(x=time, y=y)
-            else:
-                curve.setData(x=np.repeat(time, 2)[1:], y=np.repeat(y, 2)[:-1])
-
-    def updatePlotLayout(self):
-
-        self.ui.plotWidget.clear()
-
-        color_scheme = QGuiApplication.styleHints().colorScheme()
-
-        if color_scheme == Qt.ColorScheme.Dark:
-            self.ui.plotWidget.setBackground('#1e1e1e')
-            pg.setConfigOptions(foreground='w')
         else:
-            self.ui.plotWidget.setBackground('#fbfbfb')
-            pg.setConfigOptions(foreground='k')
+            self.ui.resultStackedWidget.setCurrentWidget(self.ui.resultViewPage)
 
-        self.curves[:] = []
+            names = [variable.name for variable in self.selectedVariables]
 
-        if self.simulationThread is not None:
-            stop_time = self.simulationThread.stopTime
-        elif self.result is not None:
-            stop_time = self.result['time'][-1]
-        else:
-            stop_time = 1.0
+            fig = create_plotly_figure(self.result, names=names)
 
-        pen = pg.mkPen('#548AF7')
+            if QGuiApplication.styleHints().colorScheme() == Qt.ColorScheme.Dark:
 
-        for variable in sorted(self.selectedVariables, key=lambda v: v.name):
+                line_spec = dict(
+                    linecolor='rgba(175, 175, 175, 1)',
+                    color='rgba(225, 225, 225, 1)',
+                    gridcolor='rgba(80, 80, 80, 1)',
+                    zerolinecolor='rgba(80, 80, 80, 1)',
+                    showline=True
+                )
 
-            self.ui.plotWidget.nextRow()
-            plot = self.ui.plotWidget.addPlot()
+                fig.update_xaxes(**line_spec)
+                fig.update_yaxes(**line_spec)
 
-            if variable.type == 'Real':
-                curve = plot.plot(pen=pen)
-            else:
-                if variable.type == 'Boolean':
-                    plot.setYRange(0, 1, padding=0.2)
-                    plot.getAxis('left').setTicks([[(0, 'false'), (1, 'true')], []])
-                    curve = plot.plot(pen=pen, fillLevel=0, fillBrush=(0, 0, 255, 50), antialias=False)
-                else:
-                    curve = plot.plot(pen=pen, antialias=False)
+                fig.update_layout(paper_bgcolor="rgb(30, 30, 30)")
 
-            plot.setXRange(0, stop_time, padding=0.05)
+            div = plotly.offline.plot(fig, output_type='div', config={'displayModeBar': False})
 
-            plot.setLabel('left', variable.name)
-            plot.showGrid(x=True, y=True, alpha=0.25)
+            html = f"""
+<html>
+<head><meta charset="utf-8"/></head>
+<body style="margin: 0; background-color: rgb(30, 30, 30); overflow: hidden">
+{div}
+</body>
+</html>
+"""
+            filename = Path(self.unzipdir) / 'plot.html'
 
-            # hide the auto-scale button and disable context menu and mouse interaction
-            plot.hideButtons()
-            plot.setMouseEnabled(False, False)
-            plot.setMenuEnabled(False)
+            with open(filename, "w", encoding='utf8') as f:
+                f.write(html)
 
-            self.curves.append((variable, curve))
-
-        self.updatePlotData()
+            self.ui.resultWebEngineView.load(QUrl.fromLocalFile(filename))
 
     def showColumn(self, name, show):
         if name in self.showColumnActions:
@@ -1136,7 +1116,7 @@ class MainWindow(QMainWindow):
     def clearPlots(self):
         """ Clear all plots """
         self.selectedVariables.clear()
-        self.updatePlotLayout()
+        self.updatePlotData()
 
     def createGraphics(self):
         """ Create the graphical representation of the FMU's inputs and outputs """

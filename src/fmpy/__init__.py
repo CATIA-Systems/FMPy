@@ -9,7 +9,7 @@ from typing import Union, IO, List
 __version__ = '0.3.23'
 
 # library to use in plot_result()
-plot_library = 'plotly'  # or 'matplotlib'
+plot_library = 'plotly'  # deprecated
 
 
 # determine the platform

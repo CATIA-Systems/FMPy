@@ -879,7 +879,7 @@ class MainWindow(QMainWindow):
                 fig.update_xaxes(**line_spec)
                 fig.update_yaxes(**line_spec)
 
-                fig.update_layout(paper_bgcolor="rgb(30, 30, 30)")
+                fig.update_layout(paper_bgcolor="rgb(0, 0, 0, 0)")
 
             div = plotly.offline.plot(fig, output_type='div', config={'displayModeBar': False})
 

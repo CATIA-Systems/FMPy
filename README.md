@@ -127,4 +127,6 @@ Please send an e-mail to support@ltx.de for a quote.
 
 ------------------------------------
 
-&copy; 2025 Dassault Syst&egrave;mes
+<p align="center">
+    <a href="https://3ds.com/"><img src="docs/made-by-3ds.svg"/></a>
+</p>

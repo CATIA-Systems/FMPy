@@ -1,65 +1,66 @@
 """ Object model and loader for the modelDescription.xml """
-
-from typing import List, Union, IO
-from attr import attrs, attrib, Factory
-
-
-@attrs(auto_attribs=True)
-class DefaultExperiment(object):
-
-    startTime: str = None
-    stopTime: str = None
-    tolerance: str = None
-    stepSize: str = None
+from __future__ import annotations
+from os import PathLike
+from typing import IO, Literal
+from attrs import define, field
 
 
-@attrs(eq=False)
-class InterfaceType(object):
+@define(eq=False)
+class DefaultExperiment:
 
-    modelIdentifier = attrib(type=str, default=None)
-    needsExecutionTool = attrib(type=bool, default=False, repr=False)
-    canBeInstantiatedOnlyOncePerProcess = attrib(type=bool, default=False, repr=False)
-    canGetAndSetFMUstate = attrib(type=bool, default=False, repr=False)
-    canSerializeFMUstate = attrib(type=bool, default=False, repr=False)
-    providesDirectionalDerivative = attrib(type=bool, default=False, repr=False)
-    providesAdjointDerivatives = attrib(type=bool, default=False, repr=False)
-    providesPerElementDependencies = attrib(type=bool, default=False, repr=False)
+    startTime: str | None = None
+    stopTime: str | None = None
+    tolerance: str | None = None
+    stepSize: str | None = None
+
+
+@define(eq=False)
+class InterfaceType:
+
+    modelIdentifier: str | None = None
+    needsExecutionTool: bool = field(default=False, repr=False)
+    canBeInstantiatedOnlyOncePerProcess: bool = field(default=False, repr=False)
+    canGetAndSetFMUstate: bool = field(default=False, repr=False)
+    canSerializeFMUstate: bool = field(default=False, repr=False)
+    providesDirectionalDerivative: bool = field(default=False, repr=False)
+    providesAdjointDerivatives: bool = field(default=False, repr=False)
+    providesPerElementDependencies: bool = field(default=False, repr=False)
 
     # FMI 2.0
-    canNotUseMemoryManagementFunctions = attrib(type=bool, default=False, repr=False)
-    providesDirectionalDerivative = attrib(type=bool, default=False, repr=False)
+    canNotUseMemoryManagementFunctions: bool = field(default=False, repr=False)
+    providesDirectionalDerivative: bool = field(default=False, repr=False)
 
 
-@attrs(eq=False)
+@define(eq=False)
 class ModelExchange(InterfaceType):
 
-    needsCompletedIntegratorStep = attrib(type=bool, default=False, repr=False)
-    providesEvaluateDiscreteStates = attrib(type=bool, default=False, repr=False)
+    needsCompletedIntegratorStep: bool = field(default=False, repr=False)
+    providesEvaluateDiscreteStates: bool = field(default=False, repr=False)
 
 
-@attrs(eq=False)
+@define(eq=False)
 class CoSimulation(InterfaceType):
 
-    canHandleVariableCommunicationStepSize = attrib(type=bool, default=False, repr=False)
-    fixedInternalStepSize = attrib(type=float, default=None, repr=False)
-    maxOutputDerivativeOrder = attrib(type=int, default=0, repr=False)
-    recommendedIntermediateInputSmoothness = attrib(type=int, default=0, repr=False)
-    canInterpolateInputs = attrib(type=bool, default=False, repr=False)
-    providesIntermediateUpdate = attrib(type=bool, default=False, repr=False)
-    canReturnEarlyAfterIntermediateUpdate = attrib(type=bool, default=False, repr=False)
-    hasEventMode = attrib(type=bool, default=False, repr=False)
-    providesEvaluateDiscreteStates = attrib(type=bool, default=False, repr=False)
-    canRunAsynchronuously = attrib(type=bool, default=False, repr=False)
+    canHandleVariableCommunicationStepSize: bool = field(default=False, repr=False)
+    fixedInternalStepSize: float | None = field(default=None, repr=False)
+    maxOutputDerivativeOrder: int = field(default=0, repr=False)
+    recommendedIntermediateInputSmoothness: int = field(default=0, repr=False)
+    canInterpolateInputs: bool = field(default=False, repr=False)
+    providesIntermediateUpdate: bool = field(default=False, repr=False)
+    canReturnEarlyAfterIntermediateUpdate: bool = field(default=False, repr=False)
+    hasEventMode: bool = field(default=False, repr=False)
+    providesEvaluateDiscreteStates: bool = field(default=False, repr=False)
+    canRunAsynchronuously: bool = field(default=False, repr=False)
 
 
-@attrs(eq=False)
+@define(eq=False)
 class ScheduledExecution(InterfaceType):
 
     pass
 
 
-@attrs(auto_attribs=True, eq=False)
-class PreProcessorDefinition(object):
+@define(eq=False)
+class PreProcessorDefinition:
 
     name: str = None
     value: str = None
@@ -67,241 +68,244 @@ class PreProcessorDefinition(object):
     description: str = None
 
 
-@attrs(auto_attribs=True, eq=False)
-class SourceFileSet(object):
+@define(eq=False)
+class SourceFileSet:
 
     name: str = None
     language: str = None
     compiler: str = None
     compilerOptions: str = None
-    preprocessorDefinitions: List[str] = Factory(list)
-    sourceFiles: List[str] = Factory(list)
-    includeDirectories: List[str] = Factory(list)
+    preprocessorDefinitions: list[PreProcessorDefinition] = field(factory=list)
+    sourceFiles: list[str] = field(factory=list)
+    includeDirectories: list[str] = field(factory=list)
 
 
-@attrs(auto_attribs=True, eq=False)
-class BuildConfiguration(object):
+@define(eq=False)
+class BuildConfiguration:
 
     modelIdentifier: str = None
-    sourceFileSets: List[SourceFileSet] = Factory(list)
+    sourceFileSets: list[SourceFileSet] = field(factory=list)
 
 
-@attrs(eq=False)
-class Dimension(object):
+@define(eq=False)
+class Dimension:
 
-    start = attrib(type=str)
-    valueReference = attrib(type=int)
-    variable = attrib(type='ScalarVariable', default=None)
+    start: str
+    valueReference: int
+    variable: ModelVariable | None = None
 
 
-@attrs(eq=False)
-class Item(object):
+@define(eq=False)
+class Item:
     """ Enumeration Item """
 
-    name = attrib(type=str, default=None)
-    value = attrib(type=str, default=None)
-    description = attrib(type=str, default=None, repr=False)
+    name: str | None = None
+    value: str | None = None
+    description: str | None = field(default=None, repr=False)
 
 
-@attrs(eq=False)
-class SimpleType(object):
+@define(eq=False)
+class SimpleType:
     """ Type Definition """
 
-    name = attrib(type=str, default=None)
-    type = attrib(type=str, default=None)
-    quantity = attrib(type=str, default=None, repr=False)
-    unit = attrib(type=str, default=None)
-    displayUnit = attrib(type=str, default=None, repr=False)
-    relativeQuantity = attrib(type=str, default=None, repr=False)
-    min = attrib(type=str, default=None, repr=False)
-    max = attrib(type=str, default=None, repr=False)
-    nominal = attrib(type=str, default=None, repr=False)
-    unbounded = attrib(type=str, default=None, repr=False)
-    items = attrib(type=List[Item], default=Factory(list), repr=False)
+    name: str | None = None
+    description: str | None = None
+    type: str | None = None
+    quantity: str | None = field(default=None, repr=False)
+    unit: str | None = None
+    displayUnit: str | None = field(default=None, repr=False)
+    relativeQuantity: str | None = field(default=None, repr=False)
+    min: str | None = field(default=None, repr=False)
+    max: str | None = field(default=None, repr=False)
+    nominal: str | None = field(default=None, repr=False)
+    unbounded: str | None = field(default=None, repr=False)
+    items: list[Item] = field(factory=list, repr=False)
 
 
-@attrs(eq=False)
-class DisplayUnit(object):
+@define(eq=False)
+class DisplayUnit:
 
-    name = attrib(type=str, default=None)
-    factor = attrib(type=float, default=1.0, repr=False)
-    offset = attrib(type=float, default=0.0, repr=False)
-
-
-@attrs(eq=False)
-class Unit(object):
-
-    name = attrib(type=str, default=None)
-    baseUnit = attrib(type=str, default=None, repr=False)
-    displayUnits = attrib(type=List[DisplayUnit], default=Factory(list), repr=False)
+    name: str | None = None
+    factor: float = field(default=1.0, repr=False)
+    offset: float = field(default=0.0, repr=False)
 
 
-@attrs(eq=False)
-class BaseUnit(object):
+@define(eq=False)
+class Unit:
 
-    kg = attrib(type=int, default=0)
-    m = attrib(type=int, default=0)
-    s = attrib(type=int, default=0)
-    A = attrib(type=int, default=0)
-    K = attrib(type=int, default=0)
-    mol = attrib(type=int, default=0)
-    cd = attrib(type=int, default=0)
-    rad = attrib(type=int, default=0)
-    factor = attrib(type=float, default=1.0)
-    offset = attrib(type=float, default=0.0)
+    name: str | None = None
+    baseUnit: str | None = field(default=None, repr=False)
+    displayUnits: list[DisplayUnit] = field(factory=list, repr=False)
 
 
-@attrs(eq=False)
-class VariableAlias(object):
+@define(eq=False)
+class BaseUnit:
 
-    name = attrib(type=str)
-    description = attrib(type=str, default=None, repr=False)
-    displayUnit = attrib(type=str, default=None, repr=False)
+    kg: int = 0
+    m: int = 0
+    s: int = 0
+    A: int = 0
+    K: int = 0
+    mol: int = 0
+    cd: int = 0
+    rad: int = 0
+    factor: float = 1.0
+    offset: float = 0.0
 
 
-@attrs(eq=False)
-class ScalarVariable(object):
+@define(eq=False)
+class VariableAlias:
 
-    name = attrib(type=str)
+    name: str
+    description: str | None = field(default=None, repr=False)
+    displayUnit: str | None = field(default=None, repr=False)
 
-    valueReference = attrib(type=int, repr=False)
 
-    type = attrib(type=str, default=None)
-    "One of 'Real', 'Integer', 'Enumeration', 'Boolean', 'String'"
+@define(eq=False)
+class ModelVariable:
 
-    description = attrib(type=str, default=None, repr=False)
+    name: str = field(default=None)
 
-    causality = attrib(type=str, default=None, repr=False)
-    "One of 'parameter', 'calculatedParameter', 'input', 'output', 'local', 'independent', 'structuralParameter'"
+    valueReference: int = field(default=None, repr=False)
 
-    variability = attrib(type=str, default=None, repr=False)
-    "One of 'constant', 'fixed', 'tunable', 'discrete' or 'continuous'"
+    type: Literal['Real', 'Integer', 'Enumeration', 'Boolean', 'String'] = field(default=None)
 
-    initial = attrib(type=str, default=None, repr=False)
-    "One of 'exact', 'approx', 'calculated' or None"
+    shape: tuple[int, ...] | None = field(default=None, repr=False)
 
-    canHandleMultipleSetPerTimeInstant = attrib(type=bool, default=True, repr=False)
+    _python_type = field(default=None, repr=False)
 
-    intermediateUpdate = attrib(type=bool, default=False, repr=False)
+    description: str | None = field(default=None, repr=False)
 
-    previous = attrib(type=int, default=None, repr=False)
+    causality: Literal['parameter', 'calculatedParameter', 'input', 'output', 'local', 'independent', 'structuralParameter'] = field(default=None, repr=False)
+
+    variability: Literal['constant', 'fixed', 'tunable', 'discrete', 'continuous'] = field(default=None, repr=False)
+
+    initial: Literal['exact', 'approx', 'calculated', None] = field(default=None, repr=False)
+
+    canHandleMultipleSetPerTimeInstant: bool = field(default=True, repr=False)
+
+    intermediateUpdate: bool = field(default=False, repr=False)
+
+    previous: int | None = field(default=None, repr=False)
 
     # TODO: resolve variables
-    clocks = attrib(type=List[int], default=Factory(list))
+    clocks: list[int] = field(factory=list, repr=False)
 
-    declaredType = attrib(type=SimpleType, default=None, repr=False)
+    declaredType: SimpleType | None = field(default=None, repr=False)
 
-    dimensions = attrib(type=List[Dimension], default=Factory(list))
+    dimensions: list[Dimension] = field(factory=list, repr=False)
     "List of fixed dimensions"
 
-    dimensionValueReferences = attrib(type=List[int], default=Factory(list))
+    dimensionValueReferences: list[int] = field(factory=list, repr=False)
     "List of value references to the variables that hold the dimensions"
 
-    quantity = attrib(type=str, default=None, repr=False)
+    quantity: str | None = field(default=None, repr=False)
     "Physical quantity"
 
-    unit = attrib(type=str, default=None, repr=False)
+    unit: str | None = field(default=None, repr=False)
     "Unit"
 
-    displayUnit = attrib(type=str, default=None, repr=False)
+    displayUnit: str | None = field(default=None, repr=False)
     "Default display unit"
 
-    relativeQuantity = attrib(type=bool, default=False, repr=False)
+    relativeQuantity: bool = field(default=False, repr=False)
     "Relative quantity"
 
-    min = attrib(type=str, default=None, repr=False)
+    min: str | None = field(default=None, repr=False)
     "Minimum value"
 
-    max = attrib(type=str, default=None, repr=False)
+    max: str | None = field(default=None, repr=False)
     "Maximum value"
 
-    nominal = attrib(type=str, default=None, repr=False)
+    nominal: str | None = field(default=None, repr=False)
     "Nominal value"
 
-    unbounded = attrib(type=bool, default=False, repr=False)
+    unbounded: bool = field(default=False, repr=False)
     "Value is unbounded"
 
-    start = attrib(type=str, default=None, repr=False)
+    start: str | None = field(default=None, repr=False)
     "Initial or guess value"
 
-    derivative = attrib(type='ScalarVariable', default=None, repr=False)
+    derivative: ModelVariable | None = field(default=None, repr=False)
     "The derivative of this variable"
 
-    reinit = attrib(type=bool, default=False, repr=False)
+    reinit: bool = field(default=False, repr=False)
     "Can be reinitialized at an event by the FMU"
 
-    sourceline = attrib(type=int, default=None, repr=False)
+    sourceline: int | None = field(default=None, repr=False)
     "Line number in the modelDescription.xml or None if unknown"
 
     # Clock attributes
-    canBeDeactivated = attrib(type=bool, default=False, repr=False)
+    canBeDeactivated: bool = field(default=False, repr=False)
 
-    priority = attrib(type=int, default=None, repr=False)
+    priority: int | None = field(default=None, repr=False)
 
-    intervalVariability = attrib(type=str, default=None, repr=False)
-    "One of 'constant', 'fixed', 'tunable', 'changing', 'countdown', 'triggered' or None"
+    intervalVariability: Literal['constant', 'fixed', 'tunable', 'changing', 'countdown', 'triggered', None] = field(default=None, repr=False)
 
-    intervalDecimal = attrib(type=float, default=None, repr=False)
+    intervalDecimal: float | None = field(default=None, repr=False)
 
-    shiftDecimal = attrib(type=float, default=None, repr=False)
+    shiftDecimal: float | None = field(default=None, repr=False)
 
-    supportsFraction = attrib(type=bool, default=False, repr=False)
+    supportsFraction: bool = field(default=False, repr=False)
 
-    resolution = attrib(type=int, default=None, repr=False)
+    resolution: int | None = field(default=None, repr=False)
 
-    intervalCounter = attrib(type=int, default=None, repr=False)
+    intervalCounter: int | None = field(default=None, repr=False)
 
-    shiftCounter = attrib(type=int, default=0, repr=False)
+    shiftCounter: int = field(default=0, repr=False)
 
-    aliases = attrib(type=List[VariableAlias], default=Factory(list))
+    aliases: list[VariableAlias] = field(factory=list, repr=False)
 
 
-@attrs(eq=False)
-class Unknown(object):
+ScalarVariable = ModelVariable  # for backwards compatibility
 
-    index = attrib(type=int, default=0, repr=False)
-    variable = attrib(type=ScalarVariable, default=None)
-    dependencies = attrib(type=List[ScalarVariable], default=Factory(list), repr=False)
-    dependenciesKind = attrib(type=List[str], default=Factory(list), repr=False)
-    sourceline = attrib(type=int, default=0, repr=False)
+
+@define(eq=False)
+class Unknown:
+
+    index: int = field(default=0, repr=False)
+    variable: ModelVariable | None = None
+    dependencies: list[ModelVariable] = field(factory=list, repr=False)
+    dependenciesKind: list[str] = field(factory=list, repr=False)
+    sourceline: int = field(default=0, repr=False)
     "Line number in the modelDescription.xml"
 
 
-@attrs(eq=False)
-class ModelDescription(object):
+@define(eq=False)
+class ModelDescription:
 
-    fmiVersion = attrib(type=str, default=None)
-    modelName = attrib(type=str, default=None)
-    guid = attrib(type=str, default=None, repr=False)
-    description = attrib(type=str, default=None, repr=False)
-    author = attrib(type=str, default=None, repr=False)
-    version = attrib(type=str, default=None, repr=False)
-    copyright = attrib(type=str, default=None, repr=False)
-    license = attrib(type=str, default=None, repr=False)
-    generationTool = attrib(type=str, default=None, repr=False)
-    generationDateAndTime = attrib(type=str, default=None, repr=False)
-    variableNamingConvention = attrib(type=str, default='flat', repr=False)
-    numberOfContinuousStates = attrib(type=int, default=0, repr=False)
-    numberOfEventIndicators = attrib(type=int, default=0, repr=False)
+    fmiVersion: str | None = None
+    modelName: str | None = None
+    guid: str | None = field(default=None, repr=False)
+    description: str | None = field(default=None, repr=False)
+    author: str | None = field(default=None, repr=False)
+    version: str | None = field(default=None, repr=False)
+    copyright: str | None = field(default=None, repr=False)
+    license: str | None = field(default=None, repr=False)
+    generationTool: str | None = field(default=None, repr=False)
+    generationDateAndTime: str | None = field(default=None, repr=False)
+    variableNamingConvention: Literal['flat', 'structured'] = field(default='flat', repr=False)
+    numberOfContinuousStates: int = field(default=0, repr=False)
+    numberOfEventIndicators: int = field(default=0, repr=False)
 
-    defaultExperiment = attrib(type=DefaultExperiment, default=None, repr=False)
+    defaultExperiment: DefaultExperiment = field(default=None, repr=False)
 
-    coSimulation = attrib(type=CoSimulation, default=None)
-    modelExchange = attrib(type=ModelExchange, default=None)
-    scheduledExecution = attrib(type=ScheduledExecution, default=None)
+    coSimulation: CoSimulation | None = None
+    modelExchange: ModelExchange | None = None
+    scheduledExecution: ScheduledExecution | None = None
 
-    buildConfigurations = attrib(type=List[BuildConfiguration], default=Factory(list), repr=False)
+    buildConfigurations: list[BuildConfiguration] = field(factory=list, repr=False)
 
-    unitDefinitions = attrib(type=List[Unit], default=Factory(list), repr=False)
-    typeDefinitions = attrib(type=List[SimpleType], default=Factory(list), repr=False)
-    modelVariables = attrib(type=List[ScalarVariable], default=Factory(list), repr=False)
+    unitDefinitions: list[Unit] = field(factory=list, repr=False)
+    typeDefinitions: list[SimpleType] = field(factory=list, repr=False)
+    modelVariables: list[ModelVariable] = field(factory=list, repr=False)
 
     # model structure
-    outputs = attrib(type=List[Unknown], default=Factory(list), repr=False)
-    derivatives = attrib(type=List[Unknown], default=Factory(list), repr=False)
-    clockedStates = attrib(type=List[Unknown], default=Factory(list), repr=False)
-    eventIndicators = attrib(type=List[Unknown], default=Factory(list), repr=False)
-    initialUnknowns = attrib(type=List[Unknown], default=Factory(list), repr=False)
+    outputs: list[Unknown] = field(factory=list, repr=False)
+    derivatives: list[Unknown] = field(factory=list, repr=False)
+    clockedStates: list[Unknown] = field(factory=list, repr=False)
+    eventIndicators: list[Unknown] = field(factory=list, repr=False)
+    initialUnknowns: list[Unknown] = field(factory=list, repr=False)
 
 
 class ValidationError(Exception):
@@ -325,7 +329,7 @@ def _copy_attributes(element, object, attributes=None):
     """ Copy attributes from an XML element to a Python object """
 
     if attributes is None:
-        attributes = object.__dict__.keys()
+        attributes = dir(object)
 
     for attribute in attributes:
 
@@ -347,7 +351,7 @@ def _copy_attributes(element, object, attributes=None):
         setattr(object, attribute, value)
 
 
-def read_build_description(filename, validate=True):
+def read_build_description(filename: str | PathLike | IO, validate=True) -> list[BuildConfiguration]:
 
     import zipfile
     from lxml import etree
@@ -420,7 +424,7 @@ def read_build_description(filename, validate=True):
     return build_configurations
 
 
-def read_model_description(filename: Union[str, IO], validate: bool = True, validate_variable_names: bool = False, validate_model_structure: bool = False) -> ModelDescription:
+def read_model_description(filename: str | PathLike | IO, validate: bool = True, validate_variable_names: bool = False, validate_model_structure: bool = False) -> ModelDescription:
     """ Read the model description from an FMU without extracting it
 
     Parameters:
@@ -691,12 +695,7 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
         if variable.get("name") is None:
             continue
 
-        sv = ScalarVariable(name=variable.get('name'), valueReference=int(variable.get('valueReference')))
-        sv.description = variable.get('description')
-        sv.causality = variable.get('causality', default='local')
-        sv.variability = variable.get('variability')
-        sv.initial = variable.get('initial')
-        sv.sourceline = variable.sourceline
+        sv = ModelVariable(name=variable.get('name'), valueReference=int(variable.get('valueReference')), type=None)
 
         if fmiVersion in ['1.0', '2.0']:
             # get the nested "value" element
@@ -710,6 +709,12 @@ def read_model_description(filename: Union[str, IO], validate: bool = True, vali
             sv.clocks = variable.get('clocks')
 
         sv.type = value.tag
+
+        sv.description = variable.get('description')
+        sv.causality = variable.get('causality', default='local')
+        sv.variability = variable.get('variability')
+        sv.initial = variable.get('initial')
+        sv.sourceline = variable.sourceline
 
         if variable.tag in {'Binary', 'String'}:
             # handle <Start> element of Binary and String variables in FMI 3

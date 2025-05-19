@@ -109,6 +109,7 @@ class SimpleType:
     """ Type Definition """
 
     name: str | None = None
+    description: str | None = None
     type: str | None = None
     quantity: str | None = field(default=None, repr=False)
     unit: str | None = None

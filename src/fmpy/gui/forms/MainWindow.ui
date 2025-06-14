@@ -1384,6 +1384,8 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="actionCreateDesktopShortcut"/>
     <addaction name="actionAddFileAssociation"/>
     <addaction name="separator"/>
+    <addaction name="actionShowGenerateFMUDialog"/>
+    <addaction name="separator"/>
     <addaction name="actionValidateFMU"/>
     <addaction name="menuCompilePlatformBinary"/>
     <addaction name="actionRemoveSourceCode"/>
@@ -2041,6 +2043,14 @@ QToolButton:checked, QToolButton:hover:pressed {
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionShowGenerateFMUDialog">
+   <property name="text">
+    <string>&amp;Generate FMU...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
    </property>
   </action>
  </widget>

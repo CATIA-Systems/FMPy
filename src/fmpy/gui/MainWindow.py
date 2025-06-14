@@ -3,6 +3,8 @@ from pathlib import Path
 
 import shutil
 
+from .GenerateFMUDialog import GenerateFMUDialog
+
 try:
     from . import compile_resources
     compile_resources()
@@ -351,6 +353,7 @@ class MainWindow(QMainWindow):
         self.log.currentMessageChanged.connect(self.setStatusMessage)
         self.ui.selectInputButton.clicked.connect(self.selectInputFile)
         self.ui.actionShowAboutDialog.triggered.connect(self.showAboutDialog)
+        self.ui.actionShowGenerateFMUDialog.triggered.connect(self.showGenerateFMUDialog)
 
         if os.name == 'nt':
             self.ui.actionCreateDesktopShortcut.triggered.connect(self.createDesktopShortcut)
@@ -1006,6 +1009,10 @@ class MainWindow(QMainWindow):
 
     def showAboutDialog(self):
         dialog = AboutDialog(self)
+        dialog.show()
+
+    def showGenerateFMUDialog(self):
+        dialog = GenerateFMUDialog(self)
         dialog.show()
 
     @staticmethod

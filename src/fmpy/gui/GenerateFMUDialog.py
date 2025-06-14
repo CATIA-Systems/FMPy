@@ -10,3 +10,5 @@ class GenerateFMUDialog(QDialog):
 
         self.ui = Ui_GenerateFMUDialog()
         self.ui.setupUi(self)
+
+

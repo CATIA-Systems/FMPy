@@ -1241,7 +1241,7 @@ def can_simulate(platforms, remote_platform='auto'):
     return False, None
 
 
-def create_zip_archive(filename, source_dir):
+def create_zip_archive(filename: str | PathLike | IO[bytes], source_dir: str | PathLike) -> None:
 
     import zipfile
     import os

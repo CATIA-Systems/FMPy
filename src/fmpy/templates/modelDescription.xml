@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="3.0"
+  modelName="{{modelDescription.modelName}}"
+  description="{{modelDescription.description}}"
+  generationTool="{{modelDescription.generationTool}}"
+  generationDateAndTime="{{modelDescription.generationDateAndTime}}"
+  instantiationToken="{{modelDescription.instantiationToken}}">
+{% if modelDescription.modelExchange is not none %}
+
+  <ModelExchange
+    modelIdentifier="{{modelDescription.modelExchange.modelIdentifier}}"/>
+{% endif %}
+{% if modelDescription.coSimulation is not none %}
+
+  <CoSimulation modelIdentifier="{{modelDescription.coSimulation.modelIdentifier}}"/>
+{% endif %}
+{% if modelDescription.defaultExperiment is not none %}
+
+  <LogCategories>
+    <Category name="logStatusError" description="Log error messages"/>
+  </LogCategories>
+
+  <DefaultExperiment
+{% if modelDescription.defaultExperiment.startTime is not none %}
+    startTime="{{ modelDescription.defaultExperiment.startTime }}"
+{% endif %}
+{% if modelDescription.defaultExperiment.stopTime is not none %}
+    stopTime="{{ modelDescription.defaultExperiment.stopTime }}"
+{% endif %}
+{% if modelDescription.defaultExperiment.stepSize is not none %}
+    stepSize="{{ modelDescription.defaultExperiment.stepSize }}"
+{% endif %}
+  />
+{% endif %}
+
+  <ModelVariables>
+{% for variable in modelDescription.modelVariables %}
+    <Float64 name="{{variable.name}}" valueReference="{{variable.valueReference}}" causality="{{variable.causality}}" variability="{{variable.variability}}" description="{{variable.description}}"
+{%- if variable.start is not none %} start="{{variable.start}}"{% endif %}/>
+{% endfor %}
+  </ModelVariables>
+
+  <ModelStructure>
+{% for unknown in modelDescription.outputs %}
+    <Output valueReference="{{unknown.variable.valueReference}}"/>
+{% endfor %}
+{% for unknown in modelDescription.initialUnknowns %}
+    <InitialUnknown valueReference="{{unknown.variable.valueReference}}"/>
+{% endfor %}
+  </ModelStructure>
+
+</fmiModelDescription>

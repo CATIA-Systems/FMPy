@@ -168,7 +168,25 @@ class ModelVariable:
 
     valueReference: int = field(default=None, repr=False)
 
-    type: Literal['Real', 'Integer', 'Enumeration', 'Boolean', 'String'] = field(default=None)
+    type: Literal[
+        'Real',
+        'Float32',
+        'Float64',
+        'Integer',
+        'Int8',
+        'UInt8',
+        'Int16',
+        'UInt16',
+        'Int32',
+        'UInt32',
+        'Int64',
+        'UInt64',
+        'Enumeration',
+        'Boolean',
+        'String'
+        'Binary',
+        'Clock',
+    ] = field(default=None)
 
     shape: tuple[int, ...] | None = field(default=None, repr=False)
 
@@ -276,7 +294,7 @@ class ModelDescription:
 
     fmiVersion: str | None = None
     modelName: str | None = None
-    guid: str | None = field(default=None, repr=False)
+    instantiationToken: str | None = field(default=None, repr=False)
     description: str | None = field(default=None, repr=False)
     author: str | None = field(default=None, repr=False)
     version: str | None = field(default=None, repr=False)
@@ -306,6 +324,14 @@ class ModelDescription:
     clockedStates: list[Unknown] = field(factory=list, repr=False)
     eventIndicators: list[Unknown] = field(factory=list, repr=False)
     initialUnknowns: list[Unknown] = field(factory=list, repr=False)
+
+    @property
+    def guid(self):
+        return self.instantiationToken
+
+    @guid.setter
+    def guid(self, value):
+        self.instantiationToken = value
 
 
 class ValidationError(Exception):

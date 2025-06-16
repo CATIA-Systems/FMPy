@@ -3,6 +3,8 @@ from pathlib import Path
 
 import shutil
 
+from ..template import create_fmu
+
 try:
     from . import compile_resources
     compile_resources()
@@ -351,6 +353,7 @@ class MainWindow(QMainWindow):
         self.log.currentMessageChanged.connect(self.setStatusMessage)
         self.ui.selectInputButton.clicked.connect(self.selectInputFile)
         self.ui.actionShowAboutDialog.triggered.connect(self.showAboutDialog)
+        self.ui.actionShowNewFMUDialog.triggered.connect(self.showNewFMUDialog)
 
         if os.name == 'nt':
             self.ui.actionCreateDesktopShortcut.triggered.connect(self.createDesktopShortcut)
@@ -590,10 +593,9 @@ class MainWindow(QMainWindow):
         if self.unzipdir:
             shutil.rmtree(self.unzipdir, ignore_errors=True)
 
-    def open(self):
+    def startDir(self) -> str:
 
         start_dir = QDir.homePath()
-
         settings = QSettings()
         recent_files = settings.value("recentFiles", defaultValue=[])
 
@@ -603,9 +605,13 @@ class MainWindow(QMainWindow):
                 start_dir = dirname
                 break
 
+        return os.path.normpath(start_dir)
+
+    def open(self):
+
         filename, _ = QFileDialog.getOpenFileName(parent=self,
                                                   caption="Open File",
-                                                  dir=start_dir,
+                                                  dir=self.startDir(),
                                                   filter="FMUs (*.fmu);;All Files (*.*)")
 
         if filename:
@@ -1007,6 +1013,39 @@ class MainWindow(QMainWindow):
     def showAboutDialog(self):
         dialog = AboutDialog(self)
         dialog.show()
+
+    def showNewFMUDialog(self):
+
+        from .NewFMUDialog import NewFMUDialog
+
+        dialog = NewFMUDialog(self)
+
+        filename = os.path.join(self.startDir(), "Model.fmu")
+
+        dialog.ui.filenameLineEdit.setText(filename)
+
+        if dialog.exec_() == QDialog.DialogCode.Accepted:
+
+            from fmpy.template import generate_model_description
+
+            model_description = generate_model_description(
+                n_parameters=dialog.ui.nParametersSpinBox.value(),
+                n_inputs=dialog.ui.nInputsSpinBox.value(),
+                n_outputs=dialog.ui.nOutputsSpinBox.value(),
+                n_states=dialog.ui.nLocalVariablesSpinBox.value(),
+            )
+
+            filename = dialog.ui.filenameLineEdit.text()
+
+            create_fmu(model_description, filename)
+
+            if dialog.ui.openFMUCheckBox.isChecked():
+                if self.filename is None:
+                    self.load(filename)
+                else:
+                    window = MainWindow()
+                    window.show()
+                    window.load(filename)
 
     @staticmethod
     def removeDuplicates(seq):

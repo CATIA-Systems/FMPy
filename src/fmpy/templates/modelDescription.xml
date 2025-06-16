@@ -3,8 +3,8 @@
   fmiVersion="3.0"
   modelName="{{modelDescription.modelName}}"
   description="{{modelDescription.description}}"
-  generationTool="FMI Challenge (development build)"
-  generationDateAndTime="{{generationDateAndTime}}"
+  generationTool="{{modelDescription.generationTool}}"
+  generationDateAndTime="{{modelDescription.generationDateAndTime}}"
   instantiationToken="{{modelDescription.instantiationToken}}">
 {% if modelDescription.modelExchange is not none %}
 
@@ -16,6 +16,10 @@
   <CoSimulation modelIdentifier="{{modelDescription.coSimulation.modelIdentifier}}"/>
 {% endif %}
 {% if modelDescription.defaultExperiment is not none %}
+
+  <LogCategories>
+    <Category name="logStatusError" description="Log error messages"/>
+  </LogCategories>
 
   <DefaultExperiment
 {% if modelDescription.defaultExperiment.startTime is not none %}

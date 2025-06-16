@@ -1,3 +1,6 @@
+import fmpy
+import uuid
+
 import shutil
 
 from datetime import datetime, timezone
@@ -7,7 +10,7 @@ from subprocess import check_call
 from tempfile import TemporaryDirectory
 
 import jinja2
-from .model_description import ModelDescription, CoSimulation, DefaultExperiment, ScalarVariable, Unknown
+from .model_description import ModelDescription, CoSimulation, DefaultExperiment, ScalarVariable, Unknown, ModelVariable
 from .util import create_zip_archive
 
 
@@ -27,13 +30,13 @@ def create_fmu(model_description: ModelDescription, filename: str | PathLike = N
 
         xml = xml_template.render(
             modelDescription=model_description,
-            generationDateAndTime=datetime.now(timezone.utc).isoformat()
         )
 
         c_template = environment.get_template('model.c')
 
         c = c_template.render(
             modelDescription=model_description,
+            fmpyVersion=fmpy.__version__,
         )
 
         with open(unzipdir / "modelDescription.xml", "w") as xml_file:
@@ -106,10 +109,16 @@ def generate_model_description(n_parameters: int = 10, n_inputs: int = 10, n_out
 
     model_description = ModelDescription()
 
+    model_description.fmiVersion = "3.0"
     model_description.modelName = 'model'
     model_description.description = f'A test model with {n_parameters} parameters, {n_inputs} inputs, {n_outputs} outputs, and {n_states} states.'
+    model_description.generationTool = f"FMPy {fmpy.__version__}"
+    model_description.generationDateAndTime = datetime.now(timezone.utc).isoformat()
+    model_description.instantiationToken = str(uuid.uuid4())
 
-    model_description.coSimulation = CoSimulation(modelIdentifier="model")
+    model_description.coSimulation = CoSimulation(
+        modelIdentifier="model"
+    )
 
     model_description.defaultExperiment = DefaultExperiment(
         startTime="0.0",
@@ -120,6 +129,7 @@ def generate_model_description(n_parameters: int = 10, n_inputs: int = 10, n_out
     time = ScalarVariable(
         name="time",
         valueReference=0,
+        type='Float64',
         causality='independent',
         variability='continuous',
         description="description"
@@ -133,6 +143,7 @@ def generate_model_description(n_parameters: int = 10, n_inputs: int = 10, n_out
         variable = ScalarVariable(
             name=f"p{i}",
             valueReference=vr,
+            type='Float64',
             start='0',
             causality='parameter',
             variability='fixed',
@@ -142,9 +153,10 @@ def generate_model_description(n_parameters: int = 10, n_inputs: int = 10, n_out
         model_description.modelVariables.append(variable)
 
     for i in range(n_inputs):
-        variable = ScalarVariable(
+        variable = ModelVariable(
             name=f"u{i}",
             valueReference=vr,
+            type='Float64',
             start='0',
             causality='input',
             variability='continuous',
@@ -154,9 +166,10 @@ def generate_model_description(n_parameters: int = 10, n_inputs: int = 10, n_out
         model_description.modelVariables.append(variable)
 
     for i in range(n_outputs):
-        variable = ScalarVariable(
+        variable = ModelVariable(
             name=f"y{i}",
             valueReference=vr,
+            type='Float64',
             causality='output',
             variability='continuous',
             description=f"Output {i}"
@@ -168,9 +181,10 @@ def generate_model_description(n_parameters: int = 10, n_inputs: int = 10, n_out
         model_description.initialUnknowns.append(Unknown(variable=variable))
 
     for i in range(n_outputs):
-        variable = ScalarVariable(
+        variable = ModelVariable(
             name=f"x{i}",
             valueReference=vr,
+            type='Float64',
             causality='local',
             variability='continuous',
             description=f"State {i}"

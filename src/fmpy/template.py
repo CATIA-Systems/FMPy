@@ -13,7 +13,7 @@ from .model_description import ModelDescription, CoSimulation, DefaultExperiment
 from .util import create_zip_archive
 
 
-def create_fmu(model_description: ModelDescription, filename: str | PathLike | None = None) -> None:
+def create_fmu(model_description: ModelDescription, filename: str | PathLike) -> None:
     """Create an FMU from a ModelDescription"""
 
     with TemporaryDirectory() as unzipdir:

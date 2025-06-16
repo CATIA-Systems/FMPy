@@ -6,7 +6,6 @@ import shutil
 from datetime import datetime, timezone
 from os import makedirs, PathLike
 from pathlib import Path
-from subprocess import check_call
 from tempfile import TemporaryDirectory
 
 import jinja2
@@ -14,7 +13,8 @@ from .model_description import ModelDescription, CoSimulation, DefaultExperiment
 from .util import create_zip_archive
 
 
-def create_fmu(model_description: ModelDescription, filename: str | PathLike = None) -> None:
+def create_fmu(model_description: ModelDescription, filename: str | PathLike | None = None) -> None:
+    """Create an FMU from a ModelDescription"""
 
     with TemporaryDirectory() as unzipdir:
 
@@ -52,60 +52,8 @@ def create_fmu(model_description: ModelDescription, filename: str | PathLike = N
         create_zip_archive(filename, unzipdir)
 
 
-def main() -> None:
-
-    model_description = ModelDescription()
-
-    model_description.modelName = 'foo'
-    model_description.description = 'description'
-
-    model_description.coSimulation = CoSimulation(modelIdentifier="bb")
-
-    model_description.defaultExperiment = DefaultExperiment(
-        startTime="0.0",
-        stopTime="1.0",
-        stepSize="1e-3"
-    )
-
-    time = ScalarVariable(
-        name="time",
-        valueReference=0,
-        causality='independent',
-        variability='continuous',
-        description="description"
-    )
-
-    real_in = ScalarVariable(
-        name="real_in",
-        valueReference=10,
-        start='0',
-        causality='input',
-        variability='continuous',
-        description="description"
-    )
-
-    real_out = ScalarVariable(
-        name="real_out",
-        valueReference=11,
-        causality='output',
-        variability='continuous',
-        description="description"
-    )
-
-    model_description.modelVariables.append(time)
-    model_description.modelVariables.append(real_in)
-    model_description.modelVariables.append(real_out)
-
-    model_description.outputs.append(Unknown(variable=real_out))
-    model_description.initialUnknowns.append(Unknown(variable=real_out))
-
-    create_fmu(model_description)
-
-if __name__ == "__main__":
-    main()
-
-
 def generate_model_description(n_parameters: int = 10, n_inputs: int = 10, n_outputs: int = 10, n_states: int = 10) -> ModelDescription:
+    """Generate a template Model Description"""
 
     model_description = ModelDescription()
 

@@ -171,14 +171,17 @@
    </item>
    <item row="2" column="2">
     <widget class="QComboBox" name="fmiVersionComboBox">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <item>
       <property name="text">
-       <string>2</string>
+       <string>3</string>
       </property>
      </item>
      <item>
       <property name="text">
-       <string>3</string>
+       <string>2</string>
       </property>
      </item>
     </widget>

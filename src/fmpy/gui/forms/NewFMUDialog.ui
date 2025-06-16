@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>GenerateFMUDialog</class>
- <widget class="QDialog" name="GenerateFMUDialog">
+ <class>NewFMUDialog</class>
+ <widget class="QDialog" name="NewFMUDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Create an FMU</string>
+   <string>Create a new FMU</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <property name="leftMargin">
@@ -54,12 +54,12 @@
       <item>
        <widget class="QLineEdit" name="filenameLineEdit">
         <property name="text">
-         <string>Template.fmu</string>
+         <string/>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QToolButton" name="toolButton">
+       <widget class="QToolButton" name="selectFilenameButton">
         <property name="text">
          <string>...</string>
         </property>
@@ -213,7 +213,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>GenerateFMUDialog</receiver>
+   <receiver>NewFMUDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -229,7 +229,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>GenerateFMUDialog</receiver>
+   <receiver>NewFMUDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

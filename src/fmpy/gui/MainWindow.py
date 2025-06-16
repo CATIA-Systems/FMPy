@@ -3,8 +3,7 @@ from pathlib import Path
 
 import shutil
 
-from .GenerateFMUDialog import GenerateFMUDialog
-from ..template import generate_model_description, create_fmu
+from ..template import create_fmu
 
 try:
     from . import compile_resources
@@ -354,7 +353,7 @@ class MainWindow(QMainWindow):
         self.log.currentMessageChanged.connect(self.setStatusMessage)
         self.ui.selectInputButton.clicked.connect(self.selectInputFile)
         self.ui.actionShowAboutDialog.triggered.connect(self.showAboutDialog)
-        self.ui.actionShowGenerateFMUDialog.triggered.connect(self.showGenerateFMUDialog)
+        self.ui.actionShowNewFMUDialog.triggered.connect(self.showNewFMUDialog)
 
         if os.name == 'nt':
             self.ui.actionCreateDesktopShortcut.triggered.connect(self.createDesktopShortcut)
@@ -1015,9 +1014,11 @@ class MainWindow(QMainWindow):
         dialog = AboutDialog(self)
         dialog.show()
 
-    def showGenerateFMUDialog(self):
+    def showNewFMUDialog(self):
 
-        dialog = GenerateFMUDialog(self)
+        from .NewFMUDialog import NewFMUDialog
+
+        dialog = NewFMUDialog(self)
 
         filename = os.path.join(self.startDir(), "Model.fmu")
 

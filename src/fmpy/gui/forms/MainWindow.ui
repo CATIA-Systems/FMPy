@@ -1323,6 +1323,7 @@ QToolButton:checked, QToolButton:hover:pressed {
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <addaction name="actionShowNewFMUDialog"/>
     <addaction name="actionOpen"/>
     <addaction name="actionNewWindow"/>
     <addaction name="separator"/>
@@ -1384,7 +1385,6 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="actionCreateDesktopShortcut"/>
     <addaction name="actionAddFileAssociation"/>
     <addaction name="separator"/>
-    <addaction name="actionShowGenerateFMUDialog"/>
     <addaction name="separator"/>
     <addaction name="actionValidateFMU"/>
     <addaction name="menuCompilePlatformBinary"/>
@@ -2045,9 +2045,12 @@ QToolButton:checked, QToolButton:hover:pressed {
     <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
-  <action name="actionShowGenerateFMUDialog">
+  <action name="actionShowNewFMUDialog">
    <property name="text">
-    <string>&amp;Generate FMU...</string>
+    <string>&amp;New FMU...</string>
+   </property>
+   <property name="toolTip">
+    <string>Create new FMU</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>

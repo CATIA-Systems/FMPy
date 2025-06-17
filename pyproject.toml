@@ -1,6 +1,6 @@
 [project]
 name = "FMPy"
-version = "0.3.23"
+version = "0.3.24"
 description = "Simulate Functional Mock-up Units (FMUs) in Python"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -31,10 +31,8 @@ complete = [
     "dash-bootstrap-components>=2.0.1",
     "dask[bag]>=2024.11.2",
     "requests>=2.32.3",
-    "matplotlib>=3.9.2",
     "plotly>=5.24.1",
     "scipy>=1.14.1",
-    "pyqtgraph>=0.13.7",
     "pyside6>=6.8.0.2",
     "pywin32>=308; sys_platform == 'win32'",
 ]

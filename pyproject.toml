@@ -24,6 +24,7 @@ plot = [
     "scipy>=1.14.1",
 ]
 gui = [
+    "pyqtgraph>=0.13.7",
     "pyside6>=6.8.0.2",
     "pywin32>=308; sys_platform == 'win32'",
 ]
@@ -33,6 +34,7 @@ complete = [
     "requests>=2.32.3",
     "plotly>=5.24.1",
     "scipy>=1.14.1",
+    "pyqtgraph>=0.13.7",
     "pyside6>=6.8.0.2",
     "pywin32>=308; sys_platform == 'win32'",
 ]

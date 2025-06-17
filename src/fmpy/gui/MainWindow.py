@@ -36,10 +36,6 @@ QCoreApplication.setApplicationVersion(fmpy.__version__)
 QCoreApplication.setOrganizationName("CATIA-Systems")
 QCoreApplication.setApplicationName("FMPy")
 
-import pyqtgraph as pg
-
-# pg.setConfigOptions(foreground='r', antialias=True)
-
 COLLAPSABLE_COLUMNS = ['Type', 'Dimensions', 'Value Reference', 'Initial', 'Causality', 'Variability', 'Nominal', 'Min', 'Max']
 
 

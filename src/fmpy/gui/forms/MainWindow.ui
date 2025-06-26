@@ -1622,6 +1622,7 @@ QToolButton:checked, QToolButton:hover:pressed {
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionShowNewFMUDialog"/>
    <addaction name="actionOpen"/>
    <addaction name="actionReload"/>
    <addaction name="separator"/>
@@ -2049,6 +2050,10 @@ QToolButton:checked, QToolButton:hover:pressed {
    </property>
   </action>
   <action name="actionShowNewFMUDialog">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/icons/dark/file-new.svg</normaloff>:/icons/dark/file-new.svg</iconset>
+   </property>
    <property name="text">
     <string>&amp;New FMU...</string>
    </property>

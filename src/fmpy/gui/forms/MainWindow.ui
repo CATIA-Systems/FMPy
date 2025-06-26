@@ -1409,6 +1409,9 @@ QStatusBar::item {
 }
 </string>
    </property>
+   <property name="sizeGripEnabled">
+    <bool>false</bool>
+   </property>
   </widget>
   <widget class="QDockWidget" name="dockWidget">
    <property name="styleSheet">

@@ -1,5 +1,9 @@
 <RCC>
   <qresource prefix="icons">
+    <file>dark/hammer.svg</file>
+    <file>light/hammer.svg</file>
+    <file>dark/file-new.svg</file>
+    <file>light/file-new.svg</file>
     <file>dark/arrow-clockwise.svg</file>
     <file>dark/book.svg</file>
     <file>dark/debug.svg</file>

@@ -20,6 +20,9 @@
    <iconset resource="../icons/icons.qrc">
     <normaloff>:/icons/app_icon.ico</normaloff>:/icons/app_icon.ico</iconset>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QToolBar::separator { width: 20px }</string>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_12">
     <property name="leftMargin">
@@ -1230,16 +1233,16 @@ QToolButton:checked, QToolButton:hover:pressed {
          </widget>
         </item>
         <item>
-         <widget class="QTreeView" name="logTreeView">
-          <property name="frameShape">
-           <enum>QFrame::Shape::NoFrame</enum>
+         <widget class="QWebEngineView" name="logWebEngineView">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
-          <property name="rootIsDecorated">
-           <bool>false</bool>
+          <property name="contextMenuPolicy">
+           <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
           </property>
-          <attribute name="headerVisible">
-           <bool>false</bool>
-          </attribute>
          </widget>
         </item>
        </layout>
@@ -1366,15 +1369,6 @@ QToolButton:checked, QToolButton:hover:pressed {
     <property name="title">
      <string>&amp;Tools</string>
     </property>
-    <widget class="QMenu" name="menuCompilePlatformBinary">
-     <property name="title">
-      <string>Compile Platform &amp;Binary</string>
-     </property>
-     <addaction name="actionCompileDarwinBinary"/>
-     <addaction name="actionCompileLinuxBinary"/>
-     <addaction name="actionCompileWin32Binary"/>
-     <addaction name="actionCompileWin64Binary"/>
-    </widget>
     <widget class="QMenu" name="menuAddRemoting">
      <property name="title">
       <string>Add &amp;Remoting</string>
@@ -1387,7 +1381,6 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="separator"/>
     <addaction name="separator"/>
     <addaction name="actionValidateFMU"/>
-    <addaction name="menuCompilePlatformBinary"/>
     <addaction name="actionRemoveSourceCode"/>
     <addaction name="actionCreateJupyterNotebook"/>
     <addaction name="actionCreateCMakeProject"/>
@@ -1625,7 +1618,6 @@ QToolButton:checked, QToolButton:hover:pressed {
    <addaction name="actionShowNewFMUDialog"/>
    <addaction name="actionOpen"/>
    <addaction name="actionReload"/>
-   <addaction name="separator"/>
    <addaction name="actionShowSettings"/>
    <addaction name="actionShowFiles"/>
    <addaction name="actionShowDocumentation"/>

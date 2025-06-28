@@ -1,7 +1,6 @@
 """ Entry point for the graphical user interface """
-from pathlib import Path
-
 import shutil
+from pathlib import Path
 
 from ..template import create_fmu
 
@@ -25,12 +24,12 @@ from PySide6.QtCore import Signal
 
 from fmpy.gui.generated.MainWindow import Ui_MainWindow
 import fmpy
-from fmpy import read_model_description, supported_platforms, platform
+from fmpy import read_model_description, supported_platforms
 from fmpy.model_description import ScalarVariable
 from fmpy.util import can_simulate, remove_source_code
 
 from fmpy.gui.model import VariablesTableModel, VariablesTreeModel, VariablesModel, VariablesFilterModel
-from fmpy.gui.log import Log, LogMessagesFilterProxyModel
+from fmpy.gui.log import Log
 
 QCoreApplication.setApplicationVersion(fmpy.__version__)
 QCoreApplication.setOrganizationName("CATIA-Systems")
@@ -125,7 +124,6 @@ class MainWindow(QMainWindow):
 
         self.ui.treeView.setAttribute(Qt.WA_MacShowFocusRect, False)
         self.ui.tableView.setAttribute(Qt.WA_MacShowFocusRect, False)
-        self.ui.logTreeView.setAttribute(Qt.WA_MacShowFocusRect, False)
 
         # set the window size to 85% of the available space
         # geo = QApplication.desktop().availableGeometry()
@@ -220,12 +218,10 @@ class MainWindow(QMainWindow):
         self.inputFileMenu.addAction("Open in default application", self.openInputFile)
         self.ui.selectInputButton.setMenu(self.inputFileMenu)
 
-        # log page
         self.log = Log(self)
-        self.logFilterModel = LogMessagesFilterProxyModel(self)
-        self.logFilterModel.setSourceModel(self.log)
-        self.logFilterModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
-        self.ui.logTreeView.setModel(self.logFilterModel)
+
+        self.log.htmlChanged.connect(self.ui.logWebEngineView.setHtml)
+
         self.ui.clearLogButton.clicked.connect(self.log.clear)
 
         self.log.numberOfDebugMessagesChanged.connect(lambda n: self.ui.showDebugMessagesButton.setText(str(n)))
@@ -233,12 +229,12 @@ class MainWindow(QMainWindow):
         self.log.numberOfWarningMessagesChanged.connect(lambda n: self.ui.showWarningMessagesButton.setText(str(n)))
         self.log.numberOfErrorMessagesChanged.connect(lambda n: self.ui.showErrorMessagesButton.setText(str(n)))
 
-        self.ui.logFilterLineEdit.textChanged.connect(self.logFilterModel.setFilterFixedString)
+        self.ui.logFilterLineEdit.textChanged.connect(self.log.setFilterString)
 
-        self.ui.showDebugMessagesButton.toggled.connect(self.logFilterModel.setShowDebugMessages)
-        self.ui.showInfoMessagesButton.toggled.connect(self.logFilterModel.setShowInfoMessages)
-        self.ui.showWarningMessagesButton.toggled.connect(self.logFilterModel.setShowWarningMessages)
-        self.ui.showErrorMessagesButton.toggled.connect(self.logFilterModel.setShowErrorMessages)
+        self.ui.showDebugMessagesButton.toggled.connect(self.log.setShowDebugMessages)
+        self.ui.showInfoMessagesButton.toggled.connect(self.log.setShowInfoMessages)
+        self.ui.showWarningMessagesButton.toggled.connect(self.log.setShowWarningMessages)
+        self.ui.showErrorMessagesButton.toggled.connect(self.log.setShowErrorMessages)
 
         # context menu
         self.contextMenu = QMenu()
@@ -555,6 +551,9 @@ class MainWindow(QMainWindow):
         if has_documentation:
             self.ui.webEngineView.load(QUrl.fromLocalFile(doc_file))
 
+        # log page
+        self.log.clear()
+
         self.ui.actionReload.setEnabled(True)
         self.ui.actionOpenUnzipDirectory.setEnabled(True)
         self.ui.actionShowSettings.setEnabled(True)
@@ -750,7 +749,7 @@ class MainWindow(QMainWindow):
                 max_samples = float(self.ui.maxSamplesLineEdit.text())
                 output_interval = stop_time / max_samples
         except Exception as ex:
-            self.log.log('error', "Failed to start simulation: %s" % ex)
+            self.log.logMessage('error', "Failed to start simulation: %s" % ex)
             self.ui.stackedWidget.setCurrentWidget(self.ui.logPage)
             return
 
@@ -772,7 +771,7 @@ class MainWindow(QMainWindow):
                 filename = self.ui.inputFilenameLineEdit.text()
                 input = read_csv(filename, variable_names=input_variables)
             except Exception as e:
-                self.log.log('error', "Failed to load input from '%s'. %s" % (filename, e))
+                self.log.logMessage('error', "Failed to load input from '%s'. %s" % (filename, e))
                 return
         else:
             input = None
@@ -804,7 +803,7 @@ class MainWindow(QMainWindow):
 
         self.simulationProgressBar.setVisible(True)
 
-        self.simulationThread.messageChanged.connect(self.log.log)
+        self.simulationThread.messageChanged.connect(self.log.logMessage)
         self.simulationThread.progressChanged.connect(self.simulationProgressBar.setValue)
         self.simulationThread.finished.connect(self.simulationFinished)
 

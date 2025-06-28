@@ -2,12 +2,16 @@ from PySide6.QtCore import QAbstractTableModel, Qt, QModelIndex, QSortFilterProx
 from PySide6.QtGui import QIcon, QGuiApplication
 from PySide6.QtCore import Signal
 import re
+from typing import Literal, get_args
+from string import Template
 
 
-class Log2(QObject):
+class Log(QObject):
+
+    Severity = Literal['debug', 'info', 'warning', 'error']
 
     currentMessageChanged = Signal(str, str)
-    textChanged = Signal(str)
+    htmlChanged = Signal(str)
     numberOfDebugMessagesChanged = Signal(int)
     numberOfInfoMessagesChanged = Signal(int)
     numberOfWarningMessagesChanged = Signal(int)
@@ -16,9 +20,9 @@ class Log2(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.filter = ""
+        self.pattern = ""
 
-        self.currentLevel = 'debug'
+        self.currentLevel: Log.Severity = 'debug'
 
         self.messages = []
 
@@ -33,13 +37,13 @@ class Log2(QObject):
         self.numberOfErrorMessages = 0
 
     @staticmethod
-    def severity(level):
-        return ['debug', 'info', 'warning', 'error'].index(level)
+    def severity(level: Severity):
+        return get_args(Log.Severity).index(level)
 
     def clear(self):
         self.currentLevel = 'debug'
         self.messages[:] = []
-        self.updateText()
+        self.updateHtml()
 
         self.currentMessageChanged.emit('', '')
 
@@ -75,29 +79,29 @@ class Log2(QObject):
             self.numberOfErrorMessages += 1
             self.numberOfErrorMessagesChanged.emit(self.numberOfErrorMessages)
 
-        self.updateText()
+        self.updateHtml()
 
     def setShowDebugMessages(self, show):
         self.showDebugMessages = show
-        self.updateText()
+        self.updateHtml()
 
     def setShowInfoMessages(self, show):
         self.showInfoMessages = show
-        self.updateText()
+        self.updateHtml()
 
     def setShowWarningMessages(self, show):
         self.showWarningMessages = show
-        self.updateText()
+        self.updateHtml()
 
     def setShowErrorMessages(self, show):
         self.showErrorMessages = show
-        self.updateText()
+        self.updateHtml()
 
-    def setFilterFixedString(self, filter: str):
-        self.filter = filter
-        self.updateText()
+    def setFilterString(self, pattern: str):
+        self.pattern = pattern
+        self.updateHtml()
 
-    def updateText(self):
+    def updateHtml(self):
 
         if QGuiApplication.styleHints().colorScheme() == Qt.ColorScheme.Dark:
             colors = {
@@ -115,8 +119,6 @@ class Log2(QObject):
                 "yellow": "#b19c16",
                 "red": "#a9493a",
             }
-
-        from string import Template
 
         html = Template('''
 <html>
@@ -179,13 +181,8 @@ pre.error {
 
         for level, text in self.messages:
 
-            if self.filter.lower() not in text.lower():
+            if self.pattern.lower() not in text.lower():
                 continue
-
-            # from random import randint
-            # levels = ['debug', 'info', 'warning', 'error']
-            #
-            # level = levels[randint(0,3)]
 
             if (level == "debug" and self.showDebugMessages or
                 level == "info" and self.showInfoMessages or
@@ -195,143 +192,4 @@ pre.error {
 
         html += "</body></html>"
 
-        self.textChanged.emit(html)
-
-        # print(html)
-
-
-class Log(QAbstractTableModel):
-
-    textChanged = Signal(str)
-
-    currentMessageChanged = Signal(str, str)
-    numberOfDebugMessagesChanged = Signal(int)
-    numberOfInfoMessagesChanged = Signal(int)
-    numberOfWarningMessagesChanged = Signal(int)
-    numberOfErrorMessagesChanged = Signal(int)
-
-    @staticmethod
-    def severity(level):
-        return ['debug', 'info', 'warning', 'error'].index(level)
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.messages = []
-        self.currentLevel = 'debug'
-        self.numberOfDebugMessages = 0
-        self.numberOfInfoMessages = 0
-        self.numberOfWarningMessages = 0
-        self.numberOfErrorMessages = 0
-
-    def clear(self):
-        self.beginResetModel()
-        self.currentLevel = 'debug'
-        self.messages[:] = []
-        self.endResetModel()
-
-        self.currentMessageChanged.emit('', '')
-
-        self.numberOfDebugMessages = 0
-        self.numberOfInfoMessages = 0
-        self.numberOfWarningMessages = 0
-        self.numberOfErrorMessages = 0
-
-        self.numberOfDebugMessagesChanged.emit(self.numberOfDebugMessages)
-        self.numberOfInfoMessagesChanged.emit(self.numberOfInfoMessages)
-        self.numberOfWarningMessagesChanged.emit(self.numberOfWarningMessages)
-        self.numberOfErrorMessagesChanged.emit(self.numberOfErrorMessages)
-
-    def columnCount(self, parent):
-        return 1
-
-    def rowCount(self, parent):
-        return len(self.messages)
-
-    def log(self, level, text):
-        import re
-
-        last = len(self.messages)
-        simplified = re.sub(r'\s+', ' ', text).strip()
-        self.beginInsertRows(QModelIndex(), last, last)
-        self.messages.append((level, simplified, text))
-        self.endInsertRows()
-
-        if self.severity(level) >= self.severity(self.currentLevel):
-            self.currentLevel = level
-            self.currentMessageChanged.emit(level, simplified)
-
-        if level == 'debug':
-            self.numberOfDebugMessages += 1
-            self.numberOfDebugMessagesChanged.emit(self.numberOfDebugMessages)
-        elif level == 'info':
-            self.numberOfInfoMessages += 1
-            self.numberOfInfoMessagesChanged.emit(self.numberOfInfoMessages)
-        elif level == 'warning':
-            self.numberOfWarningMessages += 1
-            self.numberOfWarningMessagesChanged.emit(self.numberOfWarningMessages)
-        elif level == 'error':
-            self.numberOfErrorMessages += 1
-            self.numberOfErrorMessagesChanged.emit(self.numberOfErrorMessages)
-
-        text = "\n".join(m[2] for m in self.messages)
-
-        self.textChanged.emit(text)
-
-    def data(self, index, role):
-
-        level, simplified, text = self.messages[index.row()]
-
-        if role == Qt.DisplayRole:
-            return simplified
-        elif role == Qt.ToolTipRole:
-            return text
-        elif role == Qt.DecorationRole:
-            return QIcon(':/icons/light/%s.svg' % level)
-
-        return None
-
-
-class LogMessagesFilterProxyModel(QSortFilterProxyModel):
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.showDebugMessages = False
-        self.showInfoMessages = True
-        self.showWarningMessages = True
-        self.showErrorMessages = True
-
-    def filterAcceptsRow(self, source_row, source_parent):
-
-        model = self.sourceModel()
-        index = model.index(source_row, 0, source_parent)
-
-        if index.isValid():
-
-            level, _, _ = model.messages[source_row]
-
-            if level == 'debug' and not self.showDebugMessages:
-                return False
-            elif level == 'info' and not self.showInfoMessages:
-                return False
-            elif level == 'warning' and not self.showWarningMessages:
-                return False
-            elif level == 'error' and not  self.showErrorMessages:
-                return False
-
-        return QSortFilterProxyModel.filterAcceptsRow(self, source_row, source_parent)
-
-    def setShowDebugMessages(self, show):
-        self.showDebugMessages = show
-        self.invalidateFilter()
-
-    def setShowInfoMessages(self, show):
-        self.showInfoMessages = show
-        self.invalidateFilter()
-
-    def setShowWarningMessages(self, show):
-        self.showWarningMessages = show
-        self.invalidateFilter()
-
-    def setShowErrorMessages(self, show):
-        self.showErrorMessages = show
-        self.invalidateFilter()
+        self.htmlChanged.emit(html)

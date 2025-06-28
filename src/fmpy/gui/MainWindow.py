@@ -20,7 +20,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QCo
     QMenu, QMessageBox, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, \
     QGraphicsTextItem, QGraphicsPathItem, QFileSystemModel
 from PySide6.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, \
-    QPolygonF, QPainterPath, QGuiApplication
+    QPolygonF, QPainterPath, QGuiApplication, QFontDatabase
 from PySide6.QtCore import Signal
 
 from fmpy.gui.generated.MainWindow import Ui_MainWindow
@@ -30,7 +30,7 @@ from fmpy.model_description import ScalarVariable
 from fmpy.util import can_simulate, remove_source_code
 
 from fmpy.gui.model import VariablesTableModel, VariablesTreeModel, VariablesModel, VariablesFilterModel
-from fmpy.gui.log import Log, LogMessagesFilterProxyModel
+from fmpy.gui.log import Log, LogMessagesFilterProxyModel, Log2
 
 QCoreApplication.setApplicationVersion(fmpy.__version__)
 QCoreApplication.setOrganizationName("CATIA-Systems")
@@ -125,7 +125,6 @@ class MainWindow(QMainWindow):
 
         self.ui.treeView.setAttribute(Qt.WA_MacShowFocusRect, False)
         self.ui.tableView.setAttribute(Qt.WA_MacShowFocusRect, False)
-        self.ui.logTreeView.setAttribute(Qt.WA_MacShowFocusRect, False)
 
         # set the window size to 85% of the available space
         # geo = QApplication.desktop().availableGeometry()
@@ -220,25 +219,23 @@ class MainWindow(QMainWindow):
         self.inputFileMenu.addAction("Open in default application", self.openInputFile)
         self.ui.selectInputButton.setMenu(self.inputFileMenu)
 
-        # log page
-        self.log = Log(self)
-        self.logFilterModel = LogMessagesFilterProxyModel(self)
-        self.logFilterModel.setSourceModel(self.log)
-        self.logFilterModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
-        self.ui.logTreeView.setModel(self.logFilterModel)
-        self.ui.clearLogButton.clicked.connect(self.log.clear)
+        self.log2 = Log2(self)
 
-        self.log.numberOfDebugMessagesChanged.connect(lambda n: self.ui.showDebugMessagesButton.setText(str(n)))
-        self.log.numberOfInfoMessagesChanged.connect(lambda n: self.ui.showInfoMessagesButton.setText(str(n)))
-        self.log.numberOfWarningMessagesChanged.connect(lambda n: self.ui.showWarningMessagesButton.setText(str(n)))
-        self.log.numberOfErrorMessagesChanged.connect(lambda n: self.ui.showErrorMessagesButton.setText(str(n)))
+        self.log2.textChanged.connect(self.ui.logWebEngineView.setHtml)
 
-        self.ui.logFilterLineEdit.textChanged.connect(self.logFilterModel.setFilterFixedString)
+        self.ui.clearLogButton.clicked.connect(self.log2.clear)
 
-        self.ui.showDebugMessagesButton.toggled.connect(self.logFilterModel.setShowDebugMessages)
-        self.ui.showInfoMessagesButton.toggled.connect(self.logFilterModel.setShowInfoMessages)
-        self.ui.showWarningMessagesButton.toggled.connect(self.logFilterModel.setShowWarningMessages)
-        self.ui.showErrorMessagesButton.toggled.connect(self.logFilterModel.setShowErrorMessages)
+        self.log2.numberOfDebugMessagesChanged.connect(lambda n: self.ui.showDebugMessagesButton.setText(str(n)))
+        self.log2.numberOfInfoMessagesChanged.connect(lambda n: self.ui.showInfoMessagesButton.setText(str(n)))
+        self.log2.numberOfWarningMessagesChanged.connect(lambda n: self.ui.showWarningMessagesButton.setText(str(n)))
+        self.log2.numberOfErrorMessagesChanged.connect(lambda n: self.ui.showErrorMessagesButton.setText(str(n)))
+
+        self.ui.logFilterLineEdit.textChanged.connect(self.log2.setFilterFixedString)
+
+        self.ui.showDebugMessagesButton.toggled.connect(self.log2.setShowDebugMessages)
+        self.ui.showInfoMessagesButton.toggled.connect(self.log2.setShowInfoMessages)
+        self.ui.showWarningMessagesButton.toggled.connect(self.log2.setShowWarningMessages)
+        self.ui.showErrorMessagesButton.toggled.connect(self.log2.setShowErrorMessages)
 
         # context menu
         self.contextMenu = QMenu()
@@ -346,7 +343,7 @@ class MainWindow(QMainWindow):
         self.ui.filterLineEdit.textChanged.connect(self.tableFilterModel.setFilterFixedString)
         self.ui.filterToolButton.toggled.connect(self.treeFilterModel.setFilterByCausality)
         self.ui.filterToolButton.toggled.connect(self.tableFilterModel.setFilterByCausality)
-        self.log.currentMessageChanged.connect(self.setStatusMessage)
+        self.log2.currentMessageChanged.connect(self.setStatusMessage)
         self.ui.selectInputButton.clicked.connect(self.selectInputFile)
         self.ui.actionShowAboutDialog.triggered.connect(self.showAboutDialog)
         self.ui.actionShowNewFMUDialog.triggered.connect(self.showNewFMUDialog)
@@ -555,6 +552,9 @@ class MainWindow(QMainWindow):
         if has_documentation:
             self.ui.webEngineView.load(QUrl.fromLocalFile(doc_file))
 
+        # log page
+        self.log2.clear()
+
         self.ui.actionReload.setEnabled(True)
         self.ui.actionOpenUnzipDirectory.setEnabled(True)
         self.ui.actionShowSettings.setEnabled(True)
@@ -750,7 +750,7 @@ class MainWindow(QMainWindow):
                 max_samples = float(self.ui.maxSamplesLineEdit.text())
                 output_interval = stop_time / max_samples
         except Exception as ex:
-            self.log.log('error', "Failed to start simulation: %s" % ex)
+            self.log2.logMessage('error', "Failed to start simulation: %s" % ex)
             self.ui.stackedWidget.setCurrentWidget(self.ui.logPage)
             return
 
@@ -772,7 +772,7 @@ class MainWindow(QMainWindow):
                 filename = self.ui.inputFilenameLineEdit.text()
                 input = read_csv(filename, variable_names=input_variables)
             except Exception as e:
-                self.log.log('error', "Failed to load input from '%s'. %s" % (filename, e))
+                self.log2.logMessage('error', "Failed to load input from '%s'. %s" % (filename, e))
                 return
         else:
             input = None
@@ -804,12 +804,12 @@ class MainWindow(QMainWindow):
 
         self.simulationProgressBar.setVisible(True)
 
-        self.simulationThread.messageChanged.connect(self.log.log)
+        self.simulationThread.messageChanged.connect(self.log2.logMessage)
         self.simulationThread.progressChanged.connect(self.simulationProgressBar.setValue)
         self.simulationThread.finished.connect(self.simulationFinished)
 
         if self.ui.clearLogOnStartButton.isChecked():
-            self.log.clear()
+            self.log2.clear()
 
         self.setCurrentPage(self.ui.resultPage)
 

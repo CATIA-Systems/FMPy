@@ -1,9 +1,9 @@
-from PySide6.QtCore import QAbstractTableModel, Qt, QModelIndex, QSortFilterProxyModel, QObject
-from PySide6.QtGui import QIcon, QGuiApplication
-from PySide6.QtCore import Signal
 import re
-from typing import Literal, get_args
+from PySide6.QtCore import Qt, QObject
+from PySide6.QtCore import Signal
+from PySide6.QtGui import QGuiApplication
 from string import Template
+from typing import Literal, get_args
 
 
 class Log(QObject):

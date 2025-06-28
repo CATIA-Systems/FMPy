@@ -1,7 +1,6 @@
 """ Entry point for the graphical user interface """
-from pathlib import Path
-
 import shutil
+from pathlib import Path
 
 from ..template import create_fmu
 
@@ -20,12 +19,12 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QCo
     QMenu, QMessageBox, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, \
     QGraphicsTextItem, QGraphicsPathItem, QFileSystemModel
 from PySide6.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, \
-    QPolygonF, QPainterPath, QGuiApplication, QFontDatabase
+    QPolygonF, QPainterPath, QGuiApplication
 from PySide6.QtCore import Signal
 
 from fmpy.gui.generated.MainWindow import Ui_MainWindow
 import fmpy
-from fmpy import read_model_description, supported_platforms, platform
+from fmpy import read_model_description, supported_platforms
 from fmpy.model_description import ScalarVariable
 from fmpy.util import can_simulate, remove_source_code
 

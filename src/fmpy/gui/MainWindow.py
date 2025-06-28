@@ -887,7 +887,7 @@ class MainWindow(QMainWindow):
             html = f"""
 <html>
 <head><meta charset="utf-8"/></head>
-<body style="margin: 0; background-color: rgb(30, 30, 30); overflow: hidden">
+<body style="margin: 0; background-color: #171717; overflow: hidden">
 {div}
 </body>
 </html>

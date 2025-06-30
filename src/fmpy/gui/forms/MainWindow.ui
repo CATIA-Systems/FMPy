@@ -1618,6 +1618,8 @@ QToolButton:checked, QToolButton:hover:pressed {
    <addaction name="actionShowNewFMUDialog"/>
    <addaction name="actionOpen"/>
    <addaction name="actionReload"/>
+   <addaction name="actionBuildPlatfromBinary"/>
+   <addaction name="separator"/>
    <addaction name="actionShowSettings"/>
    <addaction name="actionShowFiles"/>
    <addaction name="actionShowDocumentation"/>
@@ -2054,6 +2056,21 @@ QToolButton:checked, QToolButton:hover:pressed {
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionBuildPlatfromBinary">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/icons/dark/hammer.svg</normaloff>:/icons/dark/hammer.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Build Platfrom Binary</string>
+   </property>
+   <property name="toolTip">
+    <string>Build Platfrom Binary</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
  </widget>

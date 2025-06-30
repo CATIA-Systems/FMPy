@@ -1,5 +1,6 @@
 """ Entry point for the graphical user interface """
 import shutil
+from dask.array import delete
 from pathlib import Path
 
 from ..template import create_fmu
@@ -25,7 +26,7 @@ from PySide6.QtCore import Signal
 from fmpy.gui.generated.MainWindow import Ui_MainWindow
 import fmpy
 from fmpy import read_model_description, supported_platforms
-from fmpy.model_description import ScalarVariable
+from fmpy.model_description import ScalarVariable, ModelDescription, read_build_description
 from fmpy.util import can_simulate, remove_source_code
 
 from fmpy.gui.model import VariablesTableModel, VariablesTreeModel, VariablesModel, VariablesFilterModel
@@ -97,7 +98,7 @@ class MainWindow(QMainWindow):
         self.filename = None
         self.unzipdir = None
         self.result = None
-        self.modelDescription = None
+        self.modelDescription: ModelDescription = None
         self.variables = dict()
         self.selectedVariables = set()
         self.startValues = dict()
@@ -201,6 +202,8 @@ class MainWindow(QMainWindow):
         if recent_files:
             added = set()
             for file in recent_files[:5]:
+                if not file:
+                    continue
                 link = QLabel('<a href="%s" style="text-decoration: none; color: #548AF7">%s</a>' % (file, os.path.basename(file)))
                 link.setToolTip(file)
                 link.linkActivated.connect(self.load)
@@ -269,6 +272,8 @@ class MainWindow(QMainWindow):
         self.ui.actionReload.triggered.connect(lambda: self.load(self.filename))
 
         # tools menu
+        self.ui.actionBuildPlatfromBinary.triggered.connect(self.buildPlatformBinary)
+
         self.ui.actionValidateFMU.triggered.connect(self.validateFMU)
         self.ui.actionCompileDarwinBinary.triggered.connect(lambda: self.compilePlatformBinary('darwin64'))
         self.ui.actionCompileLinuxBinary.triggered.connect(lambda: self.compilePlatformBinary('linux64'))
@@ -409,16 +414,23 @@ class MainWindow(QMainWindow):
         if not self.isVisible():
             self.show()
 
-        self.cleanUp()
+        if filename:
+
+            self.cleanUp()
+
+            try:
+                self.unzipdir = fmpy.extract(filename)
+            except Exception as e:
+                QMessageBox.warning(self, "Failed to load extract FMU", f"Failed to extract {filename}. {e}")
+                return
+
+            self.filename = filename
 
         try:
-            self.unzipdir = fmpy.extract(filename)
-            self.modelDescription = md = read_model_description(filename)
+            self.modelDescription = md = read_model_description(self.filename)
         except Exception as e:
-            QMessageBox.warning(self, "Failed to load FMU", "Failed to load %s. %s" % (filename, e))
+            QMessageBox.warning(self, "Failed to read model description FMU", f"Failed to read model description {self.filename}. {e}")
             return
-
-        self.filename = filename
 
         # show model.png
         try:
@@ -439,7 +451,7 @@ class MainWindow(QMainWindow):
             self.ui.modelImageLabel.setPixmap(QPixmap())
             self.ui.modelImageLabel.setToolTip(None)
 
-        platforms = supported_platforms(self.filename)
+        platforms = supported_platforms(self.unzipdir)
 
         self.variables.clear()
         self.selectedVariables.clear()
@@ -575,12 +587,12 @@ class MainWindow(QMainWindow):
 
         settings = QSettings()
         recent_files = settings.value("recentFiles", defaultValue=[])
-        recent_files = self.removeDuplicates([filename] + recent_files)
+        recent_files = self.removeDuplicates([self.filename] + recent_files)
 
         # save the 10 most recent files
         settings.setValue('recentFiles', recent_files[:10])
 
-        self.setWindowTitle("%s - FMPy" % os.path.normpath(filename))
+        self.setWindowTitle("%s - FMPy" % os.path.normpath(self.filename))
 
         self.createGraphics()
 
@@ -1293,6 +1305,138 @@ class MainWindow(QMainWindow):
             if dialog.exec_() == QDialog.Accepted:
                 self.startValues.clear()
                 self.startValues.update(start_values)
+
+    def buildPlatformBinary(self):
+
+        from .BuildDialog import BuildDialog
+        from tempfile import TemporaryDirectory
+
+        temp_dir = TemporaryDirectory()
+
+        dialog = BuildDialog(self)
+
+        dialog.ui.buildDirectoryLineEdit.setText(temp_dir.name)
+
+        dialog.ui.generatorComboBox.addItems([
+            "",
+            "Visual Studio 17 2022",
+            "Visual Studio 16 2019",
+            "Visual Studio 15 2017",
+            "Visual Studio 14 2015",
+            "MinGW Makefiles",
+            "Unix Makefiles",
+        ])
+
+        dialog.ui.platformComboBox.addItems([
+            "",
+            "ARM",
+            "Win32",
+            "x64",
+        ])
+
+        if dialog.exec_() != QDialog.DialogCode.Accepted:
+            return
+
+        if self.ui.clearLogOnStartButton.isChecked():
+            self.log.clear()
+
+        temp_dir._delete = dialog.ui.removeBuildDirectoryCheckBox.isChecked()
+
+        import subprocess
+
+        root = Path(__file__).parent.parent
+        unzipdir = Path(self.unzipdir)
+
+        source_dir = (root / "c-code").as_posix()
+        build_dir = Path(dialog.ui.buildDirectoryLineEdit.text())
+        include_dir = (unzipdir / 'sources').as_posix()
+
+        build_configurations = read_build_description(str(unzipdir))
+
+        source_file_set = build_configurations[0].sourceFileSets[0]
+
+        sources = [(unzipdir / "sources" / file).as_posix() for file in source_file_set.sourceFiles]
+        definitions = [f"{definition.name}={definition.value}" for definition in source_file_set.preprocessorDefinitions]
+        generator = dialog.ui.generatorComboBox.currentText()
+        platform = dialog.ui.platformComboBox.currentText()
+        is_fmi2 = self.modelDescription.fmiVersion == "2.0"
+        build_with_wsl = dialog.ui.compileWithWslCheckBox.isChecked()
+        configuration = dialog.ui.configurationComboBox.currentText()
+
+        def wsl_path(path: str | os.PathLike) -> str:
+            output = subprocess.check_output(["wsl", "wslpath", "-a", Path(path).as_posix()])
+            return output.decode('utf-8').strip()
+
+        program = ["cmake"]
+
+        if build_with_wsl:
+            program = ["wsl", "cmake"]
+            binary_dir = "x86_64-linux"
+            include_dir = wsl_path(include_dir)
+            source_dir = wsl_path(source_dir)
+            sources = map(wsl_path, sources)
+            target_dir = unzipdir / 'binaries' / 'x86_64-linux'
+            target_dir = wsl_path(target_dir)
+        else:
+            if platform == "Win32":
+                if is_fmi2:
+                    binary_dir = "win32"
+                else:
+                    binary_dir = "x86-windows"
+            else:
+                if is_fmi2:
+                    binary_dir = "win64"
+                else:
+                    binary_dir = "x86_64-windows"
+            target_dir = (unzipdir / 'binaries' / binary_dir).as_posix()
+
+        with open(build_dir / "CMakeCache.txt", "w") as cache:
+            if generator:
+                cache.write(f"CMAKE_GENERATOR:INTERNAL={generator}\n")
+            if platform:
+                cache.write(f"CMAKE_GENERATOR_PLATFORM:INTERNAL={platform}\n")
+            cache.write(f"MODEL_IDENTIFIER:STRING={self.modelDescription.coSimulation.modelIdentifier}\n")
+            cache.write(f"INCLUDE_DIRS:STRING={include_dir}\n")
+            cache.write(f"SOURCES:STRING={';'.join(sources)}\n")
+            cache.write(f"DEFINITIONS:STRING={';'.join(definitions)}\n")
+            cache.write(f"TARGET_DIR:STRING={target_dir}\n")
+            cache.write(f"CMAKE_BUILD_TYPE:STRING={configuration}\n")
+
+        if build_with_wsl:
+            build_dir = wsl_path(build_dir)
+        else:
+            build_dir = build_dir.as_posix()
+
+        cmd = program + [
+            "-S", source_dir,
+            "-B", build_dir,
+        ]
+
+        self.log.logMessage("debug", " ".join(cmd))
+
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True) as p:
+            for line in p.stdout:
+                self.log.logMessage("info", line)
+            for line in p.stderr:
+                self.log.logMessage("error", line)
+
+        cmd = program + [
+            "--build", build_dir,
+            "--target", "install",
+            "--config", configuration,
+        ]
+
+        self.log.logMessage("debug", " ".join(cmd))
+
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True) as p:
+            for line in p.stdout:
+                self.log.logMessage("info", line)
+            for line in p.stderr:
+                self.log.logMessage("error", line)
+
+        # p = subprocess.run(["cmake", "--version"])
+        # print(p)
+        self.load(None)
 
     def compilePlatformBinary(self, target_platform):
         """ Compile the platform binary """

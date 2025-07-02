@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>436</width>
-    <height>333</height>
+    <width>460</width>
+    <height>298</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -29,8 +29,18 @@
    <property name="spacing">
     <number>12</number>
    </property>
+   <item row="0" column="0">
+    <widget class="QLabel" name="label_4">
+     <property name="text">
+      <string>Build Directory</string>
+     </property>
+    </widget>
+   </item>
    <item row="2" column="1">
     <widget class="QComboBox" name="generatorComboBox"/>
+   </item>
+   <item row="3" column="1">
+    <widget class="QComboBox" name="platformComboBox"/>
    </item>
    <item row="4" column="0">
     <widget class="QLabel" name="label_3">
@@ -39,7 +49,7 @@
      </property>
     </widget>
    </item>
-   <item row="7" column="0">
+   <item row="8" column="0">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Orientation::Vertical</enum>
@@ -52,27 +62,6 @@
      </property>
     </spacer>
    </item>
-   <item row="4" column="1">
-    <widget class="QComboBox" name="configurationComboBox">
-     <item>
-      <property name="text">
-       <string>Release</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Debug</string>
-      </property>
-     </item>
-    </widget>
-   </item>
-   <item row="5" column="0" colspan="2">
-    <widget class="QCheckBox" name="compileWithWslCheckBox">
-     <property name="text">
-      <string>Compile for Linux with WSL</string>
-     </property>
-    </widget>
-   </item>
    <item row="2" column="0">
     <widget class="QLabel" name="label_2">
      <property name="text">
@@ -80,14 +69,17 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="0">
-    <widget class="QLabel" name="label_4">
+   <item row="5" column="0" colspan="2">
+    <widget class="QCheckBox" name="allWarningsCheckBox">
      <property name="text">
-      <string>Build Directory</string>
+      <string>Enable all compiler warnings</string>
      </property>
     </widget>
    </item>
-   <item row="8" column="0" colspan="2">
+   <item row="4" column="1">
+    <widget class="QComboBox" name="configurationComboBox"/>
+   </item>
+   <item row="9" column="0" colspan="2">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Orientation::Horizontal</enum>
@@ -97,9 +89,6 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="1">
-    <widget class="QComboBox" name="platformComboBox"/>
-   </item>
    <item row="3" column="0">
     <widget class="QLabel" name="label">
      <property name="text">
@@ -107,13 +96,10 @@
      </property>
     </widget>
    </item>
-   <item row="6" column="0" colspan="2">
-    <widget class="QCheckBox" name="removeBuildDirectoryCheckBox">
+   <item row="7" column="0" colspan="2">
+    <widget class="QCheckBox" name="compileWithWslCheckBox">
      <property name="text">
-      <string>Remove build directory</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
+      <string>Compile for Linux with WSL</string>
      </property>
     </widget>
    </item>
@@ -133,7 +119,14 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QLineEdit" name="buildDirectoryLineEdit"/>
+       <widget class="QLineEdit" name="buildDirectoryLineEdit">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="placeholderText">
+         <string>Create temporary directory</string>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QToolButton" name="selectBuildDirectoryToolButton">
@@ -143,6 +136,13 @@
        </widget>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item row="6" column="0" colspan="2">
+    <widget class="QCheckBox" name="warningAsErrorCheckBox">
+     <property name="text">
+      <string>Turn compiler warnings into errors</string>
+     </property>
     </widget>
    </item>
   </layout>

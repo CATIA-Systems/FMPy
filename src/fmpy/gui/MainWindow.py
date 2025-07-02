@@ -1,12 +1,16 @@
 """ Entry point for the graphical user interface """
+from tempfile import TemporaryDirectory
+
 import shutil
-from dask.array import delete
 from pathlib import Path
+from typing import cast
+from typing_extensions import get_args
 
 from ..template import create_fmu
 
 try:
-    from . import compile_resources
+    from . import compile_resources, BuildThread
+
     compile_resources()
 except Exception as e:
     print("Failed to compiled resources. %s" % e)
@@ -16,9 +20,10 @@ import sys
 
 from PySide6.QtCore import QCoreApplication, QDir, Qt, QUrl, QSettings, QPoint, QTimer, QStandardPaths, \
     QPointF, QBuffer, QIODevice, QSize
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, \
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, \
+    QVBoxLayout, \
     QMenu, QMessageBox, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, \
-    QGraphicsTextItem, QGraphicsPathItem, QFileSystemModel
+    QGraphicsTextItem, QGraphicsPathItem, QFileSystemModel, QProgressDialog, QPushButton
 from PySide6.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, \
     QPolygonF, QPainterPath, QGuiApplication
 from PySide6.QtCore import Signal
@@ -409,7 +414,7 @@ class MainWindow(QMainWindow):
 
         self.contextMenu.exec_(currentView.mapToGlobal(point))
 
-    def load(self, filename):
+    def load(self, filename=None, clearLog=True):
 
         if not self.isVisible():
             self.show()
@@ -564,7 +569,8 @@ class MainWindow(QMainWindow):
             self.ui.webEngineView.load(QUrl.fromLocalFile(doc_file))
 
         # log page
-        self.log.clear()
+        if clearLog:
+            self.log.clear()
 
         self.ui.actionReload.setEnabled(True)
         self.ui.actionOpenUnzipDirectory.setEnabled(True)
@@ -1309,30 +1315,15 @@ class MainWindow(QMainWindow):
     def buildPlatformBinary(self):
 
         from .BuildDialog import BuildDialog
-        from tempfile import TemporaryDirectory
-
-        temp_dir = TemporaryDirectory()
+        from .BuildThread import BuildThread
 
         dialog = BuildDialog(self)
 
-        dialog.ui.buildDirectoryLineEdit.setText(temp_dir.name)
+        from ..build import Platform, Configuration, Generator
 
-        dialog.ui.generatorComboBox.addItems([
-            "",
-            "Visual Studio 17 2022",
-            "Visual Studio 16 2019",
-            "Visual Studio 15 2017",
-            "Visual Studio 14 2015",
-            "MinGW Makefiles",
-            "Unix Makefiles",
-        ])
-
-        dialog.ui.platformComboBox.addItems([
-            "",
-            "ARM",
-            "Win32",
-            "x64",
-        ])
+        dialog.ui.generatorComboBox.addItems(["", *get_args(Generator)])
+        dialog.ui.platformComboBox.addItems(["", *get_args(Platform)])
+        dialog.ui.configurationComboBox.addItems(get_args(Configuration))
 
         if dialog.exec_() != QDialog.DialogCode.Accepted:
             return
@@ -1340,103 +1331,35 @@ class MainWindow(QMainWindow):
         if self.ui.clearLogOnStartButton.isChecked():
             self.log.clear()
 
-        temp_dir._delete = dialog.ui.removeBuildDirectoryCheckBox.isChecked()
+        build_thread = BuildThread(
+            unzipdir=Path(self.unzipdir),
+            build_dir=dialog.ui.buildDirectoryLineEdit.text(),
+            generator=dialog.ui.generatorComboBox.currentText(),
+            platform=dialog.ui.platformComboBox.currentText(),
+            configuration=dialog.ui.configurationComboBox.currentText(),
+            all_warnings=dialog.ui.allWarningsCheckBox.isChecked(),
+            warning_as_error=dialog.ui.warningAsErrorCheckBox.isChecked(),
+            with_wsl=dialog.ui.compileWithWslCheckBox.isChecked(),
+            parent=self
+        )
 
-        import subprocess
+        progress_dialog = QProgressDialog(self)
+        flags = progress_dialog.windowFlags()
+        flags &= ~Qt.WindowType.WindowCloseButtonHint
+        progress_dialog.setWindowFlags(flags)
 
-        root = Path(__file__).parent.parent
-        unzipdir = Path(self.unzipdir)
+        progress_dialog.setWindowTitle("FMPy")
+        progress_dialog.setLabelText("Building Platform Binary...")
+        progress_dialog.setRange(0, 0)
+        progress_dialog.setWindowModality(Qt.WindowModality.WindowModal)
+        progress_dialog.setCancelButton(cast(QPushButton, None))
 
-        source_dir = (root / "c-code").as_posix()
-        build_dir = Path(dialog.ui.buildDirectoryLineEdit.text())
-        include_dir = (unzipdir / 'sources').as_posix()
+        build_thread.messageChanged.connect(self.log.logMessage)
+        build_thread.finished.connect(progress_dialog.reset)
+        build_thread.finished.connect(lambda: self.load(clearLog=False))
 
-        build_configurations = read_build_description(str(unzipdir))
-
-        source_file_set = build_configurations[0].sourceFileSets[0]
-
-        sources = [(unzipdir / "sources" / file).as_posix() for file in source_file_set.sourceFiles]
-        definitions = [f"{definition.name}={definition.value}" for definition in source_file_set.preprocessorDefinitions]
-        generator = dialog.ui.generatorComboBox.currentText()
-        platform = dialog.ui.platformComboBox.currentText()
-        is_fmi2 = self.modelDescription.fmiVersion == "2.0"
-        build_with_wsl = dialog.ui.compileWithWslCheckBox.isChecked()
-        configuration = dialog.ui.configurationComboBox.currentText()
-
-        def wsl_path(path: str | os.PathLike) -> str:
-            output = subprocess.check_output(["wsl", "wslpath", "-a", Path(path).as_posix()])
-            return output.decode('utf-8').strip()
-
-        program = ["cmake"]
-
-        if build_with_wsl:
-            program = ["wsl", "cmake"]
-            binary_dir = "x86_64-linux"
-            include_dir = wsl_path(include_dir)
-            source_dir = wsl_path(source_dir)
-            sources = map(wsl_path, sources)
-            target_dir = unzipdir / 'binaries' / 'x86_64-linux'
-            target_dir = wsl_path(target_dir)
-        else:
-            if platform == "Win32":
-                if is_fmi2:
-                    binary_dir = "win32"
-                else:
-                    binary_dir = "x86-windows"
-            else:
-                if is_fmi2:
-                    binary_dir = "win64"
-                else:
-                    binary_dir = "x86_64-windows"
-            target_dir = (unzipdir / 'binaries' / binary_dir).as_posix()
-
-        with open(build_dir / "CMakeCache.txt", "w") as cache:
-            if generator:
-                cache.write(f"CMAKE_GENERATOR:INTERNAL={generator}\n")
-            if platform:
-                cache.write(f"CMAKE_GENERATOR_PLATFORM:INTERNAL={platform}\n")
-            cache.write(f"MODEL_IDENTIFIER:STRING={self.modelDescription.coSimulation.modelIdentifier}\n")
-            cache.write(f"INCLUDE_DIRS:STRING={include_dir}\n")
-            cache.write(f"SOURCES:STRING={';'.join(sources)}\n")
-            cache.write(f"DEFINITIONS:STRING={';'.join(definitions)}\n")
-            cache.write(f"TARGET_DIR:STRING={target_dir}\n")
-            cache.write(f"CMAKE_BUILD_TYPE:STRING={configuration}\n")
-
-        if build_with_wsl:
-            build_dir = wsl_path(build_dir)
-        else:
-            build_dir = build_dir.as_posix()
-
-        cmd = program + [
-            "-S", source_dir,
-            "-B", build_dir,
-        ]
-
-        self.log.logMessage("debug", " ".join(cmd))
-
-        with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True) as p:
-            for line in p.stdout:
-                self.log.logMessage("info", line)
-            for line in p.stderr:
-                self.log.logMessage("error", line)
-
-        cmd = program + [
-            "--build", build_dir,
-            "--target", "install",
-            "--config", configuration,
-        ]
-
-        self.log.logMessage("debug", " ".join(cmd))
-
-        with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True) as p:
-            for line in p.stdout:
-                self.log.logMessage("info", line)
-            for line in p.stderr:
-                self.log.logMessage("error", line)
-
-        # p = subprocess.run(["cmake", "--version"])
-        # print(p)
-        self.load(None)
+        progress_dialog.show()
+        build_thread.start()
 
     def compilePlatformBinary(self, target_platform):
         """ Compile the platform binary """

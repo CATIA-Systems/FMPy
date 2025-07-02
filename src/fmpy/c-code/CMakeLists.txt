@@ -1,40 +1,50 @@
 cmake_minimum_required (VERSION 3.15)
 
 set (CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-set (MODEL_IDENTIFIER CACHE STRING "The model identifier")
-set (INCLUDE_DIRS CACHE STRING "The include directories")
-set (SOURCES CACHE STRING "The source files")
-set (DEFINITIONS CACHE STRING "The preprocessor definitions")
-set (TARGET_DIR CACHE STRING "The target directory")
+set (FMI_MODEL_IDENTIFIER CACHE STRING "The model identifier")
+set (FMI_INCLUDE_DIRS CACHE STRING "The include directories")
+set (FMI_SOURCES CACHE STRING "The source files")
+set (FMI_DEFINITIONS CACHE STRING "The preprocessor definitions")
+set (FMI_TARGET_DIR CACHE STRING "The target directory")
+set (FMI_ALL_WARNINGS CACHE BOOL "Enable all compiler warnings")
 
-message(STATUS "MODEL_IDENTIFIER: ${MODEL_IDENTIFIER}")
-message(STATUS "INCLUDE_DIRS: ${INCLUDE_DIRS}")
-message(STATUS "SOURCES: ${SOURCES}")
-message(STATUS "DEFINITIONS: ${DEFINITIONS}")
-message(STATUS "TARGET_DIR: ${TARGET_DIR}")
+message(STATUS "FMI_MODEL_IDENTIFIER: ${MODEL_IDENTIFIER}")
+message(STATUS "FMI_INCLUDE_DIRS: ${INCLUDE_DIRS}")
+message(STATUS "FMI_SOURCES: ${SOURCES}")
+message(STATUS "FMI_DEFINITIONS: ${DEFINITIONS}")
+message(STATUS "FMI_TARGET_DIR: ${TARGET_DIR}")
+message(STATUS "FMI_ALL_WARNINGS: ${FMI_ALL_WARNINGS}")
 
-project (${MODEL_IDENTIFIER})
+project (${FMI_MODEL_IDENTIFIER})
 
-add_library(${MODEL_IDENTIFIER} SHARED ${SOURCES})
+add_library(${FMI_MODEL_IDENTIFIER} SHARED ${FMI_SOURCES})
 
-target_compile_definitions(${MODEL_IDENTIFIER} PUBLIC ${DEFINITIONS})
+target_compile_definitions(${FMI_MODEL_IDENTIFIER} PUBLIC ${FMI_DEFINITIONS})
 
 if (WIN32)
-    target_compile_definitions(${MODEL_IDENTIFIER} PUBLIC
+    target_compile_definitions(${FMI_MODEL_IDENTIFIER} PUBLIC
         "FMI3_Export=__declspec(dllexport)"
         "FMI3_FUNCTION_PREFIX="
     )
 endif ()
 
-target_include_directories(${MODEL_IDENTIFIER} PUBLIC
+if (FMI_ALL_WARNINGS)
+    if(MSVC)
+      target_compile_options(${FMI_MODEL_IDENTIFIER} PRIVATE /W4)
+    else()
+      target_compile_options(${FMI_MODEL_IDENTIFIER} PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+endif ()
+
+target_include_directories(${FMI_MODEL_IDENTIFIER} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${INCLUDE_DIRS}
+    ${FMI_INCLUDE_DIRS}
 )
 
-set_target_properties(${MODEL_IDENTIFIER} PROPERTIES PREFIX "")
+set_target_properties(${FMI_MODEL_IDENTIFIER} PROPERTIES PREFIX "")
 
-install(TARGETS ${MODEL_IDENTIFIER} DESTINATION ${TARGET_DIR})
+install(TARGETS ${FMI_MODEL_IDENTIFIER} DESTINATION ${FMI_TARGET_DIR})
 
 if (MSVC)
-    install(FILES $<TARGET_PDB_FILE:${MODEL_IDENTIFIER}> DESTINATION ${TARGET_DIR} OPTIONAL)
+    install(FILES $<TARGET_PDB_FILE:${FMI_MODEL_IDENTIFIER}> DESTINATION ${FMI_TARGET_DIR} OPTIONAL)
 endif ()

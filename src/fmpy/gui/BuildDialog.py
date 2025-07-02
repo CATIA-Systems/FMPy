@@ -20,4 +20,3 @@ class BuildDialog(QDialog):
                                                   dir=self.ui.buildDirectoryLineEdit.text())
         if path:
             self.ui.buildDirectoryLineEdit.setText(path)
-            self.ui.removeBuildDirectoryCheckBox.setChecked(False)

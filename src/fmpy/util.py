@@ -1,4 +1,9 @@
 from __future__ import annotations
+
+import shutil
+
+from pathlib import Path
+
 from collections.abc import Iterable
 
 import os
@@ -808,29 +813,33 @@ def compile_platform_binary(filename, output_filename=None, target_platform=None
     rmtree(unzipdir2, ignore_errors=True)
 
 
-def remove_source_code(filename):
-    """ Remove the source code from an FMU """
+def remove_source_code(filename: str | PathLike) -> None:
+    """Remove the source code from an FMU or extracted FMU"""
 
-    import tempfile
     from shutil import rmtree
     from lxml import etree
 
-    with tempfile.TemporaryDirectory() as unzipdir:
+    filename = Path(filename)
 
-        fmpy.extract(filename=filename, unzipdir=unzipdir)
+    if filename.is_file():
+        unzipdir = fmpy.extract(filename=filename)
+    else:
+        unzipdir = filename
 
-        rmtree(os.path.join(unzipdir, 'sources'))
+    rmtree(unzipdir / 'sources')
 
-        model_description = fmpy.read_model_description(filename)
+    model_description = fmpy.read_model_description(unzipdir)
 
-        if model_description.fmiVersion == '2.0':
-            xml = os.path.join(unzipdir, 'modelDescription.xml')
-            tree = etree.parse(xml)
-            for e in tree.xpath('//SourceFiles'):
-                e.getparent().remove(e)
-            tree.write(xml, pretty_print=True, encoding='utf-8')
+    if model_description.fmiVersion == '2.0':
+        xml = os.path.join(unzipdir, 'modelDescription.xml')
+        tree = etree.parse(xml)
+        for e in tree.xpath('//SourceFiles'):
+            e.getparent().remove(e)
+        tree.write(xml, pretty_print=True, encoding='utf-8')
 
+    if filename.is_file():
         create_zip_archive(filename, unzipdir)
+        shutil.rmtree(unzipdir)
 
 
 def add_remoting(filename, host_platform, remote_platform):

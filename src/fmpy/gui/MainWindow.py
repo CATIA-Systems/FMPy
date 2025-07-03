@@ -32,7 +32,7 @@ from fmpy.gui.generated.MainWindow import Ui_MainWindow
 import fmpy
 from fmpy import read_model_description, supported_platforms
 from fmpy.model_description import ScalarVariable, ModelDescription, read_build_description
-from fmpy.util import can_simulate, remove_source_code
+from fmpy.util import can_simulate, remove_source_code, create_zip_archive
 
 from fmpy.gui.model import VariablesTableModel, VariablesTreeModel, VariablesModel, VariablesFilterModel
 from fmpy.gui.log import Log
@@ -101,7 +101,7 @@ class MainWindow(QMainWindow):
 
         # state
         self.filename = None
-        self.unzipdir = None
+        self.unzipdir: Path | None = None
         self.result = None
         self.modelDescription: ModelDescription = None
         self.variables = dict()
@@ -271,10 +271,17 @@ class MainWindow(QMainWindow):
         self.actionClearPlots = self.contextMenu.addAction("Clear Plots", self.clearPlots)
 
         # file menu
-        self.ui.actionExit.triggered.connect(QApplication.closeAllWindows)
-        self.ui.actionLoadStartValues.triggered.connect(self.loadStartValues)
-        self.ui.actionOpenUnzipDirectory.triggered.connect(self.openUnzipDirectory)
+        self.ui.actionShowNewFMUDialog.triggered.connect(self.showNewFMUDialog)
+        self.ui.actionNewWindow.triggered.connect(self.newWindow)
+        self.ui.actionOpen.triggered.connect(self.open)
+        self.ui.actionSave.triggered.connect(self.save)
+        self.ui.actionSaveAs.triggered.connect(self.saveAs)
         self.ui.actionReload.triggered.connect(lambda: self.load(self.filename))
+        self.ui.actionOpenUnzipDirectory.triggered.connect(self.openUnzipDirectory)
+        self.ui.actionLoadStartValues.triggered.connect(self.loadStartValues)
+        self.ui.actionSaveResult.triggered.connect(self.saveResult)
+        self.ui.actionSavePlottedResult.triggered.connect(lambda: self.saveResult(plotted=True))
+        self.ui.actionExit.triggered.connect(QApplication.closeAllWindows)
 
         # tools menu
         self.ui.actionBuildPlatfromBinary.triggered.connect(self.buildPlatformBinary)
@@ -329,11 +336,7 @@ class MainWindow(QMainWindow):
         self.simulationProgressBar.setVisible(False)
 
         # connect signals and slots
-        self.ui.actionNewWindow.triggered.connect(self.newWindow)
         self.ui.openButton.clicked.connect(self.open)
-        self.ui.actionOpen.triggered.connect(self.open)
-        self.ui.actionSaveResult.triggered.connect(self.saveResult)
-        self.ui.actionSavePlottedResult.triggered.connect(lambda: self.saveResult(plotted=True))
         self.ui.actionSimulate.triggered.connect(self.startSimulation)
         self.ui.actionShowSettings.triggered.connect(lambda: self.setCurrentPage(self.ui.settingsPage))
         self.ui.actionShowFiles.triggered.connect(lambda: self.setCurrentPage(self.ui.filesPage))
@@ -355,7 +358,6 @@ class MainWindow(QMainWindow):
         self.log.currentMessageChanged.connect(self.setStatusMessage)
         self.ui.selectInputButton.clicked.connect(self.selectInputFile)
         self.ui.actionShowAboutDialog.triggered.connect(self.showAboutDialog)
-        self.ui.actionShowNewFMUDialog.triggered.connect(self.showNewFMUDialog)
 
         if os.name == 'nt':
             self.ui.actionCreateDesktopShortcut.triggered.connect(self.createDesktopShortcut)
@@ -414,7 +416,7 @@ class MainWindow(QMainWindow):
 
         self.contextMenu.exec_(currentView.mapToGlobal(point))
 
-    def load(self, filename=None, clearLog=True):
+    def load(self, filename=None):
 
         if not self.isVisible():
             self.show()
@@ -424,7 +426,7 @@ class MainWindow(QMainWindow):
             self.cleanUp()
 
             try:
-                self.unzipdir = fmpy.extract(filename)
+                self.unzipdir = Path(fmpy.extract(filename))
             except Exception as e:
                 QMessageBox.warning(self, "Failed to load extract FMU", f"Failed to extract {filename}. {e}")
                 return
@@ -432,9 +434,9 @@ class MainWindow(QMainWindow):
             self.filename = filename
 
         try:
-            self.modelDescription = md = read_model_description(self.filename)
+            self.modelDescription = md = read_model_description(self.unzipdir)
         except Exception as e:
-            QMessageBox.warning(self, "Failed to read model description FMU", f"Failed to read model description {self.filename}. {e}")
+            QMessageBox.warning(self, "Failed to read model description FMU", f"Failed to read model description from {self.unzipdir}. {e}")
             return
 
         # show model.png
@@ -546,15 +548,16 @@ class MainWindow(QMainWindow):
 
         self.updateSimulationSettings()
 
-        self.setCurrentPage(self.ui.settingsPage)
+        if filename:
+            self.setCurrentPage(self.ui.settingsPage)
 
         self.ui.dockWidget.show()
 
         # files page
         self.fileSystemModel = QFileSystemModel()
-        self.fileSystemModel.setRootPath(self.unzipdir)
+        self.fileSystemModel.setRootPath(str(self.unzipdir))
         self.ui.filesTreeView.setModel(self.fileSystemModel)
-        root_index = self.fileSystemModel.index(self.unzipdir)
+        root_index = self.fileSystemModel.index(str(self.unzipdir))
         self.ui.filesTreeView.setRootIndex(root_index)
         self.ui.filesTreeView.expandRecursively(root_index, 10)
         self.ui.filesTreeView.doubleClicked.connect(self.openFileInDefaultApplication)
@@ -569,7 +572,7 @@ class MainWindow(QMainWindow):
             self.ui.webEngineView.load(QUrl.fromLocalFile(doc_file))
 
         # log page
-        if clearLog:
+        if filename:
             self.log.clear()
 
         self.ui.actionReload.setEnabled(True)
@@ -601,6 +604,17 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("%s - FMPy" % os.path.normpath(self.filename))
 
         self.createGraphics()
+
+    def save(self):
+        create_zip_archive(filename=self.filename, source_dir=self.unzipdir)
+
+    def saveAs(self):
+        filename, _ = QFileDialog.getSaveFileName(parent=self,
+                                                  caption="Save As",
+                                                  dir=self.filename,
+                                                  filter="FMUs (*.fmu);;All Files (*.*)")
+        if filename:
+            create_zip_archive(filename=filename, source_dir=self.unzipdir)
 
     def cleanUp(self):
         if self.unzipdir:
@@ -1356,7 +1370,7 @@ class MainWindow(QMainWindow):
 
         build_thread.messageChanged.connect(self.log.logMessage)
         build_thread.finished.connect(progress_dialog.reset)
-        build_thread.finished.connect(lambda: self.load(clearLog=False))
+        build_thread.finished.connect(self.load)
 
         progress_dialog.show()
         build_thread.start()
@@ -1398,9 +1412,9 @@ class MainWindow(QMainWindow):
 
         button = QMessageBox.question(self, "Remove Source Code?", "Do you want to remove the source code from the FMU?\nThis action cannot be undone.")
 
-        if button == QMessageBox.Yes:
-            remove_source_code(self.filename)
-            self.load(self.filename)
+        if button == QMessageBox.StandardButton.Yes:
+            remove_source_code(self.unzipdir)
+            self.load()
 
     def createJupyterNotebook(self):
         """ Create a Jupyter Notebook to simulate the FMU """
@@ -1465,11 +1479,11 @@ class MainWindow(QMainWindow):
 
         try:
             add_cswrapper(self.filename)
-        except Exception as e:
+        except Exception as ex:
             QMessageBox.warning(self, "Failed to add Co-Simulation Wrapper",
-                                "Failed to add Co-Simulation Wrapper %s. %s" % (self.filename, e))
+                                f"Failed to add Co-Simulation Wrapper {self.filename}. {ex}")
 
-        self.load(self.filename)
+        self.load()
 
 
     def setColorScheme(self, colorScheme: Qt.ColorScheme):

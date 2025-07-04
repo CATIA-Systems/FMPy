@@ -629,7 +629,7 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
                 buildConfiguration.sourceFileSets.append(source_file_set)
                 source_file_set.sourceFiles = source_files
 
-    elif is_fmi3 and not (isinstance(_filename, (str, PathLike)) and Path(_filename).is_file()):
+    elif is_fmi3 and not (isinstance(_filename, (str, PathLike)) and Path(_filename).name.endswith('.xml')):
         # read buildDescription.xml if _filename is a folder or ZIP file
         modelDescription.buildConfigurations = read_build_description(_filename, validate=validate)
 

@@ -823,6 +823,7 @@ def remove_source_code(filename: str | PathLike) -> None:
 
     if filename.is_file():
         unzipdir = fmpy.extract(filename=filename)
+        unzipdir = Path(unzipdir)
     else:
         unzipdir = filename
 
@@ -1023,14 +1024,13 @@ def create_cmake_project(filename, project_dir):
     from zipfile import ZipFile
     from fmpy import read_model_description, extract
 
-    model_description = read_model_description(filename)
-
     extract(filename, unzipdir=project_dir)
 
-    fmpy_dir = os.path.dirname(__file__)
-    source_dir = os.path.join(fmpy_dir, 'c-code')
+    model_description = read_model_description(project_dir)
 
-    with open(os.path.join(source_dir, 'CMakeLists.txt'), 'r') as cmake_file:
+    root = Path(__file__).parent
+
+    with open(root / "templates" / "CMakeLists.template", 'r') as cmake_file:
         txt = cmake_file.read()
 
     definitions = []
@@ -1064,7 +1064,7 @@ def create_cmake_project(filename, project_dir):
     txt = txt.replace('%MODEL_NAME%', model_description.modelName)
     txt = txt.replace('%MODEL_IDENTIFIER%', build_configuration.modelIdentifier)
     txt = txt.replace('%DEFINITIONS%', ' '.join(definitions))
-    txt = txt.replace('%INCLUDE_DIRS%', '"' + source_dir.replace('\\', '/') + '"')
+    txt = txt.replace('%INCLUDE_DIRS%', '"' + str((root / "c-code").absolute().as_posix()) + '"')
     txt = txt.replace('%SOURCES%', ' '.join(sources))
     txt = txt.replace('%RESOURCES%', '\n    '.join('"' + r + '"' for r in resources))
 

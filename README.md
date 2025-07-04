@@ -115,9 +115,9 @@ on the command line or use `--help` for more options.
 ## Advanced Usage
 
 To learn more about how to use FMPy in you own scripts take a look at the
-[coupled_clutches.py](fmpy/examples/coupled_clutches.py),
-[custom_input.py](fmpy/examples/custom_input.py) and
-[parameter_variation.py](fmpy/examples/parameter_variation.py) examples.
+[coupled_clutches.py](src/fmpy/examples/coupled_clutches.py),
+[custom_input.py](src/fmpy/examples/custom_input.py) and
+[parameter_variation.py](src/fmpy/examples/parameter_variation.py) examples.
 
 ## Commercial Support
 

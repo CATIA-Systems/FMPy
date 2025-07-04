@@ -1,4 +1,9 @@
 from __future__ import annotations
+
+import shutil
+
+from pathlib import Path
+
 from collections.abc import Iterable
 
 import os
@@ -808,29 +813,34 @@ def compile_platform_binary(filename, output_filename=None, target_platform=None
     rmtree(unzipdir2, ignore_errors=True)
 
 
-def remove_source_code(filename):
-    """ Remove the source code from an FMU """
+def remove_source_code(filename: str | PathLike) -> None:
+    """Remove the source code from an FMU or extracted FMU"""
 
-    import tempfile
     from shutil import rmtree
     from lxml import etree
 
-    with tempfile.TemporaryDirectory() as unzipdir:
+    filename = Path(filename)
 
-        fmpy.extract(filename=filename, unzipdir=unzipdir)
+    if filename.is_file():
+        unzipdir = fmpy.extract(filename=filename)
+        unzipdir = Path(unzipdir)
+    else:
+        unzipdir = filename
 
-        rmtree(os.path.join(unzipdir, 'sources'))
+    rmtree(unzipdir / 'sources')
 
-        model_description = fmpy.read_model_description(filename)
+    model_description = fmpy.read_model_description(unzipdir)
 
-        if model_description.fmiVersion == '2.0':
-            xml = os.path.join(unzipdir, 'modelDescription.xml')
-            tree = etree.parse(xml)
-            for e in tree.xpath('//SourceFiles'):
-                e.getparent().remove(e)
-            tree.write(xml, pretty_print=True, encoding='utf-8')
+    if model_description.fmiVersion == '2.0':
+        xml = os.path.join(unzipdir, 'modelDescription.xml')
+        tree = etree.parse(xml)
+        for e in tree.xpath('//SourceFiles'):
+            e.getparent().remove(e)
+        tree.write(xml, pretty_print=True, encoding='utf-8')
 
+    if filename.is_file():
         create_zip_archive(filename, unzipdir)
+        shutil.rmtree(unzipdir)
 
 
 def add_remoting(filename, host_platform, remote_platform):
@@ -1014,14 +1024,13 @@ def create_cmake_project(filename, project_dir):
     from zipfile import ZipFile
     from fmpy import read_model_description, extract
 
-    model_description = read_model_description(filename)
-
     extract(filename, unzipdir=project_dir)
 
-    fmpy_dir = os.path.dirname(__file__)
-    source_dir = os.path.join(fmpy_dir, 'c-code')
+    model_description = read_model_description(project_dir)
 
-    with open(os.path.join(source_dir, 'CMakeLists.txt'), 'r') as cmake_file:
+    root = Path(__file__).parent
+
+    with open(root / "templates" / "CMakeLists.template", 'r') as cmake_file:
         txt = cmake_file.read()
 
     definitions = []
@@ -1055,7 +1064,7 @@ def create_cmake_project(filename, project_dir):
     txt = txt.replace('%MODEL_NAME%', model_description.modelName)
     txt = txt.replace('%MODEL_IDENTIFIER%', build_configuration.modelIdentifier)
     txt = txt.replace('%DEFINITIONS%', ' '.join(definitions))
-    txt = txt.replace('%INCLUDE_DIRS%', '"' + source_dir.replace('\\', '/') + '"')
+    txt = txt.replace('%INCLUDE_DIRS%', '"' + str((root / "c-code").absolute().as_posix()) + '"')
     txt = txt.replace('%SOURCES%', ' '.join(sources))
     txt = txt.replace('%RESOURCES%', '\n    '.join('"' + r + '"' for r in resources))
 

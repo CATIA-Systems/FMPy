@@ -297,7 +297,8 @@ class _FMU(object):
 
         self.fmiCallLogger(f)
 
-    def _call(self, fname: str, *args) -> Any:
+    def _call(self, fname: str, *args) -> 'ctypes._FuncPointer':
+        """Call and log the FMI API function"""
 
         f = self._functions[fname]
 
@@ -309,7 +310,8 @@ class _FMU(object):
         return res
 
     def _loadFunctions(self, prefix: str) -> None:
-
+        """Load the FMI API functions from the shared library"""
+        
         import inspect
 
         for name, value in inspect.getmembers(self):

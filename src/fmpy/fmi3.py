@@ -1,4 +1,5 @@
 """ FMI 3.0 interface """
+import ctypes
 
 import os
 from ctypes import *
@@ -88,6 +89,8 @@ class _FMU3(_FMU):
                                              kwargs['modelIdentifier'] + sharedLibraryExtension)
 
         super(_FMU3, self).__init__(**kwargs)
+
+        self.functions = self.collect()
 
         # inquire version numbers and setting logging status
         self._fmi3Function('fmi3GetVersion', [], fmi3String)
@@ -445,22 +448,134 @@ class _FMU3(_FMU):
             (c_size_t, 'nValues'),
         ])
 
-        self._fmi3Function('fmi3DoStep', [
-            (fmi3Instance, 'instance'),
-            (fmi3Float64, 'currentCommunicationPoint'),
-            (fmi3Float64, 'communicationStepSize'),
-            (fmi3Boolean, 'noSetFMUStatePriorToCurrentPoint'),
-            (POINTER(fmi3Boolean), 'eventHandlingNeeded'),
-            (POINTER(fmi3Boolean), 'terminateSimulation'),
-            (POINTER(fmi3Boolean), 'earlyReturn'),
-            (POINTER(fmi3Float64), 'lastSuccessfulTime')
-        ])
+        # self._fmi3Function('fmi3DoStep', [
+        #     (fmi3Instance, 'instance'),
+        #     (fmi3Float64, 'currentCommunicationPoint'),
+        #     (fmi3Float64, 'communicationStepSize'),
+        #     (fmi3Boolean, 'noSetFMUStatePriorToCurrentPoint'),
+        #     (POINTER(fmi3Boolean), 'eventHandlingNeeded'),
+        #     (POINTER(fmi3Boolean), 'terminateSimulation'),
+        #     (POINTER(fmi3Boolean), 'earlyReturn'),
+        #     (POINTER(fmi3Float64), 'lastSuccessfulTime')
+        # ])
 
         self._fmi3Function('fmi3ActivateModelPartition', [
             (fmi3Instance, 'instance'),
             (fmi3ValueReference, 'clockReference'),
             (fmi3Float64, 'activationTime')
         ])
+
+    def collect(self):
+
+        functions = dict()
+
+        import inspect
+
+        for name, value in inspect.getmembers(self):
+            if name.startswith("fmi3"):
+                ff = getattr(self, name)
+                sig = inspect.signature(ff)
+                argnames, argtypes = zip(*((v.name, v.annotation) for v in sig.parameters.values()))
+                f = getattr(self.dll, name)
+                f.argnames = argnames
+                f.argtypes = argtypes
+                f.restype = sig.return_annotation
+                functions[name] = f
+
+        return functions
+
+        # fun = getattr(self, fname)
+        #
+        # sig = inspect.signature(fun)
+        #
+        # argnames, argtypes = zip(*((v.name, v.annotation) for v in sig.parameters.values()))
+        #
+        # f = getattr(self.dll, fname)
+        # f.argtypes = argtypes
+        # f.restype = fmi3Status
+
+        pass
+
+    def fmi3DoStep(self,
+        instance: fmi3Instance,
+        currentCommunicationPoint: fmi3Float64,
+        communicationStepSize: fmi3Float64,
+        noSetFMUStatePriorToCurrentPoint: fmi3Boolean,
+        eventHandlingNeeded: POINTER(fmi3Boolean),
+        terminateSimulation: POINTER(fmi3Boolean),
+        earlyReturn: POINTER(fmi3Boolean),
+        lastSuccessfulTime: POINTER(fmi3Float64),
+    ) -> fmi3Status:
+
+        return self._call("fmi3DoStep",
+      instance,
+            currentCommunicationPoint,
+            communicationStepSize,
+            noSetFMUStatePriorToCurrentPoint,
+            eventHandlingNeeded,
+            terminateSimulation,
+            earlyReturn,
+            lastSuccessfulTime,
+        )
+
+        # f = getattr(self.dll, "fmi3DoStep")
+        #
+        # f.argtypes = [
+        #     fmi3Instance,
+        #     fmi3Float64,
+        #     fmi3Float64,
+        #     fmi3Boolean,
+        #     POINTER(fmi3Boolean),
+        #     POINTER(fmi3Boolean),
+        #     POINTER(fmi3Boolean),
+        #     POINTER(fmi3Float64),
+        # ]
+        #
+        # f.restype = fmi3Status
+        #
+        # status = f(
+        #     instance,
+        #     currentCommunicationPoint,
+        #     communicationStepSize,
+        #     noSetFMUStatePriorToCurrentPoint,
+        #     eventHandlingNeeded,
+        #     terminateSimulation,
+        #     earlyReturn,
+        #     lastSuccessfulTime,
+        # )
+        #
+        # if self.fmiCallLogger is not None:
+        #     # log the call
+        #     self._log_fmi_args(fname, argnames, argtypes, args, restype, res)
+        #
+        # print("doStep()")
+        #
+        # return status
+
+    def _call(self, fname, *args) -> dict[str, ctypes._CFuncPtr]:
+
+        f = self.functions[fname]
+
+        # restype = fmi3Status
+        #
+        # import inspect
+        #
+        # fun = getattr(self, fname)
+        #
+        # sig = inspect.signature(fun)
+        #
+        # argnames, argtypes = zip(*((v.name, v.annotation) for v in sig.parameters.values()))
+        #
+        # f = getattr(self.dll, fname)
+        # f.argtypes = argtypes
+        # f.restype = fmi3Status
+        #
+        res = f(*args)
+
+        if self.fmiCallLogger is not None:
+            self._log_fmi_args(fname, f.argnames, f.argtypes, args, f.restype, res)
+
+        return res
 
     def _fmi3Function(self, fname, params, restype=fmi3Status):
         """ Add an FMI 3.0 function to this instance and add a wrapper that allows

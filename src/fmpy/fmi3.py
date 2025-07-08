@@ -3,7 +3,7 @@ import ctypes
 
 import os
 from ctypes import *
-from typing import Tuple, Sequence, List, Iterable
+from typing import Tuple, Sequence, List, Iterable, Any
 
 from . import sharedLibraryExtension, platform_tuple
 from .fmi1 import _FMU, FMICallException, printLogMessage
@@ -91,54 +91,6 @@ class _FMU3(_FMU):
         super(_FMU3, self).__init__(**kwargs)
 
         self.functions = self.collect()
-
-        # inquire version numbers and setting logging status
-        self._fmi3Function('fmi3GetVersion', [], fmi3String)
-
-        self._fmi3Function('fmi3SetDebugLogging', [
-            (fmi3Instance,        'instance'),
-            (fmi3Boolean,         'loggingOn'),
-            (c_size_t,            'nCategories'),
-            (POINTER(fmi3String), 'categories')
-        ])
-
-        self._fmi3Function('fmi3InstantiateModelExchange', [
-            (fmi3String,              'instanceName'),
-            (fmi3String,              'instantiationToken'),
-            (fmi3String,              'resourcePath'),
-            (fmi3Boolean,             'visible'),
-            (fmi3Boolean,             'loggingOn'),
-            (fmi3InstanceEnvironment, 'instanceEnvironment'),
-            (fmi3LogMessageCallback,  'logMessage')
-        ], fmi3Instance)
-
-        self._fmi3Function('fmi3InstantiateCoSimulation', [
-            (fmi3String,                     'instanceName'),
-            (fmi3String,                     'instantiationToken'),
-            (fmi3String,                     'resourcePath'),
-            (fmi3Boolean,                    'visible'),
-            (fmi3Boolean,                    'loggingOn'),
-            (fmi3Boolean,                    'eventModeUsed'),
-            (fmi3Boolean,                    'earlyReturnAllowed'),
-            (POINTER(fmi3ValueReference),    'requiredIntermediateVariables'),
-            (c_size_t,                       'nRequiredIntermediateVariables'),
-            (fmi3InstanceEnvironment,        'instanceEnvironment'),
-            (fmi3LogMessageCallback,         'logMessage'),
-            (fmi3IntermediateUpdateCallback, 'intermediateUpdate')
-        ], fmi3Instance)
-
-        self._fmi3Function('fmi3InstantiateScheduledExecution', [
-            (fmi3String,                   'instanceName'),
-            (fmi3String,                   'instantiationToken'),
-            (fmi3String,                   'resourcePath'),
-            (fmi3Boolean,                  'visible'),
-            (fmi3Boolean,                  'loggingOn'),
-            (fmi3InstanceEnvironment,      'instanceEnvironment'),
-            (fmi3LogMessageCallback,       'logMessage'),
-            (fmi3ClockUpdateCallback,      'clockUpdate'),
-            (fmi3LockPreemptionCallback,   'lockPreemption'),
-            (fmi3UnlockPreemptionCallback, 'unlockPreemption'),
-        ], fmi3Instance)
 
         self._fmi3Function('fmi3FreeInstance', [(fmi3Instance, 'instance')], None)
 
@@ -475,14 +427,56 @@ class _FMU3(_FMU):
             if name.startswith("fmi3"):
                 ff = getattr(self, name)
                 sig = inspect.signature(ff)
-                argnames, argtypes = zip(*((v.name, v.annotation) for v in sig.parameters.values()))
                 f = getattr(self.dll, name)
-                f.argnames = argnames
-                f.argtypes = argtypes
+                if sig.parameters:
+                    f.argnames, f.argtypes = zip(*((v.name, v.annotation) for v in sig.parameters.values()))
+                else:
+                    f.argnames, f.argtypes = (), ()
                 f.restype = sig.return_annotation
                 functions[name] = f
 
         return functions
+
+    # inquire version numbers and setting logging status
+
+    def fmi3GetVersion(self) -> fmi3String:
+        return self._call('fmi3GetVersion')
+
+    def fmi3SetDebugLogging(
+        self,
+        instance: fmi3Instance,
+        loggingOn: fmi3Boolean,
+        nCategories: c_size_t,
+        categories: POINTER(fmi3String),
+    ):
+        self._call(
+            'fmi3SetDebugLogging',
+            instance,
+            loggingOn,
+            nCategories,
+            categories,
+        )
+
+    def fmi3InstantiateModelExchange(
+        self,
+        instanceName: fmi3String,
+        instantiationToken: fmi3String,
+        resourcePath: fmi3String,
+        visible: fmi3Boolean,
+        loggingOn: fmi3Boolean,
+        instanceEnvironment: fmi3InstanceEnvironment,
+        logMessage: fmi3LogMessageCallback,
+    ) -> fmi3Instance:
+        return self._call(
+            "fmi3InstantiateModelExchange",
+            instanceName,
+            instantiationToken,
+            resourcePath,
+            visible,
+            loggingOn,
+            instanceEnvironment,
+            logMessage,
+        )
 
     def fmi3InstantiateCoSimulation(
             self,
@@ -515,6 +509,33 @@ class _FMU3(_FMU):
             intermediateUpdat,
         )
 
+    def fmi3InstantiateScheduledExecution(
+            self,
+            instanceName: fmi3String,
+            instantiationToken: fmi3String,
+            resourcePath: fmi3String,
+            visible: fmi3Boolean,
+            loggingOn: fmi3Boolean,
+            instanceEnvironment: fmi3InstanceEnvironment,
+            logMessage: fmi3LogMessageCallback,
+            clockUpdate: fmi3ClockUpdateCallback,
+            lockPreemption: fmi3LockPreemptionCallback,
+            unlockPreemption: fmi3UnlockPreemptionCallback,
+    ) -> fmi3Instance:
+        return self._call(
+            "fmi3InstantiateScheduledExecution",
+            instanceName,
+            instantiationToken,
+            resourcePath,
+            visible,
+            loggingOn,
+            instanceEnvironment,
+            logMessage,
+            clockUpdate,
+            lockPreemption,
+            unlockPreemption,
+        )
+
     def fmi3DoStep(
         self,
         instance: fmi3Instance,
@@ -538,7 +559,7 @@ class _FMU3(_FMU):
             lastSuccessfulTime,
         )
 
-    def _call(self, fname, *args):
+    def _call(self, fname: str, *args) -> Any:
 
         f = self.functions[fname]
 

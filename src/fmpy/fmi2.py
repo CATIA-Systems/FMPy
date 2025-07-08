@@ -81,37 +81,7 @@ class _FMU2(_FMU):
     """ Base class for FMI 2.0 FMUs """
 
     def __init__(self, **kwargs):
-
         super(_FMU2, self).__init__(**kwargs)
-
-        self._loadFunctions(prefix="fmi2")
-
-        # # Getting and setting the internal FMU state
-        # self._fmi2Function('fmi2GetFMUstate', ['component', 'FMUstate'],
-        #                    [fmi2Component, POINTER(fmi2FMUstate)])
-        #
-        # self._fmi2Function('fmi2SetFMUstate', ['component', 'FMUstate'],
-        #                    [fmi2Component, fmi2FMUstate])
-        #
-        # self._fmi2Function('fmi2FreeFMUstate', ['component', 'FMUstate'],
-        #                    [fmi2Component, POINTER(fmi2FMUstate)])
-        #
-        # self._fmi2Function('fmi2SerializedFMUstateSize',
-        #                    ['component', 'FMUstate', 'size'],
-        #                    [fmi2Component, fmi2FMUstate, POINTER(c_size_t)])
-        #
-        # self._fmi2Function('fmi2SerializeFMUstate',
-        #                    ['component', 'FMUstate', 'serializedState', 'size'],
-        #                    [fmi2Component, fmi2FMUstate, POINTER(fmi2Byte), c_size_t])
-        #
-        # self._fmi2Function('fmi2DeSerializeFMUstate',
-        #                    ['component', 'FMUstate', 'serializedState', 'size'],
-        #                    [fmi2Component, POINTER(fmi2Byte), c_size_t, POINTER(fmi2FMUstate)])
-        #
-        # # Getting partial derivatives
-        # self._fmi2Function('fmi2GetDirectionalDerivative',
-        #                    ['component', 'vUnknown_ref', 'nUnknown', 'vKnown_ref', 'nKnown', 'dvKnown', 'dvUnknown'],
-        #                    [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Real), POINTER(fmi2Real)])
 
     def _fmi2Function(self, fname, argnames, argtypes, restype=fmi2Status):
         """ Add an FMI 2.0 function to this instance and add a wrapper that allows

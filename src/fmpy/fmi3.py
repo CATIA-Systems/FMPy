@@ -90,8 +90,6 @@ class _FMU3(_FMU):
 
         super(_FMU3, self).__init__(**kwargs)
 
-        self.functions = self._loadFunctions("fmi3")
-
         # Getting and setting variable values
         types = [
             ('Float32', fmi3Float32),

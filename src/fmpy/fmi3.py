@@ -92,26 +92,6 @@ class _FMU3(_FMU):
 
         self.functions = self.collect()
 
-        self._fmi3Function('fmi3FreeInstance', [(fmi3Instance, 'instance')], None)
-
-        # Enter and exit initialization mode, terminate and reset
-        self._fmi3Function('fmi3EnterInitializationMode', [
-            (fmi3Instance, 'instance'),
-            (fmi3Boolean,  'toleranceDefined'),
-            (fmi3Float64,  'tolerance'),
-            (fmi3Float64,  'startTime'),
-            (fmi3Boolean,  'stopTimeDefined'),
-            (fmi3Float64,  'stopTime')
-        ])
-
-        self._fmi3Function('fmi3ExitInitializationMode', [(fmi3Instance, 'instance')])
-
-        self._fmi3Function('fmi3EnterEventMode', [(fmi3Instance, 'instance')])
-
-        self._fmi3Function('fmi3Terminate', [(fmi3Instance, 'instance')])
-
-        self._fmi3Function('fmi3Reset', [(fmi3Instance, 'instance')])
-
         # Getting and setting variable values
         types = [
             ('Float32', fmi3Float32),
@@ -558,6 +538,43 @@ class _FMU3(_FMU):
             earlyReturn,
             lastSuccessfulTime,
         )
+
+    def fmi3FreeInstance(self, instance: fmi3Instance) -> None:
+        self._call("fmi3FreeInstance", instance)
+
+    def fmi3EnterInitializationMode(
+        self,
+        instance: fmi3Instance,
+        toleranceDefined: fmi3Boolean,
+        tolerance: fmi3Float64,
+        startTime: fmi3Float64,
+        stopTimeDefined: fmi3Boolean,
+        stopTime: fmi3Float64,
+    ) -> fmi3Status:
+        return self._call(
+            "fmi3EnterInitializationMode",
+            instance,
+            toleranceDefined,
+            tolerance,
+            startTime,
+            stopTimeDefined,
+            stopTime,
+        )
+
+    def fmi3ExitInitializationMode(self, instance: fmi3Instance) -> fmi3Status:
+        return self._call("fmi3ExitInitializationMode", instance)
+
+    def fmi3EnterEventMode(self, instance: fmi3Instance) -> fmi3Status:
+        return self._call("fmi3EnterEventMode", instance)
+
+    def fmi3Terminate(self, instance: fmi3Instance) -> fmi3Status:
+        return self._call("fmi3Terminate", instance)
+
+    def fmi3Reset(self, instance: fmi3Instance) -> fmi3Status:
+        return self._call("fmi3Reset", instance)
+
+
+
 
     def _call(self, fname: str, *args) -> Any:
 

@@ -95,7 +95,7 @@ class _FMU3(_FMU):
         # Getting and setting variable values
         types = [
             ('Float32', fmi3Float32),
-            ('Float64', fmi3Float64),
+            # ('Float64', fmi3Float64),
             ('Int8',    fmi3Int8),
             ('UInt8',   fmi3UInt8),
             ('Int16',   fmi3Int16),
@@ -573,7 +573,69 @@ class _FMU3(_FMU):
     def fmi3Reset(self, instance: fmi3Instance) -> fmi3Status:
         return self._call("fmi3Reset", instance)
 
+    def fmi3GetFloat64(
+        self,
+        instance: fmi3Instance,
+        valueReferences: POINTER(fmi3ValueReference),
+        nValueReferences: c_size_t,
+        values: POINTER(fmi3Float64),
+        nValue: c_size_t,
+    ) -> fmi3Status:
+        return self._call(
+            "fmi3GetFloat64",
+            instance,
+            valueReferences,
+            nValueReferences,
+            values,
+            nValue,
+        )
 
+    def fmi3SetFloat64(
+        self,
+        instance: fmi3Instance,
+        valueReferences: POINTER(fmi3ValueReference),
+        nValueReferences: c_size_t,
+        values: POINTER(fmi3Float64),
+        nValue: c_size_t,
+    ) -> fmi3Status:
+        return self._call(
+            "fmi3SetFloat64",
+            instance,
+            valueReferences,
+            nValueReferences,
+            values,
+            nValue,
+        )
+
+#        # Getting and setting variable values
+#         types = [
+#             ('Float32', fmi3Float32),
+#             ('Float64', fmi3Float64),
+#             ('Int8',    fmi3Int8),
+#             ('UInt8',   fmi3UInt8),
+#             ('Int16',   fmi3Int16),
+#             ('UInt16',  fmi3UInt16),
+#             ('Int32',   fmi3Int32),
+#             ('UInt32',  fmi3UInt32),
+#             ('Int64',   fmi3Int64),
+#             ('UInt64',  fmi3UInt64),
+#             ('Boolean', fmi3Boolean),
+#             ('String',  fmi3String),
+#             ('Clock',   fmi3Clock),
+#         ]
+#
+#         for name, _type in types:
+#
+#             params = [
+#                 (fmi3Instance,                'instance'),
+#                 (POINTER(fmi3ValueReference), 'valueReferences'),
+#                 (c_size_t,                    'nValueReferences'),
+#                 (POINTER(_type),              'values'),
+#                 (c_size_t,                    'nValues')
+#             ]
+#
+#             self._fmi3Function(f'fmi3Get{name}', params)
+#             self._fmi3Function(f'fmi3Set{name}', params)
 
 
     def _call(self, fname: str, *args) -> Any:

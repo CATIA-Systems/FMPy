@@ -84,35 +84,22 @@ class _FMU2(_FMU):
 
         super(_FMU2, self).__init__(**kwargs)
 
-        # Inquire version numbers of header files and setting logging status
-        self._fmi2Function('fmi2GetTypesPlatform', [], [], fmi2String)
+        self._loadFunctions(prefix="fmi2")
 
-        self._fmi2Function('fmi2GetVersion', [], [], fmi2String)
-
-        self._fmi2Function('fmi2SetDebugLogging',
-                           ['component', 'loggingOn', 'nCategories', 'categories'],
-                           [fmi2Component, fmi2Boolean, c_size_t, POINTER(fmi2String)])
-
-        # Creation and destruction of FMU instances and setting debug status
-        self._fmi2Function('fmi2Instantiate',
-                           ['instanceName', 'fmuType', 'guid', 'resourceLocation', 'callbacks', 'visible', 'loggingOn'],
-                           [fmi2String, fmi2Type, fmi2String, fmi2String, POINTER(fmi2CallbackFunctions), fmi2Boolean, fmi2Boolean],
-                           fmi2Component)
-
-        self._fmi2Function('fmi2FreeInstance', ['component'], [fmi2Component], None)
-
-        # Enter and exit initialization mode, terminate and reset
-        self._fmi2Function('fmi2SetupExperiment',
-                           ['component', 'toleranceDefined', 'tolerance', 'startTime', 'stopTimeDefined', 'stopTime'],
-                           [fmi2Component, fmi2Boolean, fmi2Real, fmi2Real, fmi2Boolean, fmi2Real])
-
-        self._fmi2Function('fmi2EnterInitializationMode', ['component'], [fmi2Component], fmi2Status)
-
-        self._fmi2Function('fmi2ExitInitializationMode', ['component'], [fmi2Component], fmi2Status)
-
-        self._fmi2Function('fmi2Terminate', ['component'], [fmi2Component], fmi2Status)
-
-        self._fmi2Function('fmi2Reset', ['component'], [fmi2Component], fmi2Status)
+        # self._fmi2Function('fmi2FreeInstance', ['component'], [fmi2Component], None)
+        #
+        # # Enter and exit initialization mode, terminate and reset
+        # self._fmi2Function('fmi2SetupExperiment',
+        #                    ['component', 'toleranceDefined', 'tolerance', 'startTime', 'stopTimeDefined', 'stopTime'],
+        #                    [fmi2Component, fmi2Boolean, fmi2Real, fmi2Real, fmi2Boolean, fmi2Real])
+        #
+        # self._fmi2Function('fmi2EnterInitializationMode', ['component'], [fmi2Component], fmi2Status)
+        #
+        # self._fmi2Function('fmi2ExitInitializationMode', ['component'], [fmi2Component], fmi2Status)
+        #
+        # self._fmi2Function('fmi2Terminate', ['component'], [fmi2Component], fmi2Status)
+        #
+        # self._fmi2Function('fmi2Reset', ['component'], [fmi2Component], fmi2Status)
 
         # Getting and setting variable values
         self._fmi2Function('fmi2GetReal',
@@ -217,6 +204,57 @@ class _FMU2(_FMU):
             return res
 
         setattr(self, fname, w)
+
+    # Inquire version numbers of header files and setting logging status
+
+    def fmi2GetTypesPlatform(self) -> fmi2String:
+        return self._call("fmi2GetTypesPlatform")
+
+    def fmi2GetVersion(self) -> fmi2String:
+        return self._call("fmi2GetVersion")
+
+    def fmi2SetDebugLogging(
+        self,
+        component: fmi2Component,
+        loggingOn: fmi2Boolean,
+        nCategories: c_size_t,
+        categories: POINTER(fmi2String),
+    ) -> fmi2Status:
+        return self._call(
+            "fmi2SetDebugLogging",
+            component,
+            loggingOn,
+            nCategories,
+            categories,
+        )
+
+    # Creation and destruction of FMU instances and setting debug status
+
+    def fmi2Instantiate(
+            self,
+            instanceName: fmi2String,
+            fmuType: fmi2Type,
+            guid: fmi2String,
+            resourceLocation: fmi2String,
+            callbacks: POINTER(fmi2CallbackFunctions),
+            visible: fmi2Boolean,
+            loggingOn: fmi2Boolean,
+    ) -> fmi2Component:
+        return self._call(
+            "fmi2Instantiate",
+            instanceName,
+            fmuType,
+            guid,
+            resourceLocation,
+            callbacks,
+            visible,
+            loggingOn,
+        )
+
+        # self._fmi2Function('fmi2Instantiate',
+        #                    ['instanceName', 'fmuType', 'guid', 'resourceLocation', 'callbacks', 'visible', 'loggingOn'],
+        #                    [, , , , , , ],
+        #                    fmi2Component)
 
     # Inquire version numbers of header files and setting logging status
 

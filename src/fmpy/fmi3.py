@@ -90,7 +90,7 @@ class _FMU3(_FMU):
 
         super(_FMU3, self).__init__(**kwargs)
 
-        self.functions = self.collect()
+        self.functions = self._loadFunctions("fmi3")
 
         # Getting and setting variable values
         types = [
@@ -397,26 +397,6 @@ class _FMU3(_FMU):
             (fmi3Float64, 'activationTime')
         ])
 
-    def collect(self):
-
-        functions = dict()
-
-        import inspect
-
-        for name, value in inspect.getmembers(self):
-            if name.startswith("fmi3"):
-                ff = getattr(self, name)
-                sig = inspect.signature(ff)
-                f = getattr(self.dll, name)
-                if sig.parameters:
-                    f.argnames, f.argtypes = zip(*((v.name, v.annotation) for v in sig.parameters.values()))
-                else:
-                    f.argnames, f.argtypes = (), ()
-                f.restype = sig.return_annotation
-                functions[name] = f
-
-        return functions
-
     # inquire version numbers and setting logging status
 
     def fmi3GetVersion(self) -> fmi3String:
@@ -636,18 +616,6 @@ class _FMU3(_FMU):
 #
 #             self._fmi3Function(f'fmi3Get{name}', params)
 #             self._fmi3Function(f'fmi3Set{name}', params)
-
-
-    def _call(self, fname: str, *args) -> Any:
-
-        f = self.functions[fname]
-
-        res = f(*args)
-
-        if self.fmiCallLogger is not None:
-            self._log_fmi_args(fname, f.argnames, f.argtypes, args, f.restype, res)
-
-        return res
 
     def _fmi3Function(self, fname, params, restype=fmi3Status):
         """ Add an FMI 3.0 function to this instance and add a wrapper that allows

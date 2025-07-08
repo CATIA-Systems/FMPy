@@ -1,4 +1,7 @@
 """ FMI 1.0 interface """
+import ctypes
+
+from typing import Any
 
 import os
 import pathlib
@@ -141,6 +144,8 @@ class _FMU(object):
         self.instanceName = instanceName if instanceName is not None else self.modelIdentifier
         self.fmiCallLogger = fmiCallLogger
         self.requireFunctions = requireFunctions
+
+        self._functions: dict[str, ctypes._FuncPointer] = dict()
 
         # remember the current working directory
         work_dir = os.getcwd()
@@ -291,6 +296,33 @@ class _FMU(object):
             f += ' -> ' + hex(0 if res is None else res)
 
         self.fmiCallLogger(f)
+
+    def _call(self, fname: str, *args) -> Any:
+
+        f = self._functions[fname]
+
+        res = f(*args)
+
+        if self.fmiCallLogger is not None:
+            self._log_fmi_args(fname, f.argnames, f.argtypes, args, f.restype, res)
+
+        return res
+
+    def _loadFunctions(self, prefix: str) -> None:
+
+        import inspect
+
+        for name, value in inspect.getmembers(self):
+            if name.startswith(prefix):
+                ff = getattr(self, name)
+                sig = inspect.signature(ff)
+                f = getattr(self.dll, name)
+                if sig.parameters:
+                    f.argnames, f.argtypes = zip(*((v.name, v.annotation) for v in sig.parameters.values()))
+                else:
+                    f.argnames, f.argtypes = (), ()
+                f.restype = sig.return_annotation
+                self._functions[name] = f
 
 
 class _FMU1(_FMU):

@@ -228,6 +228,42 @@ class _FMU2(_FMU):
             categories,
         )
 
+    def fmi2FreeInstance(self, component: fmi2Component) -> None:
+        self._call("fmi2FreeInstance", component)
+
+    # Enter and exit initialization mode, terminate and reset
+
+    def fmi2SetupExperiment(
+            self,
+            component: fmi2Component,
+            toleranceDefined: fmi2Boolean,
+            tolerance: fmi2Real,
+            startTime: fmi2Real,
+            stopTimeDefined: fmi2Boolean,
+            stopTime: fmi2Real,
+    ) -> fmi2Status:
+        return self._call(
+            "fmi2SetupExperiment",
+            component,
+            toleranceDefined,
+            tolerance,
+            startTime,
+            stopTimeDefined,
+            stopTime,
+        )
+
+    def fmi2EnterInitializationMode(self, component: fmi2Component) -> fmi2Status:
+        return self._call("fmi2EnterInitializationMode", component)
+
+    def fmi2ExitInitializationMode(self, component: fmi2Component) -> fmi2Status:
+        return self._call("fmi2ExitInitializationMode", component)
+
+    def fmi2Terminate(self, component: fmi2Component) -> fmi2Status:
+        return self._call("fmi2Terminate", component)
+
+    def fmi2Reset(self, component: fmi2Component) -> fmi2Status:
+        return self._call("fmi2Reset", component)
+
     # Creation and destruction of FMU instances and setting debug status
 
     def fmi2Instantiate(

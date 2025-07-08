@@ -484,19 +484,39 @@ class _FMU3(_FMU):
 
         return functions
 
-        # fun = getattr(self, fname)
-        #
-        # sig = inspect.signature(fun)
-        #
-        # argnames, argtypes = zip(*((v.name, v.annotation) for v in sig.parameters.values()))
-        #
-        # f = getattr(self.dll, fname)
-        # f.argtypes = argtypes
-        # f.restype = fmi3Status
+    def fmi3InstantiateCoSimulation(
+            self,
+            instanceName: fmi3String,
+            instantiationToken: fmi3String,
+            resourcePath: fmi3String,
+            visible: fmi3Boolean,
+            loggingOn: fmi3Boolean,
+            eventModeUsed: fmi3Boolean,
+            earlyReturnAllowed: fmi3Boolean,
+            requiredIntermediateVariables: POINTER(fmi3ValueReference),
+            nRequiredIntermediateVariables: c_size_t,
+            instanceEnvironment: fmi3InstanceEnvironment,
+            logMessage: fmi3LogMessageCallback,
+            intermediateUpdat: fmi3IntermediateUpdateCallback,
+    ) -> fmi3Instance:
+        return self._call(
+            "fmi3InstantiateCoSimulation",
+            instanceName,
+            instantiationToken,
+            resourcePath,
+            visible,
+            loggingOn,
+            eventModeUsed,
+            earlyReturnAllowed,
+            requiredIntermediateVariables,
+            nRequiredIntermediateVariables,
+            instanceEnvironment,
+            logMessage,
+            intermediateUpdat,
+        )
 
-        pass
-
-    def fmi3DoStep(self,
+    def fmi3DoStep(
+        self,
         instance: fmi3Instance,
         currentCommunicationPoint: fmi3Float64,
         communicationStepSize: fmi3Float64,
@@ -506,9 +526,9 @@ class _FMU3(_FMU):
         earlyReturn: POINTER(fmi3Boolean),
         lastSuccessfulTime: POINTER(fmi3Float64),
     ) -> fmi3Status:
-
-        return self._call("fmi3DoStep",
-      instance,
+        return self._call(
+            "fmi3DoStep",
+            instance,
             currentCommunicationPoint,
             communicationStepSize,
             noSetFMUStatePriorToCurrentPoint,
@@ -518,58 +538,10 @@ class _FMU3(_FMU):
             lastSuccessfulTime,
         )
 
-        # f = getattr(self.dll, "fmi3DoStep")
-        #
-        # f.argtypes = [
-        #     fmi3Instance,
-        #     fmi3Float64,
-        #     fmi3Float64,
-        #     fmi3Boolean,
-        #     POINTER(fmi3Boolean),
-        #     POINTER(fmi3Boolean),
-        #     POINTER(fmi3Boolean),
-        #     POINTER(fmi3Float64),
-        # ]
-        #
-        # f.restype = fmi3Status
-        #
-        # status = f(
-        #     instance,
-        #     currentCommunicationPoint,
-        #     communicationStepSize,
-        #     noSetFMUStatePriorToCurrentPoint,
-        #     eventHandlingNeeded,
-        #     terminateSimulation,
-        #     earlyReturn,
-        #     lastSuccessfulTime,
-        # )
-        #
-        # if self.fmiCallLogger is not None:
-        #     # log the call
-        #     self._log_fmi_args(fname, argnames, argtypes, args, restype, res)
-        #
-        # print("doStep()")
-        #
-        # return status
-
-    def _call(self, fname, *args) -> dict[str, ctypes._CFuncPtr]:
+    def _call(self, fname, *args):
 
         f = self.functions[fname]
 
-        # restype = fmi3Status
-        #
-        # import inspect
-        #
-        # fun = getattr(self, fname)
-        #
-        # sig = inspect.signature(fun)
-        #
-        # argnames, argtypes = zip(*((v.name, v.annotation) for v in sig.parameters.values()))
-        #
-        # f = getattr(self.dll, fname)
-        # f.argtypes = argtypes
-        # f.restype = fmi3Status
-        #
         res = f(*args)
 
         if self.fmiCallLogger is not None:

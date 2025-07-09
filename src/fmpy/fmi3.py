@@ -1,13 +1,13 @@
 """ FMI 3.0 interface """
-import ctypes
+
+from ctypes import c_void_p, c_uint, c_double, c_int, c_char, c_char_p, byref, c_size_t, POINTER, cast, c_bool, c_float, \
+    c_int8, c_int16, c_int32, c_int64, c_uint8, c_uint16, c_uint32, c_uint64, CFUNCTYPE, create_string_buffer
 
 import os
-from ctypes import *
-from typing import Tuple, Sequence, List, Iterable, Any
+from typing import Tuple, Sequence, List, Iterable
 
 from . import sharedLibraryExtension, platform_tuple
-from .fmi1 import _FMU, FMICallException, printLogMessage
-
+from .fmi1 import _FMU, FMICallException
 
 fmi3Instance            = c_void_p
 fmi3InstanceEnvironment = c_void_p

@@ -270,7 +270,7 @@ class _FMU2(_FMU):
     def fmi2SetFMUstate(
         self,
         component: fmi2Component,
-        FMUstate: POINTER(fmi2FMUstate),
+        FMUstate: fmi2FMUstate,
     ) -> fmi2Status:
         return self._call("fmi2SetFMUstate", component, FMUstate)
 
@@ -284,7 +284,7 @@ class _FMU2(_FMU):
     def fmi2SerializedFMUstateSize(
         self,
         component: fmi2Component,
-        FMUstate: POINTER(fmi2FMUstate),
+        FMUstate: fmi2FMUstate,
         size: POINTER(c_size_t),
     ) -> fmi2Status:
         return self._call("fmi2SerializedFMUstateSize", component, FMUstate, size)
@@ -292,9 +292,9 @@ class _FMU2(_FMU):
     def fmi2SerializeFMUstate(
         self,
         component: fmi2Component,
-        FMUstate: POINTER(fmi2FMUstate),
+        FMUstate: fmi2FMUstate,
         serializedState: POINTER(fmi2Byte),
-        size: POINTER(c_size_t),
+        size: c_size_t,
     ) -> fmi2Status:
         return self._call(
             "fmi2SerializeFMUstate", component, FMUstate, serializedState, size
@@ -304,7 +304,7 @@ class _FMU2(_FMU):
         self,
         component: fmi2Component,
         serializedState: POINTER(fmi2Byte),
-        size: POINTER(c_size_t),
+        size: c_size_t,
         FMUstate: POINTER(fmi2FMUstate),
     ) -> fmi2Status:
         return self._call(

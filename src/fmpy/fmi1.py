@@ -1,94 +1,100 @@
-""" FMI 1.0 interface """
+"""FMI 1.0 interface"""
+
 import ctypes
 
 from typing import Any, Iterable
 
 import os
 import pathlib
-from ctypes import cdll, c_void_p, c_uint, c_double, c_int, c_char, c_char_p, byref, c_size_t, POINTER, cast, c_bool, c_float, c_int8, c_int16, c_int32, c_int64, c_uint8, c_uint16, c_uint32, c_uint64, addressof, Structure, CFUNCTYPE
+from ctypes import (
+    cdll,
+    c_void_p,
+    c_uint,
+    c_double,
+    c_int,
+    c_char,
+    c_char_p,
+    byref,
+    c_size_t,
+    POINTER,
+    cast,
+    c_bool,
+    c_float,
+    c_int8,
+    c_int16,
+    c_int32,
+    c_int64,
+    c_uint8,
+    c_uint16,
+    c_uint32,
+    c_uint64,
+    addressof,
+    Structure,
+    CFUNCTYPE,
+)
 from . import free, freeLibrary, platform, sharedLibraryExtension, calloc
 
 
-fmi1Component      = c_void_p
+fmi1Component = c_void_p
 fmi1ValueReference = c_uint
-fmi1Real           = c_double
-fmi1Integer        = c_int
-fmi1Boolean        = c_char
-fmi1String         = c_char_p
+fmi1Real = c_double
+fmi1Integer = c_int
+fmi1Boolean = c_char
+fmi1String = c_char_p
 
-fmi1True  = b'\x01'
-fmi1False = b'\x00'
+fmi1True = b"\x01"
+fmi1False = b"\x00"
 
 fmi1UndefinedValueReference = -1
 
 fmi1Status = c_int
 
-fmi1OK      = 0
+fmi1OK = 0
 fmi1Warning = 1
 fmi1Discard = 2
-fmi1Error   = 3
-fmi1Fatal   = 4
+fmi1Error = 3
+fmi1Fatal = 4
 
-fmi1CallbackLoggerTYPE         = CFUNCTYPE(None, fmi1Component, fmi1String, fmi1Status, fmi1String, fmi1String)
+fmi1CallbackLoggerTYPE = CFUNCTYPE(
+    None, fmi1Component, fmi1String, fmi1Status, fmi1String, fmi1String
+)
 fmi1CallbackAllocateMemoryTYPE = CFUNCTYPE(c_void_p, c_size_t, c_size_t)
-fmi1CallbackFreeMemoryTYPE     = CFUNCTYPE(None, c_void_p)
+fmi1CallbackFreeMemoryTYPE = CFUNCTYPE(None, c_void_p)
 # fmi1StepFinishedTYPE           = CFUNCTYPE(None, fmi1Component, fmi1Status)
-fmi1StepFinishedTYPE           = c_void_p
+fmi1StepFinishedTYPE = c_void_p
 
 fmi1StatusKind = c_int
 
-fmi1DoStepStatus       = 0
-fmi1PendingStatus      = 1
+fmi1DoStepStatus = 0
+fmi1PendingStatus = 1
 fmi1LastSuccessfulTime = 2
 
 
 class fmi1CallbackFunctions(Structure):
-
-    _fields_ = [('logger',         fmi1CallbackLoggerTYPE),
-                ('allocateMemory', fmi1CallbackAllocateMemoryTYPE),
-                ('freeMemory',     fmi1CallbackFreeMemoryTYPE),
-                ('stepFinished',   fmi1StepFinishedTYPE)]
-
-    def __str__(self):
-        return 'fmi1CallbackFunctions(' \
-               'logger=%s, ' \
-               'allocateMemory=%s, ' \
-               'freeMemory=%s, ' \
-               'stepFinished=%s)' % (self.logger,
-                                     self.allocateMemory,
-                                     self.freeMemory,
-                                     self.stepFinished)
+    _fields_ = [
+        ("logger", fmi1CallbackLoggerTYPE),
+        ("allocateMemory", fmi1CallbackAllocateMemoryTYPE),
+        ("freeMemory", fmi1CallbackFreeMemoryTYPE),
+        ("stepFinished", fmi1StepFinishedTYPE),
+    ]
 
 
 class fmi1EventInfo(Structure):
-
-    _fields_ = [('iterationConverged',          fmi1Boolean),
-                ('stateValueReferencesChanged', fmi1Boolean),
-                ('stateValuesChanged',          fmi1Boolean),
-                ('terminateSimulation',         fmi1Boolean),
-                ('upcomingTimeEvent',           fmi1Boolean),
-                ('nextEventTime',               fmi1Real)]
-
-    def __str__(self):
-        return 'fmi1EventInfo(' \
-               'iterationConverged=%s, ' \
-               'stateValueReferencesChanged=%s, ' \
-               'stateValuesChanged=%s, ' \
-               'terminateSimulation=%s, ' \
-               'upcomingTimeEvent=%s, ' \
-               'nextEventTime=%s)' % (self.iterationConverged,
-                                      self.stateValueReferencesChanged,
-                                      self.stateValuesChanged,
-                                      self.terminateSimulation,
-                                      self.upcomingTimeEvent,
-                                      self.nextEventTime)
+    _fields_ = [
+        ("iterationConverged", fmi1Boolean),
+        ("stateValueReferencesChanged", fmi1Boolean),
+        ("stateValuesChanged", fmi1Boolean),
+        ("terminateSimulation", fmi1Boolean),
+        ("upcomingTimeEvent", fmi1Boolean),
+        ("nextEventTime", fmi1Real),
+    ]
 
 
 def printLogMessage(component, instanceName, status, category, message):
-    """ Print the FMU's log messages to the command line (works for both FMI 1.0 and 2.0) """
+    """Print the FMU's log messages to the command line (works for both FMI 1.0 and 2.0)"""
 
-    label = ['OK', 'WARNING', 'DISCARD', 'ERROR', 'FATAL', 'PENDING'][status]
-    print("[%s] %s" % (label, message.decode("utf-8")))
+    label = ["OK", "WARNING", "DISCARD", "ERROR", "FATAL", "PENDING"][status]
+    print(f"[{label}] {message.decode('utf-8')}")
 
 
 defaultCallbacks = fmi1CallbackFunctions()
@@ -99,20 +105,20 @@ defaultCallbacks.stepFinished = None
 
 try:
     from .logging import addLoggerProxy
+
     addLoggerProxy(byref(defaultCallbacks))
 except Exception as e:
     print(f"Failed to add logger proxy function. {e}")
 
 
 class FMICallException(Exception):
-    """ Raised when an FMI call fails """
+    """Raised when an FMI call fails"""
 
     def __init__(self, function: str, status: int):
-
         if status in range(5):
-            label = ['ok', 'warning', 'discard', 'error', 'fatal', 'pending'][status]
+            label = ["ok", "warning", "discard", "error", "fatal", "pending"][status]
         else:
-            label = 'illegal return code'
+            label = "illegal return code"
 
         super().__init__(f"{function} failed with status {status} ({label}).")
 
@@ -124,9 +130,18 @@ class FMICallException(Exception):
 
 
 class _FMU(object):
-    """ Base class for all FMUs """
+    """Base class for all FMUs"""
 
-    def __init__(self, guid, modelIdentifier, unzipDirectory, instanceName=None, libraryPath=None, fmiCallLogger=None, requireFunctions=True):
+    def __init__(
+        self,
+        guid,
+        modelIdentifier,
+        unzipDirectory,
+        instanceName=None,
+        libraryPath=None,
+        fmiCallLogger=None,
+        requireFunctions=True,
+    ):
         """
         Parameters:
             guid             the GUI from the modelDescription.xml
@@ -141,20 +156,24 @@ class _FMU(object):
         self.guid = guid
         self.modelIdentifier = modelIdentifier
         self.unzipDirectory = unzipDirectory
-        self.instanceName = instanceName if instanceName is not None else self.modelIdentifier
+        self.instanceName = (
+            instanceName if instanceName is not None else self.modelIdentifier
+        )
         self.fmiCallLogger = fmiCallLogger
         self.requireFunctions = requireFunctions
 
-        self._functions: dict[str, 'ctypes._FuncPointer'] = dict()
+        self._functions: dict[str, "ctypes._FuncPointer"] = dict()
         """Functions loaded from the shared library"""
 
         # remember the current working directory
         work_dir = os.getcwd()
 
         if libraryPath is None:
-            library_dir = os.path.join(unzipDirectory, 'binaries', platform)
+            library_dir = os.path.join(unzipDirectory, "binaries", platform)
             library_dir = os.path.abspath(library_dir)
-            libraryPath = str(os.path.join(library_dir, self.modelIdentifier + sharedLibraryExtension))
+            libraryPath = str(
+                os.path.join(library_dir, self.modelIdentifier + sharedLibraryExtension)
+            )
         else:
             library_dir = os.path.dirname(libraryPath)
 
@@ -187,51 +206,65 @@ class _FMU(object):
         # unload the shared library
         freeLibrary(self.dll._handle)
 
-    def _log_fmi_args(self, fname: str, argnames: Iterable[str], argtypes: Iterable[type], args: Iterable, restype: Any, res: Any) -> None:
-        """ Format FMI arguments and pass them to the logger """
+    def _log_fmi_args(
+        self,
+        fname: str,
+        argnames: Iterable[str],
+        argtypes: Iterable[type],
+        args: Iterable,
+        restype: Any,
+        res: Any,
+    ) -> None:
+        """Format FMI arguments and pass them to the logger"""
 
-        message = fname + '('
+        message = fname + "("
 
         arguments: list[str] = []
 
         def struct_to_str(s):
-
             a = []
 
             for n, t in s._fields_:
-
                 if t == c_char:
-                    v = int.from_bytes(s.iterationConverged, 'little')
+                    v = int.from_bytes(s.iterationConverged, "little")
                 else:
                     v = str(getattr(s, n))
 
-                    prefix = '<CFunctionType object at '
+                    prefix = "<CFunctionType object at "
 
-                    if v.startswith(prefix) and v.endswith('>'):
-                        v = v[len(prefix):-1]
-                    elif v == 'None':
-                        v = '0x0'
+                    if v.startswith(prefix) and v.endswith(">"):
+                        v = v[len(prefix) : -1]
+                    elif v == "None":
+                        v = "0x0"
 
-                a.append(f'{n}={v}')
+                a.append(f"{n}={v}")
 
-            return f'{type(s).__name__}(' + ', '.join(a) + ')'
+            return f"{type(s).__name__}(" + ", ".join(a) + ")"
 
         for i, (n, t, v) in enumerate(zip(argnames, argtypes, args)):
+            a = n + "="
 
-            a = n + '='
-
-            if fname == 'fmi2Instantiate' and n == 'callbacks':
+            if fname == "fmi2Instantiate" and n == "callbacks":
                 from .fmi2 import fmi2CallbackFunctions
+
                 a += struct_to_str(cast(v, POINTER(fmi2CallbackFunctions)).contents)
-            elif fname in ['fmiInstantiateModel', 'fmiInstantiateSlave'] and n == 'functions':
+            elif (
+                fname in ["fmiInstantiateModel", "fmiInstantiateSlave"]
+                and n == "functions"
+            ):
                 a += struct_to_str(v)
-            elif fname in ['fmiInitialize', 'fmiEventUpdate'] and n == 'eventInfo':
+            elif fname in ["fmiInitialize", "fmiEventUpdate"] and n == "eventInfo":
                 a += struct_to_str(cast(v, POINTER(fmi1EventInfo)).contents)
-            elif fname == 'fmi2NewDiscreteStates' and n == 'eventInfo':
+            elif fname == "fmi2NewDiscreteStates" and n == "eventInfo":
                 from .fmi2 import fmi2EventInfo
+
                 a += struct_to_str(cast(v, POINTER(fmi2EventInfo)).contents)
-            elif fname in ['fmi3GetBinary', 'fmi3SetBinary'] and n == 'values':
-                a += '[' + ', '.join([hex(addressof(p.contents) if p else 0) for p in v]) + ']'
+            elif fname in ["fmi3GetBinary", "fmi3SetBinary"] and n == "values":
+                a += (
+                    "["
+                    + ", ".join([hex(addressof(p.contents) if p else 0) for p in v])
+                    + "]"
+                )
             elif t == c_void_p:
                 if isinstance(v, c_void_p):
                     v = v.value
@@ -241,64 +274,71 @@ class _FMU(object):
             elif t == POINTER(c_uint):
                 # value references
                 if v is None:
-                    a += 'NULL'
+                    a += "NULL"
                 else:
-                    a += '[' + ', '.join(map(str, v)) + ']'
-            elif t in [POINTER(c_float), POINTER(c_double),
-                       POINTER(c_int8), POINTER(c_uint8),
-                       POINTER(c_int16), POINTER(c_uint16),
-                       POINTER(c_int32), POINTER(c_uint32),
-                       POINTER(c_int64), POINTER(c_uint64),
-                       POINTER(c_bool), POINTER(c_char_p)] and hasattr(v, '__len__'):
+                    a += "[" + ", ".join(map(str, v)) + "]"
+            elif t in [
+                POINTER(c_float),
+                POINTER(c_double),
+                POINTER(c_int8),
+                POINTER(c_uint8),
+                POINTER(c_int16),
+                POINTER(c_uint16),
+                POINTER(c_int32),
+                POINTER(c_uint32),
+                POINTER(c_int64),
+                POINTER(c_uint64),
+                POINTER(c_bool),
+                POINTER(c_char_p),
+            ] and hasattr(v, "__len__"):
                 # c_*_Array_N
-                a += '[' + ', '.join(map(str, v)) + ']'
-            elif t == POINTER(c_double) and not hasattr(v, '__len__'):
+                a += "[" + ", ".join(map(str, v)) + "]"
+            elif t == POINTER(c_double) and not hasattr(v, "__len__"):
                 if len(args) > i + 1:
                     # double pointers are always flowed by the size of the array
-                    arr = v[:args[i + 1]]
-                    a += '[' + ', '.join(map(str, arr)) + ']'
+                    arr = v[: args[i + 1]]
+                    a += "[" + ", ".join(map(str, arr)) + "]"
                 else:
                     # except for fmi3DoStep
                     v_ = cast(v, POINTER(c_double))
                     a += str(str(v_.contents.value))
-            elif hasattr(v, '_obj'):
+            elif hasattr(v, "_obj"):
                 # byref object
-                if hasattr(v._obj, 'value'):
+                if hasattr(v._obj, "value"):
                     # pointer (e.g. c_char_p)
                     a += str(v._obj.value)
                 else:
                     # struct
                     a += str(v._obj)
-            elif hasattr(v, 'decode'):
+            elif hasattr(v, "decode"):
                 # UTF-8 byte string
-                a += '"' + v.decode('utf-8') + '"'
+                a += '"' + v.decode("utf-8") + '"'
             else:
                 a += str(v)
 
             arguments.append(a)
 
-        message += ', '.join(arguments) + ')'
+        message += ", ".join(arguments) + ")"
 
         if restype == c_int:
-
-            message += ' -> '
+            message += " -> "
 
             if res == 0:
-                message += 'OK'
+                message += "OK"
             elif res == 1:
-                message += 'WARNING'
+                message += "WARNING"
             elif res == 2:
-                message += 'DISCARD'
+                message += "DISCARD"
             elif res == 3:
-                message += 'ERROR'
+                message += "ERROR"
             elif res == 4:
-                message += 'FATAL'
+                message += "FATAL"
             elif res == 5:
-                message += 'PENDING'
+                message += "PENDING"
             else:
                 message += str(res)
         elif restype == c_void_p:
-            message += ' -> ' + hex(0 if res is None else res)
+            message += " -> " + hex(0 if res is None else res)
 
         self.fmiCallLogger(message)
 
@@ -339,7 +379,9 @@ class _FMU(object):
                 else:
                     f = getattr(self.dll, name)
                 if sig.parameters:
-                    f.argnames, f.argtypes = zip(*((v.name, v.annotation) for v in sig.parameters.values()))
+                    f.argnames, f.argtypes = zip(
+                        *((v.name, v.annotation) for v in sig.parameters.values())
+                    )
                 else:
                     f.argnames, f.argtypes = (), ()
                 f.restype = sig.return_annotation
@@ -347,87 +389,98 @@ class _FMU(object):
 
 
 class _FMU1(_FMU):
-    """ Base class for FMI 1.0 FMUs """
+    """Base class for FMI 1.0 FMUs"""
 
     def __init__(self, **kwargs):
-
         super(_FMU1, self).__init__(**kwargs)
-
-    def _fmi1Function(self, fname, argnames, argtypes, restype=fmi1Status):
-        """ Add an FMI 1.0 function to this instance and add a wrapper that allows
-        logging and checks the return code if the return type if fmi1Status
-
-        Parameters:
-            fname     the name of the function (without 'fmi' prefix)
-            argnames  names of the arguments
-            argtypes  types of the arguments
-            restype   return type
-        """
-
-        # get the exported function form the shared library
-        f = getattr(self.dll, self.modelIdentifier + '_fmi' + fname)
-        f.argtypes = argtypes
-        f.restype = restype
-
-        def w(*args):
-            """ Wrapper function for the FMI call """
-
-            # call the FMI function
-            res = f(*args)
-
-            if self.fmiCallLogger is not None:
-                # log the call
-                self._log_fmi_args('fmi' + fname, argnames, argtypes, args, restype, res)
-
-            if restype == fmi1Status:
-                # check the status code
-                if res > fmi1Warning:
-                    raise FMICallException(function=fname, status=res)
-
-            return res
-
-        # add the function to the instance
-        setattr(self, 'fmi1' + fname, w)
 
     def fmi1GetVersion(self) -> fmi1String:
         return self._call("fmi1GetVersion")
 
-    def fmi1SetDebugLogging(self, component: fmi1Component, loggingOn: fmi1Boolean) -> fmi1Status:
+    def fmi1SetDebugLogging(
+        self, component: fmi1Component, loggingOn: fmi1Boolean
+    ) -> fmi1Status:
         return self._call("fmi1SetDebugLogging", component, loggingOn)
 
     # Data Exchange Functions
 
-    def fmi1GetReal(self, component: fmi1Component, vr: POINTER(fmi1ValueReference), nvr: c_size_t, value: POINTER(fmi1Real)) -> fmi1Status:
+    def fmi1GetReal(
+        self,
+        component: fmi1Component,
+        vr: POINTER(fmi1ValueReference),
+        nvr: c_size_t,
+        value: POINTER(fmi1Real),
+    ) -> fmi1Status:
         return self._call("fmi1GetReal", component, vr, nvr, value)
 
-    def fmi1GetInteger(self, component: fmi1Component, vr: POINTER(fmi1ValueReference), nvr: c_size_t, value: POINTER(fmi1Integer)) -> fmi1Status:
+    def fmi1GetInteger(
+        self,
+        component: fmi1Component,
+        vr: POINTER(fmi1ValueReference),
+        nvr: c_size_t,
+        value: POINTER(fmi1Integer),
+    ) -> fmi1Status:
         return self._call("fmi1GetInteger", component, vr, nvr, value)
 
-    def fmi1GetBoolean(self, component: fmi1Component, vr: POINTER(fmi1ValueReference), nvr: c_size_t, value: POINTER(fmi1Boolean)) -> fmi1Status:
+    def fmi1GetBoolean(
+        self,
+        component: fmi1Component,
+        vr: POINTER(fmi1ValueReference),
+        nvr: c_size_t,
+        value: POINTER(fmi1Boolean),
+    ) -> fmi1Status:
         return self._call("fmi1GetBoolean", component, vr, nvr, value)
 
-    def fmi1GetString(self, component: fmi1Component, vr: POINTER(fmi1ValueReference), nvr: c_size_t, value: POINTER(fmi1String)) -> fmi1Status:
+    def fmi1GetString(
+        self,
+        component: fmi1Component,
+        vr: POINTER(fmi1ValueReference),
+        nvr: c_size_t,
+        value: POINTER(fmi1String),
+    ) -> fmi1Status:
         return self._call("fmi1GetString", component, vr, nvr, value)
 
-    def fmi1SetReal(self, component: fmi1Component, vr: POINTER(fmi1ValueReference), nvr: c_size_t, value: POINTER(fmi1Real)) -> fmi1Status:
+    def fmi1SetReal(
+        self,
+        component: fmi1Component,
+        vr: POINTER(fmi1ValueReference),
+        nvr: c_size_t,
+        value: POINTER(fmi1Real),
+    ) -> fmi1Status:
         return self._call("fmi1SetReal", component, vr, nvr, value)
 
-    def fmi1SetInteger(self, component: fmi1Component, vr: POINTER(fmi1ValueReference), nvr: c_size_t, value: POINTER(fmi1Integer)) -> fmi1Status:
+    def fmi1SetInteger(
+        self,
+        component: fmi1Component,
+        vr: POINTER(fmi1ValueReference),
+        nvr: c_size_t,
+        value: POINTER(fmi1Integer),
+    ) -> fmi1Status:
         return self._call("fmi1SetInteger", component, vr, nvr, value)
 
-    def fmi1SetBoolean(self, component: fmi1Component, vr: POINTER(fmi1ValueReference), nvr: c_size_t, value: POINTER(fmi1Boolean)) -> fmi1Status:
+    def fmi1SetBoolean(
+        self,
+        component: fmi1Component,
+        vr: POINTER(fmi1ValueReference),
+        nvr: c_size_t,
+        value: POINTER(fmi1Boolean),
+    ) -> fmi1Status:
         return self._call("fmi1SetBoolean", component, vr, nvr, value)
 
-    def fmi1SetString(self, component: fmi1Component, vr: POINTER(fmi1ValueReference), nvr: c_size_t, value: POINTER(fmi1String)) -> fmi1Status:
+    def fmi1SetString(
+        self,
+        component: fmi1Component,
+        vr: POINTER(fmi1ValueReference),
+        nvr: c_size_t,
+        value: POINTER(fmi1String),
+    ) -> fmi1Status:
         return self._call("fmi1SetString", component, vr, nvr, value)
-
-###################
 
     # Inquire version numbers of header files
 
     def getVersion(self):
         version = self.fmi1GetVersion()
-        return version.decode('utf-8')
+        return version.decode("utf-8")
 
     def setDebugLogging(self, loggingOn):
         self.fmi1SetDebugLogging(self.component, fmi1True if loggingOn else fmi1False)
@@ -470,7 +523,7 @@ class _FMU1(_FMU):
 
     def setBoolean(self, vr, value):
         # convert value to a byte string
-        s = b''
+        s = b""
         for v in value:
             s += fmi1True if v else fmi1False
 
@@ -480,13 +533,13 @@ class _FMU1(_FMU):
 
     def setString(self, vr, value):
         vr = (fmi1ValueReference * len(vr))(*vr)
-        value = map(lambda s: s.encode('utf-8'), value)
+        value = map(lambda s: s.encode("utf-8"), value)
         value = (fmi1String * len(vr))(*value)
         self.fmi1SetString(self.component, vr, len(vr), value)
 
 
 class FMU1Slave(_FMU1):
-    """ An FMI 1.0 Co-Simulation FMU """
+    """An FMI 1.0 Co-Simulation FMU"""
 
     def __init__(self, **kwargs):
         super(FMU1Slave, self).__init__(**kwargs)
@@ -672,28 +725,36 @@ class FMU1Slave(_FMU1):
 
     # Creation and destruction of slave instances and setting debug status
 
-    def instantiate(self, mimeType='application/x-fmu-sharedlibrary', timeout=0, visible=fmi1False,
-                    interactive=fmi1False, functions=None, loggingOn=False):
-
+    def instantiate(
+        self,
+        mimeType="application/x-fmu-sharedlibrary",
+        timeout=0,
+        visible=fmi1False,
+        interactive=fmi1False,
+        functions=None,
+        loggingOn=False,
+    ):
         fmuLocation = pathlib.Path(self.unzipDirectory).as_uri()
 
         self.callbacks = defaultCallbacks if functions is None else functions
 
-        self.component = self.fmi1InstantiateSlave(self.instanceName.encode('UTF-8'),
-                                                   self.guid.encode('UTF-8'),
-                                                   fmuLocation.encode('UTF-8'),
-                                                   mimeType.encode('UTF-8'),
-                                                   timeout,
-                                                   visible,
-                                                   interactive,
-                                                   self.callbacks,
-                                                   fmi1True if loggingOn else fmi1False)
+        self.component = self.fmi1InstantiateSlave(
+            self.instanceName.encode("UTF-8"),
+            self.guid.encode("UTF-8"),
+            fmuLocation.encode("UTF-8"),
+            mimeType.encode("UTF-8"),
+            timeout,
+            visible,
+            interactive,
+            self.callbacks,
+            fmi1True if loggingOn else fmi1False,
+        )
 
     # Inquire version numbers of header files
 
     def getTypesPlatform(self):
         types_platform = self.fmi1GetTypesPlatform()
-        return types_platform.decode('utf-8')
+        return types_platform.decode("utf-8")
 
     # Creation and destruction of slave instances and setting debug status
 
@@ -728,8 +789,12 @@ class FMU1Slave(_FMU1):
     def cancelStep(self):
         return self.fmi1CancelStep(self.component)
 
-    def doStep(self, currentCommunicationPoint, communicationStepSize, newStep=fmi1True):
-        self.fmi1DoStep(self.component, currentCommunicationPoint, communicationStepSize, newStep)
+    def doStep(
+        self, currentCommunicationPoint, communicationStepSize, newStep=fmi1True
+    ):
+        self.fmi1DoStep(
+            self.component, currentCommunicationPoint, communicationStepSize, newStep
+        )
 
     def getStatus(self, kind):
         value = fmi1Status(fmi1OK)
@@ -752,16 +817,15 @@ class FMU1Slave(_FMU1):
         return value
 
     def getStringStatus(self, kind):
-        value = fmi1String(b'')
+        value = fmi1String(b"")
         self.fmi1GetStringStatus(self.component, kind, byref(value))
         return value
 
 
 class FMU1Model(_FMU1):
-    """ An FMI 1.0 Model Exchange FMU """
+    """An FMI 1.0 Model Exchange FMU"""
 
     def __init__(self, **kwargs):
-
         super(FMU1Model, self).__init__(**kwargs)
 
     # Inquire version numbers of header files
@@ -771,8 +835,16 @@ class FMU1Model(_FMU1):
 
     # Creation and destruction of model instances and setting debug status
 
-    def fmi1InstantiateModel(self, instanceName: fmi1String, guid: fmi1String, functions: fmi1CallbackFunctions, loggingOn: fmi1Boolean) -> fmi1Component:
-        return self._call("fmi1InstantiateModel", instanceName, guid, functions, loggingOn)
+    def fmi1InstantiateModel(
+        self,
+        instanceName: fmi1String,
+        guid: fmi1String,
+        functions: fmi1CallbackFunctions,
+        loggingOn: fmi1Boolean,
+    ) -> fmi1Component:
+        return self._call(
+            "fmi1InstantiateModel", instanceName, guid, functions, loggingOn
+        )
 
     def fmi1FreeModelInstance(self, c: fmi1Component) -> None:
         return self._call("fmi1FreeModelInstance", c)
@@ -782,33 +854,60 @@ class FMU1Model(_FMU1):
 
     # Providing independent variables and re-initialization of caching
 
-    def fmi1SetContinuousStates(self, c: fmi1Component, x: POINTER(fmi1Real), nx: c_size_t) -> fmi1Status:
+    def fmi1SetContinuousStates(
+        self, c: fmi1Component, x: POINTER(fmi1Real), nx: c_size_t
+    ) -> fmi1Status:
         return self._call("fmi1SetContinuousStates", c, x, nx)
 
-    def fmi1CompletedIntegratorStep(self, c: fmi1Component, callEventUpdate: POINTER(fmi1Boolean)) -> fmi1Status:
+    def fmi1CompletedIntegratorStep(
+        self, c: fmi1Component, callEventUpdate: POINTER(fmi1Boolean)
+    ) -> fmi1Status:
         return self._call("fmi1CompletedIntegratorStep", c, callEventUpdate)
 
     # Evaluation of the model equations
 
-    def fmi1Initialize(self, c: fmi1Component, toleranceControlled: fmi1Boolean, relativeTolerance: fmi1Real, eventInfo: POINTER(fmi1EventInfo)) -> fmi1Status:
-        return self._call("fmi1Initialize", c, toleranceControlled, relativeTolerance, eventInfo)
+    def fmi1Initialize(
+        self,
+        c: fmi1Component,
+        toleranceControlled: fmi1Boolean,
+        relativeTolerance: fmi1Real,
+        eventInfo: POINTER(fmi1EventInfo),
+    ) -> fmi1Status:
+        return self._call(
+            "fmi1Initialize", c, toleranceControlled, relativeTolerance, eventInfo
+        )
 
-    def fmi1GetDerivatives(self, c: fmi1Component, derivatives: POINTER(fmi1Real), nx: c_size_t) -> fmi1Status:
+    def fmi1GetDerivatives(
+        self, c: fmi1Component, derivatives: POINTER(fmi1Real), nx: c_size_t
+    ) -> fmi1Status:
         return self._call("fmi1GetDerivatives", c, derivatives, nx)
 
-    def fmi1GetEventIndicators(self, c: fmi1Component, eventIndicators: POINTER(fmi1Real), ni: c_size_t) -> fmi1Status:
+    def fmi1GetEventIndicators(
+        self, c: fmi1Component, eventIndicators: POINTER(fmi1Real), ni: c_size_t
+    ) -> fmi1Status:
         return self._call("fmi1GetEventIndicators", c, eventIndicators, ni)
 
-    def fmi1EventUpdate(self, c: fmi1Component, intermediateResults: fmi1Boolean, eventInfo: POINTER(fmi1EventInfo)) -> fmi1Status:
+    def fmi1EventUpdate(
+        self,
+        c: fmi1Component,
+        intermediateResults: fmi1Boolean,
+        eventInfo: POINTER(fmi1EventInfo),
+    ) -> fmi1Status:
         return self._call("fmi1EventUpdate", c, intermediateResults, eventInfo)
 
-    def fmi1GetContinuousStates(self, c: fmi1Component, states: POINTER(fmi1Real), nx: c_size_t) -> fmi1Status:
+    def fmi1GetContinuousStates(
+        self, c: fmi1Component, states: POINTER(fmi1Real), nx: c_size_t
+    ) -> fmi1Status:
         return self._call("fmi1GetContinuousStates", c, states, nx)
 
-    def fmi1GetNominalContinuousStates(self, c: fmi1Component, x_nominal: POINTER(fmi1Real), nx: c_size_t) -> fmi1Status:
+    def fmi1GetNominalContinuousStates(
+        self, c: fmi1Component, x_nominal: POINTER(fmi1Real), nx: c_size_t
+    ) -> fmi1Status:
         return self._call("fmi1GetNominalContinuousStates", c, x_nominal, nx)
 
-    def fmi1GetStateValueReferences(self, c: fmi1Component, vrx: POINTER(fmi1ValueReference), nx: c_size_t) -> fmi1Status:
+    def fmi1GetStateValueReferences(
+        self, c: fmi1Component, vrx: POINTER(fmi1ValueReference), nx: c_size_t
+    ) -> fmi1Status:
         return self._call("fmi1GetStateValueReferences", c, vrx, nx)
 
     def fmi1Terminate(self, c: fmi1Component) -> fmi1Status:
@@ -818,18 +917,19 @@ class FMU1Model(_FMU1):
 
     def getTypesPlatform(self):
         types_platform = self.fmi1GetModelTypesPlatform()
-        return types_platform.decode('utf-8')
+        return types_platform.decode("utf-8")
 
     # Creation and destruction of model instances and setting debug status
 
     def instantiate(self, functions=None, loggingOn=False):
-
         self.callbacks = defaultCallbacks if functions is None else functions
 
-        self.component = self.fmi1InstantiateModel(self.instanceName.encode('UTF-8'),
-                                                   self.guid.encode('UTF-8'),
-                                                   self.callbacks,
-                                                   fmi1True if loggingOn else fmi1False)
+        self.component = self.fmi1InstantiateModel(
+            self.instanceName.encode("UTF-8"),
+            self.guid.encode("UTF-8"),
+            self.callbacks,
+            fmi1True if loggingOn else fmi1False,
+        )
 
         if self.component is None:
             raise Exception("Failed to instantiate model")
@@ -855,13 +955,17 @@ class FMU1Model(_FMU1):
 
     def initialize(self, toleranceControlled=fmi1False, relativeTolerance=0.0):
         eventInfo = fmi1EventInfo()
-        self.fmi1Initialize(self.component, toleranceControlled, relativeTolerance, byref(eventInfo))
-        return (eventInfo.iterationConverged != fmi1False,
-                eventInfo.stateValueReferencesChanged != fmi1False,
-                eventInfo.stateValuesChanged != fmi1False,
-                eventInfo.terminateSimulation != fmi1False,
-                eventInfo.upcomingTimeEvent != fmi1False,
-                eventInfo.nextEventTime)
+        self.fmi1Initialize(
+            self.component, toleranceControlled, relativeTolerance, byref(eventInfo)
+        )
+        return (
+            eventInfo.iterationConverged != fmi1False,
+            eventInfo.stateValueReferencesChanged != fmi1False,
+            eventInfo.stateValuesChanged != fmi1False,
+            eventInfo.terminateSimulation != fmi1False,
+            eventInfo.upcomingTimeEvent != fmi1False,
+            eventInfo.nextEventTime,
+        )
 
     def getDerivatives(self, derivatives, size):
         return self.fmi1GetDerivatives(self.component, derivatives, size)
@@ -872,12 +976,14 @@ class FMU1Model(_FMU1):
     def eventUpdate(self, intermediateResults=fmi1False):
         eventInfo = fmi1EventInfo()
         self.fmi1EventUpdate(self.component, intermediateResults, byref(eventInfo))
-        return (eventInfo.iterationConverged          != fmi1False,
-                eventInfo.stateValueReferencesChanged != fmi1False,
-                eventInfo.stateValuesChanged          != fmi1False,
-                eventInfo.terminateSimulation         != fmi1False,
-                eventInfo.upcomingTimeEvent           != fmi1False,
-                eventInfo.nextEventTime)
+        return (
+            eventInfo.iterationConverged != fmi1False,
+            eventInfo.stateValueReferencesChanged != fmi1False,
+            eventInfo.stateValuesChanged != fmi1False,
+            eventInfo.terminateSimulation != fmi1False,
+            eventInfo.upcomingTimeEvent != fmi1False,
+            eventInfo.nextEventTime,
+        )
 
     def getContinuousStates(self, states, size):
         return self.fmi1GetContinuousStates(self.component, states, size)

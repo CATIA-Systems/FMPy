@@ -1,11 +1,11 @@
 """ FMI 1.0 interface """
 import ctypes
 
-from typing import Any
+from typing import Any, Iterable
 
 import os
 import pathlib
-from ctypes import *
+from ctypes import cdll, c_void_p, c_uint, c_double, c_int, c_char, c_char_p, byref, c_size_t, POINTER, cast, c_bool, c_float, c_int8, c_int16, c_int32, c_int64, c_uint8, c_uint16, c_uint32, c_uint64, addressof, Structure, CFUNCTYPE
 from . import free, freeLibrary, platform, sharedLibraryExtension, calloc
 
 
@@ -187,12 +187,12 @@ class _FMU(object):
         # unload the shared library
         freeLibrary(self.dll._handle)
 
-    def _log_fmi_args(self, fname, argnames, argtypes, args, restype, res):
+    def _log_fmi_args(self, fname: str, argnames: Iterable[str], argtypes: Iterable[type], args: Iterable, restype: Any, res: Any) -> None:
         """ Format FMI arguments and pass them to the logger """
 
-        f = fname + '('
+        message = fname + '('
 
-        l = []
+        arguments: list[str] = []
 
         def struct_to_str(s):
 
@@ -275,32 +275,32 @@ class _FMU(object):
             else:
                 a += str(v)
 
-            l.append(a)
+            arguments.append(a)
 
-        f += ', '.join(l) + ')'
+        message += ', '.join(arguments) + ')'
 
         if restype == c_int:
 
-            f += ' -> '
+            message += ' -> '
 
             if res == 0:
-                f += 'OK'
+                message += 'OK'
             elif res == 1:
-                f += 'WARNING'
+                message += 'WARNING'
             elif res == 2:
-                f += 'DISCARD'
+                message += 'DISCARD'
             elif res == 3:
-                f += 'ERROR'
+                message += 'ERROR'
             elif res == 4:
-                f += 'FATAL'
+                message += 'FATAL'
             elif res == 5:
-                f += 'PENDING'
+                message += 'PENDING'
             else:
-                f += str(res)
+                message += str(res)
         elif restype == c_void_p:
-            f += ' -> ' + hex(0 if res is None else res)
+            message += ' -> ' + hex(0 if res is None else res)
 
-        self.fmiCallLogger(f)
+        self.fmiCallLogger(message)
 
     def _call(self, fname: str, *args) -> Any:
         """Call and log the FMI API function"""

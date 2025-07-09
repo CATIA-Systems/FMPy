@@ -1,6 +1,6 @@
 """ FMI 2.0 interface """
 
-from ctypes import *
+from ctypes import c_void_p, c_uint, c_double, c_int, c_char, c_char_p, byref, c_size_t, POINTER, Structure, CFUNCTYPE, create_string_buffer
 
 import pathlib
 

@@ -71,7 +71,7 @@ def test_fmi3_clocks(reference_fmus_dist_dir):
     fmu.enterInitializationMode()
     fmu.exitInitializationMode()
 
-    fmu.activateModelPartition(clockReference=1001, clockElementIndex=0, activationTime=0)
+    fmu.activateModelPartition(clockReference=1001, activationTime=0)
 
     fmu.terminate()
     fmu.freeInstance()

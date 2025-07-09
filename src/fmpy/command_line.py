@@ -1,6 +1,5 @@
 """ Command line interface for FMPy """
-
-from __future__ import print_function
+from fmpy import extract
 
 
 def main():
@@ -47,30 +46,38 @@ Python version:     {sys.version}
                                             'add-cswrapper','add-remoting', 'create-cmake-project',
                                             'create-jupyter-notebook'],
                         help="Command to execute")
-    parser.add_argument('fmu_filename', help="filename of the FMU")
+    parser.add_argument('fmu_filename', help="Filename of the FMU")
 
-    parser.add_argument('--validate', action='store_true', help="validate the FMU")
-    parser.add_argument('--start-time', type=float, help="start time for the simulation")
-    parser.add_argument('--stop-time', type=float, help="stop time for the simulation")
-    parser.add_argument('--solver', choices=['Euler', 'CVode'], default='CVode', help="solver to use for Model Exchange")
-    parser.add_argument('--step-size', type=float, help="step size for fixed-step solvers")
-    parser.add_argument('--relative-tolerance', type=float, help="relative tolerance for the 'CVode' solver and FMI 2.0 co-simulation FMUs")
-    parser.add_argument('--dont-record-events', action='store_true', help="dont't record outputs at events (model exchange only)")
-    parser.add_argument('--start-values', nargs='+', help="name-value pairs of start values")
-    parser.add_argument('--apply-default-start-values', action='store_true', help="apply the start values from the model description")
-    parser.add_argument('--output-interval', type=float, help="interval for sampling the output")
-    parser.add_argument('--input-file', help="CSV file to use as input")
-    parser.add_argument('--output-variables', nargs='+', help="Variables to record")
-    parser.add_argument('--output-file', help="CSV to store the results")
-    parser.add_argument('--timeout', type=float, help="max. time to wait for the simulation to finish")
-    parser.add_argument('--debug-logging', action='store_true', help="enable the FMU's debug logging")
-    parser.add_argument('--visible', action='store_true', help="enable interactive mode")
-    parser.add_argument('--fmi-logging', action='store_true', help="enable FMI logging")
-    parser.add_argument('--show-plot', action='store_true', help="plot the results")
-    parser.add_argument('--cmake-project-dir', help="Directory for the CMake project")
-    parser.add_argument('--target-platform', help="The target platform to compile the binary for")
-    parser.add_argument('--compiler-options', help="Options used when compiling the platform binary")
-    parser.add_argument('--interface-type', help='Interface type ("ModelExchange" or "CoSimulation")')
+    simulate_group = parser.add_argument_group('simulate', "Simulate an FMU")
+    simulate_group.add_argument('--show-plot', action='store_true', help="Plot the results")
+    simulate_group.add_argument('--validate', action='store_true', help="Validate the FMU")
+    simulate_group.add_argument('--start-time', type=float, help="Start time for the simulation")
+    simulate_group.add_argument('--stop-time', type=float, help="Stop time for the simulation")
+    simulate_group.add_argument('--solver', choices=['Euler', 'CVode'], default='CVode', help="Solver to use for Model Exchange")
+    simulate_group.add_argument('--step-size', type=float, help="Step size for fixed-step solvers")
+    simulate_group.add_argument('--relative-tolerance', type=float, help="Relative tolerance for the 'CVode' solver and FMI 2.0 co-simulation FMUs")
+    simulate_group.add_argument('--dont-record-events', action='store_true', help="Dont't record outputs at events (model exchange only)")
+    simulate_group.add_argument('--start-values', nargs='+', help="Name-value pairs of start values")
+    simulate_group.add_argument('--apply-default-start-values', action='store_true', help="Apply the start values from the model description")
+    simulate_group.add_argument('--output-interval', type=float, help="Interval for sampling the output")
+    simulate_group.add_argument('--input-file', help="CSV file to use as input")
+    simulate_group.add_argument('--output-variables', nargs='+', help="Variables to record")
+    simulate_group.add_argument('--output-file', help="CSV to store the results")
+    simulate_group.add_argument('--timeout', type=float, help="Max. time to wait for the simulation to finish")
+    simulate_group.add_argument('--debug-logging', action='store_true', help="Enable the FMU's debug logging")
+    simulate_group.add_argument('--visible', action='store_true', help="Enable interactive mode")
+    simulate_group.add_argument('--fmi-logging', action='store_true', help="Enable FMI logging")
+    simulate_group.add_argument('--cmake-project-dir', help="Directory for the CMake project")
+    simulate_group.add_argument('--interface-type', help='Interface type ("ModelExchange" or "CoSimulation")')
+
+    compile_group = parser.add_argument_group('compile', "Compile the platform binary")
+    compile_group.add_argument('--generator', help="CMake generator")
+    compile_group.add_argument('--platform', help="VisualStudio platform (ARM, Win32, x64)")
+    compile_group.add_argument('--configuration', default="Release", help="Build configuration (Release or Debug)")
+    compile_group.add_argument('--all-warnings', action='store_true', help="Enable all compiler warnings")
+    compile_group.add_argument('--warning-as-error', action='store_true', help="Turn compiler warnings into errors")
+    compile_group.add_argument('--cmake-options', nargs='+', help="CMake options")
+    compile_group.add_argument('--with-wsl', action='store_true', help="Compile for Linux with WSL")
 
     args = parser.parse_args()
 
@@ -98,10 +105,26 @@ Python version:     {sys.version}
 
     elif args.command == 'compile':
 
-        from fmpy.util import compile_platform_binary
-        compile_platform_binary(filename=args.fmu_filename,
-                                target_platform=args.target_platform,
-                                compiler_options=args.compiler_options)
+        from tempfile import TemporaryDirectory
+        from fmpy.build import build_platform_binary
+        from fmpy.util import create_zip_archive
+
+        cmake_options = {
+            "CMAKE_COMPILE_WARNING_AS_ERROR:BOOL": "ON" if args.warning_as_error else "OFF"
+        }
+
+        with TemporaryDirectory() as tempdir:
+            extract(args.fmu_filename, unzipdir=tempdir)
+            build_platform_binary(
+                unzipdir=tempdir,
+                generator=args.generator,
+                platform=args.platform,
+                configuration=args.configuration,
+                all_warnings=args.all_warnings,
+                with_wsl=args.with_wsl,
+                cmake_options=cmake_options,
+            )
+            create_zip_archive(args.fmu_filename, tempdir)
 
     elif args.command == 'remove-source-code':
 
@@ -193,5 +216,4 @@ Python version:     {sys.version}
 
 
 if __name__ == '__main__':
-    print('hello')
     main()

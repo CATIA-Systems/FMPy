@@ -328,6 +328,29 @@ class ModelDescription:
     initialUnknowns: list[Unknown] = field(factory=list, repr=False)
 
     @property
+    def modelIdentifier(self) -> str:
+        """Return the model identifier, if all model identifiers are equal"""
+
+        model_identifiers = []
+
+        if self.modelExchange:
+            model_identifiers.append(self.modelExchange.modelIdentifier)
+        if self.coSimulation:
+            model_identifiers.append(self.coSimulation.modelIdentifier)
+        if self.scheduledExecution:
+            model_identifiers.append(self.scheduledExecution.modelIdentifier)
+
+        if not model_identifiers:
+            raise Exception("Model description does not define any model identifiers.")
+
+        first = model_identifiers[0]
+
+        if not all(first == i for i in model_identifiers):
+            raise Exception("Model description defines different model identifiers.")
+
+        return first
+
+    @property
     def guid(self):
         return self.instantiationToken
 

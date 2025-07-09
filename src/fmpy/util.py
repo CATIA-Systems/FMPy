@@ -762,7 +762,13 @@ def compile_dll(model_description, sources_dir, compiler=None, target_platform=N
     return str(dll_path)
 
 
-def compile_platform_binary(filename, output_filename=None, target_platform=None, compiler_options=None):
+def compile_platform_binary(
+        filename: str | PathLike,
+        output_filename: str | PathLike | None = None,
+
+        # target_platform=None,
+        # compiler_options=None
+    ):
     """ Compile the binary of an FMU for the current platform and add it to the FMU
 
     Parameters:
@@ -771,46 +777,52 @@ def compile_platform_binary(filename, output_filename=None, target_platform=None
         compiler_options:  custom compiler options
     """
 
-    from . import read_model_description, extract, platform, platform_tuple
-    import zipfile
-    from shutil import copyfile, rmtree
-    from os.path import join, basename, relpath, exists, normpath, isfile, splitext
+    from fmpy.build import build_platform_binary
 
-    unzipdir = extract(filename)
+    unzipdir = fmpy.extract(filename)
 
-    model_description = read_model_description(filename)
+    build_platform_binary(unzipdir=unzipdir, )
 
-    if target_platform is None:
-        target_platform = platform if model_description.fmiVersion in ['1.0', '2.0'] else platform_tuple
-
-    binary = compile_dll(model_description=model_description,
-                         sources_dir=join(unzipdir, 'sources'),
-                         target_platform=target_platform,
-                         compiler_options=compiler_options)
-
-    unzipdir2 = extract(filename)
-
-    target_platform_dir = join(unzipdir2, 'binaries', target_platform)
-
-    if not exists(target_platform_dir):
-        os.makedirs(target_platform_dir)
-
-    copyfile(src=binary, dst=join(target_platform_dir, basename(binary)))
-
-    debug_database = splitext(binary)[0] + '.pdb'
-
-    if isfile(debug_database):
-        copyfile(src=debug_database, dst=join(target_platform_dir, basename(debug_database)))
-
-    if output_filename is None:
-        output_filename = filename  # overwrite the existing archive
-
-    # create a new archive from the existing files + compiled binary
-    create_zip_archive(output_filename, unzipdir2)
-
-    # clean up
-    rmtree(unzipdir, ignore_errors=True)
-    rmtree(unzipdir2, ignore_errors=True)
+    # from . import read_model_description, extract, platform, platform_tuple
+    # import zipfile
+    # from shutil import copyfile, rmtree
+    # from os.path import join, basename, relpath, exists, normpath, isfile, splitext
+    #
+    # unzipdir = extract(filename)
+    #
+    # model_description = read_model_description(filename)
+    #
+    # if target_platform is None:
+    #     target_platform = platform if model_description.fmiVersion in ['1.0', '2.0'] else platform_tuple
+    #
+    # binary = compile_dll(model_description=model_description,
+    #                      sources_dir=join(unzipdir, 'sources'),
+    #                      target_platform=target_platform,
+    #                      compiler_options=compiler_options)
+    #
+    # unzipdir2 = extract(filename)
+    #
+    # target_platform_dir = join(unzipdir2, 'binaries', target_platform)
+    #
+    # if not exists(target_platform_dir):
+    #     os.makedirs(target_platform_dir)
+    #
+    # copyfile(src=binary, dst=join(target_platform_dir, basename(binary)))
+    #
+    # debug_database = splitext(binary)[0] + '.pdb'
+    #
+    # if isfile(debug_database):
+    #     copyfile(src=debug_database, dst=join(target_platform_dir, basename(debug_database)))
+    #
+    # if output_filename is None:
+    #     output_filename = filename  # overwrite the existing archive
+    #
+    # # create a new archive from the existing files + compiled binary
+    # create_zip_archive(output_filename, unzipdir2)
+    #
+    # # clean up
+    # rmtree(unzipdir, ignore_errors=True)
+    # rmtree(unzipdir2, ignore_errors=True)
 
 
 def remove_source_code(filename: str | PathLike) -> None:

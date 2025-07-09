@@ -43,3 +43,7 @@ def test_simulate():
 
     assert output.startswith(b'[OK] [ModelExchange]: GUID = {'),\
         "Placeholders have not been substituted w/ variadic arguments."
+
+def test_compile(reference_fmus_dist_dir):
+    filename = reference_fmus_dist_dir / "3.0" / "Dahlquist.fmu"
+    check_output(['fmpy', 'compile', filename])

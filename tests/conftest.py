@@ -1,3 +1,5 @@
+from typing import Iterator
+
 import os
 from os import makedirs
 from shutil import rmtree
@@ -32,7 +34,7 @@ def resources_dir():
 
 
 @pytest.fixture(scope='session')
-def reference_fmus_dist_dir(resources_dir) -> Path:
+def reference_fmus_dist_dir(resources_dir) -> Iterator[Path]:
 
     version = '0.0.37'
     checksum = '9b0d6bfbceef6fc0e724620ea748f26d03ca3cf6048d17436c49b9340d553ec4'

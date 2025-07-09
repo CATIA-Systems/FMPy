@@ -1,10 +1,11 @@
 """ FMI 2.0 interface """
 
-import pathlib
 from ctypes import *
-from . import free, calloc
-from .fmi1 import _FMU, FMICallException, printLogMessage
 
+import pathlib
+
+from . import free, calloc
+from .fmi1 import _FMU, printLogMessage
 
 fmi2Component            = c_void_p
 fmi2ComponentEnvironment = c_void_p
@@ -54,7 +55,6 @@ class fmi2CallbackFunctions(Structure):
                 ('stepFinished',         fmi2StepFinishedTYPE),
                 ('componentEnvironment', fmi2ComponentEnvironment)]
 
-
 class fmi2EventInfo(Structure):
 
     _fields_ = [('newDiscreteStatesNeeded',           fmi2Boolean),
@@ -82,50 +82,6 @@ class _FMU2(_FMU):
 
     def __init__(self, **kwargs):
         super(_FMU2, self).__init__(**kwargs)
-
-    def _fmi2Function(self, fname, argnames, argtypes, restype=fmi2Status):
-        """ Add an FMI 2.0 function to this instance and add a wrapper that allows
-        logging and checks the return code if the return type is fmi2Status
-
-        Parameters:
-            fname     the name of the function
-            argnames  names of the arguments
-            argtypes  types of the arguments
-            restype   return type
-        """
-
-        if not hasattr(self.dll, fname):
-            if self.requireFunctions:
-                raise Exception(f"Function {fname} is missing in shared library.")
-            else:
-                def raise_exception(*args):
-                    raise Exception(f"Function {fname} is missing in shared library.")
-                setattr(self, fname, raise_exception)
-                return
-
-        # get the exported function form the shared library
-        f = getattr(self.dll, fname)
-        f.argtypes = argtypes
-        f.restype = restype
-
-        def w(*args):
-            """ Wrapper function for the FMI call """
-
-            # call the FMI function
-            res = f(*args)
-
-            if self.fmiCallLogger is not None:
-                # log the call
-                self._log_fmi_args(fname, argnames, argtypes, args, restype, res)
-
-            if restype == fmi2Status:  # status code
-                # check the status code
-                if res > fmi2Warning:
-                    raise FMICallException(function=fname, status=res)
-
-            return res
-
-        setattr(self, fname, w)
 
     # Inquire version numbers of header files and setting logging status
 
@@ -555,51 +511,41 @@ class FMU2Model(_FMU2):
 
         super(FMU2Model, self).__init__(**kwargs)
 
-        # Enter and exit the different modes
+    # Enter and exit the different modes
 
-        self._fmi2Function('fmi2EnterEventMode',
-                           ['component'],
-                           [fmi2Component])
+    def fmi2EnterEventMode(self, component: fmi2Component) -> fmi2Status:
+        return self._call("fmi2EnterEventMode", component)
 
-        self._fmi2Function('fmi2NewDiscreteStates',
-                           ['component', 'eventInfo'],
-                           [fmi2Component, POINTER(fmi2EventInfo)])
+    def fmi2NewDiscreteStates(self, component: fmi2Component, eventInfo: POINTER(fmi2EventInfo)) -> fmi2Status:
+        return self._call("fmi2NewDiscreteStates", component, eventInfo)
 
-        self._fmi2Function('fmi2EnterContinuousTimeMode',
-                           ['component'],
-                           [fmi2Component])
+    def fmi2EnterContinuousTimeMode(self, component: fmi2Component) -> fmi2Status:
+        return self._call("fmi2EnterContinuousTimeMode", component)
 
-        self._fmi2Function('fmi2CompletedIntegratorStep',
-                           ['component', 'noSetFMUStatePriorToCurrentPoint', 'enterEventMode', 'terminateSimulation'],
-                           [fmi2Component, fmi2Boolean, POINTER(fmi2Boolean), POINTER(fmi2Boolean)])
+    def fmi2CompletedIntegratorStep(self, component: fmi2Component, noSetFMUStatePriorToCurrentPoint: fmi2Boolean, enterEventMode: POINTER(fmi2Boolean), terminateSimulation: POINTER(fmi2Boolean)) -> fmi2Status:
+        return self._call("fmi2CompletedIntegratorStep", component, noSetFMUStatePriorToCurrentPoint, enterEventMode, terminateSimulation)
 
-        # Providing independent variables and re-initialization of caching
+    # Providing independent variables and re-initialization of caching
 
-        self._fmi2Function('fmi2SetTime',
-                           ['component', 'time'],
-                           [fmi2Component, fmi2Real])
+    def fmi2SetTime(self, component: fmi2Component, time: fmi2Real) -> fmi2Status:
+        return self._call("fmi2SetTime", component, time)
 
-        self._fmi2Function('fmi2SetContinuousStates',
-                           ['component', 'x', 'nx'],
-                           [fmi2Component, POINTER(fmi2Real), c_size_t])
+    def fmi2SetContinuousStates(self, component: fmi2Component, x: POINTER(fmi2Real), nx: c_size_t) -> fmi2Status:
+        return self._call("fmi2SetContinuousStates", component, x, nx)
 
-        # Evaluation of the model equations
+    # Evaluation of the model equations
 
-        self._fmi2Function('fmi2GetDerivatives',
-                           ['component', 'derivatives', 'nx'],
-                           [fmi2Component, POINTER(fmi2Real), c_size_t])
+    def fmi2GetDerivatives(self, component: fmi2Component, derivatives: POINTER(fmi2Real), nx: c_size_t) -> fmi2Status:
+        return self._call("fmi2GetDerivatives", component, derivatives, nx)
 
-        self._fmi2Function('fmi2GetEventIndicators',
-                           ['component', 'eventIndicators', 'ni'],
-                           [fmi2Component, POINTER(fmi2Real), c_size_t])
+    def fmi2GetEventIndicators(self, component: fmi2Component, eventIndicators: POINTER(fmi2Real), ni: c_size_t) -> fmi2Status:
+        return self._call("fmi2GetEventIndicators", component, eventIndicators, ni)
 
-        self._fmi2Function('fmi2GetContinuousStates',
-                           ['component', 'x', 'nx'],
-                           [fmi2Component, POINTER(fmi2Real), c_size_t])
+    def fmi2GetContinuousStates(self, component: fmi2Component, x: POINTER(fmi2Real), nx: c_size_t) -> fmi2Status:
+        return self._call("fmi2GetContinuousStates", component, x, nx)
 
-        self._fmi2Function('fmi2GetNominalsOfContinuousStates',
-                           ['component', 'x_nominal', 'nx'],
-                           [fmi2Component, POINTER(fmi2Real), c_size_t])
+    def fmi2GetNominalsOfContinuousStates(self, component: fmi2Component, x_nominal: POINTER(fmi2Real), nx: c_size_t) -> fmi2Status:
+        return self._call("fmi2GetNominalsOfContinuousStates", component, x_nominal, nx)
 
     # Enter and exit the different modes
 
@@ -662,41 +608,34 @@ class FMU2Slave(_FMU2):
 
         # Simulating the slave
 
-        self._fmi2Function('fmi2SetRealInputDerivatives',
-                           ['c', 'vr', 'nvr', 'order', 'value'],
-                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer), POINTER(fmi2Real)])
+    def fmi2SetRealInputDerivatives(self, c: fmi2Component, vr: POINTER(fmi2ValueReference), nvr: c_size_t, order: POINTER(fmi2Integer), value: POINTER(fmi2Real)) -> fmi2Status:
+        return self._call("fmi2SetRealInputDerivatives", c, vr, nvr, order, value)
 
-        self._fmi2Function('fmi2GetRealOutputDerivatives',
-                           ['c', 'vr', 'nvr', 'order', 'value'],
-                           [fmi2Component, POINTER(fmi2ValueReference), c_size_t, POINTER(fmi2Integer), POINTER(fmi2Real)])
+    def fmi2GetRealOutputDerivatives(self, c: fmi2Component, vr: POINTER(fmi2ValueReference), nvr: c_size_t, order: POINTER(fmi2Integer), value: POINTER(fmi2Real)) -> fmi2Status:
+        return self._call("fmi2GetRealOutputDerivatives", c, vr, nvr, order, value)
 
-        self._fmi2Function('fmi2DoStep',
-                           ['component', 'currentCommunicationPoint', 'communicationStepSize', 'noSetFMUStatePriorToCurrentPoint'],
-                           [fmi2Component, fmi2Real, fmi2Real, fmi2Boolean])
+    def fmi2DoStep(self, c: fmi2Component, currentCommunicationPoint: fmi2Real, communicationStepSize: fmi2Real, noSetFMUStatePriorToCurrentPoint: fmi2Boolean) -> fmi2Status:
+        return self._call("fmi2DoStep", c, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint)
 
-        self._fmi2Function('fmi2CancelStep', ['component'], [fmi2Component])
+    def fmi2CancelStep(self, c: fmi2Component) -> fmi2Status:
+        return self._call("fmi2CancelStep", c)
 
-        # Inquire slave status
+    # Inquire slave status
 
-        self._fmi2Function('fmi2GetStatus',
-                           ['component', 'kind', 'value'],
-                           [fmi2Component, fmi2StatusKind, POINTER(fmi2Status)])
+    def fmi2GetStatus(self, c: fmi2Component, kind: fmi2StatusKind, value: POINTER(fmi2Status)) -> fmi2Status:
+        return self._call("fmi2GetStatus", c, kind, value)
 
-        self._fmi2Function('fmi2GetRealStatus',
-                           ['component', 'kind', 'value'],
-                           [fmi2Component, fmi2StatusKind, POINTER(fmi2Real)])
+    def fmi2GetRealStatus(self, c: fmi2Component, kind: fmi2StatusKind, value: POINTER(fmi2Real)) -> fmi2Status:
+        return self._call("fmi2GetRealStatus", c, kind, value)
 
-        self._fmi2Function('fmi2GetIntegerStatus',
-                           ['component', 'kind', 'value'],
-                           [fmi2Component, fmi2StatusKind, POINTER(fmi2Integer)])
+    def fmi2GetIntegerStatus(self, c: fmi2Component, kind: fmi2StatusKind, value: POINTER(fmi2Integer)) -> fmi2Status:
+        return self._call("fmi2GetIntegerStatus", c, kind, value)
 
-        self._fmi2Function('fmi2GetBooleanStatus',
-                           ['component', 'kind', 'value'],
-                           [fmi2Component, fmi2StatusKind, POINTER(fmi2Boolean)])
+    def fmi2GetBooleanStatus(self, c: fmi2Component, kind: fmi2StatusKind, value: POINTER(fmi2Boolean)) -> fmi2Status:
+        return self._call("fmi2GetBooleanlStatus", c, kind, value)
 
-        self._fmi2Function('fmi2GetStringStatus',
-                           ['component', 'kind', 'value'],
-                           [fmi2Component, fmi2StatusKind, POINTER(fmi2String)])
+    def fmi2GetStringStatus(self, c: fmi2Component, kind: fmi2StatusKind, value: POINTER(fmi2String)) -> fmi2Status:
+        return self._call("fmi2GetStringStatus", c, kind, value)
 
     # Simulating the slave
 

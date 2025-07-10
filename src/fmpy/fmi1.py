@@ -1,6 +1,7 @@
 """FMI 1.0 interface"""
 
 import ctypes
+import types
 
 from typing import Any, Iterable
 
@@ -379,9 +380,29 @@ class _FMU(object):
                 else:
                     f = getattr(self.dll, name)
                 if sig.parameters:
-                    f.argnames, f.argtypes = zip(
-                        *((v.name, v.annotation) for v in sig.parameters.values())
-                    )
+                    argnames = []
+                    argtypes = []
+                    for value in sig.parameters.values():
+                        argnames.append(value.name)
+                        import typing
+                        if isinstance(value.annotation, types.UnionType):
+                            args = typing.get_args(value.annotation)
+                            argtypes.append(args[0])
+                        else:
+                            argtypes.append(value.annotation)
+                    try:
+                            # t = type(value.annotation)
+                            # import typing
+                            # args = typing.get_args(value.annotation)
+
+                        f.argnames = argnames
+                        f.argtypes = argtypes
+
+                        #     f.argnames, f.argtypes = zip(
+                        #         *((v.name, v.annotation) for v in sig.parameters.values())
+                        #     )
+                    except Exception as ex:
+                        print(ex)
                 else:
                     f.argnames, f.argtypes = (), ()
                 f.restype = sig.return_annotation

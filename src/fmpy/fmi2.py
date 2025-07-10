@@ -317,9 +317,9 @@ class _FMU2(_FMU):
         self,
         c: fmi2Component,
         vUnknown_ref: POINTER(fmi2ValueReference),
-        nUnknown: c_size_t,
+        nUnknown: c_size_t | int,
         vKnown_ref: POINTER(fmi2ValueReference),
-        nKnown: c_size_t,
+        nKnown: c_size_t | int,
         dvKnown: POINTER(fmi2Real),
         dvUnknown: POINTER(fmi2Real),
     ) -> fmi2Status:

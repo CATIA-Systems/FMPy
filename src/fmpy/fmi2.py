@@ -583,33 +583,33 @@ class FMU2Model(_FMU2):
 
     # Providing independent variables and re-initialization of caching
 
-    def fmi2SetTime(self, c: fmi2Component, time: fmi2Real) -> fmi2Status:
+    def fmi2SetTime(self, c: fmi2Component, time: fmi2Real | float) -> fmi2Status:
         return self._call("fmi2SetTime", c, time)
 
     def fmi2SetContinuousStates(
-        self, c: fmi2Component, x: POINTER(fmi2Real), nx: c_size_t
+        self, c: fmi2Component, x: POINTER(fmi2Real), nx: c_size_t | int
     ) -> fmi2Status:
         return self._call("fmi2SetContinuousStates", c, x, nx)
 
     # Evaluation of the model equations
 
     def fmi2GetDerivatives(
-        self, c: fmi2Component, derivatives: POINTER(fmi2Real), nx: c_size_t
+        self, c: fmi2Component, derivatives: POINTER(fmi2Real), nx: c_size_t | int
     ) -> fmi2Status:
         return self._call("fmi2GetDerivatives", c, derivatives, nx)
 
     def fmi2GetEventIndicators(
-        self, c: fmi2Component, eventIndicators: POINTER(fmi2Real), ni: c_size_t
+        self, c: fmi2Component, eventIndicators: POINTER(fmi2Real), ni: c_size_t | int
     ) -> fmi2Status:
         return self._call("fmi2GetEventIndicators", c, eventIndicators, ni)
 
     def fmi2GetContinuousStates(
-        self, c: fmi2Component, x: POINTER(fmi2Real), nx: c_size_t
+        self, c: fmi2Component, x: POINTER(fmi2Real), nx: c_size_t | int
     ) -> fmi2Status:
         return self._call("fmi2GetContinuousStates", c, x, nx)
 
     def fmi2GetNominalsOfContinuousStates(
-        self, c: fmi2Component, x_nominal: POINTER(fmi2Real), nx: c_size_t
+        self, c: fmi2Component, x_nominal: POINTER(fmi2Real), nx: c_size_t | int
     ) -> fmi2Status:
         return self._call("fmi2GetNominalsOfContinuousStates", c, x_nominal, nx)
 
@@ -702,8 +702,8 @@ class FMU2Slave(_FMU2):
     def fmi2DoStep(
         self,
         c: fmi2Component,
-        currentCommunicationPoint: fmi2Real,
-        communicationStepSize: fmi2Real,
+        currentCommunicationPoint: fmi2Real | float,
+        communicationStepSize: fmi2Real | float,
         noSetFMUStatePriorToCurrentPoint: fmi2Boolean,
     ) -> fmi2Status:
         return self._call(

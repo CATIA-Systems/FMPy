@@ -113,7 +113,7 @@ class _FMU2(_FMU):
     def fmi2SetDebugLogging(
         self,
         c: fmi2Component,
-        loggingOn: fmi2Boolean,
+        loggingOn: fmi2Boolean | bool | int,
         nCategories: c_size_t | int,
         categories: POINTER(fmi2String),
     ) -> fmi2Status:
@@ -133,10 +133,10 @@ class _FMU2(_FMU):
     def fmi2SetupExperiment(
         self,
         c: fmi2Component,
-        toleranceDefined: fmi2Boolean | bool,
+        toleranceDefined: fmi2Boolean | bool | int,
         tolerance: fmi2Real | float,
         startTime: fmi2Real | float,
-        stopTimeDefined: fmi2Boolean | bool,
+        stopTimeDefined: fmi2Boolean | bool | int,
         stopTime: fmi2Real | float,
     ) -> fmi2Status:
         return self._call(
@@ -165,13 +165,13 @@ class _FMU2(_FMU):
 
     def fmi2Instantiate(
         self,
-        instanceName: fmi2String,
-        fmuType: fmi2Type,
-        guid: fmi2String,
-        resourceLocation: fmi2String,
+        instanceName: fmi2String | bytes,
+        fmuType: fmi2Type | int,
+        guid: fmi2String | bytes,
+        resourceLocation: fmi2String | bytes,
         callbacks: POINTER(fmi2CallbackFunctions),
-        visible: fmi2Boolean,
-        loggingOn: fmi2Boolean,
+        visible: fmi2Boolean | bool | int,
+        loggingOn: fmi2Boolean | bool | int,
     ) -> fmi2Component:
         return self._call(
             "fmi2Instantiate",
@@ -296,9 +296,7 @@ class _FMU2(_FMU):
         serializedState: POINTER(fmi2Byte),
         size: c_size_t | int,
     ) -> fmi2Status:
-        return self._call(
-            "fmi2SerializeFMUstate", c, FMUstate, serializedState, size
-        )
+        return self._call("fmi2SerializeFMUstate", c, FMUstate, serializedState, size)
 
     def fmi2DeSerializeFMUstate(
         self,
@@ -307,9 +305,7 @@ class _FMU2(_FMU):
         size: c_size_t | int,
         FMUstate: POINTER(fmi2FMUstate),
     ) -> fmi2Status:
-        return self._call(
-            "fmi2DeSerializeFMUstate", c, serializedState, size, FMUstate
-        )
+        return self._call("fmi2DeSerializeFMUstate", c, serializedState, size, FMUstate)
 
     # Getting partial derivatives
 
@@ -368,8 +364,8 @@ class _FMU2(_FMU):
             self.guid.encode("utf-8"),
             resourceLocation.encode("utf-8"),
             byref(self.callbacks),
-            fmi2True if visible else fmi2False,
-            fmi2True if loggingOn else fmi2False,
+            visible,
+            loggingOn,
         )
 
         if self.component is None:
@@ -569,7 +565,7 @@ class FMU2Model(_FMU2):
     def fmi2CompletedIntegratorStep(
         self,
         c: fmi2Component,
-        noSetFMUStatePriorToCurrentPoint: fmi2Boolean,
+        noSetFMUStatePriorToCurrentPoint: fmi2Boolean | bool | int,
         enterEventMode: POINTER(fmi2Boolean),
         terminateSimulation: POINTER(fmi2Boolean),
     ) -> fmi2Status:
@@ -704,7 +700,7 @@ class FMU2Slave(_FMU2):
         c: fmi2Component,
         currentCommunicationPoint: fmi2Real | float,
         communicationStepSize: fmi2Real | float,
-        noSetFMUStatePriorToCurrentPoint: fmi2Boolean,
+        noSetFMUStatePriorToCurrentPoint: fmi2Boolean | bool | int,
     ) -> fmi2Status:
         return self._call(
             "fmi2DoStep",

@@ -114,7 +114,7 @@ class _FMU2(_FMU):
         self,
         c: fmi2Component,
         loggingOn: fmi2Boolean,
-        nCategories: c_size_t,
+        nCategories: c_size_t | int,
         categories: POINTER(fmi2String),
     ) -> fmi2Status:
         return self._call(
@@ -190,7 +190,7 @@ class _FMU2(_FMU):
         self,
         c: fmi2Component,
         vr: POINTER(fmi2ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         value: POINTER(fmi2Real),
     ) -> fmi2Status:
         return self._call("fmi2GetReal", c, vr, nvr, value)
@@ -199,7 +199,7 @@ class _FMU2(_FMU):
         self,
         c: fmi2Component,
         vr: POINTER(fmi2ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         value: POINTER(fmi2Integer),
     ) -> fmi2Status:
         return self._call("fmi2GetInteger", c, vr, nvr, value)
@@ -208,7 +208,7 @@ class _FMU2(_FMU):
         self,
         c: fmi2Component,
         vr: POINTER(fmi2ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         value: POINTER(fmi2Boolean),
     ) -> fmi2Status:
         return self._call("fmi2GetBoolean", c, vr, nvr, value)
@@ -217,7 +217,7 @@ class _FMU2(_FMU):
         self,
         c: fmi2Component,
         vr: POINTER(fmi2ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         value: POINTER(fmi2String),
     ) -> fmi2Status:
         return self._call("fmi2GetString", c, vr, nvr, value)
@@ -226,7 +226,7 @@ class _FMU2(_FMU):
         self,
         c: fmi2Component,
         vr: POINTER(fmi2ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         value: POINTER(fmi2Real),
     ) -> fmi2Status:
         return self._call("fmi2SetReal", c, vr, nvr, value)
@@ -235,7 +235,7 @@ class _FMU2(_FMU):
         self,
         c: fmi2Component,
         vr: POINTER(fmi2ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         value: POINTER(fmi2Integer),
     ) -> fmi2Status:
         return self._call("fmi2SetInteger", c, vr, nvr, value)
@@ -244,7 +244,7 @@ class _FMU2(_FMU):
         self,
         c: fmi2Component,
         vr: POINTER(fmi2ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         value: POINTER(fmi2Boolean),
     ) -> fmi2Status:
         return self._call("fmi2SetBoolean", c, vr, nvr, value)
@@ -253,7 +253,7 @@ class _FMU2(_FMU):
         self,
         c: fmi2Component,
         vr: POINTER(fmi2ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         value: POINTER(fmi2String),
     ) -> fmi2Status:
         return self._call("fmi2SetString", c, vr, nvr, value)
@@ -294,7 +294,7 @@ class _FMU2(_FMU):
         c: fmi2Component,
         FMUstate: fmi2FMUstate,
         serializedState: POINTER(fmi2Byte),
-        size: c_size_t,
+        size: c_size_t | int,
     ) -> fmi2Status:
         return self._call(
             "fmi2SerializeFMUstate", c, FMUstate, serializedState, size
@@ -304,7 +304,7 @@ class _FMU2(_FMU):
         self,
         c: fmi2Component,
         serializedState: POINTER(fmi2Byte),
-        size: c_size_t,
+        size: c_size_t | int,
         FMUstate: POINTER(fmi2FMUstate),
     ) -> fmi2Status:
         return self._call(
@@ -683,7 +683,7 @@ class FMU2Slave(_FMU2):
         self,
         c: fmi2Component,
         vr: POINTER(fmi2ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         order: POINTER(fmi2Integer),
         value: POINTER(fmi2Real),
     ) -> fmi2Status:
@@ -693,7 +693,7 @@ class FMU2Slave(_FMU2):
         self,
         c: fmi2Component,
         vr: POINTER(fmi2ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         order: POINTER(fmi2Integer),
         value: POINTER(fmi2Real),
     ) -> fmi2Status:

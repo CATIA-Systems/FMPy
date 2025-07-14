@@ -133,11 +133,11 @@ class _FMU2(_FMU):
     def fmi2SetupExperiment(
         self,
         c: fmi2Component,
-        toleranceDefined: fmi2Boolean,
-        tolerance: fmi2Real,
-        startTime: fmi2Real,
-        stopTimeDefined: fmi2Boolean,
-        stopTime: fmi2Real,
+        toleranceDefined: fmi2Boolean | bool,
+        tolerance: fmi2Real | float,
+        startTime: fmi2Real | float,
+        stopTimeDefined: fmi2Boolean | bool,
+        stopTime: fmi2Real | float,
     ) -> fmi2Status:
         return self._call(
             "fmi2SetupExperiment",

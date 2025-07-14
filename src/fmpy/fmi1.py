@@ -373,40 +373,34 @@ class _FMU(object):
 
         for name, value in inspect.getmembers(self):
             if name.startswith(prefix):
-                ff = getattr(self, name)
-                sig = inspect.signature(ff)
+
+                py_fun = getattr(self, name)
+                sig = inspect.signature(py_fun)
+
+                c_fun_name = name
+
                 if identifier:
-                    f = getattr(self.dll, identifier + name.replace("fmi1", "fmi"))
-                else:
-                    f = getattr(self.dll, name)
-                if sig.parameters:
-                    argnames = []
-                    argtypes = []
-                    for value in sig.parameters.values():
-                        argnames.append(value.name)
-                        import typing
-                        if isinstance(value.annotation, types.UnionType):
-                            args = typing.get_args(value.annotation)
-                            argtypes.append(args[0])
-                        else:
-                            argtypes.append(value.annotation)
-                    try:
-                            # t = type(value.annotation)
-                            # import typing
-                            # args = typing.get_args(value.annotation)
+                    c_fun_name = identifier + c_fun_name.replace("fmi1", "fmi")
 
-                        f.argnames = argnames
-                        f.argtypes = argtypes
+                c_fun = getattr(self.dll, c_fun_name)
 
-                        #     f.argnames, f.argtypes = zip(
-                        #         *((v.name, v.annotation) for v in sig.parameters.values())
-                        #     )
-                    except Exception as ex:
-                        print(ex)
-                else:
-                    f.argnames, f.argtypes = (), ()
-                f.restype = sig.return_annotation
-                self._functions[name] = f
+                argnames = []
+                argtypes = []
+
+                for param in sig.parameters.values():
+                    argnames.append(param.name)
+                    import typing
+                    if isinstance(param.annotation, types.UnionType):
+                        args = typing.get_args(param.annotation)
+                        argtypes.append(args[0])
+                    else:
+                        argtypes.append(param.annotation)
+
+                c_fun.argnames = argnames
+                c_fun.argtypes = argtypes
+
+                c_fun.restype = sig.return_annotation
+                self._functions[name] = c_fun
 
 
 class _FMU1(_FMU):

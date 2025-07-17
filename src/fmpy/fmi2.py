@@ -14,6 +14,7 @@ from ctypes import (
     CFUNCTYPE,
     create_string_buffer,
 )
+from typing import Iterable, Sequence
 
 import pathlib
 
@@ -104,10 +105,10 @@ class _FMU2(_FMU):
 
     # Inquire version numbers of header files and setting logging status
 
-    def fmi2GetTypesPlatform(self) -> fmi2String:
+    def fmi2GetTypesPlatform(self) -> bytes:
         return self._call("fmi2GetTypesPlatform")
 
-    def fmi2GetVersion(self) -> fmi2String:
+    def fmi2GetVersion(self) -> bytes:
         return self._call("fmi2GetVersion")
 
     def fmi2SetDebugLogging(
@@ -138,7 +139,7 @@ class _FMU2(_FMU):
         startTime: fmi2Real | float,
         stopTimeDefined: fmi2Boolean | bool | int,
         stopTime: fmi2Real | float,
-    ) -> fmi2Status:
+    ) -> int:
         return self._call(
             "fmi2SetupExperiment",
             c,
@@ -149,16 +150,16 @@ class _FMU2(_FMU):
             stopTime,
         )
 
-    def fmi2EnterInitializationMode(self, c: fmi2Component) -> fmi2Status:
+    def fmi2EnterInitializationMode(self, c: fmi2Component) -> int:
         return self._call("fmi2EnterInitializationMode", c)
 
-    def fmi2ExitInitializationMode(self, c: fmi2Component) -> fmi2Status:
+    def fmi2ExitInitializationMode(self, c: fmi2Component) -> int:
         return self._call("fmi2ExitInitializationMode", c)
 
-    def fmi2Terminate(self, c: fmi2Component) -> fmi2Status:
+    def fmi2Terminate(self, c: fmi2Component) -> int:
         return self._call("fmi2Terminate", c)
 
-    def fmi2Reset(self, c: fmi2Component) -> fmi2Status:
+    def fmi2Reset(self, c: fmi2Component) -> int:
         return self._call("fmi2Reset", c)
 
     # Creation and destruction of FMU instances and setting debug status
@@ -192,7 +193,7 @@ class _FMU2(_FMU):
         vr: POINTER(fmi2ValueReference),
         nvr: c_size_t | int,
         value: POINTER(fmi2Real),
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2GetReal", c, vr, nvr, value)
 
     def fmi2GetInteger(
@@ -201,7 +202,7 @@ class _FMU2(_FMU):
         vr: POINTER(fmi2ValueReference),
         nvr: c_size_t | int,
         value: POINTER(fmi2Integer),
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2GetInteger", c, vr, nvr, value)
 
     def fmi2GetBoolean(
@@ -210,7 +211,7 @@ class _FMU2(_FMU):
         vr: POINTER(fmi2ValueReference),
         nvr: c_size_t | int,
         value: POINTER(fmi2Boolean),
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2GetBoolean", c, vr, nvr, value)
 
     def fmi2GetString(
@@ -219,7 +220,7 @@ class _FMU2(_FMU):
         vr: POINTER(fmi2ValueReference),
         nvr: c_size_t | int,
         value: POINTER(fmi2String),
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2GetString", c, vr, nvr, value)
 
     def fmi2SetReal(
@@ -228,7 +229,7 @@ class _FMU2(_FMU):
         vr: POINTER(fmi2ValueReference),
         nvr: c_size_t | int,
         value: POINTER(fmi2Real),
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2SetReal", c, vr, nvr, value)
 
     def fmi2SetInteger(
@@ -237,7 +238,7 @@ class _FMU2(_FMU):
         vr: POINTER(fmi2ValueReference),
         nvr: c_size_t | int,
         value: POINTER(fmi2Integer),
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2SetInteger", c, vr, nvr, value)
 
     def fmi2SetBoolean(
@@ -246,7 +247,7 @@ class _FMU2(_FMU):
         vr: POINTER(fmi2ValueReference),
         nvr: c_size_t | int,
         value: POINTER(fmi2Boolean),
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2SetBoolean", c, vr, nvr, value)
 
     def fmi2SetString(
@@ -255,7 +256,7 @@ class _FMU2(_FMU):
         vr: POINTER(fmi2ValueReference),
         nvr: c_size_t | int,
         value: POINTER(fmi2String),
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2SetString", c, vr, nvr, value)
 
     # Getting and setting the internal FMU state
@@ -264,21 +265,21 @@ class _FMU2(_FMU):
         self,
         c: fmi2Component,
         FMUstate: POINTER(fmi2FMUstate),
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2GetFMUstate", c, FMUstate)
 
     def fmi2SetFMUstate(
         self,
         c: fmi2Component,
         FMUstate: fmi2FMUstate,
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2SetFMUstate", c, FMUstate)
 
     def fmi2FreeFMUstate(
         self,
         c: fmi2Component,
         FMUstate: POINTER(fmi2FMUstate),
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2FreeFMUstate", c, FMUstate)
 
     def fmi2SerializedFMUstateSize(
@@ -286,7 +287,7 @@ class _FMU2(_FMU):
         c: fmi2Component,
         FMUstate: fmi2FMUstate,
         size: POINTER(c_size_t),
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2SerializedFMUstateSize", c, FMUstate, size)
 
     def fmi2SerializeFMUstate(
@@ -295,7 +296,7 @@ class _FMU2(_FMU):
         FMUstate: fmi2FMUstate,
         serializedState: POINTER(fmi2Byte),
         size: c_size_t | int,
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2SerializeFMUstate", c, FMUstate, serializedState, size)
 
     def fmi2DeSerializeFMUstate(
@@ -304,7 +305,7 @@ class _FMU2(_FMU):
         serializedState: POINTER(fmi2Byte),
         size: c_size_t | int,
         FMUstate: POINTER(fmi2FMUstate),
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2DeSerializeFMUstate", c, serializedState, size, FMUstate)
 
     # Getting partial derivatives
@@ -318,7 +319,7 @@ class _FMU2(_FMU):
         nKnown: c_size_t | int,
         dvKnown: POINTER(fmi2Real),
         dvUnknown: POINTER(fmi2Real),
-    ) -> fmi2Status:
+    ) -> int:
         return self._call(
             "fmi2GetDirectionalDerivative",
             c,
@@ -551,15 +552,15 @@ class FMU2Model(_FMU2):
 
     # Enter and exit the different modes
 
-    def fmi2EnterEventMode(self, c: fmi2Component) -> fmi2Status:
+    def fmi2EnterEventMode(self, c: fmi2Component) -> int:
         return self._call("fmi2EnterEventMode", c)
 
     def fmi2NewDiscreteStates(
         self, c: fmi2Component, eventInfo: POINTER(fmi2EventInfo)
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2NewDiscreteStates", c, eventInfo)
 
-    def fmi2EnterContinuousTimeMode(self, c: fmi2Component) -> fmi2Status:
+    def fmi2EnterContinuousTimeMode(self, c: fmi2Component) -> int:
         return self._call("fmi2EnterContinuousTimeMode", c)
 
     def fmi2CompletedIntegratorStep(
@@ -568,7 +569,7 @@ class FMU2Model(_FMU2):
         noSetFMUStatePriorToCurrentPoint: fmi2Boolean | bool | int,
         enterEventMode: POINTER(fmi2Boolean),
         terminateSimulation: POINTER(fmi2Boolean),
-    ) -> fmi2Status:
+    ) -> int:
         return self._call(
             "fmi2CompletedIntegratorStep",
             c,
@@ -579,34 +580,34 @@ class FMU2Model(_FMU2):
 
     # Providing independent variables and re-initialization of caching
 
-    def fmi2SetTime(self, c: fmi2Component, time: fmi2Real | float) -> fmi2Status:
+    def fmi2SetTime(self, c: fmi2Component, time: fmi2Real | float) -> int:
         return self._call("fmi2SetTime", c, time)
 
     def fmi2SetContinuousStates(
         self, c: fmi2Component, x: POINTER(fmi2Real), nx: c_size_t | int
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2SetContinuousStates", c, x, nx)
 
     # Evaluation of the model equations
 
     def fmi2GetDerivatives(
         self, c: fmi2Component, derivatives: POINTER(fmi2Real), nx: c_size_t | int
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2GetDerivatives", c, derivatives, nx)
 
     def fmi2GetEventIndicators(
         self, c: fmi2Component, eventIndicators: POINTER(fmi2Real), ni: c_size_t | int
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2GetEventIndicators", c, eventIndicators, ni)
 
     def fmi2GetContinuousStates(
         self, c: fmi2Component, x: POINTER(fmi2Real), nx: c_size_t | int
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2GetContinuousStates", c, x, nx)
 
     def fmi2GetNominalsOfContinuousStates(
         self, c: fmi2Component, x_nominal: POINTER(fmi2Real), nx: c_size_t | int
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2GetNominalsOfContinuousStates", c, x_nominal, nx)
 
     # Enter and exit the different modes
@@ -682,7 +683,7 @@ class FMU2Slave(_FMU2):
         nvr: c_size_t | int,
         order: POINTER(fmi2Integer),
         value: POINTER(fmi2Real),
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2SetRealInputDerivatives", c, vr, nvr, order, value)
 
     def fmi2GetRealOutputDerivatives(
@@ -692,7 +693,7 @@ class FMU2Slave(_FMU2):
         nvr: c_size_t | int,
         order: POINTER(fmi2Integer),
         value: POINTER(fmi2Real),
-    ) -> fmi2Status:
+    ) -> int:
         return self._call("fmi2GetRealOutputDerivatives", c, vr, nvr, order, value)
 
     def fmi2DoStep(
@@ -701,7 +702,7 @@ class FMU2Slave(_FMU2):
         currentCommunicationPoint: fmi2Real | float,
         communicationStepSize: fmi2Real | float,
         noSetFMUStatePriorToCurrentPoint: fmi2Boolean | bool | int,
-    ) -> fmi2Status:
+    ) -> int:
         return self._call(
             "fmi2DoStep",
             c,
@@ -710,34 +711,34 @@ class FMU2Slave(_FMU2):
             noSetFMUStatePriorToCurrentPoint,
         )
 
-    def fmi2CancelStep(self, c: fmi2Component) -> fmi2Status:
+    def fmi2CancelStep(self, c: fmi2Component) -> int:
         return self._call("fmi2CancelStep", c)
 
     # Inquire slave status
 
     def fmi2GetStatus(
-        self, c: fmi2Component, kind: fmi2StatusKind, value: POINTER(fmi2Status)
-    ) -> fmi2Status:
+        self, c: fmi2Component, kind: fmi2StatusKind | int, value: POINTER(fmi2Status)
+    ) -> int:
         return self._call("fmi2GetStatus", c, kind, value)
 
     def fmi2GetRealStatus(
-        self, c: fmi2Component, kind: fmi2StatusKind, value: POINTER(fmi2Real)
-    ) -> fmi2Status:
+        self, c: fmi2Component, kind: fmi2StatusKind | int, value: POINTER(fmi2Real)
+    ) -> int:
         return self._call("fmi2GetRealStatus", c, kind, value)
 
     def fmi2GetIntegerStatus(
-        self, c: fmi2Component, kind: fmi2StatusKind, value: POINTER(fmi2Integer)
-    ) -> fmi2Status:
+        self, c: fmi2Component, kind: fmi2StatusKind | int, value: POINTER(fmi2Integer)
+    ) -> int:
         return self._call("fmi2GetIntegerStatus", c, kind, value)
 
     def fmi2GetBooleanStatus(
-        self, c: fmi2Component, kind: fmi2StatusKind, value: POINTER(fmi2Boolean)
-    ) -> fmi2Status:
-        return self._call("fmi2GetBooleanlStatus", c, kind, value)
+        self, c: fmi2Component, kind: fmi2StatusKind | int, value: POINTER(fmi2Boolean)
+    ) -> int:
+        return self._call("fmi2GetBooleanStatus", c, kind, value)
 
     def fmi2GetStringStatus(
-        self, c: fmi2Component, kind: fmi2StatusKind, value: POINTER(fmi2String)
-    ) -> fmi2Status:
+        self, c: fmi2Component, kind: fmi2StatusKind | int, value: POINTER(fmi2String)
+    ) -> int:
         return self._call("fmi2GetStringStatus", c, kind, value)
 
     # Simulating the slave

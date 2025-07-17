@@ -171,7 +171,7 @@ class _FMU(object):
         self.fmiCallLogger = fmiCallLogger
         self.requireFunctions = requireFunctions
 
-        self._functions: dict[str, "ctypes._FuncPointer"] = dict()
+        self._functions: dict[str, ctypes._FuncPointer] = dict()
         """Functions loaded from the shared library"""
 
         # remember the current working directory
@@ -363,6 +363,11 @@ class _FMU(object):
         if self.fmiCallLogger is not None:
             self._log_fmi_args(fname, f.argnames, f.argtypes, args, f.restype, res)
 
+        if f.restype == c_int:
+            # check the status code
+            if res > fmi1Warning:
+                raise FMICallException(function=fname, status=res)
+
         return res
 
     def _loadFunctions(self) -> None:
@@ -391,7 +396,7 @@ class _FMU(object):
                 if identifier:
                     c_fun_name = identifier + c_fun_name.replace("fmi1", "fmi")
 
-                c_fun = getattr(self.dll, c_fun_name)
+                c_fun: ctypes._FuncPointer = getattr(self.dll, c_fun_name)
 
                 argnames = []
                 argtypes = []
@@ -409,7 +414,14 @@ class _FMU(object):
                 c_fun.argnames = argnames
                 c_fun.argtypes = argtypes
 
-                c_fun.restype = sig.return_annotation
+                restype = sig.return_annotation
+
+                if restype == bytes:
+                    restype = c_char_p
+                elif restype == int:
+                    restype = c_int
+
+                c_fun.restype = restype
                 self._functions[name] = c_fun
 
 
@@ -419,7 +431,7 @@ class _FMU1(_FMU):
     def __init__(self, **kwargs):
         super(_FMU1, self).__init__(**kwargs)
 
-    def fmi1GetVersion(self) -> fmi1String:
+    def fmi1GetVersion(self) -> bytes:
         return self._call("fmi1GetVersion")
 
     def fmi1SetDebugLogging(
@@ -571,7 +583,7 @@ class FMU1Slave(_FMU1):
 
     # Inquire version numbers of header files
 
-    def fmi1GetTypesPlatform(self) -> fmi1String:
+    def fmi1GetTypesPlatform(self) -> bytes:
         return self._call("fmi1GetTypesPlatform")
 
     # Creation and destruction of slave instances and setting debug status

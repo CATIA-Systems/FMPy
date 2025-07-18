@@ -29,7 +29,7 @@ import os
 from typing import Tuple, Sequence, List, Iterable
 
 from . import sharedLibraryExtension, platform_tuple
-from .fmi1 import _FMU, FMICallException
+from .fmi1 import _FMU
 
 fmi3Instance = c_void_p
 fmi3InstanceEnvironment = c_void_p
@@ -106,8 +106,8 @@ fmi3UnlockPreemptionCallback = CFUNCTYPE(None)
 def printLogMessage(
     instanceEnvironment: fmi3InstanceEnvironment,
     status: fmi3Status,
-    category: fmi3String,
-    message: fmi3String,
+    category: fmi3String | bytes,
+    message: fmi3String | bytes,
 ) -> None:
     """Print the FMU's log messages to the command line"""
 
@@ -131,17 +131,17 @@ class _FMU3(_FMU):
 
     # inquire version numbers and setting logging status
 
-    def fmi3GetVersion(self) -> fmi3String:
+    def fmi3GetVersion(self) -> bytes:
         return self._call("fmi3GetVersion")
 
     def fmi3SetDebugLogging(
         self,
         instance: fmi3Instance,
-        loggingOn: fmi3Boolean,
-        nCategories: c_size_t,
+        loggingOn: fmi3Boolean | bool,
+        nCategories: c_size_t | int,
         categories: POINTER(fmi3String),
-    ):
-        self._call(
+    ) -> int:
+        return self._call(
             "fmi3SetDebugLogging",
             instance,
             loggingOn,
@@ -151,11 +151,11 @@ class _FMU3(_FMU):
 
     def fmi3InstantiateModelExchange(
         self,
-        instanceName: fmi3String,
-        instantiationToken: fmi3String,
-        resourcePath: fmi3String,
-        visible: fmi3Boolean,
-        loggingOn: fmi3Boolean,
+        instanceName: fmi3String | bytes,
+        instantiationToken: fmi3String | bytes,
+        resourcePath: fmi3String | bytes,
+        visible: fmi3Boolean | bool,
+        loggingOn: fmi3Boolean | bool,
         instanceEnvironment: fmi3InstanceEnvironment,
         logMessage: fmi3LogMessageCallback,
     ) -> fmi3Instance:
@@ -172,15 +172,15 @@ class _FMU3(_FMU):
 
     def fmi3InstantiateCoSimulation(
         self,
-        instanceName: fmi3String,
-        instantiationToken: fmi3String,
-        resourcePath: fmi3String,
-        visible: fmi3Boolean,
-        loggingOn: fmi3Boolean,
-        eventModeUsed: fmi3Boolean,
-        earlyReturnAllowed: fmi3Boolean,
+        instanceName: fmi3String | bytes,
+        instantiationToken: fmi3String | bytes,
+        resourcePath: fmi3String | bytes,
+        visible: fmi3Boolean | bool,
+        loggingOn: fmi3Boolean | bool,
+        eventModeUsed: fmi3Boolean | bool,
+        earlyReturnAllowed: fmi3Boolean | bool,
         requiredIntermediateVariables: POINTER(fmi3ValueReference),
-        nRequiredIntermediateVariables: c_size_t,
+        nRequiredIntermediateVariables: c_size_t | int,
         instanceEnvironment: fmi3InstanceEnvironment,
         logMessage: fmi3LogMessageCallback,
         intermediateUpdat: fmi3IntermediateUpdateCallback,
@@ -203,11 +203,11 @@ class _FMU3(_FMU):
 
     def fmi3InstantiateScheduledExecution(
         self,
-        instanceName: fmi3String,
-        instantiationToken: fmi3String,
-        resourcePath: fmi3String,
-        visible: fmi3Boolean,
-        loggingOn: fmi3Boolean,
+        instanceName: fmi3String | bytes,
+        instantiationToken: fmi3String | bytes,
+        resourcePath: fmi3String | bytes,
+        visible: fmi3Boolean | bool,
+        loggingOn: fmi3Boolean | bool,
         instanceEnvironment: fmi3InstanceEnvironment,
         logMessage: fmi3LogMessageCallback,
         clockUpdate: fmi3ClockUpdateCallback,
@@ -234,12 +234,12 @@ class _FMU3(_FMU):
     def fmi3EnterInitializationMode(
         self,
         instance: fmi3Instance,
-        toleranceDefined: fmi3Boolean,
-        tolerance: fmi3Float64,
-        startTime: fmi3Float64,
-        stopTimeDefined: fmi3Boolean,
-        stopTime: fmi3Float64,
-    ) -> fmi3Status:
+        toleranceDefined: fmi3Boolean | bool,
+        tolerance: fmi3Float64 | float,
+        startTime: fmi3Float64 | float,
+        stopTimeDefined: fmi3Boolean | bool,
+        stopTime: fmi3Float64 | float,
+    ) -> int:
         return self._call(
             "fmi3EnterInitializationMode",
             instance,
@@ -250,26 +250,26 @@ class _FMU3(_FMU):
             stopTime,
         )
 
-    def fmi3ExitInitializationMode(self, instance: fmi3Instance) -> fmi3Status:
+    def fmi3ExitInitializationMode(self, instance: fmi3Instance) -> int:
         return self._call("fmi3ExitInitializationMode", instance)
 
-    def fmi3EnterEventMode(self, instance: fmi3Instance) -> fmi3Status:
+    def fmi3EnterEventMode(self, instance: fmi3Instance) -> int:
         return self._call("fmi3EnterEventMode", instance)
 
-    def fmi3Terminate(self, instance: fmi3Instance) -> fmi3Status:
+    def fmi3Terminate(self, instance: fmi3Instance) -> int:
         return self._call("fmi3Terminate", instance)
 
-    def fmi3Reset(self, instance: fmi3Instance) -> fmi3Status:
+    def fmi3Reset(self, instance: fmi3Instance) -> int:
         return self._call("fmi3Reset", instance)
 
     def fmi3GetFloat32(
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3Float32),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetFloat32",
             instance,
@@ -285,10 +285,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3Float64),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetFloat64",
             instance,
@@ -302,10 +302,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3Int8),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetInt8",
             instance,
@@ -319,10 +319,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3UInt8),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetUInt8",
             instance,
@@ -336,10 +336,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3Int16),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetInt16",
             instance,
@@ -353,10 +353,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3UInt16),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetUInt16",
             instance,
@@ -370,10 +370,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3Int32),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetInt32",
             instance,
@@ -387,10 +387,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3UInt32),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetUInt32",
             instance,
@@ -404,10 +404,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3Int64),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetInt64",
             instance,
@@ -421,10 +421,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3UInt64),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetUInt64",
             instance,
@@ -438,10 +438,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3Boolean),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetBoolean",
             instance,
@@ -455,10 +455,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3String),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetString",
             instance,
@@ -472,11 +472,11 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         valueSizes: POINTER(c_size_t),
         values: POINTER(fmi3Binary),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetBinary",
             instance,
@@ -491,9 +491,9 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3Clock),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3GetClock",
             instance,
@@ -506,10 +506,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3Float32),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3SetFloat32",
             instance,
@@ -523,10 +523,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3Float64),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3SetFloat64",
             instance,
@@ -540,10 +540,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3Int8),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3SetInt8",
             instance,
@@ -557,10 +557,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3UInt8),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3SetUInt8",
             instance,
@@ -574,10 +574,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3Int16),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3SetInt16",
             instance,
@@ -591,10 +591,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3UInt16),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3SetUInt16",
             instance,
@@ -608,10 +608,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3Int32),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3SetInt32",
             instance,
@@ -625,10 +625,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3UInt32),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3SetUInt32",
             instance,
@@ -642,10 +642,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3Int64),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3SetInt64",
             instance,
@@ -659,10 +659,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3UInt64),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3SetUInt64",
             instance,
@@ -676,10 +676,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3Boolean),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3SetBoolean",
             instance,
@@ -693,10 +693,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3String),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3SetString",
             instance,
@@ -710,11 +710,11 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         valueSizes: POINTER(c_size_t),
         values: POINTER(fmi3Binary),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3SetBinary",
             instance,
@@ -729,9 +729,9 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         values: POINTER(fmi3Clock),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3SetClock",
             instance,
@@ -747,7 +747,7 @@ class _FMU3(_FMU):
         instance: fmi3Instance,
         valueReference: fmi3ValueReference,
         nDependencies: POINTER(c_size_t),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3GetNumberOfVariableDependencies",
             instance,
@@ -763,8 +763,8 @@ class _FMU3(_FMU):
         independents: POINTER(fmi3ValueReference),
         elementIndicesOfIndependents: POINTER(c_size_t),
         dependencyKinds: POINTER(fmi3DependencyKind),
-        nDependencies: c_size_t,
-    ) -> fmi3Status:
+        nDependencies: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetVariableDependencies",
             instance,
@@ -782,7 +782,7 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         FMUState: POINTER(fmi3FMUState),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3GetFMUState",
             instance,
@@ -793,7 +793,7 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         FMUState: fmi3FMUState,
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3SetFMUState",
             instance,
@@ -804,7 +804,7 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         FMUState: POINTER(fmi3FMUState),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3FreeFMUState",
             instance,
@@ -816,7 +816,7 @@ class _FMU3(_FMU):
         instance: fmi3Instance,
         FMUState: fmi3FMUState,
         size: POINTER(c_size_t),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3SerializedFMUStateSize",
             instance,
@@ -829,8 +829,8 @@ class _FMU3(_FMU):
         instance: fmi3Instance,
         FMUState: fmi3FMUState,
         serializedState: POINTER(fmi3Byte),
-        size: c_size_t,
-    ) -> fmi3Status:
+        size: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3SerializeFMUState",
             instance,
@@ -843,9 +843,9 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         serializedState: POINTER(fmi3Byte),
-        size: c_size_t,
+        size: c_size_t | int,
         FMUState: POINTER(fmi3FMUState),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3DeserializeFMUState",
             instance,
@@ -860,14 +860,14 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         unknowns: POINTER(fmi3ValueReference),
-        nUnknowns: c_size_t,
+        nUnknowns: c_size_t | int,
         knowns: POINTER(fmi3ValueReference),
-        nKnowns: c_size_t,
+        nKnowns: c_size_t | int,
         seed: POINTER(fmi3Float64),
-        nSeed: c_size_t,
+        nSeed: c_size_t | int,
         sensitivity: POINTER(fmi3Float64),
-        nSensitivity: c_size_t,
-    ) -> fmi3Status:
+        nSensitivity: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetDirectionalDerivative",
             instance,
@@ -885,14 +885,14 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         unknowns: POINTER(fmi3ValueReference),
-        nUnknowns: c_size_t,
+        nUnknowns: c_size_t | int,
         knowns: POINTER(fmi3ValueReference),
-        nKnowns: c_size_t,
+        nKnowns: c_size_t | int,
         seed: POINTER(fmi3Float64),
-        nSeed: c_size_t,
+        nSeed: c_size_t | int,
         sensitivity: POINTER(fmi3Float64),
-        nSensitivity: c_size_t,
-    ) -> fmi3Status:
+        nSensitivity: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetAdjointDerivative",
             instance,
@@ -911,7 +911,7 @@ class _FMU3(_FMU):
     def fmi3EnterConfigurationMode(
         self,
         instance: fmi3Instance,
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3EnterConfigurationMode",
             instance,
@@ -920,7 +920,7 @@ class _FMU3(_FMU):
     def fmi3ExitConfigurationMode(
         self,
         instance: fmi3Instance,
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3ExitConfigurationMode",
             instance,
@@ -932,10 +932,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         intervals: POINTER(fmi3Float64),
         qualifiers: POINTER(fmi3IntervalQualifier),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3GetIntervalDecimal",
             instance,
@@ -949,11 +949,11 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         counters: POINTER(fmi3UInt64),
         resolutions: POINTER(fmi3UInt64),
         qualifiers: POINTER(fmi3IntervalQualifier),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3GetIntervalFraction",
             instance,
@@ -968,9 +968,9 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         shifts: POINTER(fmi3Float64),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3GetShiftDecimal",
             instance,
@@ -983,10 +983,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         counters: POINTER(fmi3UInt64),
         resolutions: POINTER(fmi3UInt64),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3GetShiftFraction",
             instance,
@@ -1000,9 +1000,9 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         intervals: POINTER(fmi3Float64),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3SetIntervalDecimal",
             instance,
@@ -1015,10 +1015,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         counters: POINTER(fmi3UInt64),
         resolutions: POINTER(fmi3UInt64),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3SetIntervalFraction",
             instance,
@@ -1032,9 +1032,9 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         shifts: POINTER(fmi3Float64),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3SetShiftDecimal",
             instance,
@@ -1047,10 +1047,10 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         counters: POINTER(fmi3UInt64),
         resolutions: POINTER(fmi3UInt64),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3SetShiftFraction",
             instance,
@@ -1063,7 +1063,7 @@ class _FMU3(_FMU):
     def fmi3EvaluateDiscreteStates(
         self,
         instance: fmi3Instance,
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3EvaluateDiscreteStates",
             instance,
@@ -1078,7 +1078,7 @@ class _FMU3(_FMU):
         valuesOfContinuousStatesChanged: POINTER(fmi3Boolean),
         nextEventTimeDefined: POINTER(fmi3Boolean),
         nextEventTime: POINTER(fmi3Float64),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3UpdateDiscreteStates",
             instance,
@@ -1095,7 +1095,7 @@ class _FMU3(_FMU):
     def fmi3EnterContinuousTimeMode(
         self,
         instance: fmi3Instance,
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3EnterContinuousTimeMode",
             instance,
@@ -1104,10 +1104,10 @@ class _FMU3(_FMU):
     def fmi3CompletedIntegratorStep(
         self,
         instance: fmi3Instance,
-        noSetFMUStatePriorToCurrentPoint: fmi3Boolean,
+        noSetFMUStatePriorToCurrentPoint: fmi3Boolean | bool,
         enterEventMode: POINTER(fmi3Boolean),
         terminateSimulation: POINTER(fmi3Boolean),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3CompletedIntegratorStep",
             instance,
@@ -1121,8 +1121,8 @@ class _FMU3(_FMU):
     def fmi3SetTime(
         self,
         instance: fmi3Instance,
-        time: fmi3Float64,
-    ) -> fmi3Status:
+        time: fmi3Float64 | float,
+    ) -> int:
         return self._call(
             "fmi3SetTime",
             instance,
@@ -1133,8 +1133,8 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         continuousStates: POINTER(fmi3Float64),
-        nContinuousStates: c_size_t,
-    ) -> fmi3Status:
+        nContinuousStates: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3SetContinuousStates",
             instance,
@@ -1148,8 +1148,8 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         derivatives: POINTER(fmi3Float64),
-        nContinuousStates: c_size_t,
-    ) -> fmi3Status:
+        nContinuousStates: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetContinuousStateDerivatives",
             instance,
@@ -1161,8 +1161,8 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         eventIndicators: POINTER(fmi3Float64),
-        nEventIndicators: c_size_t,
-    ) -> fmi3Status:
+        nEventIndicators: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetEventIndicators",
             instance,
@@ -1174,8 +1174,8 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         continuousStates: POINTER(fmi3Float64),
-        nContinuousStates: c_size_t,
-    ) -> fmi3Status:
+        nContinuousStates: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetContinuousStates",
             instance,
@@ -1187,8 +1187,8 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         nominals: POINTER(fmi3Float64),
-        nContinuousStates: c_size_t,
-    ) -> fmi3Status:
+        nContinuousStates: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetNominalsOfContinuousStates",
             instance,
@@ -1200,7 +1200,7 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         nEventIndicators: POINTER(c_size_t),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3GetNumberOfEventIndicators",
             instance,
@@ -1211,7 +1211,7 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         nContinuousStates: POINTER(c_size_t),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3GetNumberOfContinuousStates",
             instance,
@@ -1225,7 +1225,7 @@ class _FMU3(_FMU):
     def fmi3EnterStepMode(
         self,
         instance: fmi3Instance,
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3EnterStepMode",
             instance,
@@ -1235,11 +1235,11 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         valueReferences: POINTER(fmi3ValueReference),
-        nValueReferences: c_size_t,
+        nValueReferences: c_size_t | int,
         orders: POINTER(fmi3Int32),
         values: POINTER(fmi3Float64),
-        nValues: c_size_t,
-    ) -> fmi3Status:
+        nValues: c_size_t | int,
+    ) -> int:
         return self._call(
             "fmi3GetOutputDerivatives",
             instance,
@@ -1253,14 +1253,14 @@ class _FMU3(_FMU):
     def fmi3DoStep(
         self,
         instance: fmi3Instance,
-        currentCommunicationPoint: fmi3Float64,
-        communicationStepSize: fmi3Float64,
-        noSetFMUStatePriorToCurrentPoint: fmi3Boolean,
+        currentCommunicationPoint: fmi3Float64 | float,
+        communicationStepSize: fmi3Float64 | float,
+        noSetFMUStatePriorToCurrentPoint: fmi3Boolean | bool,
         eventHandlingNeeded: POINTER(fmi3Boolean),
         terminateSimulation: POINTER(fmi3Boolean),
         earlyReturn: POINTER(fmi3Boolean),
         lastSuccessfulTime: POINTER(fmi3Float64),
-    ) -> fmi3Status:
+    ) -> int:
         return self._call(
             "fmi3DoStep",
             instance,
@@ -1279,64 +1279,14 @@ class _FMU3(_FMU):
         self,
         instance: fmi3Instance,
         clockReference: fmi3ValueReference,
-        activationTime: fmi3Float64,
-    ) -> fmi3Status:
+        activationTime: fmi3Float64 | float,
+    ) -> int:
         return self._call(
             "fmi3ActivateModelPartition",
             instance,
             clockReference,
             activationTime,
         )
-
-    def _fmi3Function(self, fname, params, restype=fmi3Status):
-        """Add an FMI 3.0 function to this instance and add a wrapper that allows
-        logging and checks the return code if the return type is fmi3Status
-
-        Parameters:
-            fname     the name of the function
-            params    parameters as (type, name) tuples
-            restype   return type
-        """
-
-        if not hasattr(self.dll, fname):
-            if self.requireFunctions:
-                raise Exception(f"Function {fname} is missing in shared library.")
-            else:
-
-                def raise_exception(*args):
-                    raise Exception(f"Function {fname} is missing in shared library.")
-
-                setattr(self, fname, raise_exception)
-                return
-
-        if len(params) > 0:
-            argtypes, argnames = zip(*params)
-        else:
-            argtypes = argnames = []
-
-        # get the exported function form the shared library
-        f = getattr(self.dll, fname)
-        f.argtypes = argtypes
-        f.restype = restype
-
-        def w(*args):
-            """Wrapper function for the FMI call"""
-
-            # call the FMI function
-            res = f(*args)
-
-            if self.fmiCallLogger is not None:
-                # log the call
-                self._log_fmi_args(fname, argnames, argtypes, args, restype, res)
-
-            if restype == fmi3Status:  # status code
-                # check the status code
-                if res > fmi3Warning:
-                    raise FMICallException(function=fname, status=res)
-
-            return res
-
-        setattr(self, fname, w)
 
     # Inquire version numbers of header files and setting logging status
 

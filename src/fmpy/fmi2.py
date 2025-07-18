@@ -14,7 +14,6 @@ from ctypes import (
     CFUNCTYPE,
     create_string_buffer,
 )
-from typing import Iterable, Sequence
 
 import pathlib
 

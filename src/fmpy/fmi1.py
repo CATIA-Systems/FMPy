@@ -416,9 +416,9 @@ class _FMU(object):
 
                 restype = sig.return_annotation
 
-                if restype == bytes:
+                if restype is bytes:
                     restype = c_char_p
-                elif restype == int:
+                elif restype is int:
                     restype = c_int
 
                 c_fun.restype = restype

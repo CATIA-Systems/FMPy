@@ -29,7 +29,7 @@ import os
 from typing import Tuple, Sequence, List, Iterable
 
 from . import sharedLibraryExtension, platform_tuple
-from .fmi1 import _FMU, FMICallException
+from .fmi1 import _FMU
 
 fmi3Instance = c_void_p
 fmi3InstanceEnvironment = c_void_p

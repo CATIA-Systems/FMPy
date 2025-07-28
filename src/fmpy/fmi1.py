@@ -1,6 +1,9 @@
 """FMI 1.0 interface"""
 
+import typing
+
 import ctypes
+import types
 
 from typing import Any, Iterable
 
@@ -90,7 +93,13 @@ class fmi1EventInfo(Structure):
     ]
 
 
-def printLogMessage(component, instanceName, status, category, message):
+def printLogMessage(
+    component: c_void_p,
+    instanceName: bytes,
+    status: int,
+    category: bytes,
+    message: bytes,
+):
     """Print the FMU's log messages to the command line (works for both FMI 1.0 and 2.0)"""
 
     label = ["OK", "WARNING", "DISCARD", "ERROR", "FATAL", "PENDING"][status]
@@ -162,7 +171,7 @@ class _FMU(object):
         self.fmiCallLogger = fmiCallLogger
         self.requireFunctions = requireFunctions
 
-        self._functions: dict[str, "ctypes._FuncPointer"] = dict()
+        self._functions: dict[str, ctypes._FuncPointer] = dict()
         """Functions loaded from the shared library"""
 
         # remember the current working directory
@@ -265,6 +274,8 @@ class _FMU(object):
                     + ", ".join([hex(addressof(p.contents) if p else 0) for p in v])
                     + "]"
                 )
+            elif t == c_char:
+                a += str(v[0])
             elif t == c_void_p:
                 if isinstance(v, c_void_p):
                     v = v.value
@@ -352,6 +363,11 @@ class _FMU(object):
         if self.fmiCallLogger is not None:
             self._log_fmi_args(fname, f.argnames, f.argtypes, args, f.restype, res)
 
+        if f.restype == c_int:
+            # check the status code
+            if res > fmi1Warning:
+                raise FMICallException(function=fname, status=res)
+
         return res
 
     def _loadFunctions(self) -> None:
@@ -372,20 +388,41 @@ class _FMU(object):
 
         for name, value in inspect.getmembers(self):
             if name.startswith(prefix):
-                ff = getattr(self, name)
-                sig = inspect.signature(ff)
+                py_fun = getattr(self, name)
+                sig = inspect.signature(py_fun)
+
+                c_fun_name = name
+
                 if identifier:
-                    f = getattr(self.dll, identifier + name.replace("fmi1", "fmi"))
-                else:
-                    f = getattr(self.dll, name)
-                if sig.parameters:
-                    f.argnames, f.argtypes = zip(
-                        *((v.name, v.annotation) for v in sig.parameters.values())
-                    )
-                else:
-                    f.argnames, f.argtypes = (), ()
-                f.restype = sig.return_annotation
-                self._functions[name] = f
+                    c_fun_name = identifier + c_fun_name.replace("fmi1", "fmi")
+
+                c_fun: ctypes._FuncPointer = getattr(self.dll, c_fun_name)
+
+                argnames = []
+                argtypes = []
+
+                for param in sig.parameters.values():
+                    argnames.append(param.name)
+                    import typing
+
+                    if isinstance(param.annotation, types.UnionType):
+                        args = typing.get_args(param.annotation)
+                        argtypes.append(args[0])
+                    else:
+                        argtypes.append(param.annotation)
+
+                c_fun.argnames = argnames
+                c_fun.argtypes = argtypes
+
+                restype = sig.return_annotation
+
+                if restype is bytes:
+                    restype = c_char_p
+                elif restype is int:
+                    restype = c_int
+
+                c_fun.restype = restype
+                self._functions[name] = c_fun
 
 
 class _FMU1(_FMU):
@@ -394,11 +431,11 @@ class _FMU1(_FMU):
     def __init__(self, **kwargs):
         super(_FMU1, self).__init__(**kwargs)
 
-    def fmi1GetVersion(self) -> fmi1String:
+    def fmi1GetVersion(self) -> bytes:
         return self._call("fmi1GetVersion")
 
     def fmi1SetDebugLogging(
-        self, component: fmi1Component, loggingOn: fmi1Boolean
+        self, component: fmi1Component, loggingOn: fmi1Boolean | bool
     ) -> fmi1Status:
         return self._call("fmi1SetDebugLogging", component, loggingOn)
 
@@ -408,7 +445,7 @@ class _FMU1(_FMU):
         self,
         component: fmi1Component,
         vr: POINTER(fmi1ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         value: POINTER(fmi1Real),
     ) -> fmi1Status:
         return self._call("fmi1GetReal", component, vr, nvr, value)
@@ -417,7 +454,7 @@ class _FMU1(_FMU):
         self,
         component: fmi1Component,
         vr: POINTER(fmi1ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         value: POINTER(fmi1Integer),
     ) -> fmi1Status:
         return self._call("fmi1GetInteger", component, vr, nvr, value)
@@ -426,7 +463,7 @@ class _FMU1(_FMU):
         self,
         component: fmi1Component,
         vr: POINTER(fmi1ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         value: POINTER(fmi1Boolean),
     ) -> fmi1Status:
         return self._call("fmi1GetBoolean", component, vr, nvr, value)
@@ -435,7 +472,7 @@ class _FMU1(_FMU):
         self,
         component: fmi1Component,
         vr: POINTER(fmi1ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         value: POINTER(fmi1String),
     ) -> fmi1Status:
         return self._call("fmi1GetString", component, vr, nvr, value)
@@ -444,7 +481,7 @@ class _FMU1(_FMU):
         self,
         component: fmi1Component,
         vr: POINTER(fmi1ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         value: POINTER(fmi1Real),
     ) -> fmi1Status:
         return self._call("fmi1SetReal", component, vr, nvr, value)
@@ -453,7 +490,7 @@ class _FMU1(_FMU):
         self,
         component: fmi1Component,
         vr: POINTER(fmi1ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         value: POINTER(fmi1Integer),
     ) -> fmi1Status:
         return self._call("fmi1SetInteger", component, vr, nvr, value)
@@ -462,7 +499,7 @@ class _FMU1(_FMU):
         self,
         component: fmi1Component,
         vr: POINTER(fmi1ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         value: POINTER(fmi1Boolean),
     ) -> fmi1Status:
         return self._call("fmi1SetBoolean", component, vr, nvr, value)
@@ -471,15 +508,15 @@ class _FMU1(_FMU):
         self,
         component: fmi1Component,
         vr: POINTER(fmi1ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         value: POINTER(fmi1String),
     ) -> fmi1Status:
         return self._call("fmi1SetString", component, vr, nvr, value)
 
     # Inquire version numbers of header files
 
-    def getVersion(self):
-        version = self.fmi1GetVersion()
+    def getVersion(self) -> str:
+        version = typing.cast(bytes, self.fmi1GetVersion())
         return version.decode("utf-8")
 
     def setDebugLogging(self, loggingOn):
@@ -546,7 +583,7 @@ class FMU1Slave(_FMU1):
 
     # Inquire version numbers of header files
 
-    def fmi1GetTypesPlatform(self) -> fmi1String:
+    def fmi1GetTypesPlatform(self) -> bytes:
         return self._call("fmi1GetTypesPlatform")
 
     # Creation and destruction of slave instances and setting debug status
@@ -557,11 +594,11 @@ class FMU1Slave(_FMU1):
         guid: fmi1String,
         fmuLocation: fmi1String,
         mimeType: fmi1String,
-        timeout: fmi1Real,
-        visible: fmi1Boolean,
-        interactive: fmi1Boolean,
+        timeout: fmi1Real | float,
+        visible: fmi1Boolean | bool,
+        interactive: fmi1Boolean | bool,
         functions: fmi1CallbackFunctions,
-        loggingOn: fmi1Boolean,
+        loggingOn: fmi1Boolean | bool,
     ) -> fmi1Component:
         return self._call(
             "fmi1InstantiateSlave",
@@ -579,9 +616,9 @@ class FMU1Slave(_FMU1):
     def fmi1InitializeSlave(
         self,
         component: fmi1Component,
-        tStart: fmi1Real,
-        stopTimeDefined: fmi1Boolean,
-        tStop: fmi1Real,
+        tStart: fmi1Real | float,
+        stopTimeDefined: fmi1Boolean | bool,
+        tStop: fmi1Real | float,
     ) -> fmi1String:
         return self._call(
             "fmi1InitializeSlave",
@@ -604,7 +641,7 @@ class FMU1Slave(_FMU1):
         self,
         c: fmi1Component,
         vr: POINTER(fmi1ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         order: POINTER(fmi1Integer),
         value: POINTER(fmi1Real),
     ) -> fmi1String:
@@ -621,7 +658,7 @@ class FMU1Slave(_FMU1):
         self,
         c: fmi1Component,
         vr: POINTER(fmi1ValueReference),
-        nvr: c_size_t,
+        nvr: c_size_t | int,
         order: POINTER(fmi1Integer),
         value: POINTER(fmi1Real),
     ) -> fmi1String:
@@ -646,9 +683,9 @@ class FMU1Slave(_FMU1):
     def fmi1DoStep(
         self,
         c: fmi1Component,
-        currentCommunicationPoint: fmi1Real,
-        communicationStepSize: fmi1Real,
-        newStep: fmi1Boolean,
+        currentCommunicationPoint: fmi1Real | float,
+        communicationStepSize: fmi1Real | float,
+        newStep: fmi1Boolean | bool,
     ) -> fmi1String:
         return self._call(
             "fmi1DoStep",
@@ -840,7 +877,7 @@ class FMU1Model(_FMU1):
         instanceName: fmi1String,
         guid: fmi1String,
         functions: fmi1CallbackFunctions,
-        loggingOn: fmi1Boolean,
+        loggingOn: fmi1Boolean | bool,
     ) -> fmi1Component:
         return self._call(
             "fmi1InstantiateModel", instanceName, guid, functions, loggingOn
@@ -849,7 +886,7 @@ class FMU1Model(_FMU1):
     def fmi1FreeModelInstance(self, c: fmi1Component) -> None:
         return self._call("fmi1FreeModelInstance", c)
 
-    def fmi1SetTime(self, c: fmi1Component, time: fmi1Real) -> fmi1Status:
+    def fmi1SetTime(self, c: fmi1Component, time: fmi1Real | float) -> fmi1Status:
         return self._call("fmi1SetTime", c, time)
 
     # Providing independent variables and re-initialization of caching
@@ -869,8 +906,8 @@ class FMU1Model(_FMU1):
     def fmi1Initialize(
         self,
         c: fmi1Component,
-        toleranceControlled: fmi1Boolean,
-        relativeTolerance: fmi1Real,
+        toleranceControlled: fmi1Boolean | bool,
+        relativeTolerance: fmi1Real | float,
         eventInfo: POINTER(fmi1EventInfo),
     ) -> fmi1Status:
         return self._call(
@@ -890,7 +927,7 @@ class FMU1Model(_FMU1):
     def fmi1EventUpdate(
         self,
         c: fmi1Component,
-        intermediateResults: fmi1Boolean,
+        intermediateResults: fmi1Boolean | bool,
         eventInfo: POINTER(fmi1EventInfo),
     ) -> fmi1Status:
         return self._call("fmi1EventUpdate", c, intermediateResults, eventInfo)

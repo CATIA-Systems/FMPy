@@ -106,13 +106,6 @@ class BuildThread(QThread):
             for line in process.stderr:
                 self.messageChanged.emit("error", line)
 
-            # while process.returncode is None:
-            #     outs, errs = process.communicate()
-            #     if outs:
-            #         self.messageChanged.emit("info", outs)
-            #     if errs:
-            #         self.messageChanged.emit("error", errs)
-
             process.wait()
 
             return process.returncode

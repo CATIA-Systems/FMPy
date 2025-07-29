@@ -1935,50 +1935,6 @@ QToolButton:checked, QToolButton:hover:pressed {
     <string>&amp;Validate FMU</string>
    </property>
   </action>
-  <action name="actionCompileWin32Binary">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Windows &amp;32-bit</string>
-   </property>
-   <property name="toolTip">
-    <string>Compile Windows 32-bit binary</string>
-   </property>
-  </action>
-  <action name="actionCompileWin64Binary">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Windows &amp;64-bit</string>
-   </property>
-   <property name="toolTip">
-    <string>Compile Windows 64-bit binary</string>
-   </property>
-  </action>
-  <action name="actionCompileLinuxBinary">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Linux</string>
-   </property>
-   <property name="toolTip">
-    <string>Compile Linux binary</string>
-   </property>
-  </action>
-  <action name="actionCompileDarwinBinary">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Darwin</string>
-   </property>
-   <property name="toolTip">
-    <string>Compile Darwin binary</string>
-   </property>
-  </action>
   <action name="actionAddLinux64Remoting">
    <property name="enabled">
     <bool>false</bool>

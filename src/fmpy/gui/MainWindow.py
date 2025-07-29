@@ -163,6 +163,7 @@ class MainWindow(QMainWindow):
         # disable widgets
         self.ui.actionLoadStartValues.setEnabled(False)
         self.ui.actionReload.setEnabled(False)
+        self.ui.actionBuildPlatfromBinary.setEnabled(False)
         self.ui.actionOpenUnzipDirectory.setEnabled(False)
         self.ui.actionShowSettings.setEnabled(False)
         self.ui.actionShowFiles.setEnabled(False)
@@ -287,10 +288,6 @@ class MainWindow(QMainWindow):
         self.ui.actionBuildPlatfromBinary.triggered.connect(self.buildPlatformBinary)
 
         self.ui.actionValidateFMU.triggered.connect(self.validateFMU)
-        self.ui.actionCompileDarwinBinary.triggered.connect(lambda: self.compilePlatformBinary('darwin64'))
-        self.ui.actionCompileLinuxBinary.triggered.connect(lambda: self.compilePlatformBinary('linux64'))
-        self.ui.actionCompileWin32Binary.triggered.connect(lambda: self.compilePlatformBinary('win32'))
-        self.ui.actionCompileWin64Binary.triggered.connect(lambda: self.compilePlatformBinary('win64'))
         self.ui.actionRemoveSourceCode.triggered.connect(self.removeSourceCode)
         self.ui.actionCreateJupyterNotebook.triggered.connect(self.createJupyterNotebook)
         self.ui.actionCreateCMakeProject.triggered.connect(self.createCMakeProject)
@@ -488,14 +485,10 @@ class MainWindow(QMainWindow):
 
         can_compile = md.fmiVersion != '1.0' and 'c-code' in platforms
 
-        self.ui.actionCompileDarwinBinary.setEnabled(can_compile and fmpy.system == 'darwin')
-        self.ui.actionCompileLinuxBinary.setEnabled(can_compile and fmpy.system in ['linux', 'windows'])
-        self.ui.actionCompileWin32Binary.setEnabled(can_compile and fmpy.system == 'windows')
-        self.ui.actionCompileWin64Binary.setEnabled(can_compile and fmpy.system == 'windows')
+        self.ui.actionBuildPlatfromBinary.setEnabled(can_compile)
+        self.ui.actionCreateCMakeProject.setEnabled(can_compile)
 
         self.ui.actionRemoveSourceCode.setEnabled('c-code' in platforms)
-
-        self.ui.actionCreateCMakeProject.setEnabled(can_compile)
 
         self.ui.actionCreateJupyterNotebook.setEnabled(True)
 
@@ -1374,39 +1367,6 @@ class MainWindow(QMainWindow):
 
         progress_dialog.show()
         build_thread.start()
-
-    def compilePlatformBinary(self, target_platform):
-        """ Compile the platform binary """
-
-        from ..util import compile_platform_binary
-
-        platforms = supported_platforms(self.filename)
-
-        if target_platform in platforms:
-            button = QMessageBox.question(self, "Platform binary already exists",
-                                          f'The FMU already contains a binary for the platform "{target_platform}".'
-                                          ' Do you want to compile and overwrite the existing binary?')
-            if button == QMessageBox.No:
-                return
-
-        if self.modelDescription.fmiVersion == '3.0':
-
-            platform_map = {
-                'darwin64': 'x86_64-darwin',
-                'linux64': 'x86_64-linux',
-                'win32': 'x86-windows',
-                'win64': 'x86_64-windows',
-            }
-            
-            target_platform = platform_map[target_platform]
-
-        try:
-            compile_platform_binary(self.filename, target_platform=target_platform)
-        except Exception as e:
-            QMessageBox.critical(self, "Failed to compile platform binaries", str(e))
-            return
-
-        self.load(self.filename)
 
     def removeSourceCode(self):
 

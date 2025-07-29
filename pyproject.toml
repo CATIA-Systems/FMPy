@@ -44,7 +44,7 @@ webapp = [
 ]
 
 [project.scripts]
-fmpy = "fmpy.command_line:main"
+fmpy = "fmpy.cli:main"
 
 [project.gui-scripts]
 fmpy-gui = "fmpy.gui:main"

@@ -7,6 +7,7 @@ from tempfile import TemporaryDirectory
 from pathlib import Path
 
 from fmpy import read_model_description
+import fmpy
 
 
 Generator = Literal[
@@ -60,22 +61,20 @@ def create_cmake_settings(
     else:
         model_identifier = model_description.modelExchange.modelIdentifier
 
-    if with_wsl:
-        include_dirs = map(wsl_path, include_dirs)
-        sources = map(wsl_path, sources)
-        target_dir = unzipdir / 'binaries' / 'x86_64-linux'
-        target_dir = wsl_path(target_dir)
-    else:
-        if platform == "Win32":
-            if is_fmi2:
-                binary_dir = "win32"
-            else:
-                binary_dir = "x86-windows"
+    if fmpy.system == "windows":
+        if with_wsl:
+            include_dirs = map(wsl_path, include_dirs)
+            sources = map(wsl_path, sources)
+            target_dir = unzipdir / 'binaries' / 'x86_64-linux'
+            target_dir = wsl_path(target_dir)
         else:
-            if is_fmi2:
-                binary_dir = "win64"
+            if platform == "Win32":
+                binary_dir = "win32" if is_fmi2 else "x86-windows"
             else:
-                binary_dir = "x86_64-windows"
+                binary_dir = "win64" if is_fmi2 else "x86_64-windows"
+            target_dir = (unzipdir / 'binaries' / binary_dir).as_posix()
+    else:
+        binary_dir = fmpy.platform if is_fmi2 else fmpy.platform_tuple
         target_dir = (unzipdir / 'binaries' / binary_dir).as_posix()
 
     with open(build_dir / "CMakeCache.txt", "w") as cache:

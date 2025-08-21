@@ -1,7 +1,11 @@
-from fmpy import simulate_fmu
+from tempfile import TemporaryDirectory
+
+from fmpy import simulate_fmu, extract
+from fmpy.build import build_platform_binary
 from fmpy.template import create_fmu, generate_model_description
-from fmpy.util import compile_platform_binary
 import numpy as np
+
+from fmpy.util import create_zip_archive
 
 
 def test_create_fmu(work_dir):
@@ -12,7 +16,10 @@ def test_create_fmu(work_dir):
 
     create_fmu(model_description, filename)
 
-    compile_platform_binary(filename)
+    with TemporaryDirectory() as tempdir:
+        extract(filename, tempdir)
+        build_platform_binary(tempdir)
+        create_zip_archive(filename, tempdir)
 
     result = simulate_fmu(filename, start_values={'u5': 5}, output=['u5'])
 

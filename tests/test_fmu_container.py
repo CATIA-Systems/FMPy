@@ -1,8 +1,11 @@
+from tempfile import TemporaryDirectory
+
 import pytest
 from itertools import product
-from fmpy import simulate_fmu, plot_result
+from fmpy import simulate_fmu, plot_result, extract
+from fmpy.build import build_platform_binary
 from fmpy.fmucontainer import create_fmu_container, Variable, Connection, Configuration, Component, DefaultExperiment
-from fmpy.util import compile_platform_binary
+from fmpy.util import create_zip_archive
 from fmpy.validation import validate_fmu
 from fmpy.model_description import Unit, BaseUnit, SimpleType, DisplayUnit, Item
 
@@ -27,8 +30,8 @@ def test_create_fmu_container(reference_fmus_dist_dir, fmi_version, parallelDoSt
             SimpleType(name='AngularVelocity', type=real_type, quantity='AngularVelocity', unit='rad/s',
                        displayUnit='rpm'),
             SimpleType(name='Option', type='Enumeration', items=[
-                Item(name='Option 1', value=1, description="First option"),
-                Item(name='Option 2', value=2, description="Second option")
+                Item(name='Option 1', value="1", description="First option"),
+                Item(name='Option 2', value="2", description="Second option")
             ])
         ],
         defaultExperiment=DefaultExperiment(
@@ -177,5 +180,9 @@ def test_create_fmu_container(reference_fmus_dist_dir, fmi_version, parallelDoSt
     assert result['Boolean_output'][-1] == False
     assert result['Enumeration_output'][-1] == 2
 
-    compile_platform_binary(filename)
+    with TemporaryDirectory() as tempdir:
+        extract(filename, tempdir)
+        build_platform_binary(tempdir)
+        create_zip_archive(filename, tempdir)
+
     simulate_fmu(filename=filename)

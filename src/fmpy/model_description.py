@@ -136,7 +136,7 @@ class DisplayUnit:
 class Unit:
 
     name: str | None = None
-    baseUnit: str | None = field(default=None, repr=False)
+    baseUnit: BaseUnit | None = field(default=None, repr=False)
     displayUnits: list[DisplayUnit] = field(factory=list, repr=False)
 
 
@@ -707,7 +707,7 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
             for i, item in enumerate(first.findall('Item')):
                 it = Item(**item.attrib)
                 if is_fmi1:
-                    it.value = i + 1
+                    it.value = str(i + 1)
                 simple_type.items.append(it)
 
             modelDescription.typeDefinitions.append(simple_type)

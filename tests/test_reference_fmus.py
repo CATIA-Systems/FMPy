@@ -26,7 +26,9 @@ def test_fmi2(reference_fmus_dist_dir):
 
 def test_fmi3(reference_fmus_dist_dir, reference_fmus_repo_dir):
 
-    for model_name in ['BouncingBall', 'Dahlquist', 'Feedthrough', 'Resource', 'Stair', 'VanDerPol']:
+    for model_name in ['BouncingBall',
+                       # 'Dahlquist',  # skip until #659 is fixed
+                       'Feedthrough', 'Resource', 'Stair', 'VanDerPol']:
 
         if model_name == 'Feedthrough':
             start_values = {

@@ -163,7 +163,7 @@ class MainWindow(QMainWindow):
         self.ui.actionLoadStartValues.setEnabled(False)
         self.ui.actionSave.setEnabled(False)
         self.ui.actionReload.setEnabled(False)
-        self.ui.actionBuildPlatfromBinary.setEnabled(False)
+        self.ui.actionBuildPlatformBinary.setEnabled(False)
         self.ui.actionOpenUnzipDirectory.setEnabled(False)
         self.ui.actionShowSettings.setEnabled(False)
         self.ui.actionShowFiles.setEnabled(False)
@@ -285,7 +285,7 @@ class MainWindow(QMainWindow):
         self.ui.actionExit.triggered.connect(QApplication.closeAllWindows)
 
         # tools menu
-        self.ui.actionBuildPlatfromBinary.triggered.connect(self.buildPlatformBinary)
+        self.ui.actionBuildPlatformBinary.triggered.connect(self.buildPlatformBinary)
 
         self.ui.actionValidateFMU.triggered.connect(self.validateFMU)
         self.ui.actionRemoveSourceCode.triggered.connect(self.removeSourceCode)
@@ -485,7 +485,7 @@ class MainWindow(QMainWindow):
 
         can_compile = md.fmiVersion != '1.0' and 'c-code' in platforms
 
-        self.ui.actionBuildPlatfromBinary.setEnabled(can_compile)
+        self.ui.actionBuildPlatformBinary.setEnabled(can_compile)
         self.ui.actionCreateCMakeProject.setEnabled(can_compile)
 
         self.ui.actionRemoveSourceCode.setEnabled('c-code' in platforms)
@@ -1455,7 +1455,7 @@ class MainWindow(QMainWindow):
         self.ui.actionOpen.setIcon(QIcon(f':/icons/{theme}/folder-open.svg'))
         self.ui.actionSave.setIcon(QIcon(f':/icons/{theme}/floppy.svg'))
         self.ui.actionReload.setIcon(QIcon(f':/icons/{theme}/arrow-clockwise.svg'))
-        self.ui.actionBuildPlatfromBinary.setIcon(QIcon(f':/icons/{theme}/hammer.svg'))
+        self.ui.actionBuildPlatformBinary.setIcon(QIcon(f':/icons/{theme}/hammer.svg'))
         self.ui.actionShowSettings.setIcon(QIcon(f':/icons/{theme}/gear.svg'))
         self.ui.actionShowFiles.setIcon(QIcon(f':/icons/{theme}/file-earmark-zip.svg'))
         self.ui.actionShowDocumentation.setIcon(QIcon(f':/icons/{theme}/book.svg'))

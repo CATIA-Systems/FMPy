@@ -1381,7 +1381,7 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="actionCreateDesktopShortcut"/>
     <addaction name="actionAddFileAssociation"/>
     <addaction name="separator"/>
-    <addaction name="separator"/>
+    <addaction name="actionBuildPlatformBinary"/>
     <addaction name="actionValidateFMU"/>
     <addaction name="actionRemoveSourceCode"/>
     <addaction name="actionCreateJupyterNotebook"/>
@@ -1621,7 +1621,7 @@ QToolButton:checked, QToolButton:hover:pressed {
    <addaction name="actionOpen"/>
    <addaction name="actionSave"/>
    <addaction name="actionReload"/>
-   <addaction name="actionBuildPlatfromBinary"/>
+   <addaction name="actionBuildPlatformBinary"/>
    <addaction name="separator"/>
    <addaction name="actionShowSettings"/>
    <addaction name="actionShowFiles"/>
@@ -1870,7 +1870,7 @@ QToolButton:checked, QToolButton:hover:pressed {
   </action>
   <action name="actionAddFileAssociation">
    <property name="text">
-    <string>Associate with *.fmu Files</string>
+    <string>&amp;Associate with *.fmu Files</string>
    </property>
    <property name="toolTip">
     <string>Add file association for *.fmu</string>
@@ -2017,16 +2017,16 @@ QToolButton:checked, QToolButton:hover:pressed {
     <string>Ctrl+N</string>
    </property>
   </action>
-  <action name="actionBuildPlatfromBinary">
+  <action name="actionBuildPlatformBinary">
    <property name="icon">
     <iconset resource="../icons/icons.qrc">
      <normaloff>:/icons/dark/hammer.svg</normaloff>:/icons/dark/hammer.svg</iconset>
    </property>
    <property name="text">
-    <string>Build Platfrom Binary</string>
+    <string>&amp;Build Platform Binary...</string>
    </property>
    <property name="toolTip">
-    <string>Build Platfrom Binary</string>
+    <string>Build Platform Binary</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

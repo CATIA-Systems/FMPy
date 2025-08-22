@@ -1,3 +1,5 @@
+import os
+
 from PySide6.QtWidgets import QDialog, QWidget, QFileDialog, QDialogButtonBox
 
 from fmpy.gui.generated.BuildDialog import Ui_BuildDialog
@@ -13,6 +15,7 @@ class BuildDialog(QDialog):
         self.ui.setupUi(self)
         self.ui.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setText("Build")
         self.ui.selectBuildDirectoryToolButton.clicked.connect(self.selectBuildDirectory)
+        self.ui.compileWithWslCheckBox.setEnabled(os.name == 'nt')
 
     def selectBuildDirectory(self):
         path = QFileDialog.getExistingDirectory(parent=self,

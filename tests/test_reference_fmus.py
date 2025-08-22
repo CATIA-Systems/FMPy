@@ -33,7 +33,7 @@ def test_fmi3(reference_fmus_dist_dir, reference_fmus_repo_dir):
         if model_name == 'Feedthrough':
             start_values = {
                 'Float64_fixed_parameter': 1,
-                # 'String_parameter': "FMI is awesome!"
+                'String_input': "FMI is awesome!"
             }
             output_interval = 1e-3
             in_csv = reference_fmus_repo_dir / model_name / f'{model_name}_in.csv'

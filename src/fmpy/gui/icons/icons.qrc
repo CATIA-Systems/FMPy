@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="icons">
+    <file>dark/floppy.svg</file>
+    <file>light/floppy.svg</file>
     <file>dark/hammer.svg</file>
     <file>light/hammer.svg</file>
     <file>dark/file-new.svg</file>

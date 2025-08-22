@@ -1,4 +1,9 @@
 from __future__ import annotations
+
+import shutil
+
+from pathlib import Path
+
 from collections.abc import Iterable
 
 import os
@@ -607,230 +612,34 @@ def visual_c_versions():
     return sorted(versions)
 
 
-def compile_dll(model_description, sources_dir, compiler=None, target_platform=None, compiler_options=None):
-    """ Compile the shared library
+def remove_source_code(filename: str | PathLike) -> None:
+    """Remove the source code from an FMU or extracted FMU"""
 
-    Parameters:
-        sources_dir       directory that contains the FMU's source code
-        compiler          compiler to use (None: use Visual C on Windows, GCC otherwise)
-        platform          platform to compile for the binary for
-        compiler_options  custom compiler options
-    """
-
-    from . import platform, system
-    import subprocess
-
-    if target_platform is None:
-        target_platform = platform
-
-    if model_description.fmiVersion == '1.0':
-        raise Exception("FMI 1.0 source code FMUs are not supported.")
-
-    if compiler is None:
-        if target_platform in ['win32', 'win64', 'x86-windows', 'x86_64-windows']:
-            compiler = 'vc'
-        elif target_platform in ['darwin64', 'x86_64-darwin', 'aarch64-darwin']:
-            compiler = 'clang'
-        else:
-            compiler = 'gcc'
-
-    include_dir = os.path.join(os.path.dirname(__file__), 'c-code')
-
-    source_files = []
-
-    if len(model_description.buildConfigurations) == 0:
-        raise Exception("No build configuration found.")
-
-    build_configuration = model_description.buildConfigurations[0]
-
-    if len(build_configuration.sourceFileSets) > 1:
-        raise Exception("More than one SourceFileSet is not supported.")
-
-    source_file_set = build_configuration.sourceFileSets[0]
-
-    source_files += source_file_set.sourceFiles
-
-    preprocessor_definitions = []
-
-    if model_description.fmiVersion.startswith('3.0'):
-        preprocessor_definitions.append('FMI3_OVERRIDE_FUNCTION_PREFIX')
-        preprocessor_definitions.append('FMI3_FUNCTION_PREFIX=""')
-
-    for definition in source_file_set.preprocessorDefinitions:
-        literal = definition.name
-        if definition.value is not None:
-            literal += '=' + definition.value
-        preprocessor_definitions.append(literal)
-
-    if len(source_files) == 0:
-        raise Exception("No source files specified in the model description.")
-
-    print('Compiling platform binary...')
-
-    sources = ' '.join(source_files)
-    model_identifier = build_configuration.modelIdentifier
-
-    if compiler == 'vc':
-
-        target = model_identifier + '.dll'
-
-        vc_versions = visual_c_versions()
-
-        toolset = 'x86_amd64' if target_platform in ['win64', 'x86_64-windows'] else 'x86'
-
-        definitions = ' '.join(f' /D{d}' for d in preprocessor_definitions)
-
-        if compiler_options is None:
-            compiler_options = '/Oy /Ob1 /Oi /LD'
-
-        if len(vc_versions) == 0:
-            raise Exception("No VisualStudio found")
-
-        # use the latest version
-        vc_version = vc_versions[-1]
-
-        if vc_version < 150:
-            command = rf'call "%VS{vc_version}COMNTOOLS%\..\..\VC\vcvarsall.bat" {toolset}'
-        else:
-            installation_paths = visual_studio_installation_paths(only_latest=True)
-            _, installation_path = installation_paths[-1]
-            command = rf'call "{installation_path}\VC\Auxiliary\Build\vcvarsall.bat" {toolset}'
-
-        command += f' && cl {compiler_options} /I. /I"{include_dir}" {definitions} /Fe{model_identifier} shlwapi.lib {sources}'
-
-    elif compiler == 'gcc':
-
-        definitions = ' '.join(f' -D{d}' for d in preprocessor_definitions)
-
-        if target_platform in ['linux64', 'x86_64-linux']:
-
-            cc = 'gcc'
-            target = model_identifier + '.so'
-
-            if compiler_options is None:
-                compiler_options = '-fPIC'
-
-            if system == 'windows':
-                cc = 'wsl ' + cc
-                output = subprocess.check_output(f"wsl wslpath -a '{include_dir}'")
-                include_dir = output.decode('utf-8').strip()
-
-            command = f"{cc} -c {compiler_options} -I. -I'{include_dir}' {definitions} {sources}"
-            command += f' && {cc} -static-libgcc -shared -o{target} *.o -lm'
-
-        else:
-            raise Exception(f'The target platform "{target_platform}" is not supported for the gcc compiler.')
-
-    elif compiler == 'clang':
-
-        definitions = ' '.join(f' -D{d}' for d in preprocessor_definitions)
-
-        if target_platform in ['darwin64', 'x86_64-darwin', 'aarch64-darwin']:
-
-            target = f'{model_identifier}.dylib'
-
-            if compiler_options is None:
-                compiler_options = '-arch x86_64 -arch arm64'
-
-            command = f'clang -c {compiler_options} -I. -I{include_dir} {definitions} {sources}'
-            command += f' && clang -shared -arch x86_64 -arch arm64 -o{target} *.o -lm'
-
-        else:
-            raise Exception(f'The target platform "{target_platform}" is not supported for the clang compiler.')
-
-    else:
-        raise Exception(f'The compiler "{compiler}" is not supported.')
-
-    print(sources_dir)
-    print(command)
-
-    cur_dir = os.getcwd()
-    os.chdir(sources_dir)
-    status = os.system(command)
-    os.chdir(cur_dir)
-
-    dll_path = os.path.join(sources_dir, target)
-
-    if status != 0 or not os.path.isfile(dll_path):
-        raise Exception('Failed to compile shared library')
-
-    return str(dll_path)
-
-
-def compile_platform_binary(filename, output_filename=None, target_platform=None, compiler_options=None):
-    """ Compile the binary of an FMU for the current platform and add it to the FMU
-
-    Parameters:
-        filename:          filename of the source code FMU
-        output_filename:   filename of the FMU with the compiled binary (None: overwrite existing FMU)
-        compiler_options:  custom compiler options
-    """
-
-    from . import read_model_description, extract, platform, platform_tuple
-    import zipfile
-    from shutil import copyfile, rmtree
-    from os.path import join, basename, relpath, exists, normpath, isfile, splitext
-
-    unzipdir = extract(filename)
-
-    model_description = read_model_description(filename)
-
-    if target_platform is None:
-        target_platform = platform if model_description.fmiVersion in ['1.0', '2.0'] else platform_tuple
-
-    binary = compile_dll(model_description=model_description,
-                         sources_dir=join(unzipdir, 'sources'),
-                         target_platform=target_platform,
-                         compiler_options=compiler_options)
-
-    unzipdir2 = extract(filename)
-
-    target_platform_dir = join(unzipdir2, 'binaries', target_platform)
-
-    if not exists(target_platform_dir):
-        os.makedirs(target_platform_dir)
-
-    copyfile(src=binary, dst=join(target_platform_dir, basename(binary)))
-
-    debug_database = splitext(binary)[0] + '.pdb'
-
-    if isfile(debug_database):
-        copyfile(src=debug_database, dst=join(target_platform_dir, basename(debug_database)))
-
-    if output_filename is None:
-        output_filename = filename  # overwrite the existing archive
-
-    # create a new archive from the existing files + compiled binary
-    create_zip_archive(output_filename, unzipdir2)
-
-    # clean up
-    rmtree(unzipdir, ignore_errors=True)
-    rmtree(unzipdir2, ignore_errors=True)
-
-
-def remove_source_code(filename):
-    """ Remove the source code from an FMU """
-
-    import tempfile
     from shutil import rmtree
     from lxml import etree
 
-    with tempfile.TemporaryDirectory() as unzipdir:
+    filename = Path(filename)
 
-        fmpy.extract(filename=filename, unzipdir=unzipdir)
+    if filename.is_file():
+        unzipdir = fmpy.extract(filename=filename)
+        unzipdir = Path(unzipdir)
+    else:
+        unzipdir = filename
 
-        rmtree(os.path.join(unzipdir, 'sources'))
+    rmtree(unzipdir / 'sources')
 
-        model_description = fmpy.read_model_description(filename)
+    model_description = fmpy.read_model_description(unzipdir)
 
-        if model_description.fmiVersion == '2.0':
-            xml = os.path.join(unzipdir, 'modelDescription.xml')
-            tree = etree.parse(xml)
-            for e in tree.xpath('//SourceFiles'):
-                e.getparent().remove(e)
-            tree.write(xml, pretty_print=True, encoding='utf-8')
+    if model_description.fmiVersion == '2.0':
+        xml = os.path.join(unzipdir, 'modelDescription.xml')
+        tree = etree.parse(xml)
+        for e in tree.xpath('//SourceFiles'):
+            e.getparent().remove(e)
+        tree.write(xml, pretty_print=True, encoding='utf-8')
 
+    if filename.is_file():
         create_zip_archive(filename, unzipdir)
+        shutil.rmtree(unzipdir)
 
 
 def add_remoting(filename, host_platform, remote_platform):
@@ -1014,14 +823,13 @@ def create_cmake_project(filename, project_dir):
     from zipfile import ZipFile
     from fmpy import read_model_description, extract
 
-    model_description = read_model_description(filename)
-
     extract(filename, unzipdir=project_dir)
 
-    fmpy_dir = os.path.dirname(__file__)
-    source_dir = os.path.join(fmpy_dir, 'c-code')
+    model_description = read_model_description(project_dir)
 
-    with open(os.path.join(source_dir, 'CMakeLists.txt'), 'r') as cmake_file:
+    root = Path(__file__).parent
+
+    with open(root / "templates" / "CMakeLists.template", 'r') as cmake_file:
         txt = cmake_file.read()
 
     definitions = []
@@ -1055,7 +863,7 @@ def create_cmake_project(filename, project_dir):
     txt = txt.replace('%MODEL_NAME%', model_description.modelName)
     txt = txt.replace('%MODEL_IDENTIFIER%', build_configuration.modelIdentifier)
     txt = txt.replace('%DEFINITIONS%', ' '.join(definitions))
-    txt = txt.replace('%INCLUDE_DIRS%', '"' + source_dir.replace('\\', '/') + '"')
+    txt = txt.replace('%INCLUDE_DIRS%', '"' + str((root / "c-code").absolute().as_posix()) + '"')
     txt = txt.replace('%SOURCES%', ' '.join(sources))
     txt = txt.replace('%RESOURCES%', '\n    '.join('"' + r + '"' for r in resources))
 

@@ -1,6 +1,8 @@
 """ Object model and loader for the modelDescription.xml """
 from __future__ import annotations
 from os import PathLike
+from pathlib import Path
+
 from typing import IO, Literal
 from attrs import define, field
 
@@ -134,7 +136,7 @@ class DisplayUnit:
 class Unit:
 
     name: str | None = None
-    baseUnit: str | None = field(default=None, repr=False)
+    baseUnit: BaseUnit | None = field(default=None, repr=False)
     displayUnits: list[DisplayUnit] = field(factory=list, repr=False)
 
 
@@ -326,6 +328,29 @@ class ModelDescription:
     initialUnknowns: list[Unknown] = field(factory=list, repr=False)
 
     @property
+    def modelIdentifier(self) -> str:
+        """Return the model identifier, if all model identifiers are equal"""
+
+        model_identifiers = []
+
+        if self.modelExchange:
+            model_identifiers.append(self.modelExchange.modelIdentifier)
+        if self.coSimulation:
+            model_identifiers.append(self.coSimulation.modelIdentifier)
+        if self.scheduledExecution:
+            model_identifiers.append(self.scheduledExecution.modelIdentifier)
+
+        if not model_identifiers:
+            raise Exception("Model description does not define any model identifiers.")
+
+        first = model_identifiers[0]
+
+        if not all(first == i for i in model_identifiers):
+            raise Exception("Model description defines different model identifiers.")
+
+        return first
+
+    @property
     def guid(self):
         return self.instantiationToken
 
@@ -383,7 +408,7 @@ def read_build_description(filename: str | PathLike | IO, validate=True) -> list
     from lxml import etree
     import os
 
-    if isinstance(filename, str) and os.path.isdir(filename):  # extracted FMU
+    if isinstance(filename, (str, PathLike)) and os.path.isdir(filename):  # extracted FMU
         filename = os.path.join(filename, 'sources/buildDescription.xml')
         if not os.path.isfile(filename):
             return []
@@ -627,7 +652,7 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
                 buildConfiguration.sourceFileSets.append(source_file_set)
                 source_file_set.sourceFiles = source_files
 
-    elif is_fmi3 and not (isinstance(filename, str) and _filename.endswith('.xml')):
+    elif is_fmi3 and not (isinstance(_filename, (str, PathLike)) and Path(_filename).name.endswith('.xml')):
         # read buildDescription.xml if _filename is a folder or ZIP file
         modelDescription.buildConfigurations = read_build_description(_filename, validate=validate)
 
@@ -682,7 +707,7 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
             for i, item in enumerate(first.findall('Item')):
                 it = Item(**item.attrib)
                 if is_fmi1:
-                    it.value = i + 1
+                    it.value = str(i + 1)
                 simple_type.items.append(it)
 
             modelDescription.typeDefinitions.append(simple_type)

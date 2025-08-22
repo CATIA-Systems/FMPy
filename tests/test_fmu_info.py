@@ -45,8 +45,8 @@ Model Info
   Continuous States  2
   Event Indicators   1
   Variables          8
-  Generation Tool    Reference FMUs (v0.0.37)
-  Generation Date    2024-12-09T07:40:34.834298+00:00
+  Generation Tool    Reference FMUs (v0.0.39)
+  Generation Date    2025-06-12T19:14:13.998312+00:00
 
 Default Experiment
 

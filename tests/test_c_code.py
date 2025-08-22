@@ -1,10 +1,12 @@
 # Test compilation of source code FMUs from various vendors
+from tempfile import TemporaryDirectory
 
 import pytest
-from fmpy import simulate_fmu
-from fmpy.util import download_file
+from fmpy import simulate_fmu, extract
+from fmpy.build import build_platform_binary
+from fmpy.util import download_file, create_zip_archive
 import os
-from fmpy.util import compile_platform_binary, create_cmake_project
+from fmpy.util import create_cmake_project
 
 
 urls = [
@@ -12,25 +14,6 @@ urls = [
     'https://github.com/CATIA-Systems/dymola-fmi-compatibility/raw/refs/heads/main/2025x,%202024-10-11/CoupledClutches_fmi2_Cvode.fmu',
     # 'https://github.com/CATIA-Systems/dymola-fmi-compatibility/raw/refs/heads/main/2025x,%202024-10-11/CoupledClutches_fmi3_Cvode.fmu',
 ]
-
-
-@pytest.mark.parametrize('url', urls)
-def test_compile(url):
-    """ Compile the platform binary """
-
-    # add debug info
-    if os.name == 'nt':
-        compiler_options = '/LDd /Zi'
-    else:
-        compiler_options = '-g -fPIC'
-
-    filename = download_file(url)
-
-    compile_platform_binary(filename, compiler_options=compiler_options)
-
-    result = simulate_fmu(filename=filename)
-
-    assert result is not None
 
 
 @pytest.mark.parametrize('url', urls)

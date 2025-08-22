@@ -2,9 +2,10 @@
 
 import sys
 import os
+from os import PathLike
 from platform import machine
 from ctypes import *
-from typing import Union, IO, List
+from typing import Union, IO, List, Callable
 
 __version__ = '0.3.25'
 
@@ -175,7 +176,11 @@ def fmi_info(filename):
     return fmi_version, fmi_types
 
 
-def extract(filename, unzipdir=None, include=None):
+def extract(
+        filename: str | PathLike,
+        unzipdir: str | PathLike | None = None,
+        include: Callable[[str], bool] | None = None
+):
     """ Extract a ZIP archive to a temporary directory
 
     Parameters:
@@ -188,9 +193,12 @@ def extract(filename, unzipdir=None, include=None):
 
     from tempfile import mkdtemp
     import zipfile
+    from pathlib import Path
 
     if unzipdir is None:
         unzipdir = mkdtemp()
+
+    unzipdir = Path(unzipdir)
 
     # expand the 8.3 paths on windows
     if sys.platform.startswith('win') and isinstance(unzipdir, str) and '~' in unzipdir:

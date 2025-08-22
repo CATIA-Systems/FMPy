@@ -1,6 +1,8 @@
+from os import PathLike
+from pathlib import Path
 
 
-def add_cswrapper(filename, outfilename=None):
+def add_cswrapper(filename: str | PathLike, outfilename: str | PathLike | None = None) -> None:
 
     from lxml import etree
     import os
@@ -8,18 +10,23 @@ def add_cswrapper(filename, outfilename=None):
     from fmpy import read_model_description, extract, sharedLibraryExtension, platform, __version__
     from fmpy.util import create_zip_archive
 
+    filename = Path(filename)
+
+    if filename.is_file():
+        unzipdir = extract(filename)
+    else:
+        unzipdir = filename
+
     if outfilename is None:
         outfilename = filename
 
-    model_description = read_model_description(filename)
+    model_description = read_model_description(unzipdir)
 
     if model_description.fmiVersion != '2.0':
-        raise Exception("%s is not an FMI 2.0 FMU." % filename)
+        raise Exception(f"{filename} is not an FMI 2.0 FMU.")
 
     if model_description.modelExchange is None:
-        raise Exception("%s does not support Model Exchange." % filename)
-
-    unzipdir = extract(filename)
+        raise Exception(f"{filename} does not support Model Exchange.")
 
     xml = os.path.join(unzipdir, 'modelDescription.xml')
 
@@ -28,7 +35,7 @@ def add_cswrapper(filename, outfilename=None):
     root = tree.getroot()
 
     # update description
-    generation_tool = root.attrib.get('generationTool', 'Unknown') + " with FMPy %s Co-Simulation wrapper" % __version__
+    generation_tool = root.attrib.get('generationTool', 'Unknown') + f" with FMPy {__version__} Co-Simulation wrapper"
     root.attrib['generationTool'] = generation_tool
 
     # remove any existing <CoSimulation> element
@@ -61,4 +68,5 @@ def add_cswrapper(filename, outfilename=None):
 
     create_zip_archive(outfilename, unzipdir)
 
-    rmtree(unzipdir, ignore_errors=True)
+    if filename.is_file():
+        rmtree(unzipdir, ignore_errors=True)

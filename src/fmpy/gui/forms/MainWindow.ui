@@ -1327,13 +1327,15 @@ QToolButton:checked, QToolButton:hover:pressed {
      <string>&amp;File</string>
     </property>
     <addaction name="actionShowNewFMUDialog"/>
-    <addaction name="actionOpen"/>
     <addaction name="actionNewWindow"/>
     <addaction name="separator"/>
-    <addaction name="actionLoadStartValues"/>
-    <addaction name="separator"/>
+    <addaction name="actionOpen"/>
+    <addaction name="actionSave"/>
+    <addaction name="actionSaveAs"/>
     <addaction name="actionReload"/>
     <addaction name="actionOpenUnzipDirectory"/>
+    <addaction name="separator"/>
+    <addaction name="actionLoadStartValues"/>
     <addaction name="separator"/>
     <addaction name="actionSaveResult"/>
     <addaction name="actionSavePlottedResult"/>
@@ -1379,7 +1381,7 @@ QToolButton:checked, QToolButton:hover:pressed {
     <addaction name="actionCreateDesktopShortcut"/>
     <addaction name="actionAddFileAssociation"/>
     <addaction name="separator"/>
-    <addaction name="separator"/>
+    <addaction name="actionBuildPlatformBinary"/>
     <addaction name="actionValidateFMU"/>
     <addaction name="actionRemoveSourceCode"/>
     <addaction name="actionCreateJupyterNotebook"/>
@@ -1617,7 +1619,10 @@ QToolButton:checked, QToolButton:hover:pressed {
    </attribute>
    <addaction name="actionShowNewFMUDialog"/>
    <addaction name="actionOpen"/>
+   <addaction name="actionSave"/>
    <addaction name="actionReload"/>
+   <addaction name="actionBuildPlatformBinary"/>
+   <addaction name="separator"/>
    <addaction name="actionShowSettings"/>
    <addaction name="actionShowFiles"/>
    <addaction name="actionShowDocumentation"/>
@@ -1865,7 +1870,7 @@ QToolButton:checked, QToolButton:hover:pressed {
   </action>
   <action name="actionAddFileAssociation">
    <property name="text">
-    <string>Associate with *.fmu Files</string>
+    <string>&amp;Associate with *.fmu Files</string>
    </property>
    <property name="toolTip">
     <string>Add file association for *.fmu</string>
@@ -1928,50 +1933,6 @@ QToolButton:checked, QToolButton:hover:pressed {
    </property>
    <property name="text">
     <string>&amp;Validate FMU</string>
-   </property>
-  </action>
-  <action name="actionCompileWin32Binary">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Windows &amp;32-bit</string>
-   </property>
-   <property name="toolTip">
-    <string>Compile Windows 32-bit binary</string>
-   </property>
-  </action>
-  <action name="actionCompileWin64Binary">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Windows &amp;64-bit</string>
-   </property>
-   <property name="toolTip">
-    <string>Compile Windows 64-bit binary</string>
-   </property>
-  </action>
-  <action name="actionCompileLinuxBinary">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Linux</string>
-   </property>
-   <property name="toolTip">
-    <string>Compile Linux binary</string>
-   </property>
-  </action>
-  <action name="actionCompileDarwinBinary">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Darwin</string>
-   </property>
-   <property name="toolTip">
-    <string>Compile Darwin binary</string>
    </property>
   </action>
   <action name="actionAddLinux64Remoting">
@@ -2054,6 +2015,47 @@ QToolButton:checked, QToolButton:hover:pressed {
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionBuildPlatformBinary">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/icons/dark/hammer.svg</normaloff>:/icons/dark/hammer.svg</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Build Platform Binary...</string>
+   </property>
+   <property name="toolTip">
+    <string>Build Platform Binary</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="icon">
+    <iconset resource="../icons/icons.qrc">
+     <normaloff>:/icons/dark/floppy.svg</normaloff>:/icons/dark/floppy.svg</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Save</string>
+   </property>
+   <property name="toolTip">
+    <string>Save FMU</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionSaveAs">
+   <property name="text">
+    <string>Save &amp;As...</string>
+   </property>
+   <property name="toolTip">
+    <string>Save FMU as...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+S</string>
    </property>
   </action>
  </widget>

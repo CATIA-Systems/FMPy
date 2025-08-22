@@ -1,11 +1,16 @@
 """ Entry point for the graphical user interface """
+from tempfile import TemporaryDirectory
+
 import shutil
 from pathlib import Path
+from typing import cast
+from typing_extensions import get_args
 
 from ..template import create_fmu
 
 try:
-    from . import compile_resources
+    from . import compile_resources, BuildThread
+
     compile_resources()
 except Exception as e:
     print("Failed to compiled resources. %s" % e)
@@ -15,9 +20,10 @@ import sys
 
 from PySide6.QtCore import QCoreApplication, QDir, Qt, QUrl, QSettings, QPoint, QTimer, QStandardPaths, \
     QPointF, QBuffer, QIODevice, QSize
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, QVBoxLayout, \
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QLineEdit, QComboBox, QFileDialog, QLabel, \
+    QVBoxLayout, \
     QMenu, QMessageBox, QProgressBar, QDialog, QGraphicsScene, QGraphicsItemGroup, QGraphicsRectItem, \
-    QGraphicsTextItem, QGraphicsPathItem, QFileSystemModel
+    QGraphicsTextItem, QGraphicsPathItem, QFileSystemModel, QProgressDialog, QPushButton
 from PySide6.QtGui import QDesktopServices, QPixmap, QIcon, QDoubleValidator, QColor, QFont, QPen, QFontMetricsF, \
     QPolygonF, QPainterPath, QGuiApplication
 from PySide6.QtCore import Signal
@@ -25,8 +31,8 @@ from PySide6.QtCore import Signal
 from fmpy.gui.generated.MainWindow import Ui_MainWindow
 import fmpy
 from fmpy import read_model_description, supported_platforms
-from fmpy.model_description import ScalarVariable
-from fmpy.util import can_simulate, remove_source_code
+from fmpy.model_description import ScalarVariable, ModelDescription, read_build_description
+from fmpy.util import can_simulate, remove_source_code, create_zip_archive
 
 from fmpy.gui.model import VariablesTableModel, VariablesTreeModel, VariablesModel, VariablesFilterModel
 from fmpy.gui.log import Log
@@ -67,7 +73,6 @@ class AboutDialog(QDialog):
 
         # hide the question mark button
         flags = self.windowFlags()
-        flags &= ~Qt.WindowContextHelpButtonHint
         flags |= Qt.MSWindowsFixedSizeDialogHint
         self.setWindowFlags(flags)
 
@@ -95,9 +100,9 @@ class MainWindow(QMainWindow):
 
         # state
         self.filename = None
-        self.unzipdir = None
+        self.unzipdir: Path | None = None
         self.result = None
-        self.modelDescription = None
+        self.modelDescription: ModelDescription = None
         self.variables = dict()
         self.selectedVariables = set()
         self.startValues = dict()
@@ -156,7 +161,9 @@ class MainWindow(QMainWindow):
 
         # disable widgets
         self.ui.actionLoadStartValues.setEnabled(False)
+        self.ui.actionSave.setEnabled(False)
         self.ui.actionReload.setEnabled(False)
+        self.ui.actionBuildPlatformBinary.setEnabled(False)
         self.ui.actionOpenUnzipDirectory.setEnabled(False)
         self.ui.actionShowSettings.setEnabled(False)
         self.ui.actionShowFiles.setEnabled(False)
@@ -201,6 +208,8 @@ class MainWindow(QMainWindow):
         if recent_files:
             added = set()
             for file in recent_files[:5]:
+                if not file:
+                    continue
                 link = QLabel('<a href="%s" style="text-decoration: none; color: #548AF7">%s</a>' % (file, os.path.basename(file)))
                 link.setToolTip(file)
                 link.linkActivated.connect(self.load)
@@ -263,17 +272,22 @@ class MainWindow(QMainWindow):
         self.actionClearPlots = self.contextMenu.addAction("Clear Plots", self.clearPlots)
 
         # file menu
-        self.ui.actionExit.triggered.connect(QApplication.closeAllWindows)
-        self.ui.actionLoadStartValues.triggered.connect(self.loadStartValues)
-        self.ui.actionOpenUnzipDirectory.triggered.connect(self.openUnzipDirectory)
+        self.ui.actionShowNewFMUDialog.triggered.connect(self.showNewFMUDialog)
+        self.ui.actionNewWindow.triggered.connect(self.newWindow)
+        self.ui.actionOpen.triggered.connect(self.open)
+        self.ui.actionSave.triggered.connect(self.save)
+        self.ui.actionSaveAs.triggered.connect(self.saveAs)
         self.ui.actionReload.triggered.connect(lambda: self.load(self.filename))
+        self.ui.actionOpenUnzipDirectory.triggered.connect(self.openUnzipDirectory)
+        self.ui.actionLoadStartValues.triggered.connect(self.loadStartValues)
+        self.ui.actionSaveResult.triggered.connect(self.saveResult)
+        self.ui.actionSavePlottedResult.triggered.connect(lambda: self.saveResult(plotted=True))
+        self.ui.actionExit.triggered.connect(QApplication.closeAllWindows)
 
         # tools menu
+        self.ui.actionBuildPlatformBinary.triggered.connect(self.buildPlatformBinary)
+
         self.ui.actionValidateFMU.triggered.connect(self.validateFMU)
-        self.ui.actionCompileDarwinBinary.triggered.connect(lambda: self.compilePlatformBinary('darwin64'))
-        self.ui.actionCompileLinuxBinary.triggered.connect(lambda: self.compilePlatformBinary('linux64'))
-        self.ui.actionCompileWin32Binary.triggered.connect(lambda: self.compilePlatformBinary('win32'))
-        self.ui.actionCompileWin64Binary.triggered.connect(lambda: self.compilePlatformBinary('win64'))
         self.ui.actionRemoveSourceCode.triggered.connect(self.removeSourceCode)
         self.ui.actionCreateJupyterNotebook.triggered.connect(self.createJupyterNotebook)
         self.ui.actionCreateCMakeProject.triggered.connect(self.createCMakeProject)
@@ -319,11 +333,7 @@ class MainWindow(QMainWindow):
         self.simulationProgressBar.setVisible(False)
 
         # connect signals and slots
-        self.ui.actionNewWindow.triggered.connect(self.newWindow)
         self.ui.openButton.clicked.connect(self.open)
-        self.ui.actionOpen.triggered.connect(self.open)
-        self.ui.actionSaveResult.triggered.connect(self.saveResult)
-        self.ui.actionSavePlottedResult.triggered.connect(lambda: self.saveResult(plotted=True))
         self.ui.actionSimulate.triggered.connect(self.startSimulation)
         self.ui.actionShowSettings.triggered.connect(lambda: self.setCurrentPage(self.ui.settingsPage))
         self.ui.actionShowFiles.triggered.connect(lambda: self.setCurrentPage(self.ui.filesPage))
@@ -345,7 +355,6 @@ class MainWindow(QMainWindow):
         self.log.currentMessageChanged.connect(self.setStatusMessage)
         self.ui.selectInputButton.clicked.connect(self.selectInputFile)
         self.ui.actionShowAboutDialog.triggered.connect(self.showAboutDialog)
-        self.ui.actionShowNewFMUDialog.triggered.connect(self.showNewFMUDialog)
 
         if os.name == 'nt':
             self.ui.actionCreateDesktopShortcut.triggered.connect(self.createDesktopShortcut)
@@ -404,21 +413,28 @@ class MainWindow(QMainWindow):
 
         self.contextMenu.exec_(currentView.mapToGlobal(point))
 
-    def load(self, filename):
+    def load(self, filename=None):
 
         if not self.isVisible():
             self.show()
 
-        self.cleanUp()
+        if filename:
+
+            self.cleanUp()
+
+            try:
+                self.unzipdir = Path(fmpy.extract(filename))
+            except Exception as e:
+                QMessageBox.warning(self, "Failed to load extract FMU", f"Failed to extract {filename}. {e}")
+                return
+
+            self.filename = filename
 
         try:
-            self.unzipdir = fmpy.extract(filename)
-            self.modelDescription = md = read_model_description(filename)
+            self.modelDescription = md = read_model_description(self.unzipdir)
         except Exception as e:
-            QMessageBox.warning(self, "Failed to load FMU", "Failed to load %s. %s" % (filename, e))
+            QMessageBox.warning(self, "Failed to read model description FMU", f"Failed to read model description from {self.unzipdir}. {e}")
             return
-
-        self.filename = filename
 
         # show model.png
         try:
@@ -439,7 +455,7 @@ class MainWindow(QMainWindow):
             self.ui.modelImageLabel.setPixmap(QPixmap())
             self.ui.modelImageLabel.setToolTip(None)
 
-        platforms = supported_platforms(self.filename)
+        platforms = supported_platforms(self.unzipdir)
 
         self.variables.clear()
         self.selectedVariables.clear()
@@ -469,14 +485,10 @@ class MainWindow(QMainWindow):
 
         can_compile = md.fmiVersion != '1.0' and 'c-code' in platforms
 
-        self.ui.actionCompileDarwinBinary.setEnabled(can_compile and fmpy.system == 'darwin')
-        self.ui.actionCompileLinuxBinary.setEnabled(can_compile and fmpy.system in ['linux', 'windows'])
-        self.ui.actionCompileWin32Binary.setEnabled(can_compile and fmpy.system == 'windows')
-        self.ui.actionCompileWin64Binary.setEnabled(can_compile and fmpy.system == 'windows')
+        self.ui.actionBuildPlatformBinary.setEnabled(can_compile)
+        self.ui.actionCreateCMakeProject.setEnabled(can_compile)
 
         self.ui.actionRemoveSourceCode.setEnabled('c-code' in platforms)
-
-        self.ui.actionCreateCMakeProject.setEnabled(can_compile)
 
         self.ui.actionCreateJupyterNotebook.setEnabled(True)
 
@@ -529,15 +541,16 @@ class MainWindow(QMainWindow):
 
         self.updateSimulationSettings()
 
-        self.setCurrentPage(self.ui.settingsPage)
+        if filename:
+            self.setCurrentPage(self.ui.settingsPage)
 
         self.ui.dockWidget.show()
 
         # files page
         self.fileSystemModel = QFileSystemModel()
-        self.fileSystemModel.setRootPath(self.unzipdir)
+        self.fileSystemModel.setRootPath(str(self.unzipdir))
         self.ui.filesTreeView.setModel(self.fileSystemModel)
-        root_index = self.fileSystemModel.index(self.unzipdir)
+        root_index = self.fileSystemModel.index(str(self.unzipdir))
         self.ui.filesTreeView.setRootIndex(root_index)
         self.ui.filesTreeView.expandRecursively(root_index, 10)
         self.ui.filesTreeView.doubleClicked.connect(self.openFileInDefaultApplication)
@@ -552,8 +565,10 @@ class MainWindow(QMainWindow):
             self.ui.webEngineView.load(QUrl.fromLocalFile(doc_file))
 
         # log page
-        self.log.clear()
+        if filename:
+            self.log.clear()
 
+        self.ui.actionSave.setEnabled(True)
         self.ui.actionReload.setEnabled(True)
         self.ui.actionOpenUnzipDirectory.setEnabled(True)
         self.ui.actionShowSettings.setEnabled(True)
@@ -575,14 +590,25 @@ class MainWindow(QMainWindow):
 
         settings = QSettings()
         recent_files = settings.value("recentFiles", defaultValue=[])
-        recent_files = self.removeDuplicates([filename] + recent_files)
+        recent_files = self.removeDuplicates([self.filename] + recent_files)
 
         # save the 10 most recent files
         settings.setValue('recentFiles', recent_files[:10])
 
-        self.setWindowTitle("%s - FMPy" % os.path.normpath(filename))
+        self.setWindowTitle("%s - FMPy" % os.path.normpath(self.filename))
 
         self.createGraphics()
+
+    def save(self):
+        create_zip_archive(filename=self.filename, source_dir=self.unzipdir)
+
+    def saveAs(self):
+        filename, _ = QFileDialog.getSaveFileName(parent=self,
+                                                  caption="Save As",
+                                                  dir=self.filename,
+                                                  filter="FMUs (*.fmu);;All Files (*.*)")
+        if filename:
+            create_zip_archive(filename=filename, source_dir=self.unzipdir)
 
     def cleanUp(self):
         if self.unzipdir:
@@ -1294,46 +1320,62 @@ class MainWindow(QMainWindow):
                 self.startValues.clear()
                 self.startValues.update(start_values)
 
-    def compilePlatformBinary(self, target_platform):
-        """ Compile the platform binary """
+    def buildPlatformBinary(self):
 
-        from ..util import compile_platform_binary
+        from .BuildDialog import BuildDialog
+        from .BuildThread import BuildThread
 
-        platforms = supported_platforms(self.filename)
+        dialog = BuildDialog(self)
 
-        if target_platform in platforms:
-            button = QMessageBox.question(self, "Platform binary already exists",
-                                          f'The FMU already contains a binary for the platform "{target_platform}".'
-                                          ' Do you want to compile and overwrite the existing binary?')
-            if button == QMessageBox.No:
-                return
+        from ..build import Platform, Configuration, Generator
 
-        if self.modelDescription.fmiVersion == '3.0':
+        dialog.ui.generatorComboBox.addItems(["", *get_args(Generator)])
+        dialog.ui.platformComboBox.addItems(["", *get_args(Platform)])
+        dialog.ui.configurationComboBox.addItems(get_args(Configuration))
 
-            platform_map = {
-                'darwin64': 'x86_64-darwin',
-                'linux64': 'x86_64-linux',
-                'win32': 'x86-windows',
-                'win64': 'x86_64-windows',
-            }
-            
-            target_platform = platform_map[target_platform]
-
-        try:
-            compile_platform_binary(self.filename, target_platform=target_platform)
-        except Exception as e:
-            QMessageBox.critical(self, "Failed to compile platform binaries", str(e))
+        if dialog.exec_() != QDialog.DialogCode.Accepted:
             return
 
-        self.load(self.filename)
+        if self.ui.clearLogOnStartButton.isChecked():
+            self.log.clear()
+
+        build_thread = BuildThread(
+            unzipdir=Path(self.unzipdir),
+            build_dir=dialog.ui.buildDirectoryLineEdit.text(),
+            generator=dialog.ui.generatorComboBox.currentText(),
+            platform=dialog.ui.platformComboBox.currentText(),
+            configuration=dialog.ui.configurationComboBox.currentText(),
+            all_warnings=dialog.ui.allWarningsCheckBox.isChecked(),
+            warning_as_error=dialog.ui.warningAsErrorCheckBox.isChecked(),
+            with_wsl=dialog.ui.compileWithWslCheckBox.isChecked(),
+            parent=self
+        )
+
+        progress_dialog = QProgressDialog(self)
+        flags = progress_dialog.windowFlags()
+        flags &= ~Qt.WindowType.WindowCloseButtonHint
+        progress_dialog.setWindowFlags(flags)
+
+        progress_dialog.setWindowTitle("FMPy")
+        progress_dialog.setLabelText("Building Platform Binary...")
+        progress_dialog.setRange(0, 0)
+        progress_dialog.setWindowModality(Qt.WindowModality.WindowModal)
+        progress_dialog.setCancelButton(cast(QPushButton, None))
+
+        build_thread.messageChanged.connect(self.log.logMessage)
+        build_thread.finished.connect(progress_dialog.reset)
+        build_thread.finished.connect(self.load)
+
+        progress_dialog.show()
+        build_thread.start()
 
     def removeSourceCode(self):
 
         button = QMessageBox.question(self, "Remove Source Code?", "Do you want to remove the source code from the FMU?\nThis action cannot be undone.")
 
-        if button == QMessageBox.Yes:
-            remove_source_code(self.filename)
-            self.load(self.filename)
+        if button == QMessageBox.StandardButton.Yes:
+            remove_source_code(self.unzipdir)
+            self.load()
 
     def createJupyterNotebook(self):
         """ Create a Jupyter Notebook to simulate the FMU """
@@ -1398,19 +1440,22 @@ class MainWindow(QMainWindow):
 
         try:
             add_cswrapper(self.filename)
-        except Exception as e:
+        except Exception as ex:
             QMessageBox.warning(self, "Failed to add Co-Simulation Wrapper",
-                                "Failed to add Co-Simulation Wrapper %s. %s" % (self.filename, e))
+                                f"Failed to add Co-Simulation Wrapper {self.filename}. {ex}")
 
-        self.load(self.filename)
+        self.load()
 
 
     def setColorScheme(self, colorScheme: Qt.ColorScheme):
 
         theme = 'dark' if colorScheme == Qt.ColorScheme.Dark else 'light'
 
+        self.ui.actionShowNewFMUDialog.setIcon(QIcon(f':/icons/{theme}/file-new.svg'))
         self.ui.actionOpen.setIcon(QIcon(f':/icons/{theme}/folder-open.svg'))
+        self.ui.actionSave.setIcon(QIcon(f':/icons/{theme}/floppy.svg'))
         self.ui.actionReload.setIcon(QIcon(f':/icons/{theme}/arrow-clockwise.svg'))
+        self.ui.actionBuildPlatformBinary.setIcon(QIcon(f':/icons/{theme}/hammer.svg'))
         self.ui.actionShowSettings.setIcon(QIcon(f':/icons/{theme}/gear.svg'))
         self.ui.actionShowFiles.setIcon(QIcon(f':/icons/{theme}/file-earmark-zip.svg'))
         self.ui.actionShowDocumentation.setIcon(QIcon(f':/icons/{theme}/book.svg'))

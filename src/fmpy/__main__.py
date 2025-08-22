@@ -1,4 +1,4 @@
 
 if __name__ == '__main__':
-    from fmpy.command_line import main
+    from fmpy.cli import main
     main()

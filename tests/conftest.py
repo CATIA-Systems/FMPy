@@ -1,3 +1,5 @@
+from typing import Iterator
+
 import os
 from os import makedirs
 from shutil import rmtree
@@ -32,10 +34,10 @@ def resources_dir():
 
 
 @pytest.fixture(scope='session')
-def reference_fmus_dist_dir(resources_dir) -> Path:
+def reference_fmus_dist_dir(resources_dir) -> Iterator[Path]:
 
-    version = '0.0.37'
-    checksum = '9b0d6bfbceef6fc0e724620ea748f26d03ca3cf6048d17436c49b9340d553ec4'
+    version = '0.0.39'
+    checksum = '6863d55e5818e1ca4e4614c4d4ba4047a921b4495f6336e7002874ed791f6c2a'
 
     zip_file = download_file(
         url=f'https://github.com/modelica/Reference-FMUs/releases/download/v{version}/Reference-FMUs-{version}.zip',

@@ -85,7 +85,7 @@ def test_common_functions(fmi_version, reference_fmus_dist_dir):
     assert result[0] == value[0]
 
     # set and get String
-    vr = [variables['String_parameter'].valueReference]
+    vr = [variables['String_input'].valueReference]
     value = ['foo']
     fmu.setString(vr, value)
     result = fmu.getString(vr)

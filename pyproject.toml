@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "attrs>=24.2.0",
+    "cmake>=4.0.3",
     "jinja2>=3.1.4",
     "lark>=1.2.2",
     "lxml>=5.3.0",
@@ -43,7 +44,7 @@ webapp = [
 ]
 
 [project.scripts]
-fmpy = "fmpy.command_line:main"
+fmpy = "fmpy.cli:main"
 
 [project.gui-scripts]
 fmpy-gui = "fmpy.gui:main"

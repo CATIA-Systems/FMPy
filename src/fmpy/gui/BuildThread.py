@@ -1,3 +1,6 @@
+import subprocess
+
+import os
 from os import PathLike
 from tempfile import TemporaryDirectory
 
@@ -98,7 +101,13 @@ class BuildThread(QThread):
 
         self.messageChanged.emit("debug", " ".join(command))
 
-        with Popen(command, stdout=PIPE, stderr=PIPE, bufsize=1, text=True, encoding="utf-8") as process:
+        startupinfo = None
+
+        if os.name == 'nt':
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
+        with Popen(command, stdout=PIPE, stderr=PIPE, bufsize=1, text=True, encoding="utf-8", startupinfo=startupinfo) as process:
 
             for line in process.stdout:
                 self.messageChanged.emit("info", line)

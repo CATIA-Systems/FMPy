@@ -73,7 +73,6 @@ class AboutDialog(QDialog):
 
         # hide the question mark button
         flags = self.windowFlags()
-        flags &= ~Qt.WindowContextHelpButtonHint
         flags |= Qt.MSWindowsFixedSizeDialogHint
         self.setWindowFlags(flags)
 

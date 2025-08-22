@@ -161,6 +161,7 @@ class MainWindow(QMainWindow):
 
         # disable widgets
         self.ui.actionLoadStartValues.setEnabled(False)
+        self.ui.actionSave.setEnabled(False)
         self.ui.actionReload.setEnabled(False)
         self.ui.actionBuildPlatfromBinary.setEnabled(False)
         self.ui.actionOpenUnzipDirectory.setEnabled(False)
@@ -567,6 +568,7 @@ class MainWindow(QMainWindow):
         if filename:
             self.log.clear()
 
+        self.ui.actionSave.setEnabled(True)
         self.ui.actionReload.setEnabled(True)
         self.ui.actionOpenUnzipDirectory.setEnabled(True)
         self.ui.actionShowSettings.setEnabled(True)

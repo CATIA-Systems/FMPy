@@ -1449,8 +1449,11 @@ class MainWindow(QMainWindow):
 
         theme = 'dark' if colorScheme == Qt.ColorScheme.Dark else 'light'
 
+        self.ui.actionShowNewFMUDialog.setIcon(QIcon(f':/icons/{theme}/file-new.svg'))
         self.ui.actionOpen.setIcon(QIcon(f':/icons/{theme}/folder-open.svg'))
+        self.ui.actionSave.setIcon(QIcon(f':/icons/{theme}/floppy.svg'))
         self.ui.actionReload.setIcon(QIcon(f':/icons/{theme}/arrow-clockwise.svg'))
+        self.ui.actionBuildPlatfromBinary.setIcon(QIcon(f':/icons/{theme}/hammer.svg'))
         self.ui.actionShowSettings.setIcon(QIcon(f':/icons/{theme}/gear.svg'))
         self.ui.actionShowFiles.setIcon(QIcon(f':/icons/{theme}/file-earmark-zip.svg'))
         self.ui.actionShowDocumentation.setIcon(QIcon(f':/icons/{theme}/book.svg'))

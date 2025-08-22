@@ -1,6 +1,6 @@
 [project]
 name = "FMPy"
-version = "0.3.25"
+version = "0.3.26"
 description = "Simulate Functional Mock-up Units (FMUs) in Python"
 readme = "README.md"
 requires-python = ">=3.10"

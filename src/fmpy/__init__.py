@@ -7,7 +7,7 @@ from platform import machine
 from ctypes import *
 from typing import Union, IO, List, Callable
 
-__version__ = '0.3.25'
+__version__ = '0.3.26'
 
 # library to use in plot_result()
 plot_library = 'plotly'  # deprecated

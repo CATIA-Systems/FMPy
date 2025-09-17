@@ -19,12 +19,12 @@
 #include <sunmatrix/sunmatrix_dense.h> /* access to dense SUNMatrix            */
 #include <sunlinsol/sunlinsol_dense.h> /* access to dense SUNLinearSolver      */
 #include <sundials/sundials_types.h>   /* defs. of realtype, sunindextype      */
-
+#include <sundials/sundials_context.h> /* for error handling */
 #include "fmi2Functions.h"
 
 
-#define EPSILON 1e-14
-#define RTOL  RCONST(1.0e-4)   /* scalar relative tolerance            */
+#define EPSILON (1e-14)
+#define RTOL    (1.0e-4)  /* scalar relative tolerance            */
 
 #if defined(_WIN32)
 #define SHARED_LIBRARY_EXTENSION ".dll"
@@ -50,6 +50,7 @@ typedef struct {
     size_t nx;
     size_t nz;
     
+    SUNContext sunctx;
     void *cvode_mem;
     N_Vector x;
     N_Vector abstol;
@@ -102,29 +103,29 @@ typedef struct {
 
 } Model;
 
-static int f(realtype t, N_Vector y, N_Vector ydot, void *user_data) {
+static int f(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {
     
     Model *m = (Model *)user_data;
         
     if (m->nx > 0) {
         fmi2Status status;
         status = m->fmi2SetTime(m->c, t);
-        status = m->fmi2GetContinuousStates(m->c, NV_DATA_S(y), NV_LENGTH_S(y));
-        status = m->fmi2GetDerivatives(m->c, NV_DATA_S(ydot), NV_LENGTH_S(ydot));
+        status = m->fmi2GetContinuousStates(m->c, NV_DATA_S(y), (size_t)NV_LENGTH_S(y));
+        status = m->fmi2GetDerivatives(m->c, NV_DATA_S(ydot), (size_t)NV_LENGTH_S(ydot));
     }
         
     return 0;
     
 }
 
-static int g(realtype t, N_Vector y, realtype *gout, void *user_data) {
+static int g(sunrealtype t, N_Vector y, sunrealtype *gout, void *user_data) {
 
     Model *m = (Model *)user_data;
     
     fmi2Status status = m->fmi2SetTime(m->c, t);
 
     if (m->nx > 0) {
-        status = m->fmi2SetContinuousStates(m->c, NV_DATA_S(y), NV_LENGTH_S(y));
+        status = m->fmi2SetContinuousStates(m->c, NV_DATA_S(y), (size_t)NV_LENGTH_S(y));
     }
     
     status = m->fmi2GetEventIndicators(m->c, gout, m->nz);
@@ -132,11 +133,11 @@ static int g(realtype t, N_Vector y, realtype *gout, void *user_data) {
     return 0;
 }
 
-static void ehfun(int error_code, const char *module, const char *function, char *msg, void *user_data) {
+static void ehfun(int line, const char* func, const char* file, const char* msg, SUNErrCode err_code, void* err_user_data, SUNContext sunctx) {
 	
-	Model *m = (Model *)user_data;
+	Model *m = (Model *)err_user_data;
 
-	m->logger(m, m->instanceName, fmi2Error, "logError", "CVode error(code %d) in module %s, function %s: %s.", error_code, module, function, msg);
+	m->logger(m, m->instanceName, fmi2Error, "logError", "CVode error (code %d) in file %s, function %s: %s.", err_code, file, func, msg);
 }
 
 
@@ -295,24 +296,28 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
     m->c = m->fmi2Instantiate(instanceName, fmi2ModelExchange, fmuGUID, fmuResourceLocation, functions, visible, loggingOn); 
 	ASSERT_NOT_NULL(m->c)
-    
+
+    int flag;
+
+    flag = SUNContext_Create(SUN_COMM_NULL, &m->sunctx);
+    ASSERT_CV_SUCCESS(flag)
+
     if (m->nx > 0) {
-        m->x = N_VNew_Serial(m->nx);
-        m->abstol = N_VNew_Serial(m->nx);
+        m->x = N_VNew_Serial(m->nx, m->sunctx);
+        m->abstol = N_VNew_Serial(m->nx, m->sunctx);
         for (size_t i = 0; i < m->nx; i++) {
             NV_DATA_S(m->abstol)[i] = RTOL;
         }
-        m->A = SUNDenseMatrix(m->nx, m->nx);
+        m->A = SUNDenseMatrix(m->nx, m->nx, m->sunctx);
     } else  {
-        m->x = N_VNew_Serial(1);
-        m->abstol = N_VNew_Serial(1);
+        m->x = N_VNew_Serial(1, m->sunctx);
+        m->abstol = N_VNew_Serial(1, m->sunctx);
         NV_DATA_S(m->abstol)[0] = RTOL;
-        m->A = SUNDenseMatrix(1, 1);
+        m->A = SUNDenseMatrix(1, 1, m->sunctx);
     }
     
-    m->cvode_mem = CVodeCreate(CV_BDF);
+    m->cvode_mem = CVodeCreate(CV_BDF, m->sunctx);
     
-	int flag;
 		
 	flag = CVodeInit(m->cvode_mem, f, 0, m->x);
 	ASSERT_CV_SUCCESS(flag)
@@ -325,7 +330,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 		ASSERT_CV_SUCCESS(flag)
     }
     
-    m->LS = SUNLinSol_Dense(m->x, m->A);
+    m->LS = SUNLinSol_Dense(m->x, m->A, m->sunctx);
 
     flag = CVodeSetLinearSolver(m->cvode_mem, m->LS, m->A);
 	ASSERT_CV_SUCCESS(flag)
@@ -333,7 +338,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	flag = CVodeSetNoInactiveRootWarn(m->cvode_mem);
 	ASSERT_CV_SUCCESS(flag)
 
-	flag = CVodeSetErrHandlerFn(m->cvode_mem, ehfun, NULL);
+	flag = SUNContext_PushErrHandler(m->cvode_mem, ehfun, NULL);
 	ASSERT_CV_SUCCESS(flag)
 
     flag = CVodeSetUserData(m->cvode_mem, m);
@@ -532,20 +537,20 @@ fmi2Status fmi2DoStep(fmi2Component c,
     if (!c) return fmi2Error;
     Model *m = (Model *)c;
     
-    fmi2Status status;
+    fmi2Status status = fmi2OK;
     
-    realtype tret = currentCommunicationPoint;
-    realtype tNext = currentCommunicationPoint + communicationStepSize;
-	realtype epsilon = (1.0 + fabs(tNext)) * EPSILON;
+    sunrealtype tret = currentCommunicationPoint;
+    sunrealtype tNext = currentCommunicationPoint + communicationStepSize;
+    sunrealtype epsilon = (1.0 + fabs(tNext)) * EPSILON;
         
     if (m->nx > 0) {
-        status = m->fmi2GetContinuousStates(m->c, NV_DATA_S(m->x), NV_LENGTH_S(m->x));
+        status = m->fmi2GetContinuousStates(m->c, NV_DATA_S(m->x), (size_t)NV_LENGTH_S(m->x));
         if (status > fmi2Warning) return status;
     }
     
     while (tret + epsilon < tNext) {
         
-        realtype tout = tNext;
+        sunrealtype tout = tNext;
         
         if (m->eventInfo.nextEventTimeDefined && m->eventInfo.nextEventTime < tNext) {
             tout = m->eventInfo.nextEventTime;
@@ -562,7 +567,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
         if (status > fmi2Warning) return status;
 
         if (m->nx > 0) {
-            status = m->fmi2SetContinuousStates(m->c, NV_DATA_S(m->x), NV_LENGTH_S(m->x));
+            status = m->fmi2SetContinuousStates(m->c, NV_DATA_S(m->x), (size_t)NV_LENGTH_S(m->x));
             if (status > fmi2Warning) return status;
         }
         
@@ -587,7 +592,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
             if (status > fmi2Warning) return status;
 
             if (m->nx > 0 && m->eventInfo.valuesOfContinuousStatesChanged) {
-                status = m->fmi2GetContinuousStates(m->c, NV_DATA_S(m->x), NV_LENGTH_S(m->x));
+                status = m->fmi2GetContinuousStates(m->c, NV_DATA_S(m->x), (size_t)NV_LENGTH_S(m->x));
                 if (status > fmi2Warning) return status;
             }
             

@@ -3,7 +3,7 @@ from tempfile import TemporaryDirectory
 
 import shutil
 from pathlib import Path
-from typing import cast
+from typing import cast, Iterable
 from typing_extensions import get_args
 
 from ..template import create_fmu
@@ -200,13 +200,10 @@ class MainWindow(QMainWindow):
         self.hideAllColumns()
 
         # populate the recent files list
-        settings = QSettings()
-        recent_files = settings.value("recentFiles", defaultValue=[])
-        recent_files = self.removeDuplicates(recent_files)
+        recent_files = self.getRecentFiles()
         vbox = QVBoxLayout()
 
         if recent_files:
-            added = set()
             for file in recent_files[:5]:
                 if not file:
                     continue
@@ -214,7 +211,6 @@ class MainWindow(QMainWindow):
                 link.setToolTip(file)
                 link.linkActivated.connect(self.load)
                 vbox.addWidget(link)
-                added.add(file)
 
         self.ui.recentFilesGroupBox.setLayout(vbox)
         self.ui.recentFilesGroupBox.setVisible(len(recent_files) > 0)
@@ -588,11 +584,10 @@ class MainWindow(QMainWindow):
         self.fmiTypeComboBox.setEnabled(can_sim and len(fmi_types) > 1)
         self.ui.settingsGroupBox.setEnabled(can_sim)
 
-        settings = QSettings()
-        recent_files = settings.value("recentFiles", defaultValue=[])
-        recent_files = self.removeDuplicates([self.filename] + recent_files)
+        recent_files = [self.filename] + self.getRecentFiles()
 
         # save the 10 most recent files
+        settings = QSettings()
         settings.setValue('recentFiles', recent_files[:10])
 
         self.setWindowTitle("%s - FMPy" % os.path.normpath(self.filename))
@@ -617,8 +612,8 @@ class MainWindow(QMainWindow):
     def startDir(self) -> str:
 
         start_dir = QDir.homePath()
-        settings = QSettings()
-        recent_files = settings.value("recentFiles", defaultValue=[])
+
+        recent_files = self.getRecentFiles()
 
         for filename in recent_files:
             dirname = os.path.dirname(filename)
@@ -1069,11 +1064,10 @@ class MainWindow(QMainWindow):
                     window.load(filename)
 
     @staticmethod
-    def removeDuplicates(seq):
-        """ Remove duplicates from a sequence """
-        seen = set()
-        seen_add = seen.add
-        return [x for x in seq if not (x in seen or seen_add(x))]
+    def getRecentFiles() -> list[str]:
+        settings = QSettings()
+        recent_files = settings.value("recentFiles", type=list)
+        return list(dict.fromkeys(recent_files))
 
     def validateFMU(self):
 

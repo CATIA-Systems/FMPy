@@ -51,7 +51,8 @@ for platform, cmake_options, platform_tuple in generators:
         '-D', 'CMAKE_OSX_ARCHITECTURES=arm64;x86_64',
         '-D', 'CMAKE_POSITION_INDEPENDENT_CODE=ON',
         '-S', 'sundials-5.3.0',
-        '-B', f'sundials-5.3.0/{platform}/static'
+        '-B', f'sundials-5.3.0/{platform}/static',
+        '-D', 'CMAKE_POLICY_VERSION_MINIMUM=3.5',  # quick fix for CMake 4.1+
     ] + cmake_options)
 
     check_call(['cmake', '--build', f'sundials-5.3.0/{platform}/static', '--target', 'install', '--config', configuration])

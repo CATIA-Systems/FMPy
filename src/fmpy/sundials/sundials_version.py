@@ -1,11 +1,11 @@
-from ctypes import *
-from .libraries import sundials_cvode
+from ctypes import POINTER, c_int, c_char_p
+from .libraries import sundials_core
 
 # /* -----------------------------------------------------------------
 #  * Programmer(s): David J. Gardner @ LLNL
 #  * -----------------------------------------------------------------
 #  * SUNDIALS Copyright Start
-#  * Copyright (c) 2002-2019, Lawrence Livermore National Security
+#  * Copyright (c) 2002-2025, Lawrence Livermore National Security
 #  * and Southern Methodist University.
 #  * All rights reserved.
 #  *
@@ -21,19 +21,22 @@ from .libraries import sundials_cvode
 # #define _SUNDIALS_VERSION_H
 #
 # #include <sundials/sundials_config.h>
+# #include <sundials/sundials_errors.h>
 #
-# #ifdef __cplusplus  /* wrapper to enable C++ usage */
+# #ifdef __cplusplus /* wrapper to enable C++ usage */
 # extern "C" {
 # #endif
 #
 # /* Fill a string with SUNDIALS version information */
-# SUNDIALS_EXPORT int SUNDIALSGetVersion(char *version, int len);
+# SUNDIALS_EXPORT
+# SUNErrCode SUNDIALSGetVersion(char* version, int len);
 #
 # /* Fills integers with the major, minor, and patch release version numbers and a
 #    string with the release label.*/
-# SUNDIALS_EXPORT int SUNDIALSGetVersionNumber(int *major, int *minor, int *patch,
-#                                              char *label, int len);
-SUNDIALSGetVersionNumber = getattr(sundials_cvode, 'SUNDIALSGetVersionNumber')
+# SUNDIALS_EXPORT
+# SUNErrCode SUNDIALSGetVersionNumber(int* major, int* minor, int* patch,
+#                                     char* label, int len);
+SUNDIALSGetVersionNumber = getattr(sundials_core, 'SUNDIALSGetVersionNumber')
 SUNDIALSGetVersionNumber.argtypes = [POINTER(c_int), POINTER(c_int), POINTER(c_int), c_char_p, c_int]
 SUNDIALSGetVersionNumber.restype = c_int
 #
@@ -42,4 +45,3 @@ SUNDIALSGetVersionNumber.restype = c_int
 # #endif
 #
 # #endif
-

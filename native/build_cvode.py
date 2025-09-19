@@ -83,9 +83,7 @@ for platform, cmake_options, platform_tuple in generators:
 
     os.makedirs(sundials_binary_dir, exist_ok=True)
 
-    os.path.join('sundials-7.4.0', platform, 'dynamic', 'install', 'sundials_cvode' + sharedLibraryExtension)
-
-    for name in ['sundials_cvode', 'sundials_nvecserial', 'sundials_sunlinsoldense', 'sundials_sunmatrixdense']:
+    for name in ['sundials_core', 'sundials_cvode', 'sundials_nvecserial', 'sundials_sunlinsoldense', 'sundials_sunmatrixdense']:
         lib_dir = 'bin' if os.name == 'nt' else 'lib'
         src = os.path.join('sundials-7.4.0', platform, 'dynamic', 'install', lib_dir, sl_prefix + name + sl_suffix)
         dst = os.path.join(sundials_binary_dir, name + sl_suffix)

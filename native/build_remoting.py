@@ -76,6 +76,7 @@ else:
         '-D', 'CMAKE_INSTALL_PREFIX=' + os.path.join(rpclib_dir, 'linux64', 'install'),
         '-D', 'CMAKE_POSITION_INDEPENDENT_CODE=ON',
         '-G', 'Unix Makefiles',
+        '-D', 'CMAKE_POLICY_VERSION_MINIMUM=3.5',
         rpclib_dir
     ])
 

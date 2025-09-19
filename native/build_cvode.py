@@ -44,6 +44,7 @@ for platform, cmake_options, platform_tuple in generators:
         '-D', 'BUILD_IDAS=OFF',
         '-D', 'BUILD_KINSOL=OFF',
         '-D', 'BUILD_SHARED_LIBS=OFF',
+        '-D', 'EXAMPLES_ENABLE_C=OFF',
         '-D', f'CMAKE_INSTALL_PREFIX=sundials-5.3.0/{platform}/static/install',
         '-D', 'CMAKE_POLICY_DEFAULT_CMP0091=NEW',
         '-D', 'CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded',

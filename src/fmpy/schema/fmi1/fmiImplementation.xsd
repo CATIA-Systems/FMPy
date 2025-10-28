@@ -53,7 +53,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             <xs:element name="Model" type="fmiCoSimulationModel"/>
           </xs:sequence>
         </xs:complexType>
-      </xs:element>
+      </xs:element>
     </xs:choice>
   </xs:complexType>
 

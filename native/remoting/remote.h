@@ -81,7 +81,7 @@ typedef unsigned long portable_size_t;
 #define REMOTE_ENCODE_PTR(_data, _n, _ptr, _len)    memcpy(_data + _n*REMOTE_ARG_SIZE, _ptr, sizeof(*_ptr)*_len)
 #define REMOTE_ENCODE_STR(_data, _n, _ptr)          strncpy(_data + _n*REMOTE_ARG_SIZE, _ptr, REMOTE_ARG_SIZE)
 
-#define REMOTE_DECODE_VAR(_data, _n, _type)         (*((_type *)(_data + _n*REMOTE_ARG_SIZE)))    
+#define REMOTE_DECODE_VAR(_data, _n, _type)         (*((_type *)(_data + _n*REMOTE_ARG_SIZE)))
 #define REMOTE_DECODE_PTR(_data, _n, _type)         ((_type)(_data + _n*REMOTE_ARG_SIZE))
 #define REMOTE_DECODE_STR(_data, _n)                REMOTE_DECODE_PTR(_data, _n, fmi2String)
 

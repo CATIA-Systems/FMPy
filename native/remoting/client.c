@@ -29,7 +29,7 @@
 
 
 /*----------------------------------------------------------------------------
-                                 L O G G E R 
+                                 L O G G E R
 ----------------------------------------------------------------------------*/
 
 #define _LOG(client, level, ...)    client_logger(client, level, ##__VA_ARGS__)
@@ -89,7 +89,7 @@ static fmi2Status make_rpc(client_t* client, remote_function_t function) {
     remote_data_t *remote_data = client->communication->data;
 
     fmi2Status status = (fmi2Status)-1;
-    
+
     /* Flush message log */
     remote_data->message[0] = '\0';
 
@@ -106,7 +106,7 @@ static fmi2Status make_rpc(client_t* client, remote_function_t function) {
         LOG_DEBUG(client, "Waiting for server...");
     }
 
-    status = remote_data->status; 
+    status = remote_data->status;
     CLIENT_LOG("RPC: %s | reply = %d\n", remote_function_name(function), status);
 
     if (remote_data->message[0]) {
@@ -134,7 +134,7 @@ static char* dirname(char* path) {
         }
     return path;
 }
- 
+
 
 static int get_server_bitness(void) {
     /* current process (calling this dll) is 64bits, the server is 32 bits */

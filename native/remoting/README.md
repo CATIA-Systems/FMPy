@@ -39,20 +39,20 @@ Considering win64 FMU, only the `binaries/win64` folder is populated. It contain
 #### Add remoting win32: simulate 64bits FMU 32 bits OS
   1. Copy `client_sm.dll` (32 bits) as `model.dll` in `binaries/win32`
   2. Copy `server_sm.exe` (64 bits) in `binaries/win64`
-  
+
 When Simulation Enviroment will use the FMU on 32 bits OS:
   1. it will load  `win32/model.dll` (which is a copy of `client_sm.dll`)
   2. which will communicate with `win64/server_exe`.
-  3. which will load `win64/model.dll` 
+  3. which will load `win64/model.dll`
 
 #### Add remoting win64: simulate 32 bits FMU 64 bits OS
   1. Copy `client_sm.dll` (64 bits) as `model.dll` in `binaries/win64`
   3. Copy `server_sm.exe` (32 bits) in `binaries/win32`
-  
+
   When Simulation Enviroment will use the FMU on 64bits kernel:
   1. it will load  `win64/model.dll` (which is a copy of `client_sm.dll`)
   2. which will communicate with `win32/server_exe`.
-  3. which will load `win32/model.dll` 
+  3. which will load `win32/model.dll`
 
 
 ## TODO List
@@ -79,15 +79,15 @@ provided that the following conditions are met:
    and the following disclaimer.
 
 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions
-   and the following disclaimer in the documentation and/or other materials provided with 
+   and the following disclaimer in the documentation and/or other materials provided with
    the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR 
-CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
 OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.

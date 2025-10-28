@@ -26,7 +26,7 @@ template<typename T> T *get(void *libraryHandle, const char *functionName) {
 # endif
 
 void logger(fmi2ComponentEnvironment componentEnvironment, fmi2String instanceName, fmi2Status status, fmi2String category, fmi2String message, ...) {
-    
+
     printf("[%d][%s] ", status, instanceName);
 
     va_list args;
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
     }
 
     const char *libraryPath = argv[1];
-   
+
 	// load the shared library
 # ifdef _WIN32
 	auto l = LoadLibraryA(libraryPath);
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
     cout << "Types Platform: " << typesPlatform << endl;
 
 	auto version = getVersion();
-    
+
     cout << "FMI Version: " << version << endl;
 
     fmi2CallbackFunctions functions = { logger,	nullptr, nullptr, nullptr, nullptr };
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	CALL(terminate(c));
-	
+
 	freeInstance(c);
 
 out:

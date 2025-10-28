@@ -141,7 +141,7 @@ if (WIN32)
     # shared memory server
     add_executable(server_sm
         communication.c communication.h
-        process.c process.h 
+        process.c process.h
         remote.c remote.h
         server.c server.h
         ${CMAKE_CURRENT_BINARY_DIR}/config.h
@@ -163,7 +163,7 @@ if (WIN32)
     add_library(client_sm SHARED
         client.c client.h
         communication.c communication.h
-        process.c process.h 
+        process.c process.h
         remote.c remote.h
         ${CMAKE_CURRENT_BINARY_DIR}/config.h
     )

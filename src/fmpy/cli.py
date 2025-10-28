@@ -13,27 +13,27 @@ def main():
 Validate and simulate Functional Mock-up Units (FMUs)
 
 Get information about an FMU:
-   
+
     fmpy info Rectifier.fmu
- 
+
 Simulate an FMU:
- 
+
     fmpy simulate Rectifier.fmu --show-plot
-    
+
 Compile a source code FMU:
 
     fmpy compile Rectifier.fmu
-    
+
 Create a Jupyter Notebook
 
     fmpy create-jupyter-notebook Rectifier.fmu
-    
+
 
 About FMPy
 
 FMPy version:       {fmpy.__version__}
 FMI platform:       {fmpy.platform}
-Installation path:  {os.path.dirname(__file__)}  
+Installation path:  {os.path.dirname(__file__)}
 Python interpreter: {sys.executable}
 Python version:     {sys.version}
 """

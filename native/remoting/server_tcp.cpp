@@ -95,9 +95,9 @@ DWORD WINAPI checkLockFile(LPVOID lpParam) {
     }
 
     cout << "Lock file " << lockFile << " open. Exiting." << endl;
-    
+
     s_server->stop();
-    
+
     return 0;
 }
 #else
@@ -116,7 +116,7 @@ void *checkLockFile(void *arg) {
 
     return NULL;
 }
-#endif		
+#endif
 
 
 
@@ -160,7 +160,7 @@ private:
 		EventInfoReturnValue r = {
 			status,
 			s_logMessages,
-			eventInfo->newDiscreteStatesNeeded, 
+			eventInfo->newDiscreteStatesNeeded,
 			eventInfo->terminateSimulation,
 			eventInfo->nominalsOfContinuousStatesChanged,
 			eventInfo->valuesOfContinuousStatesChanged,
@@ -179,7 +179,7 @@ public:
 	FMU(const string &libraryPath) : srv(rpc::constants::DEFAULT_PORT) {
 
         this->libraryPath = libraryPath;
-		
+
 		srv.bind("echo", [](string const& s) {
 			return s;
 		});
@@ -188,7 +188,7 @@ public:
             return a + b;
         });
 
-		srv.bind("fmi2SetDebugLogging", [this]() { 
+		srv.bind("fmi2SetDebugLogging", [this]() {
             NOT_IMPLEMENTED
         });
 
@@ -208,13 +208,13 @@ public:
             if (status > fmi2Warning) {
                 return createReturnValue(0);
             }
-			
+
             long int_value = reinterpret_cast<long>(m_instance);
-            
+
             return createReturnValue(static_cast<int>(int_value));
 		});
 
-		srv.bind("fmi2FreeInstance", [this]() { 
+		srv.bind("fmi2FreeInstance", [this]() {
 			resetExitTimer();
 			FMI2FreeInstance(m_instance);
 		});
@@ -225,7 +225,7 @@ public:
 			const FMIStatus status = FMI2SetupExperiment(m_instance, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime);
 			return createReturnValue(status);
 		});
-		
+
 		srv.bind("fmi2EnterInitializationMode", [this]() {
 			resetExitTimer();
 			const FMIStatus status = FMI2EnterInitializationMode(m_instance);
@@ -237,7 +237,7 @@ public:
 			const FMIStatus status = FMI2ExitInitializationMode(m_instance);
 			return createReturnValue(status);
 		});
-		
+
 		srv.bind("fmi2Terminate", [this]() {
 			resetExitTimer();
 			const FMIStatus status = FMI2Terminate(m_instance);
@@ -380,7 +380,7 @@ public:
 			const FMIStatus status = FMI2GetDerivatives(m_instance, derivatives.data(), nx);
 			return createRealReturnValue(status, derivatives);
 		});
-		
+
 		srv.bind("fmi2GetEventIndicators", [this](size_t ni) {
 			resetExitTimer();
 			vector<double> eventIndicators(ni);
@@ -425,7 +425,7 @@ public:
 			const FMIStatus status = FMI2DoStep(m_instance, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint);
 			return createReturnValue(status);
 		});
-		
+
 		srv.bind("fmi2CancelStep", [this]() {
 			resetExitTimer();
 			const FMIStatus status = FMI2CancelStep(m_instance);
@@ -494,16 +494,16 @@ int main(int argc, char *argv[]) {
 
             HANDLE hThreadArray = CreateThread(
                 NULL,                   // default security attributes
-                0,                      // use default stack size  
+                0,                      // use default stack size
                 checkLockFile,          // thread function name
-                NULL,                   // argument to thread function 
-                0,                      // use default creation flags 
+                NULL,                   // argument to thread function
+                0,                      // use default creation flags
                 &dwThreadIdArray);      // returns the thread identifier
 #else
             pthread_t tid;
-            
+
             int err = pthread_create(&tid, NULL, &checkLockFile, NULL);
-            
+
             if (err != 0) {
                 printf("Can't create thread :[%s]", strerror(err));
             } else {

@@ -10,7 +10,7 @@ def compile_resources():
     from os.path import getmtime
     import PySide6
 
-    
+
     pyside_dir = Path(PySide6.__file__).parent
 
     if os.name == 'posix':

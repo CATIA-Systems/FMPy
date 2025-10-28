@@ -32,12 +32,12 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ----------------------------------------------------------------------------
     </xs:documentation>
   </xs:annotation>
-  
+
   <xs:complexType name="fmiImplementation">
     <xs:annotation>
       <xs:documentation>XML structures related to the FMI co-simulation interface.</xs:documentation>
     </xs:annotation>
-    
+
     <xs:choice>
       <xs:element name="CoSimulation_StandAlone">
         <xs:complexType>
@@ -56,12 +56,12 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       </xs:element>
     </xs:choice>
   </xs:complexType>
-  
+
   <xs:complexType name="fmiCoSimulationCapabilities">
     <xs:annotation>
       <xs:documentation>List of capability flags that an FMI co-simulation interface can provide</xs:documentation>
     </xs:annotation>
-    
+
     <xs:attribute name="canHandleVariableCommunicationStepSize" type="xs:boolean" default="false"/>
     <xs:attribute name="canHandleEvents" type="xs:boolean" default="false"/>
     <xs:attribute name="canRejectSteps" type="xs:boolean" default="false"/>
@@ -77,7 +77,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <xs:annotation>
       <xs:documentation>This structure is used to model information about a model</xs:documentation>
     </xs:annotation>
-    
+
     <xs:sequence minOccurs="0" maxOccurs="unbounded">
       <xs:element name="File">
         <xs:annotation>
@@ -88,7 +88,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         </xs:complexType>
       </xs:element>
     </xs:sequence>
-    
+
     <xs:attribute name="entryPoint"  type="xs:anyURI" use="required"/>
     <xs:attribute name="manualStart" type="xs:boolean" default="false"/>
     <xs:attribute name="type"        type="xs:string" use="required"/>

@@ -108,14 +108,14 @@ fmi3Status fmi3ExitInitializationMode(fmi3Instance instance) {
 
 fmi3Status fmi3EnterEventMode(fmi3Instance instance) { NOT_IMPLEMENTED; }
 
-fmi3Status fmi3Terminate(fmi3Instance instance) { 
-    
+fmi3Status fmi3Terminate(fmi3Instance instance) {
+
     GET_SYSTEM;
 
     return terminateSystem(s);
 }
 
-fmi3Status fmi3Reset(fmi3Instance instance) { 
+fmi3Status fmi3Reset(fmi3Instance instance) {
 
     GET_SYSTEM;
 

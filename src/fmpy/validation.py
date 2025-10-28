@@ -177,7 +177,7 @@ def validate_model_description(model_description: ModelDescription, validate_var
 
         # assert unique value references
         variables = dict()
-        
+
         for v in model_description.modelVariables:
             if v.valueReference in variables:
                 p = variables[v.valueReference]
@@ -231,7 +231,7 @@ def _validate_model_structure(model_description: ModelDescription) -> List[str]:
         if initial_unknowns != expected_initial_unknowns:
             expected = ', '.join(sorted(v.name for v in expected_initial_unknowns))
             actual = ', '.join(sorted(v.name for v in initial_unknowns))
-            problem = ("ModelStructure/InitialUnknowns does not contain the expected set of variables." 
+            problem = ("ModelStructure/InitialUnknowns does not contain the expected set of variables."
                        f" Expected {{{ expected }}} but was {{{ actual }}}.")
             problems.append(problem)
     except:
@@ -268,7 +268,7 @@ def _validate_variable_names(model_description: ModelDescription) -> List[str]:
             nondigit        : "_" | "a".."z" | "A".."Z"
             digit           : "0".."9"
             qname           : "'" ( qchar | escape )+ "'"
-            qchar           : nondigit | digit | "!" | "#" | "$" | "%" | "&" | "(" | ")" 
+            qchar           : nondigit | digit | "!" | "#" | "$" | "%" | "&" | "(" | ")"
                               | "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" | ">"
                               | "=" | "?" | "@" | "[" | "]" | "^" | "{" | "}" | "|" | "~" | " "
             escape          : "\'" | "\"" | "\?" | "\\" | "\a" | "\b" | "\f" | "\n" | "\r" | "\t" | "\v"

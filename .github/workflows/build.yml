@@ -26,9 +26,10 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.10'
-    - uses: ssrobins/install-cmake@v1
+    - uses: jwlawson/actions-setup-cmake@v2
       with:
-        version: 3.31.6
+        cmake-version: "3.31.9"
+    - run: cmake --version
     - run: python -m pip install fmpy requests toml
     - run: |
         cmake --version

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription fmiVersion="2.0" modelName="Feedthrough" guid="f6cda2ea-6875-475c-b7dc-a43a33e69094">
+
+  <CoSimulation modelIdentifier="Feedthrough"/>
+
+  <TypeDefinitions>
+    <SimpleType name="Option">
+      <Enumeration>
+        <Item name="Option 1" value="1" description="First option"/>
+        <Item name="Option 2" value="2" description="Second option"/>
+      </Enumeration>
+    </SimpleType>
+  </TypeDefinitions>
+
+  <DefaultExperiment stopTime="1"/>
+
+  <ModelVariables>
+    <ScalarVariable name="time" valueReference="0" causality="independent" variability="continuous">
+      <Real/>
+    </ScalarVariable>
+    <ScalarVariable name="Real_fixed_parameter" valueReference="1" causality="parameter" variability="fixed">
+      <Real start="1"/>
+    </ScalarVariable>
+    <ScalarVariable name="Real_tunable_parameter" valueReference="2" causality="parameter" variability="tunable">
+      <Real start="2"/>
+    </ScalarVariable>
+    <ScalarVariable name="Real_continuous_input" valueReference="3" causality="input">
+      <Real start="3"/>
+    </ScalarVariable>
+    <ScalarVariable name="Real_continuous_output" valueReference="4" causality="output" initial="calculated">
+      <Real/>
+    </ScalarVariable>
+    <ScalarVariable name="Real_discrete_input" valueReference="5" causality="input" variability="discrete">
+      <Real start="5"/>
+    </ScalarVariable>
+    <ScalarVariable name="Real_discrete_output" valueReference="6" causality="output" variability="discrete" initial="calculated">
+      <Real/>
+    </ScalarVariable>
+    <ScalarVariable name="Integer_input" valueReference="7" causality="input" variability="discrete">
+      <Integer start="7"/>
+    </ScalarVariable>
+    <ScalarVariable name="Integer_output" valueReference="8" causality="output" variability="discrete" initial="calculated">
+      <Integer/>
+    </ScalarVariable>
+    <ScalarVariable name="Boolean_input" valueReference="9" causality="input" variability="discrete">
+      <Boolean start="true"/>
+    </ScalarVariable>
+    <ScalarVariable name="Boolean_output" valueReference="10" causality="output" variability="discrete" initial="calculated">
+      <Boolean/>
+    </ScalarVariable>
+    <ScalarVariable name="String_input" valueReference="11" causality="input" variability="discrete">
+        <String start="container_string_1"/>
+    </ScalarVariable>
+    <ScalarVariable name="String_output" valueReference="12" causality="output" variability="discrete">
+        <String/>
+    </ScalarVariable>
+    <ScalarVariable name="Enumeration_input" valueReference="13" causality="input" variability="discrete">
+      <Enumeration declaredType="Option" start="2"/>
+    </ScalarVariable>
+    <ScalarVariable name="Enumeration_output" valueReference="14" causality="output" variability="discrete" initial="calculated">
+      <Enumeration declaredType="Option"/>
+    </ScalarVariable>
+  </ModelVariables>
+
+  <ModelStructure>
+    <Outputs>
+      <Unknown index="5" dependencies="2 3 4" dependenciesKind="constant constant constant"/>
+      <Unknown index="7" dependencies="6" dependenciesKind="constant"/>
+      <Unknown index="9" dependencies="8" dependenciesKind="constant"/>
+      <Unknown index="11" dependencies="10 12" dependenciesKind="constant"/>
+      <Unknown index="13" dependencies="12" dependenciesKind="constant"/>
+      <Unknown index="15" dependencies="14" dependenciesKind="constant"/>
+    </Outputs>
+    <InitialUnknowns>
+      <Unknown index="5" dependencies="2 3 4" dependenciesKind="constant constant constant"/>
+      <Unknown index="7" dependencies="6" dependenciesKind="constant"/>
+      <Unknown index="9" dependencies="8" dependenciesKind="constant"/>
+      <Unknown index="11" dependencies="10 12" dependenciesKind="constant"/>
+      <Unknown index="13" dependencies="12" dependenciesKind="constant"/>
+      <Unknown index="15" dependencies="14" dependenciesKind="constant"/>
+    </InitialUnknowns>
+  </ModelStructure>
+
+</fmiModelDescription>

@@ -37,6 +37,9 @@ jobs:
         python build_cvode.py
     - run: |
         cd native
+        python build_container_fmu.py
+    - run: |
+        cd native
         python build_binaries.py
     - if: matrix.name == 'linux' || matrix.name == 'windows'
       run: |

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription fmiVersion="3.0" modelName="ContainerFMI3" instantiationToken="{FMI3-CONTAINER-TEST-TOKEN}"
+  description="FMI3 Container model with comprehensive variable type testing"
+  generationTool="ContainerFMU Test Suite"
+  generationDateAndTime="2025-01-01T00:00:00Z">
+
+  <CoSimulation modelIdentifier="container"/>
+
+  <LogCategories>
+    <Category name="logStatusError" description="Log error messages"/>
+  </LogCategories>
+
+  <DefaultExperiment startTime="0" stopTime="1" stepSize="0.1"/>
+
+  <TypeDefinitions>
+    <EnumerationType name="Option">
+      <Item name="Option 1" value="1" description="First option"/>
+      <Item name="Option 2" value="2" description="Second option"/>
+    </EnumerationType>
+  </TypeDefinitions>
+
+  <ModelVariables>
+    <Float64 name="time" valueReference="0" causality="independent" variability="continuous"/>
+    
+    <!-- Float32 variables -->
+    <Float32 name="Float32_continuous_input" valueReference="1" causality="input" start="1.5"/>
+    <Float32 name="Float32_continuous_output" valueReference="2" causality="output"/>
+    <Float32 name="Float32_discrete_input" valueReference="3" causality="input" variability="discrete" start="3.5"/>
+    <Float32 name="Float32_discrete_output" valueReference="4" causality="output" variability="discrete"/>
+
+    <!-- Float64 variables -->
+    <Float64 name="Float64_fixed_parameter" valueReference="5" causality="parameter" variability="fixed" start="5.0"/>
+    <Float64 name="Float64_tunable_parameter" valueReference="6" causality="parameter" variability="tunable" start="6.0"/>
+    <Float64 name="Float64_continuous_input" valueReference="7" causality="input" initial="exact" start="7.0"/>
+    <Float64 name="Float64_continuous_output" valueReference="8" causality="output" initial="calculated"/>
+    <Float64 name="Float64_discrete_input" valueReference="9" causality="input" variability="discrete" start="9.0"/>
+    <Float64 name="Float64_discrete_output" valueReference="10" causality="output" variability="discrete" initial="calculated"/>
+
+    <!-- Int8 variables -->
+    <Int8 name="Int8_input" valueReference="11" causality="input" start="11"/>
+    <Int8 name="Int8_output" valueReference="12" causality="output"/>
+
+    <!-- UInt8 variables -->
+    <UInt8 name="UInt8_input" valueReference="13" causality="input" start="13"/>
+    <UInt8 name="UInt8_output" valueReference="14" causality="output"/>
+
+    <!-- Int16 variables -->
+    <Int16 name="Int16_input" valueReference="15" causality="input" start="15"/>
+    <Int16 name="Int16_output" valueReference="16" causality="output"/>
+
+    <!-- UInt16 variables -->
+    <UInt16 name="UInt16_input" valueReference="17" causality="input" start="17"/>
+    <UInt16 name="UInt16_output" valueReference="18" causality="output"/>
+
+    <!-- Int32 variables -->
+    <Int32 name="Int32_input" valueReference="19" causality="input" start="19"/>
+    <Int32 name="Int32_output" valueReference="20" causality="output"/>
+
+    <!-- UInt32 variables -->
+    <UInt32 name="UInt32_input" valueReference="21" causality="input" start="21"/>
+    <UInt32 name="UInt32_output" valueReference="22" causality="output"/>
+
+    <!-- Int64 variables -->
+    <Int64 name="Int64_input" valueReference="23" causality="input" start="23"/>
+    <Int64 name="Int64_output" valueReference="24" causality="output"/>
+
+    <!-- UInt64 variables -->
+    <UInt64 name="UInt64_input" valueReference="25" causality="input" start="25"/>
+    <UInt64 name="UInt64_output" valueReference="26" causality="output"/>
+
+    <!-- Boolean variables -->
+    <Boolean name="Boolean_input" valueReference="27" causality="input" start="true"/>
+    <Boolean name="Boolean_output" valueReference="28" causality="output" initial="calculated"/>
+
+    <!-- String variables -->
+    <String name="String_input" valueReference="29" causality="input">
+        <Start value="container_fmi3_string"/>
+    </String>
+    <String name="String_output" valueReference="30" causality="output"/>
+
+    <!-- Enumeration variables -->
+    <Enumeration name="Enumeration_input" declaredType="Option" valueReference="31" causality="input" start="2"/>
+    <Enumeration name="Enumeration_output" declaredType="Option" valueReference="32" causality="output"/>
+
+  </ModelVariables>
+
+  <ModelStructure>
+    <Output valueReference="2" dependencies="1" dependenciesKind="constant"/>
+    <Output valueReference="4" dependencies="3" dependenciesKind="constant"/>
+    <Output valueReference="8" dependencies="7" dependenciesKind="constant"/>
+    <Output valueReference="10" dependencies="9" dependenciesKind="constant"/>
+    <Output valueReference="12" dependencies="11" dependenciesKind="constant"/>
+    <Output valueReference="14" dependencies="13" dependenciesKind="constant"/>
+    <Output valueReference="16" dependencies="15" dependenciesKind="constant"/>
+    <Output valueReference="18" dependencies="17" dependenciesKind="constant"/>
+    <Output valueReference="20" dependencies="19" dependenciesKind="constant"/>
+    <Output valueReference="22" dependencies="21" dependenciesKind="constant"/>
+    <Output valueReference="24" dependencies="23" dependenciesKind="constant"/>
+    <Output valueReference="26" dependencies="25" dependenciesKind="constant"/>
+    <Output valueReference="28" dependencies="27" dependenciesKind="constant"/>
+    <Output valueReference="30" dependencies="29" dependenciesKind="constant"/>
+    <Output valueReference="34" dependencies="33" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="2" dependencies="1" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="4" dependencies="3" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="8" dependencies="7" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="10" dependencies="9" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="12" dependencies="11" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="14" dependencies="13" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="16" dependencies="15" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="18" dependencies="17" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="20" dependencies="19" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="22" dependencies="21" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="24" dependencies="23" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="26" dependencies="25" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="28" dependencies="27" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="30" dependencies="29" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="34" dependencies="33" dependenciesKind="constant"/>
+  </ModelStructure>
+
+</fmiModelDescription>

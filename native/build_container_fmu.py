@@ -37,7 +37,7 @@ shutil.rmtree(unzipdir)
 
 # build Container FMU
 check_call(["cargo", "build", "--release"], cwd=native / "container-fmu")
-check_call(["cargo", "test"], cwd=native / "container-fmu")
+check_call(["cargo", "test", "--release"], cwd=native / "container-fmu")
 
 if os.name == 'nt':
     shared_library_prefix = ""

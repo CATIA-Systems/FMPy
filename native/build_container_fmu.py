@@ -1,3 +1,5 @@
+from platform import system
+
 import os
 
 from subprocess import check_call
@@ -35,16 +37,36 @@ extract(filename=path / "3.0" / "Feedthrough.fmu",
 
 shutil.rmtree(unzipdir)
 
-# build Container FMU
-check_call(["cargo", "build", "--release"], cwd=native / "container-fmu")
-check_call(["cargo", "test", "--release"], cwd=native / "container-fmu")
-
 if os.name == 'nt':
-    shared_library_prefix = ""
+    shared_library_src_name = f"container_fmu{sharedLibraryExtension}"
 else:
-    shared_library_prefix = "lib"
+    shared_library_src_name = f"libcontainer_fmu{sharedLibraryExtension}"
 
-shutil.copy(
-    src=native / "container-fmu" / "target" / "release" / f"{shared_library_prefix}container_fmu{sharedLibraryExtension}",
-    dst=native.parent / "src" / "fmpy" / "container_fmu" / platform_tuple / f"container{sharedLibraryExtension}"
-)
+shared_library_dst_name = f"container_fmu{sharedLibraryExtension}"
+
+# build Container FMU
+if system() == "Darwin":
+    check_call(["cargo", "build", "--target", "x86_64-apple-darwin", "--release"], cwd=native / "container-fmu")
+
+    shutil.copy(
+        src=native / "container-fmu" / "target" / "release" / shared_library_src_name,
+        dst=native.parent / "src" / "fmpy" / "container_fmu" / platform_tuple / shared_library_dst_name
+    )
+
+    check_call(["cargo", "build", "--target", "aarch64-apple-darwin", "--release"], cwd=native / "container-fmu")
+
+    shutil.copy(
+        src=native / "container-fmu" / "target" / "release" / shared_library_src_name,
+        dst=native.parent / "src" / "fmpy" / "container_fmu" / platform_tuple / shared_library_dst_name
+    )
+
+    check_call(["cargo", "test", "--release"], cwd=native / "container-fmu")
+else:
+    check_call(["cargo", "build", "--release"], cwd=native / "container-fmu")
+
+    shutil.copy(
+        src=native / "container-fmu" / "target" / "release" / shared_library_src_name,
+        dst=native.parent / "src" / "fmpy" / "container_fmu" / platform_tuple / shared_library_dst_name
+    )
+
+    check_call(["cargo", "test", "--release"], cwd=native / "container-fmu")

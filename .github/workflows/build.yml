@@ -24,12 +24,6 @@ jobs:
       with:
         submodules: 'true'
     - if: matrix.name == 'darwin'
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: ${{ env.RUST_TOOLCHAIN }}
-        profile: minimal
-        override: true
-    - if: matrix.name == 'darwin'
       run: rustup target add aarch64-apple-darwin
     - uses: actions/setup-python@v5
       with:

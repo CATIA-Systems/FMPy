@@ -911,8 +911,11 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
         # resolve derivatives
         for variable in modelDescription.modelVariables:
             if variable.derivative is not None:
-                index = int(variable.derivative) - 1
-                variable.derivative = modelDescription.modelVariables[index]
+                index = int(variable.derivative)
+                if index == 0 or index > len(modelDescription.modelVariables):
+                    message = f"The derivative attribute of model variable {variable.name} (line {variable.sourceline}) references model variable index {index} which does not exist."
+                    raise ValidationError(problems=[message])
+                variable.derivative = modelDescription.modelVariables[index - 1]
 
     if is_fmi3:
 
@@ -944,7 +947,11 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
 
             # resolve derivative
             if variable.derivative is not None:
-                variable.derivative = variables[int(variable.derivative)]
+                vr = int(variable.derivative)
+                if vr not in variables:
+                    message = f"The derivative attribute of model variable {variable.name} (line {variable.sourceline}) references value reference {vr} which does not exist."
+                    raise ValidationError(problems=[message])
+                variable.derivative = variables[vr]
 
             # resolve clocks
             if variable.clocks is not None:

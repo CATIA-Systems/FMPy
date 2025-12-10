@@ -88,7 +88,7 @@ static string wslpath(const string &path) {
 
     transform(driveLetter.begin(), driveLetter.end(), driveLetter.begin(), [](unsigned char c) { return tolower(c); });
 
-    string p = path.substr(colon + 1, path.length());    
+    string p = path.substr(colon + 1, path.length());
 
     replace(p.begin(), p.end(), '\\', '/');
 
@@ -99,7 +99,7 @@ static string wslpath(const string &path) {
 
 /* Creation and destruction of FMU instances and setting debug status */
 fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2String fmuGUID, fmi2String fmuResourceLocation, const fmi2CallbackFunctions* functions, fmi2Boolean visible, fmi2Boolean loggingOn) {
-	
+
     if (!functions || !functions->logger) {
         return NULL;
     }
@@ -134,11 +134,11 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
     if (!modelIdentifier.compare("client_tcp")) {
 
         s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Remoting server started externally.");
-	
+
     } else {
 
         // linux64 on Windows via WSL
-       
+
         char tempPath[MAX_PATH] = "";
         char lockFile[MAX_PATH] = "";
 
@@ -178,7 +178,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
             FALSE,                                // set handle inheritance to FALSE
             0, // CREATE_NO_WINDOW,                     // creation flags
             NULL,                                 // use parent's environment block
-            NULL,                                 // use parent's starting directory 
+            NULL,                                 // use parent's starting directory
             &si,                                  // pointer to STARTUPINFO structure
             &s_proccessInfo                       // pointer to PROCESS_INFORMATION structure
         );
@@ -200,15 +200,15 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
     const string filename(info.dli_fname);
 
     const string linux64Path = filename.substr(0, filename.find_last_of('/'));
-    
+
     const string modelIdentifier = filename.substr(filename.find_last_of('/') + 1, filename.find_last_of('.') - filename.find_last_of('/') - 1);
 
     const string binariesPath = linux64Path.substr(0, linux64Path.find_last_of('/'));
 
     if (!modelIdentifier.compare("client_tcp")) {
-    
+
         s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Remoting server started externally.");
-    
+
     } else {
 
         // create lock file
@@ -232,7 +232,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
         // lock entire file
         fl.l_whence = SEEK_SET;
         fl.l_start  = 0;
-        fl.l_len    = 0;     
+        fl.l_len    = 0;
         fl.l_pid    = 0;
 
         if (fcntl(lockFile, F_SETLKW, &fl) == -1) {
@@ -288,7 +288,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
         try {
             s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Trying to connect...");
             client = new rpc::client("localhost", rpc::constants::DEFAULT_PORT);
-            r = client->call("fmi2Instantiate", instanceName, (int)fmuType, fmuGUID ? fmuGUID : "", 
+            r = client->call("fmi2Instantiate", instanceName, (int)fmuType, fmuGUID ? fmuGUID : "",
                 fmuResourceLocation ? fmuResourceLocation : "", visible, loggingOn).as<ReturnValue>();
             break;
         } catch (exception e) {
@@ -302,7 +302,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
             }
         }
     }
-    
+
     s_logger(s_componentEnvironment, instanceName, fmi2OK, "info", "Connected.");
 
 	forwardLogMessages(r.logMessages);
@@ -325,7 +325,7 @@ void fmi2FreeInstance(fmi2Component c) {
         killpg(s_pid, SIGKILL);
 
         int status;
-        
+
         while (wait(&status) > 0) {
             s_logger(s_componentEnvironment, s_instanceName, fmi2OK, "info", "Waiting for child processes to terminate.");
         }

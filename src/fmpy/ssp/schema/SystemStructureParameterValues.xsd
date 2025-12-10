@@ -7,7 +7,7 @@
         <xs:documentation xml:lang="en">
             This is the normative XML Schema 1.0 schema for the MAP SSP
             SystemStructureParameterValues 1.0 format.
-                        
+
             Version: 1.0
 
             Copyright 2016 -- 2019 Modelica Association Project "SSP"
@@ -41,9 +41,9 @@
             POSSIBILITY OF SUCH DAMAGE.
         </xs:documentation>
     </xs:annotation>
-    
+
     <xs:import namespace="http://ssp-standard.org/SSP1/SystemStructureCommon" schemaLocation="SystemStructureCommon.xsd"/>
-    
+
     <xs:element name="ParameterSet">
         <xs:complexType>
             <xs:sequence>
@@ -75,13 +75,13 @@
             <xs:attributeGroup ref="ssc:ATopLevelMetaData"/>
         </xs:complexType>
     </xs:element>
-        
+
     <xs:complexType name="TParameters">
         <xs:sequence>
             <xs:element name="Parameter" minOccurs="0" maxOccurs="unbounded" type="ssv:TParameter"/>
         </xs:sequence>
     </xs:complexType>
-        
+
     <xs:complexType name="TParameter">
         <xs:sequence>
             <xs:choice>
@@ -143,7 +143,7 @@
                         <xs:attribute name="value" type="xs:string" use="required">
                             <xs:annotation>
                                 <xs:documentation xml:lang="en">
-                                    This attribute gives the value of the parameter as 
+                                    This attribute gives the value of the parameter as
                                     the enumeration item name.  Note that the actual
                                     numeric value this value is mapped to at run time
                                     will depend on the item mapping of the enumeration
@@ -158,16 +158,16 @@
                                     which references into the set of defined enumerations
                                     of the system structure description, as contained in
                                     the Enumerations element of the root element.
-                                    
+
                                     This attribute is optional; if it is not specified, then
                                     the list of valid enumeration items with their names and
                                     values is not specified, and the interpretation of the
                                     enumeration value is left solely to the variables that
                                     are being parameterized.
-                                    
+
                                     If the attribute is specified, implementations MAY use
                                     that information for user interface purposes, and/or
-                                    for additional consistency checking. 
+                                    for additional consistency checking.
                                 </xs:documentation>
                             </xs:annotation>
                         </xs:attribute>
@@ -214,5 +214,5 @@
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
-     
+
 </xs:schema>

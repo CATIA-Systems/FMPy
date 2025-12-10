@@ -144,7 +144,7 @@ extern "C" {
 
 
 /*
-Export FMI2 API functions on Windows and under GCC. 
+Export FMI2 API functions on Windows and under GCC.
 This definition has been changed to always export the symbols.
 */
 #if defined _WIN32 || defined __CYGWIN__
@@ -159,7 +159,7 @@ This definition has been changed to always export the symbols.
 #endif
 
 
-/* 
+/*
 Macro to construct the real function name.
 This definition has been changed to add no prefix.
 */

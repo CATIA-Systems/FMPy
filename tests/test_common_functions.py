@@ -1,12 +1,13 @@
 import pytest
 
-from fmpy import read_model_description, extract
+from fmpy import read_model_description, extract, platform_tuple
 from fmpy.fmi1 import FMU1Slave
 from fmpy.fmi2 import FMU2Slave
 import shutil
 
 
 @pytest.mark.parametrize('fmi_version', ['1.0', '2.0'])
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_common_functions(fmi_version, reference_fmus_dist_dir):
 
     model_name = 'Feedthrough'

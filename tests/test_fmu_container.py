@@ -2,7 +2,7 @@ from tempfile import TemporaryDirectory
 
 import pytest
 from itertools import product
-from fmpy import simulate_fmu, plot_result, extract
+from fmpy import simulate_fmu, plot_result, extract, platform_tuple
 from fmpy.build import build_platform_binary
 from fmpy.fmucontainer import create_fmu_container, Variable, Connection, Configuration, Component, DefaultExperiment
 from fmpy.util import create_zip_archive
@@ -11,6 +11,7 @@ from fmpy.model_description import Unit, BaseUnit, SimpleType, DisplayUnit, Item
 
 
 @pytest.mark.parametrize('fmi_version, parallelDoStep', product([2, 3], [False, True]))
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_create_fmu_container(reference_fmus_dist_dir, fmi_version, parallelDoStep):
 
     if fmi_version == 2:

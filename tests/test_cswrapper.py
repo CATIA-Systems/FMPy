@@ -1,8 +1,10 @@
-from fmpy import read_model_description, simulate_fmu
+import pytest
+from fmpy import read_model_description, simulate_fmu, platform_tuple
 from fmpy.util import download_test_file
 from fmpy.cswrapper import add_cswrapper
 
 
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_cswrapper():
 
     filename = 'CoupledClutches.fmu'

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from fmpy import simulate_fmu
+from fmpy import simulate_fmu, platform_tuple
 from fmpy.simulation import Input
 from fmpy.model_description import ModelDescription, ScalarVariable
 
@@ -121,6 +121,7 @@ def test_input_discrete():
     ('3.0', 'ModelExchange'),
     ('3.0', 'CoSimulation'),
 ])
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_discrete_input(reference_fmus_dist_dir, fmi_version, interface_type):
 
     filename = reference_fmus_dist_dir / fmi_version / 'Feedthrough.fmu'
@@ -151,6 +152,7 @@ def test_discrete_input(reference_fmus_dist_dir, fmi_version, interface_type):
     ('3.0', 'ModelExchange'),
     ('3.0', 'CoSimulation'),
 ])
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_discrete_change_in_continuous_input(reference_fmus_dist_dir, fmi_version, interface_type):
 
     filename = reference_fmus_dist_dir / fmi_version / 'Feedthrough.fmu'

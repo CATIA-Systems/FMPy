@@ -4,6 +4,7 @@ from fmpy import *
 
 
 @pytest.mark.parametrize('fmi_version', ['2.0', '3.0'])
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_get_output_derivatives(reference_fmus_dist_dir, fmi_version):
 
     filename = reference_fmus_dist_dir / fmi_version / 'BouncingBall.fmu'

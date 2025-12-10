@@ -1,9 +1,10 @@
 import pytest
 import numpy as np
-from fmpy import simulate_fmu
+from fmpy import simulate_fmu, platform_tuple
 from fmpy.util import download_test_file, download_file
 
 
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_step_size_cs():
 
     url = 'https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/win64/Test-FMUs/0.0.2/Dahlquist/Dahlquist.fmu'
@@ -21,6 +22,7 @@ def test_step_size_cs():
 
     assert np.all(time == grid)
 
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_step_size_me():
 
     # download the FMU and input file

@@ -17,7 +17,7 @@ jobs:
           - name: linux
             image: ubuntu-22.04
           - name: darwin
-            image: macos-13
+            image: macos-14
     runs-on: ${{ matrix.image }}
     steps:
     - uses: actions/checkout@v4
@@ -50,10 +50,10 @@ jobs:
          src/fmpy/cswrapper/cswrapper.dylib
          src/fmpy/fmucontainer/binaries/darwin64/FMUContainer.dylib
          src/fmpy/logging/darwin64/logging.dylib
-         src/fmpy/sundials/x86_64-darwin/sundials_cvode.dylib
-         src/fmpy/sundials/x86_64-darwin/sundials_nvecserial.dylib
-         src/fmpy/sundials/x86_64-darwin/sundials_sunlinsoldense.dylib
-         src/fmpy/sundials/x86_64-darwin/sundials_sunmatrixdense.dylib
+         src/fmpy/sundials/aarch64-darwin/sundials_cvode.dylib
+         src/fmpy/sundials/aarch64-darwin/sundials_nvecserial.dylib
+         src/fmpy/sundials/aarch64-darwin/sundials_sunlinsoldense.dylib
+         src/fmpy/sundials/aarch64-darwin/sundials_sunmatrixdense.dylib
        if-no-files-found: error
     - if: matrix.name == 'linux'
       uses: actions/upload-artifact@v4
@@ -131,7 +131,7 @@ jobs:
           - name: linux
             image: ubuntu-22.04
           - name: darwin
-            image: macos-13
+            image: macos-14
     runs-on: ${{ matrix.image }}
     needs: [ build-wheel ]
     steps:

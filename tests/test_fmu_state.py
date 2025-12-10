@@ -4,6 +4,7 @@ from fmpy import *
 
 
 @pytest.mark.parametrize('fmi_version', ['1.0', '2.0', '3.0'])
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_continue_simulation(reference_fmus_dist_dir, fmi_version):
 
     pause_time = 0.6
@@ -45,6 +46,7 @@ def test_continue_simulation(reference_fmus_dist_dir, fmi_version):
 
 
 @pytest.mark.parametrize('fmi_version', ['2.0', '3.0'])
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_set_fmu_state(reference_fmus_dist_dir, fmi_version):
 
     pause_time = 0.6
@@ -86,6 +88,7 @@ def test_set_fmu_state(reference_fmus_dist_dir, fmi_version):
 
 
 @pytest.mark.parametrize('fmi_version', ['2.0', '3.0'])
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_serialize_fmu_state(reference_fmus_dist_dir, fmi_version):
 
     serialization_time = 0.6

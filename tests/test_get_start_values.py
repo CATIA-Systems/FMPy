@@ -1,8 +1,9 @@
 import pytest
-from fmpy import platform
+from fmpy import platform, platform_tuple
 from fmpy.util import download_test_file, get_start_values
 
 
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_get_start_values():
 
     if platform.startswith('win'):

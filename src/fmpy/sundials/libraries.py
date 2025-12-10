@@ -5,8 +5,8 @@ from fmpy import sharedLibraryExtension, platform_tuple
 
 library_dir = Path(__file__).parent
 
-if platform_tuple == 'aarch64_darwin':
-    library_dir = library_dir / 'x86_64-darwin'
+if platform_tuple == 'x86_64-darwin':
+    library_dir = library_dir / 'aarch64_darwin'
 else:
     library_dir = library_dir / platform_tuple
 

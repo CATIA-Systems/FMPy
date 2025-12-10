@@ -1,6 +1,8 @@
 # Test command line interface ('fmpy' entry point must be registered through setup.py or conda package)
-
+import pytest
 from subprocess import call, check_output
+
+from fmpy import platform_tuple
 from fmpy.util import download_test_file, download_file
 
 
@@ -18,7 +20,7 @@ def test_validate():
     status = call(['fmpy', 'validate', 'Rectifier.fmu'])
     assert status == 0
 
-
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_simulate():
 
     output = check_output([

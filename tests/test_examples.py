@@ -6,10 +6,11 @@ from fmpy.examples.custom_input import simulate_custom_input
 from fmpy.examples.efficient_loops import run_efficient_loop
 from fmpy.examples.parameter_variation import run_experiment
 from fmpy.examples.continue_simulation import continue_simulation
-from fmpy import platform
+from fmpy import platform, platform_tuple
 import numpy as np
 
 
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_coupled_clutches_example():
 
     if platform.startswith('win'):
@@ -47,11 +48,13 @@ def test_coupled_clutches_example():
                     assert 0.0 == result['time'][0], "Result must start at start_time (= 0.0)"
 
 
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_custom_input_example():
     end_time = simulate_custom_input(show_plot=False)
     assert end_time == pytest.approx(1.1, rel=1e-2)
 
 
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_efficient_loops():
     run_efficient_loop()
 
@@ -62,6 +65,7 @@ def test_parameter_variation():
     assert np.all(LOSSES > 0)
 
 
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_continue_simulation(reference_fmus_dist_dir):
     for fmi_version in ['1.0/cs', '2.0', '3.0']:
         continue_simulation(fmu_filename=os.path.join(reference_fmus_dist_dir, fmi_version, 'BouncingBall.fmu'))

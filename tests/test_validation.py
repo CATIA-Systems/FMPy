@@ -1,7 +1,7 @@
 # Test the validation of model description
 
 import pytest
-from fmpy import read_model_description, simulate_fmu
+from fmpy import read_model_description, simulate_fmu, platform_tuple
 from fmpy.model_description import ValidationError
 from fmpy.util import download_file, download_test_file
 
@@ -30,6 +30,7 @@ def test_validate_variable_names():
 
     assert len(exception_info.value.problems) == 124
 
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_validate_start_values():
 
     filename = download_test_file('2.0', 'ModelExchange', 'MapleSim', '2016.2', 'CoupledClutches', 'CoupledClutches.fmu')

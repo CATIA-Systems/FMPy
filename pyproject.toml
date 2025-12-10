@@ -99,10 +99,10 @@ packages = ["src/fmpy"]
 "src/fmpy/logging/win32/logging.dll"      = "fmpy/logging/win32/logging.dll"
 "src/fmpy/logging/win64/logging.dll"      = "fmpy/logging/win64/logging.dll"
 
-"src/fmpy/sundials/x86_64-darwin/sundials_cvode.dylib"          = "fmpy/sundials/x86_64-darwin/sundials_cvode.dylib"
-"src/fmpy/sundials/x86_64-darwin/sundials_nvecserial.dylib"     = "fmpy/sundials/x86_64-darwin/sundials_nvecserial.dylib"
-"src/fmpy/sundials/x86_64-darwin/sundials_sunlinsoldense.dylib" = "fmpy/sundials/x86_64-darwin/sundials_sunlinsoldense.dylib"
-"src/fmpy/sundials/x86_64-darwin/sundials_sunmatrixdense.dylib" = "fmpy/sundials/x86_64-darwin/sundials_sunmatrixdense.dylib"
+"src/fmpy/sundials/aarch64-darwin/sundials_cvode.dylib"          = "fmpy/sundials/aarch64-darwin/sundials_cvode.dylib"
+"src/fmpy/sundials/aarch64-darwin/sundials_nvecserial.dylib"     = "fmpy/sundials/aarch64-darwin/sundials_nvecserial.dylib"
+"src/fmpy/sundials/aarch64-darwin/sundials_sunlinsoldense.dylib" = "fmpy/sundials/aarch64-darwin/sundials_sunlinsoldense.dylib"
+"src/fmpy/sundials/aarch64-darwin/sundials_sunmatrixdense.dylib" = "fmpy/sundials/aarch64-darwin/sundials_sunmatrixdense.dylib"
 
 "src/fmpy/sundials/x86_64-linux/sundials_cvode.so"          = "fmpy/sundials/x86_64-linux/sundials_cvode.so"
 "src/fmpy/sundials/x86_64-linux/sundials_nvecserial.so"     = "fmpy/sundials/x86_64-linux/sundials_nvecserial.so"

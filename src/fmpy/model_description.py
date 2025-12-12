@@ -4,7 +4,7 @@ from os import PathLike
 from pathlib import Path
 
 from typing import IO, Literal
-from attrs import define, field
+from attrs import define, field, evolve
 
 
 @define(eq=False)
@@ -275,6 +275,8 @@ class ModelVariable:
     shiftCounter: int = field(default=0, repr=False)
 
     aliases: list[VariableAlias] = field(factory=list, repr=False)
+
+    alias: ModelVariable | None = field(default=None, repr=False)
 
 
 ScalarVariable = ModelVariable  # for backwards compatibility
@@ -918,6 +920,19 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
                 variable.derivative = modelDescription.modelVariables[index - 1]
 
     if is_fmi3:
+
+        alias_variables = []
+
+        for variable in modelDescription.modelVariables:
+            for alias in variable.aliases:
+                alias_variable = evolve(variable, name=alias.name, alias=variable)
+                if alias.description:
+                    alias_variable.description = alias.description
+                if alias.displayUnit:
+                    alias_variable.displayUnit = alias.displayUnit
+                alias_variables.append(alias_variable)
+
+        modelDescription.modelVariables += alias_variables
 
         for attr, element in [(modelDescription.outputs, 'Output'),
                               (modelDescription.derivatives, 'ContinuousStateDerivative'),

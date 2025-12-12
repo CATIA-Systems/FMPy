@@ -179,7 +179,7 @@ def validate_model_description(model_description: ModelDescription, validate_var
         variables = dict()
         
         for v in model_description.modelVariables:
-            if v.valueReference in variables:
+            if v.valueReference in variables and not v.alias:
                 p = variables[v.valueReference]
                 problems.append(f'Variable "{v.name}" (line {v.sourceline}) has the same value reference as variable "{p.name}" (line {p.sourceline}).')
             else:

@@ -737,7 +737,8 @@ def simulate_fmu(filename,
 
     if step_size is None:
         total_time = stop_time - start_time
-        step_size = 10 ** (np.round(np.log10(total_time)) - 3)
+        if total_time > 0:
+            step_size = 10 ** (np.round(np.log10(total_time)) - 3)
 
     if output_interval is None and fmi_type == 'CoSimulation':
 

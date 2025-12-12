@@ -1074,7 +1074,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
             next_communication_point = next_input_event_time
 
         if next_event_time_defined and next_communication_point > next_event_time and not isclose(next_communication_point, next_event_time):
-            next_communication_point = next_input_event_time
+            next_communication_point = next_event_time
 
         if next_communication_point > stop_time and not isclose(next_communication_point, stop_time):
             next_communication_point = stop_time

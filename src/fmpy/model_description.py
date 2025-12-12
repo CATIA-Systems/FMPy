@@ -185,7 +185,7 @@ class ModelVariable:
         'UInt64',
         'Enumeration',
         'Boolean',
-        'String'
+        'String',
         'Binary',
         'Clock',
     ] = field(default=None)

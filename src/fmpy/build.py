@@ -44,11 +44,36 @@ def create_cmake_settings(
 
     build_dir = Path(build_dir)
 
+    if cmake_options is None:
+        cmake_options = dict()
+
     include_dirs = [(unzipdir / 'sources').as_posix()]
 
     model_description = read_model_description(unzipdir)
 
     source_file_set = model_description.buildConfigurations[0].sourceFileSets[0]
+
+    languages = {
+        "C89": ("CMAKE_C_STANDARD", "90"),
+        "C90": ("CMAKE_C_STANDARD", "90"),
+        "C99": ("CMAKE_C_STANDARD", "99"),
+        "C11": ("CMAKE_C_STANDARD", "11"),
+        "C17": ("CMAKE_C_STANDARD", "17"),
+        "C23": ("CMAKE_C_STANDARD", "23"),
+        "C++98": ("CMAKE_CXX_STANDARD", "98"),
+        "C++11": ("CMAKE_CXX_STANDARD", "11"),
+        "C++14": ("CMAKE_CXX_STANDARD", "14"),
+        "C++17": ("CMAKE_CXX_STANDARD", "17"),
+        "C++20": ("CMAKE_CXX_STANDARD", "20"),
+        "C++23": ("CMAKE_CXX_STANDARD", "23"),
+        "C++26": ("CMAKE_CXX_STANDARD", "26"),
+    }
+
+    if source_file_set.language:
+        if source_file_set.language in languages:
+            cmake_options.update([languages[source_file_set.language]])
+        else:
+            raise Exception(f"Unsupported language: {source_file_set.language}")
 
     sources = [(unzipdir / "sources" / file).as_posix() for file in source_file_set.sourceFiles]
 
@@ -89,9 +114,8 @@ def create_cmake_settings(
         cache.write(f"FMI_DEFINITIONS:STRING={';'.join(definitions)}\n")
         cache.write(f"FMI_TARGET_DIR:STRING={target_dir}\n")
         cache.write(f"FMI_ALL_WARNINGS:BOOL={'ON' if all_warnings else 'OFF'}\n")
-        if cmake_options:
-            for name, value in cmake_options.items():
-                cache.write(f"{name}={value}\n")
+        for name, value in cmake_options.items():
+            cache.write(f"{name}={value}\n")
 
 
 def build_platform_binary(

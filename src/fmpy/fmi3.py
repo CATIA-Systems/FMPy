@@ -149,6 +149,8 @@ class _FMU3(_FMU):
             categories,
         )
 
+    # Creation and destruction of FMU instances
+
     def fmi3InstantiateModelExchange(
         self,
         instanceName: fmi3String | bytes,
@@ -230,6 +232,8 @@ class _FMU3(_FMU):
 
     def fmi3FreeInstance(self, instance: fmi3Instance) -> None:
         self._call("fmi3FreeInstance", instance)
+
+    # Enter and exit initialization mode, terminate and reset
 
     def fmi3EnterInitializationMode(
         self,
@@ -1288,7 +1292,9 @@ class _FMU3(_FMU):
             activationTime,
         )
 
-    # Inquire version numbers of header files and setting logging status
+    # Common Functions
+
+    # Inquire version numbers and set debug logging
 
     def getVersion(self):
         version = self.fmi3GetVersion()
@@ -1301,7 +1307,7 @@ class _FMU3(_FMU):
             self.component, fmi3Boolean(loggingOn), len(categories), categories_
         )
 
-    # Creation and destruction of FMU instances and setting debug status
+    # Creation and destruction of FMU instances
 
     def freeInstance(self):
         self.fmi3FreeInstance(self.component)
@@ -1332,94 +1338,8 @@ class _FMU3(_FMU):
     def exitInitializationMode(self):
         self.fmi3ExitInitializationMode(self.component)
 
-    # Clock related functions
-
-    def getIntervalDecimal(self, valueReferences, intervals, qualifiers):
-        self.fmi3GetIntervalDecimal(
-            self.component,
-            valueReferences,
-            len(valueReferences),
-            intervals,
-            qualifiers,
-            len(intervals),
-        )
-
-    def getIntervalFraction(
-        self, valueReferences, intervalCounters, resolutions, qualifiers
-    ):
-        self.fmi3GetIntervalFraction(
-            self.component,
-            valueReferences,
-            len(valueReferences),
-            intervalCounters,
-            resolutions,
-            qualifiers,
-            len(intervalCounters),
-        )
-
-    def getShiftDecimal(self, valueReferences, shifts):
-        self.fmi3GetShiftDecimal(
-            self.component, valueReferences, len(valueReferences), shifts, len(shifts)
-        )
-
-    def getShiftFraction(self, valueReferences, shiftCounters, resolutions):
-        self.fmi3GetShiftFraction(
-            self.component,
-            valueReferences,
-            len(valueReferences),
-            shiftCounters,
-            resolutions,
-            len(shiftCounters),
-        )
-
-    def setIntervalDecimal(self, valueReferences, intervals):
-        self.fmi3SetIntervalDecimal(
-            self.component,
-            valueReferences,
-            len(valueReferences),
-            intervals,
-            len(intervals),
-        )
-
-    def setIntervalFraction(self, valueReferences, intervalCounters, resolutions):
-        self.fmi3SetIntervalFraction(
-            self.component,
-            valueReferences,
-            len(valueReferences),
-            intervalCounters,
-            resolutions,
-            len(intervalCounters),
-        )
-
     def enterEventMode(self):
         self.fmi3EnterEventMode(self.component)
-
-    def updateDiscreteStates(self):
-        discreteStatesNeedUpdate = fmi3Boolean()
-        terminateSimulation = fmi3Boolean()
-        nominalsOfContinuousStatesChanged = fmi3Boolean()
-        valuesOfContinuousStatesChanged = fmi3Boolean()
-        nextEventTimeDefined = fmi3Boolean()
-        nextEventTime = fmi3Float64()
-
-        self.fmi3UpdateDiscreteStates(
-            self.component,
-            byref(discreteStatesNeedUpdate),
-            byref(terminateSimulation),
-            byref(nominalsOfContinuousStatesChanged),
-            byref(valuesOfContinuousStatesChanged),
-            byref(nextEventTimeDefined),
-            byref(nextEventTime),
-        )
-
-        return (
-            discreteStatesNeedUpdate.value,
-            terminateSimulation.value,
-            nominalsOfContinuousStatesChanged.value,
-            valuesOfContinuousStatesChanged.value,
-            nextEventTimeDefined.value,
-            nextEventTime.value,
-        )
 
     def terminate(self):
         return self.fmi3Terminate(self.component)
@@ -1624,6 +1544,38 @@ class _FMU3(_FMU):
         values = (fmi3Clock * len(values))(*values)
         self.fmi3SetClock(self.component, vr, len(vr), values, len(values))
 
+    # Getting Variable Dependency Information
+    def getNumberOfVariableDependencies(self, valueReference: int) -> int:
+        valueReference = fmi3ValueReference(valueReference)
+        nDependencies = c_size_t
+        self.fmi3GetNumberOfVariableDependencies(self.component, valueReference, byref(nDependencies))
+        return nDependencies.value
+
+    def getVariableDependencies(self, dependent: int):
+        nDependencies = self.getNumberOfVariableDependencies(dependent)
+        dependent = fmi3ValueReference(dependent)
+        elementIndicesOfDependent = (c_size_t * nDependencies)()
+        independents = (fmi3ValueReference * nDependencies)()
+        elementIndicesOfIndependents = (c_size_t * nDependencies)()
+        dependencyKinds = (fmi3DependencyKind * nDependencies)()
+
+        self.fmi3GetVariableDependencies(
+            self.component,
+            dependent,
+            elementIndicesOfDependent,
+            independents,
+            elementIndicesOfIndependents,
+            dependencyKinds,
+            nDependencies
+        )
+
+        return (
+            elementIndicesOfDependent,
+            independents,
+            elementIndicesOfIndependents,
+            dependencyKinds
+        )
+
     # Getting and setting the internal FMU state
 
     def getFMUState(self) -> fmi3FMUState:
@@ -1756,6 +1708,95 @@ class _FMU3(_FMU):
 
         return list(sensitivity)
 
+    # Entering and exiting the Configuration or Reconfiguration Mode
+
+    def enterConfigurationMode(self) -> None:
+        self.fmi3EnterConfigurationMode(self.component)
+
+    def exitConfigurationMode(self) -> None:
+        self.fmi3ExitConfigurationMode(self.component)
+
+    # Clock related functions
+
+    def getIntervalDecimal(self, valueReferences, intervals, qualifiers):
+        self.fmi3GetIntervalDecimal(
+            self.component,
+            valueReferences,
+            len(valueReferences),
+            intervals,
+            qualifiers,
+        )
+
+    def getIntervalFraction(
+        self, valueReferences, intervalCounters, resolutions, qualifiers
+    ):
+        self.fmi3GetIntervalFraction(
+            self.component,
+            valueReferences,
+            len(valueReferences),
+            intervalCounters,
+            resolutions,
+            qualifiers,
+        )
+
+    def getShiftDecimal(self, valueReferences, shifts):
+        self.fmi3GetShiftDecimal(
+            self.component, valueReferences, len(valueReferences), shifts
+        )
+
+    def getShiftFraction(self, valueReferences, shiftCounters, resolutions):
+        self.fmi3GetShiftFraction(
+            self.component,
+            valueReferences,
+            len(valueReferences),
+            shiftCounters,
+            resolutions,
+        )
+
+    def setIntervalDecimal(self, valueReferences, intervals):
+        self.fmi3SetIntervalDecimal(
+            self.component,
+            valueReferences,
+            len(valueReferences),
+            intervals,
+        )
+
+    def setIntervalFraction(self, valueReferences, intervalCounters, resolutions):
+        self.fmi3SetIntervalFraction(
+            self.component,
+            valueReferences,
+            len(valueReferences),
+            intervalCounters,
+            resolutions,
+        )
+
+    def updateDiscreteStates(self):
+        discreteStatesNeedUpdate = fmi3Boolean()
+        terminateSimulation = fmi3Boolean()
+        nominalsOfContinuousStatesChanged = fmi3Boolean()
+        valuesOfContinuousStatesChanged = fmi3Boolean()
+        nextEventTimeDefined = fmi3Boolean()
+        nextEventTime = fmi3Float64()
+
+        self.fmi3UpdateDiscreteStates(
+            self.component,
+            byref(discreteStatesNeedUpdate),
+            byref(terminateSimulation),
+            byref(nominalsOfContinuousStatesChanged),
+            byref(valuesOfContinuousStatesChanged),
+            byref(nextEventTimeDefined),
+            byref(nextEventTime),
+        )
+
+        return (
+            discreteStatesNeedUpdate.value,
+            terminateSimulation.value,
+            nominalsOfContinuousStatesChanged.value,
+            valuesOfContinuousStatesChanged.value,
+            nextEventTimeDefined.value,
+            nextEventTime.value,
+        )
+
 
 class FMU3Model(_FMU3):
     """An FMI 3.0 Model Exchange FMU"""
@@ -1832,6 +1873,16 @@ class FMU3Model(_FMU3):
             self.component, nominals, nContinuousStates
         )
 
+    def getNumberOfEventIndicators(self) -> int:
+        nEventIndicators = c_size_t()
+        self.fmi3GetNumberOfEventIndicators(self.component, byref(nEventIndicators))
+        return nEventIndicators.value
+
+    def getNumberOfContinuousStates(self) -> int:
+        nContinuousStates = c_size_t()
+        self.fmi3GetNumberOfContinuousStates(self.component, byref(nContinuousStates))
+        return nContinuousStates.value
+
 
 class FMU3Slave(_FMU3):
     """An FMI 3.0 Co-Simulation FMU"""
@@ -1884,12 +1935,6 @@ class FMU3Slave(_FMU3):
 
     def enterStepMode(self):
         return self.fmi3EnterStepMode(self.component)
-
-    def setInputDerivatives(self, vr, order, value):
-        vr = (fmi3ValueReference * len(vr))(*vr)
-        order = (fmi3Int32 * len(vr))(*order)
-        value = (fmi3Float64 * len(vr))(*value)
-        self.fmi3SetInputDerivatives(self.component, vr, len(vr), order, value)
 
     def getOutputDerivatives(self, vr, order):
         valueReferences = (fmi3ValueReference * len(vr))(*vr)

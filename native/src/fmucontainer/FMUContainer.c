@@ -79,7 +79,7 @@ static void* instanceDoStep(void *arg) {
 
 
 static void logFMIMessage(FMIInstance *instance, FMIStatus status, const char *category, const char *message) {
-    
+
     if (!instance) {
         return;
     }
@@ -89,11 +89,11 @@ static void logFMIMessage(FMIInstance *instance, FMIStatus status, const char *c
     if (!s || !s->logMessage) {
         return;
     }
-    
+
     size_t message_len = strlen(message);
     size_t instanceName_len = strlen(instance->name);
     size_t total_len = message_len + instanceName_len + 5;
-    
+
     char *buf = malloc(total_len);
 
     snprintf(buf, total_len, "[%s]: %s", instance->name, message);

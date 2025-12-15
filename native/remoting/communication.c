@@ -52,7 +52,7 @@ static sem_handle_t communication_sem_create(const char *name) {
 #else
     SHM_LOG("Create SEM %s\n", name);
     FILE *sem_file = fopen(name, "w");
-    if (!sem_file) 
+    if (!sem_file)
         return SEM_INVALID;
     fclose(sem_file);
     sem = semget(ftok(name, 0), 1, IPC_CREAT | IPC_EXCL | 0600);
@@ -87,7 +87,7 @@ static void communication_sem_free(sem_handle_t sem, const char *sem_name) {
 #endif
 
     return;
-} 
+}
 
 
 static void communication_shm_free(shm_handle_t map_file, const char *shm_name) {
@@ -109,7 +109,7 @@ static shm_handle_t communication_shm_create(const char *shm_name, size_t memory
         0,                              // maximum object size (high-order DWORD)
         memory_size,                    // maximum object size (low-order DWORD)
         shm_name);                      // name of mapping object
-        
+
 #else
     map_file = shm_open(
         shm_name,
@@ -118,7 +118,7 @@ static shm_handle_t communication_shm_create(const char *shm_name, size_t memory
     ftruncate(map_file, memory_size);
 #endif
     SHM_LOG("SHM `%s' create. Notify server.\n", shm_name);
-    
+
     return map_file;
 }
 
@@ -255,7 +255,7 @@ communication_t *communication_new(const char *prefix, size_t memory_size, commu
         status = communication_new_client(communication);
     else
         status = communication_new_server(communication);
-    
+
     if (status) {
         communication_free(communication);
         return NULL;
@@ -350,7 +350,7 @@ int communication_timedwaitfor_server(const communication_t* communication, int 
     setitimer(ITIMER_REAL, &old_value, NULL);
     if (status < 0)
         return errno == EINTR;
-    
+
     return 0;
 #   endif
 #endif
@@ -403,7 +403,7 @@ int communication_timedwaitfor_client(const communication_t* communication, int 
     setitimer(ITIMER_REAL, &old_value, NULL);
     if (status < 0)
         return errno == EINTR;
-    
+
     return 0;
 #   endif
 #endif

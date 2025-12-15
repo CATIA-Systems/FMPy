@@ -962,7 +962,7 @@ class MainWindow(QMainWindow):
                 window = self
             else:
                 window = MainWindow()
-                
+
             window.load(url.toLocalFile())
 
     def saveResult(self, plotted=False):

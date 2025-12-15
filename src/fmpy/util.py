@@ -386,7 +386,7 @@ def plot_result(result: fmpy.simulation.SimulationResult | NDArray,
 
 def fmu_path_info(path):
     """ Extract information from the FMU's file path """
-    
+
     head = path
     values = []
 
@@ -558,7 +558,7 @@ Model Info
         start = str(v.start) if v.start is not None else ''
 
         unit = v.declaredType.unit if v.declaredType else v.unit
-        
+
         args = ['' if s is None else str(s) for s in [name, v.causality, start, unit, v.description]]
 
         l.append('  {:18} {:10} {:>23}  {:8} {}'.format(*args))

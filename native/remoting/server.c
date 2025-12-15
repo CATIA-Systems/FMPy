@@ -42,7 +42,7 @@ static void server_logger(fmi2ComponentEnvironment componentEnvironment,
     if (server) {
         remote_data_t* remote_data = server->communication->data;
         const size_t offset = strlen(remote_data->message);
-        
+
 
         va_start(params, message);
         vsnprintf(remote_data->message + offset, REMOTE_MESSAGE_SIZE - offset, message, params);

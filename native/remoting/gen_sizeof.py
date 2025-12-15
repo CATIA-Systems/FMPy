@@ -1,5 +1,5 @@
  # Generate test_sizeof.c for basic sanity checks.
- 
+
 import sys
 import os
 

@@ -7,7 +7,7 @@
         <xs:documentation xml:lang="en">
             This is the normative XML Schema 1.0 schema for the MAP SSP
             SystemStructureParameterMapping 1.0 format.
-            
+
             Version: 1.0
 
             Copyright 2016 -- 2019 Modelica Association Project "SSP"
@@ -41,9 +41,9 @@
             POSSIBILITY OF SUCH DAMAGE.
         </xs:documentation>
     </xs:annotation>
-    
+
     <xs:import namespace="http://ssp-standard.org/SSP1/SystemStructureCommon" schemaLocation="SystemStructureCommon.xsd"/>
-    
+
     <xs:element name="ParameterMapping">
         <xs:complexType>
             <xs:sequence>
@@ -66,7 +66,7 @@
             <xs:attributeGroup ref="ssc:ATopLevelMetaData"/>
         </xs:complexType>
     </xs:element>
-    
+
     <xs:complexType name="TMappingEntry">
         <xs:sequence>
             <xs:group ref="ssc:GTransformationChoice" minOccurs="0" maxOccurs="1">
@@ -106,7 +106,7 @@
                     available for both start and end definitions.  If this attribute is
                     supplied and its value is true, then the environment will not perform
                     any automatic unit conversions, otherwise automatic unit
-                    conversions can be performed.  This is also useful in conjunction with 
+                    conversions can be performed.  This is also useful in conjunction with
                     the optional linear transformation supplied via the LinearTransformation
                     element: With suppressUnitConversion = true, the linear transformation
                     is performed instead of any unit conversions, whereas otherwise the
@@ -115,5 +115,5 @@
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
-   
+
 </xs:schema>

@@ -1461,12 +1461,10 @@ class _FMU3(_FMU):
                 values.append(None)
         return values
 
-    def getClock(self, vr, nValues=None):
-        if nValues is None:
-            nValues = len(vr)
+    def getClock(self, vr):
         vr = (fmi3ValueReference * len(vr))(*vr)
-        value = (fmi3Clock * nValues)()
-        self.fmi3GetClock(self.component, vr, len(vr), value, nValues)
+        value = (fmi3Clock * len(vr))()
+        self.fmi3GetClock(self.component, vr, len(vr), value)
         return list(value)
 
     def setFloat32(self, vr, values):
@@ -1542,7 +1540,7 @@ class _FMU3(_FMU):
     def setClock(self, vr, values):
         vr = (fmi3ValueReference * len(vr))(*vr)
         values = (fmi3Clock * len(values))(*values)
-        self.fmi3SetClock(self.component, vr, len(vr), values, len(values))
+        self.fmi3SetClock(self.component, vr, len(vr), values)
 
     # Getting Variable Dependency Information
     def getNumberOfVariableDependencies(self, valueReference: int) -> int:

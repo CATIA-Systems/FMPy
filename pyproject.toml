@@ -76,10 +76,10 @@ packages = ["src/fmpy"]
 "src/fmpy/cswrapper/cswrapper.dylib" = "fmpy/cswrapper/cswrapper.dylib"
 "src/fmpy/cswrapper/cswrapper.so"    = "fmpy/cswrapper/cswrapper.so"
 
-"src/fmpy/container_fmu/binaries/aarch64-darwin/container_fmu.dylib" = "fmpy/fmucontainer/binaries/aarch64-darwin/container_fmu.dylib"
-"src/fmpy/container_fmu/binaries/x86_64-darwin/container_fmu.dylib"  = "fmpy/fmucontainer/binaries/x86_64-darwin/container_fmu.dylib"
-"src/fmpy/container_fmu/binaries/x86_64-linux/container_fmu.so"      = "fmpy/fmucontainer/binaries/x86_64-linux/container_fmu.so"
-"src/fmpy/container_fmu/binaries/x86_64-windows/container_fmu.dll"   = "fmpy/fmucontainer/binaries/x86_64-windows/container_fmu.dll"
+"src/fmpy/container_fmu/binaries/aarch64-darwin/container_fmu.dylib" = "fmpy/container_fmu/binaries/aarch64-darwin/container_fmu.dylib"
+"src/fmpy/container_fmu/binaries/x86_64-darwin/container_fmu.dylib"  = "fmpy/container_fmu/binaries/x86_64-darwin/container_fmu.dylib"
+"src/fmpy/container_fmu/binaries/x86_64-linux/container_fmu.so"      = "fmpy/container_fmu/binaries/x86_64-linux/container_fmu.so"
+"src/fmpy/container_fmu/binaries/x86_64-windows/container_fmu.dll"   = "fmpy/container_fmu/binaries/x86_64-windows/container_fmu.dll"
 
 "src/fmpy/remoting/linux64/client_tcp.so" = "fmpy/remoting/linux64/client_tcp.so"
 "src/fmpy/remoting/linux64/server_tcp"    = "fmpy/remoting/linux64/server_tcp"

@@ -14,8 +14,14 @@ use url::Url;
 
 use crate::types::*;
 
+#[cfg(all(target_arch = "aarch64", target_os = "linux"))]
+pub const PLATFORM: &str = "aarch64-linux";
+
 #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
 pub const PLATFORM: &str = "linux64";
+
+#[cfg(all(target_arch = "aarch64", target_os = "macos"))]
+pub const PLATFORM: &str = "aarch64-darwin";
 
 #[cfg(all(target_arch = "x86_64", target_os = "macos"))]
 pub const PLATFORM: &str = "darwin64";

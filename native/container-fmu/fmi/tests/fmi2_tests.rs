@@ -1,3 +1,4 @@
+#![cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
 #![allow(non_camel_case_types, non_snake_case)]
 
 use fmi::SHARED_LIBRARY_EXTENSION;

@@ -72,10 +72,14 @@ exclude = [
 packages = ["src/fmpy"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"src/fmpy/fmucontainer/binaries/darwin64/FMUContainer.dylib" = "fmpy/fmucontainer/binaries/darwin64/FMUContainer.dylib"
-"src/fmpy/fmucontainer/binaries/linux64/FMUContainer.so"     = "fmpy/fmucontainer/binaries/linux64/FMUContainer.so"
-"src/fmpy/fmucontainer/binaries/win32/FMUContainer.dll"      = "fmpy/fmucontainer/binaries/win32/FMUContainer.dll"
-"src/fmpy/fmucontainer/binaries/win64/FMUContainer.dll"      = "fmpy/fmucontainer/binaries/win64/FMUContainer.dll"
+"src/fmpy/cswrapper/cswrapper.dll"   = "fmpy/cswrapper/cswrapper.dll"
+"src/fmpy/cswrapper/cswrapper.dylib" = "fmpy/cswrapper/cswrapper.dylib"
+"src/fmpy/cswrapper/cswrapper.so"    = "fmpy/cswrapper/cswrapper.so"
+
+"src/fmpy/container_fmu/binaries/aarch64-darwin/container_fmu.dylib" = "fmpy/fmucontainer/binaries/aarch64-darwin/container_fmu.dylib"
+"src/fmpy/container_fmu/binaries/x86_64-darwin/container_fmu.dylib"  = "fmpy/fmucontainer/binaries/x86_64-darwin/container_fmu.dylib"
+"src/fmpy/container_fmu/binaries/x86_64-linux/container_fmu.so"      = "fmpy/fmucontainer/binaries/x86_64-linux/container_fmu.so"
+"src/fmpy/container_fmu/binaries/x86_64-windows/container_fmu.dll"   = "fmpy/fmucontainer/binaries/x86_64-windows/container_fmu.dll"
 
 "src/fmpy/remoting/linux64/client_tcp.so" = "fmpy/remoting/linux64/client_tcp.so"
 "src/fmpy/remoting/linux64/server_tcp"    = "fmpy/remoting/linux64/server_tcp"
@@ -95,19 +99,16 @@ packages = ["src/fmpy"]
 "src/fmpy/logging/win32/logging.dll"      = "fmpy/logging/win32/logging.dll"
 "src/fmpy/logging/win64/logging.dll"      = "fmpy/logging/win64/logging.dll"
 
-"src/fmpy/sundials/aarch64-darwin/sundials_core.dylib"           = "fmpy/sundials/aarch64-darwin/sundials_core.dylib"
 "src/fmpy/sundials/aarch64-darwin/sundials_cvode.dylib"          = "fmpy/sundials/aarch64-darwin/sundials_cvode.dylib"
 "src/fmpy/sundials/aarch64-darwin/sundials_nvecserial.dylib"     = "fmpy/sundials/aarch64-darwin/sundials_nvecserial.dylib"
 "src/fmpy/sundials/aarch64-darwin/sundials_sunlinsoldense.dylib" = "fmpy/sundials/aarch64-darwin/sundials_sunlinsoldense.dylib"
 "src/fmpy/sundials/aarch64-darwin/sundials_sunmatrixdense.dylib" = "fmpy/sundials/aarch64-darwin/sundials_sunmatrixdense.dylib"
 
-"src/fmpy/sundials/x86_64-linux/sundials_core.so"           = "fmpy/sundials/x86_64-linux/sundials_core.so"
 "src/fmpy/sundials/x86_64-linux/sundials_cvode.so"          = "fmpy/sundials/x86_64-linux/sundials_cvode.so"
 "src/fmpy/sundials/x86_64-linux/sundials_nvecserial.so"     = "fmpy/sundials/x86_64-linux/sundials_nvecserial.so"
 "src/fmpy/sundials/x86_64-linux/sundials_sunlinsoldense.so" = "fmpy/sundials/x86_64-linux/sundials_sunlinsoldense.so"
 "src/fmpy/sundials/x86_64-linux/sundials_sunmatrixdense.so" = "fmpy/sundials/x86_64-linux/sundials_sunmatrixdense.so"
 
-"src/fmpy/sundials/x86_64-windows/sundials_core.dll"           = "fmpy/sundials/x86_64-windows/sundials_core.dll"
 "src/fmpy/sundials/x86_64-windows/sundials_cvode.dll"          = "fmpy/sundials/x86_64-windows/sundials_cvode.dll"
 "src/fmpy/sundials/x86_64-windows/sundials_nvecserial.dll"     = "fmpy/sundials/x86_64-windows/sundials_nvecserial.dll"
 "src/fmpy/sundials/x86_64-windows/sundials_sunlinsoldense.dll" = "fmpy/sundials/x86_64-windows/sundials_sunlinsoldense.dll"

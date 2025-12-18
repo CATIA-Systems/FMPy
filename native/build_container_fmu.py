@@ -48,12 +48,16 @@ shared_library_dst_name = f"container_fmu{sharedLibraryExtension}"
 if system() == "Darwin":
     check_call(["cargo", "build", "--target", "x86_64-apple-darwin", "--release"], cwd=native / "container-fmu")
 
+    check_call(["tree"], cwd=native / "container-fmu")
+
     shutil.copy(
         src=native / "container-fmu" / "target" / "release" / shared_library_src_name,
         dst=native.parent / "src" / "fmpy" / "container_fmu" / "x86_64-darwin" / shared_library_dst_name
     )
 
     check_call(["cargo", "build", "--target", "aarch64-apple-darwin", "--release"], cwd=native / "container-fmu")
+
+    check_call(["tree"], cwd=native / "container-fmu")
 
     shutil.copy(
         src=native / "container-fmu" / "target" / "release" / shared_library_src_name,

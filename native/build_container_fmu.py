@@ -51,7 +51,7 @@ if system() == "Darwin":
     check_call(["find", "."], cwd=native / "container-fmu")
 
     shutil.copy(
-        src=native / "container-fmu" / "target" / "release" / shared_library_src_name,
+        src=native / "container-fmu" / "target" / "x86_64-apple-darwin" / "release" / shared_library_src_name,
         dst=native.parent / "src" / "fmpy" / "container_fmu" / "x86_64-darwin" / shared_library_dst_name
     )
 
@@ -60,7 +60,7 @@ if system() == "Darwin":
     check_call(["find", "."], cwd=native / "container-fmu")
 
     shutil.copy(
-        src=native / "container-fmu" / "target" / "release" / shared_library_src_name,
+        src=native / "container-fmu" / "target" / "aarch64-apple-darwin" / "release" / shared_library_src_name,
         dst=native.parent / "src" / "fmpy" / "container_fmu" / "aarch64-darwin" / shared_library_dst_name
     )
 

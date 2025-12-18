@@ -1,0 +1,530 @@
+{
+    "containerVersion": "0.1.0",
+    "instantiationToken": "{088cfe7e-cb81-4ca1-a83d-e7a5c3ff47fd}",
+    "fixedStepSize": 0.1,
+    "parallelDoStep": false,
+    "variables": [
+        {
+            "variableType": "Float32",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 1
+                }
+            ],
+            "start": [
+                "1.5"
+            ]
+        },
+        {
+            "variableType": "Float32",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 2
+                }
+            ]
+        },
+        {
+            "variableType": "Float32",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 3
+                }
+            ],
+            "start": [
+                "3.5"
+            ]
+        },
+        {
+            "variableType": "Float32",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 4
+                }
+            ]
+        },
+        {
+            "variableType": "Float64",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 5
+                }
+            ],
+            "start": [
+                "5.0"
+            ]
+        },
+        {
+            "variableType": "Float64",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 6
+                }
+            ],
+            "start": [
+                "6.0"
+            ]
+        },
+        {
+            "variableType": "Float64",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 7
+                }
+            ],
+            "start": [
+                "7.0"
+            ]
+        },
+        {
+            "variableType": "Float64",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 8
+                }
+            ]
+        },
+        {
+            "variableType": "Float64",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 9
+                }
+            ],
+            "start": [
+                "9.0"
+            ]
+        },
+        {
+            "variableType": "Float64",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 10
+                }
+            ]
+        },
+        {
+            "variableType": "Int8",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 11
+                }
+            ],
+            "start": [
+                "11"
+            ]
+        },
+        {
+            "variableType": "Int8",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 12
+                }
+            ]
+        },
+        {
+            "variableType": "UInt8",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 13
+                }
+            ],
+            "start": [
+                "13"
+            ]
+        },
+        {
+            "variableType": "UInt8",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 14
+                }
+            ]
+        },
+        {
+            "variableType": "Int16",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 15
+                }
+            ],
+            "start": [
+                "15"
+            ]
+        },
+        {
+            "variableType": "Int16",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 16
+                }
+            ]
+        },
+        {
+            "variableType": "UInt16",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 17
+                }
+            ],
+            "start": [
+                "17"
+            ]
+        },
+        {
+            "variableType": "UInt16",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 18
+                }
+            ]
+        },
+        {
+            "variableType": "Int32",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 19
+                }
+            ],
+            "start": [
+                "19"
+            ]
+        },
+        {
+            "variableType": "Int32",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 20
+                }
+            ]
+        },
+        {
+            "variableType": "UInt32",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 21
+                }
+            ],
+            "start": [
+                "21"
+            ]
+        },
+        {
+            "variableType": "UInt32",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 22
+                }
+            ]
+        },
+        {
+            "variableType": "Int64",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 23
+                }
+            ],
+            "start": [
+                "23"
+            ]
+        },
+        {
+            "variableType": "Int64",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 24
+                }
+            ]
+        },
+        {
+            "variableType": "UInt64",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 25
+                }
+            ],
+            "start": [
+                "25"
+            ]
+        },
+        {
+            "variableType": "UInt64",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 26
+                }
+            ]
+        },
+        {
+            "variableType": "Boolean",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 27
+                }
+            ],
+            "start": [
+                "true"
+            ]
+        },
+        {
+            "variableType": "Boolean",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 28
+                }
+            ]
+        },
+        {
+            "variableType": "String",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 29
+                }
+            ],
+            "start": [
+                "container_fmi3_string"
+            ]
+        },
+        {
+            "variableType": "String",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 30
+                }
+            ]
+        },
+        {
+            "variableType": "Int64",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 33
+                }
+            ],
+            "start": [
+                "2"
+            ]
+        },
+        {
+            "variableType": "Int64",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 34
+                }
+            ]
+        }
+    ],
+    "components": [
+        {
+            "fmiMajorVersion": "3",
+            "name": "instance1",
+            "modelIdentifier": "Feedthrough",
+            "path": "Feedthrough",
+            "instantiationToken": "{37B954F1-CC86-4D8F-B97F-C7C36F6670D2}"
+        },
+        {
+            "fmiMajorVersion": "3",
+            "name": "instance2",
+            "modelIdentifier": "Feedthrough",
+            "path": "Feedthrough",
+            "instantiationToken": "{37B954F1-CC86-4D8F-B97F-C7C36F6670D2}"
+        }
+    ],
+    "connections": [
+        {
+            "variableType": "Float32",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                2
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                1
+            ]
+        },
+        {
+            "variableType": "Float32",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                4
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                3
+            ]
+        },
+        {
+            "variableType": "Float64",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                8
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                7
+            ]
+        },
+        {
+            "variableType": "Float64",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                10
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                9
+            ]
+        },
+        {
+            "variableType": "Int8",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                12
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                11
+            ]
+        },
+        {
+            "variableType": "UInt8",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                14
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                13
+            ]
+        },
+        {
+            "variableType": "Int16",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                16
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                15
+            ]
+        },
+        {
+            "variableType": "UInt16",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                18
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                17
+            ]
+        },
+        {
+            "variableType": "Int32",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                20
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                19
+            ]
+        },
+        {
+            "variableType": "UInt32",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                22
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                21
+            ]
+        },
+        {
+            "variableType": "Int64",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                24
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                23
+            ]
+        },
+        {
+            "variableType": "UInt64",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                26
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                25
+            ]
+        },
+        {
+            "variableType": "Boolean",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                28
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                27
+            ]
+        },
+        {
+            "variableType": "String",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                30
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                29
+            ]
+        },
+        {
+            "variableType": "Int64",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                34
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                33
+            ]
+        }
+    ]
+}

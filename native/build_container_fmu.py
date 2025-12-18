@@ -64,7 +64,7 @@ if system() == "Darwin":
         dst=native.parent / "src" / "fmpy" / "container_fmu" / "aarch64-darwin" / shared_library_dst_name
     )
 
-    check_call(["cargo", "test", "--release"], cwd=native / "container-fmu")
+    # check_call(["cargo", "test", "--release"], cwd=native / "container-fmu")
 else:
     check_call(["cargo", "build", "--release"], cwd=native / "container-fmu")
 

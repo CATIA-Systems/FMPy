@@ -48,21 +48,19 @@ shared_library_dst_name = f"container_fmu{sharedLibraryExtension}"
 if system() == "Darwin":
     check_call(["cargo", "build", "--target", "x86_64-apple-darwin", "--release"], cwd=native / "container-fmu")
 
-    check_call(["find", "."], cwd=native / "container-fmu")
-
     shutil.copy(
         src=native / "container-fmu" / "target" / "x86_64-apple-darwin" / "release" / shared_library_src_name,
-        dst=native.parent / "src" / "fmpy" / "container_fmu" / "x86_64-darwin" / shared_library_dst_name
+        dst=native.parent / "src" / "fmpy" / "container_fmu" / "binaries" / "x86_64-darwin" / shared_library_dst_name
     )
 
     check_call(["cargo", "build", "--target", "aarch64-apple-darwin", "--release"], cwd=native / "container-fmu")
 
-    check_call(["find", "."], cwd=native / "container-fmu")
-
     shutil.copy(
         src=native / "container-fmu" / "target" / "aarch64-apple-darwin" / "release" / shared_library_src_name,
-        dst=native.parent / "src" / "fmpy" / "container_fmu" / "aarch64-darwin" / shared_library_dst_name
+        dst=native.parent / "src" / "fmpy" / "container_fmu" / "binaries" / "aarch64-darwin" / shared_library_dst_name
     )
+
+    check_call(["find", "."], cwd=native / "container-fmu")
 
     # check_call(["cargo", "test", "--release"], cwd=native / "container-fmu")
 else:
@@ -70,7 +68,7 @@ else:
 
     shutil.copy(
         src=native / "container-fmu" / "target" / "release" / shared_library_src_name,
-        dst=native.parent / "src" / "fmpy" / "container_fmu" / platform_tuple / shared_library_dst_name
+        dst=native.parent / "src" / "fmpy" / "container_fmu" / "binaries" / platform_tuple / shared_library_dst_name
     )
 
     check_call(["cargo", "test", "--release"], cwd=native / "container-fmu")

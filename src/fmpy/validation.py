@@ -193,7 +193,7 @@ def _validate_model_structure(model_description: ModelDescription) -> List[str]:
     problems = []
 
     # validate outputs
-    expected_outputs = set(v for v in model_description.modelVariables if v.causality == 'output')
+    expected_outputs = set(v for v in model_description.modelVariables if v.causality == 'output' and not v.alias)
     outputs = set(u.variable for u in model_description.outputs)
 
     if expected_outputs != outputs:

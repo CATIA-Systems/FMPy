@@ -8,6 +8,13 @@ from attrs import define, field, evolve
 
 
 @define(eq=False)
+class Category:
+
+    name: str = None
+    description: str | None = None
+
+
+@define(eq=False)
 class DefaultExperiment:
 
     startTime: str | None = None
@@ -22,11 +29,21 @@ class InterfaceType:
     modelIdentifier: str | None = None
     needsExecutionTool: bool = field(default=False, repr=False)
     canBeInstantiatedOnlyOncePerProcess: bool = field(default=False, repr=False)
-    canGetAndSetFMUstate: bool = field(default=False, repr=False)
-    canSerializeFMUstate: bool = field(default=False, repr=False)
+    canGetAndSetFMUState: bool = field(default=False, repr=False)
+    canSerializeFMUState: bool = field(default=False, repr=False)
     providesDirectionalDerivative: bool = field(default=False, repr=False)
     providesAdjointDerivatives: bool = field(default=False, repr=False)
     providesPerElementDependencies: bool = field(default=False, repr=False)
+
+    # for backwards compatibility
+    # alias that delegates to the same attribute
+    @property
+    def canGetAndSetFMUstate(self) -> bool:
+        return self.canGetAndSetFMUState
+
+    @canGetAndSetFMUstate.setter
+    def fullname(self, value: bool):
+        self.canGetAndSetFMUState = value
 
     # FMI 2.0
     canNotUseMemoryManagementFunctions: bool = field(default=False, repr=False)
@@ -49,16 +66,18 @@ class CoSimulation(InterfaceType):
     recommendedIntermediateInputSmoothness: int = field(default=0, repr=False)
     canInterpolateInputs: bool = field(default=False, repr=False)
     providesIntermediateUpdate: bool = field(default=False, repr=False)
+    mightReturnEarlyFromDoStep: bool = field(default=False, repr=False)
     canReturnEarlyAfterIntermediateUpdate: bool = field(default=False, repr=False)
     hasEventMode: bool = field(default=False, repr=False)
     providesEvaluateDiscreteStates: bool = field(default=False, repr=False)
+
+    # FMI 2.0
     canRunAsynchronuously: bool = field(default=False, repr=False)
 
 
 @define(eq=False)
 class ScheduledExecution(InterfaceType):
-
-    pass
+    ...
 
 
 @define(eq=False)
@@ -287,8 +306,8 @@ class Unknown:
 
     index: int = field(default=0, repr=False)
     variable: ModelVariable | None = None
-    dependencies: list[ModelVariable] = field(factory=list, repr=False)
-    dependenciesKind: list[str] = field(factory=list, repr=False)
+    dependencies: list[ModelVariable] | None = field(default=None, repr=False)
+    dependenciesKind: list[str] | None = field(default=None, repr=False)
     sourceline: int = field(default=0, repr=False)
     "Line number in the modelDescription.xml"
 
@@ -309,6 +328,8 @@ class ModelDescription:
     variableNamingConvention: Literal['flat', 'structured'] = field(default='flat', repr=False)
     numberOfContinuousStates: int = field(default=0, repr=False)
     numberOfEventIndicators: int = field(default=0, repr=False)
+
+    logCategories: list[Category] = field(factory=list, repr=False)
 
     defaultExperiment: DefaultExperiment = field(default=None, repr=False)
 
@@ -562,14 +583,19 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
     elif is_fmi2:
         modelDescription.numberOfContinuousStates = len(root.findall('ModelStructure/Derivatives/Unknown'))
 
+    # log categories
+    for l in root.findall('LogCategories/Category'):
+        category = Category(name=l.get("name"), description=l.get("description"))
+        modelDescription.logCategories.append(category)
+
     # default experiment
     for d in root.findall('DefaultExperiment'):
-
-        modelDescription.defaultExperiment = DefaultExperiment()
-
-        for attribute in ['startTime', 'stopTime', 'tolerance', 'stepSize']:
-            if attribute in d.attrib:
-                setattr(modelDescription.defaultExperiment, attribute, float(d.get(attribute)))
+        modelDescription.defaultExperiment = DefaultExperiment(
+            startTime=d.get("startTime"),
+            stopTime=d.get("stopTime"),
+            tolerance=d.get("tolerance"),
+            stepSize=d.get("stepSize"),
+        )
 
     # model description
     if is_fmi1:
@@ -616,8 +642,8 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
     else:
 
         def get_fmu_state_attributes(element, object):
-            object.canGetAndSetFMUstate = element.get('canGetAndSetFMUState') in {'true', '1'}
-            object.canSerializeFMUstate = element.get('canSerializeFMUState') in {'true', '1'}
+            object.canGetAndSetFMUState = element.get('canGetAndSetFMUState') in {'true', '1'}
+            object.canSerializeFMUState = element.get('canSerializeFMUState') in {'true', '1'}
 
         for me in root.findall('ModelExchange'):
             modelDescription.modelExchange = ModelExchange()
@@ -945,16 +971,19 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
                 unknown.sourceline = u.sourceline
                 unknown.variable = variables[int(u.get('valueReference'))]
 
-                dependencies = u.get('dependencies')
+                if "dependencies" in u.attrib:
+                    dependencies = u.get('dependencies').strip()
+                    if len(dependencies) == 0:
+                        unknown.dependencies = []
+                    else:
+                        unknown.dependencies = list(map(lambda vr: variables[int(vr)], dependencies.split(' ')))
 
-                if dependencies:
-                    for vr in dependencies.strip().split(' '):
-                        unknown.dependencies.append(variables[int(vr)])
-
-                dependenciesKind = u.get('dependenciesKind')
-
-                if dependenciesKind:
-                    unknown.dependenciesKind = dependenciesKind.strip().split(' ')
+                if "dependenciesKind" in u.attrib:
+                    dependenciesKind = u.get('dependenciesKind').strip()
+                    if len(dependenciesKind) == 0:
+                        unknown.dependenciesKind = []
+                    else:
+                        unknown.dependenciesKind = dependenciesKind.split(' ')
 
                 attr.append(unknown)
 

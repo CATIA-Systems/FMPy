@@ -1,29 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
-  fmiVersion="2.0"
+  fmiVersion="3.0"
   modelName="{{modelName}}"
-  guid=""
+  instantiationToken=""
 {% if description %}
   description="{{xml_encode(description)}}"
 {% endif %}
-  generationTool="FMPy {{fmpyVersion}} FMU Container"
+  generationTool="Container FMU {{container_fmu_version}}"
   generationDateAndTime="{{generationDateAndTime}}"
   variableNamingConvention="structured">
 
-  <CoSimulation modelIdentifier="FMUContainer">
-    <SourceFiles>
-      <File name="FMI.c"/>
-      <File name="FMI2.c"/>
-      <File name="fmi2Functions.c"/>
-      <File name="FMUContainer.c"/>
-      <File name="mpack-common.c"/>
-      <File name="mpack-expect.c"/>
-      <File name="mpack-node.c"/>
-      <File name="mpack-platform.c"/>
-      <File name="mpack-reader.c"/>
-      <File name="mpack-writer.c"/>
-    </SourceFiles>
-  </CoSimulation>
+  <CoSimulation modelIdentifier="container"/>
 
 {% if system.unitDefinitions %}
   <UnitDefinitions>
@@ -52,8 +39,7 @@
 {% if system.typeDefinitions %}
   <TypeDefinitions>
 {% for typeDefinition in system.typeDefinitions %}
-    <SimpleType name="{{typeDefinition.name}}">
-      <{{typeDefinition.type}}{% if typeDefinition.quantity is not none %} quantity="{{typeDefinition.quantity}}"{% endif %}
+    <{{typeDefinition.type}}Type name="{{typeDefinition.name}}"{% if typeDefinition.quantity is not none %} quantity="{{typeDefinition.quantity}}"{% endif %}
 {% if typeDefinition.unit is not none %} unit="{{typeDefinition.unit}}"{% endif %}
 {% if typeDefinition.displayUnit is not none %} displayUnit="{{typeDefinition.displayUnit}}"{% endif %}
 {% if typeDefinition.relativeQuantity is not none %} relativeQuantity="{{typeDefinition.relativeQuantity}}"{% endif %}
@@ -63,12 +49,11 @@
 {% if typeDefinition.unbounded is not none %} unbounded="{{typeDefinition.unbounded}}"{% endif %}
 {% if typeDefinition.items %}>
 {% for item in typeDefinition.items %}
-        <Item name="{{item.name}}" value="{{item.value}}"{% if item.description is not none %} description="{{item.description}}"{% endif %}/>
+      <Item name="{{item.name}}" value="{{item.value}}"{% if item.description is not none %} description="{{item.description}}"{% endif %}/>
 {% endfor %}
-    </{{typeDefinition.type}}>
+    </{{typeDefinition.type}}Type>
 {% else %}/>
 {% endif %}
-    </SimpleType>
 {% endfor %}
   </TypeDefinitions>
 
@@ -81,31 +66,23 @@
 
 {% endif %}
   <ModelVariables>
-    <ScalarVariable name="time" valueReference="0" causality="independent" variability="continuous">
-      <Real/>
-    </ScalarVariable>
+    <Float64 name="time" valueReference="0" causality="independent" variability="continuous"/>
 {% for variable in system.variables %}
-    <ScalarVariable name="{{variable.name}}" valueReference="{{loop.index}}"{% if variable.variability %} variability="{{variable.variability}}"{% endif %}{% if variable.causality %} causality="{{variable.causality}}"{% endif %}{% if variable.initial %} initial="{{variable.initial}}"{% endif %}{% if variable.description %} description="{{xml_encode(variable.description)}}"{% endif %}>
-      <{{variable.type}}{% if variable.start is not none %} start="{{to_literal(variable.start)}}"{% endif %}{% if variable.unit is not none %} unit="{{variable.unit}}"{% endif %}{% if variable.declaredType is not none %} declaredType="{{variable.declaredType}}"{% endif %}/>
-    </ScalarVariable>
+    <{{variable.type}} name="{{variable.name}}" valueReference="{{loop.index}}" {% if variable.variability %} variability="{{variable.variability}}"{% endif %}{% if variable.causality %} causality="{{variable.causality}}"{% endif %}{% if variable.initial %} initial="{{variable.initial}}"{% endif %}{% if variable.description %} description="{{xml_encode(variable.description)}}"{% endif %}{% if variable.start is not none %} start="{{" ".join(variable.start)}}"{% endif %}{% if variable.unit is not none %} unit="{{variable.unit}}"{% endif %}{% if variable.declaredType is not none %} declaredType="{{variable.declaredType}}"{% endif %}/>
 {% endfor %}
   </ModelVariables>
 
   <ModelStructure>
-    <Outputs>
 {% for variable in system.variables %}
 {% if variable.causality == 'output' %}
-      <Unknown index="{{loop.index + 1}}"/>
+    <Output valueReference="{{loop.index}}"/>
 {% endif %}
 {% endfor %}
-    </Outputs>
-    <InitialUnknowns>
 {% for variable in system.variables %}
 {% if variable.causality == 'output' %}
-      <Unknown index="{{loop.index + 1}}"/>
+    <InitialUnknown valueReference="{{loop.index}}"/>
 {% endif %}
 {% endfor %}
-    </InitialUnknowns>
   </ModelStructure>
 
 </fmiModelDescription>

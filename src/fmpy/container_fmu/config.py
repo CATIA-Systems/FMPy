@@ -1,66 +1,29 @@
-from enum import Enum
+from attrs import define
 from pathlib import Path
-from typing import Sequence, Literal
-from fmpy.model_description import Unit, SimpleType
-from attrs import define, field
 
-NamingConvention = Literal["flat", "structured"]
+from fmpy.model_description import ModelDescription, ModelVariable
 
 
-class FMIMajorVersion(Enum):
-    FMIMajorVersion2 = 2
-    FMIMajorVersion3 = 3
-
-
-@define(eq=False)
-class Variable:
-    type: str = None
-    variability: str = None
-    causality: str = None
-    initial: str = None
-    name: str = None
-    start: list[str] = None
-    description: str = None
-    mappings: Sequence[tuple[str, str]] = None
-    declaredType: str = None
-    unit: str = None
-    displayUnit: str = None
-
-
-@define(eq=False)
+@define
 class Component:
-    fmiMajorVersion: FMIMajorVersion
     name: str
     filename: Path
+    modelDescription: ModelDescription
 
 
-@define(eq=False)
+@define
 class Connection:
-    startElement: str
-    startConnectors: list[str]
-    endElement: str
-    endConnectors: list[str]
-    size: int = None
+    startElement: Component
+    startConnectors: list[ModelVariable]
+    endElement: Component
+    endConnectors: list[ModelVariable]
+    size: int | None = None
 
 
-@define(eq=False)
-class DefaultExperiment:
-    startTime: str = None
-    stopTime: str = None
-    tolerance: str = None
-    stepSize: str = None
-
-
-@define(eq=False)
+@define
 class Configuration:
-    parallelDoStep: bool = False
-    instantiationToken: str = None
-    fixedStepSize: float = None
-    description: str = None
-    variableNamingConvention: NamingConvention = "flat"
-    defaultExperiment: DefaultExperiment | None = None
-    unitDefinitions: list[Unit] = field(factory=list)
-    typeDefinitions: list[SimpleType] = field(factory=list)
-    variables: list[Variable] = field(factory=list)
-    components: list[Component] = field(factory=list)
-    connections: list[Connection] = field(factory=list)
+    parallelDoStep: bool
+    modelDescription: ModelDescription
+    components: list[Component]
+    connections: list[Connection]
+    variableMappings: dict[ModelVariable, list[tuple[Component, ModelVariable]]]

@@ -514,6 +514,7 @@ impl Container<'_> {
                     }
                 };
 
+                // TODO: check if valueReference is in range
                 let valueReferences = &[mapping.valueReference];
 
                 let s = match instance {

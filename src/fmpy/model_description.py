@@ -1,10 +1,22 @@
 """ Object model and loader for the modelDescription.xml """
 from __future__ import annotations
+
 from os import PathLike
 from pathlib import Path
 
-from typing import IO, Literal
+from typing import IO, Literal, TypeAlias, NewType, TypeGuard, Annotated
 from attrs import define, field, evolve
+
+
+FloatLiteral: TypeAlias = Annotated[str, "float-parsable string"]
+
+def is_float_literal(s: str) -> TypeGuard[FloatLiteral]:
+    """Type guard: returns True if s can be parsed as a float."""
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 
 @define(eq=False)
@@ -17,10 +29,10 @@ class Category:
 @define(eq=False)
 class DefaultExperiment:
 
-    startTime: str | None = None
-    stopTime: str | None = None
-    tolerance: str | None = None
-    stepSize: str | None = None
+    startTime: FloatLiteral | None = None
+    stopTime: FloatLiteral | None = None
+    tolerance: FloatLiteral | None = None
+    stepSize: FloatLiteral | None = None
 
 
 @define(eq=False)
@@ -31,18 +43,16 @@ class InterfaceType:
     canBeInstantiatedOnlyOncePerProcess: bool = field(default=False, repr=False)
     canGetAndSetFMUState: bool = field(default=False, repr=False)
     canSerializeFMUState: bool = field(default=False, repr=False)
-    providesDirectionalDerivative: bool = field(default=False, repr=False)
     providesAdjointDerivatives: bool = field(default=False, repr=False)
     providesPerElementDependencies: bool = field(default=False, repr=False)
 
     # for backwards compatibility
-    # alias that delegates to the same attribute
     @property
     def canGetAndSetFMUstate(self) -> bool:
         return self.canGetAndSetFMUState
 
     @canGetAndSetFMUstate.setter
-    def fullname(self, value: bool):
+    def canGetAndSetFMUstate(self, value: bool):
         self.canGetAndSetFMUState = value
 
     # FMI 2.0
@@ -181,15 +191,7 @@ class VariableAlias:
     description: str | None = field(default=None, repr=False)
     displayUnit: str | None = field(default=None, repr=False)
 
-
-@define(eq=False)
-class ModelVariable:
-
-    name: str = field(default=None)
-
-    valueReference: int = field(default=None, repr=False)
-
-    type: Literal[
+VariableType: TypeAlias = Literal[
         'Real',
         'Float32',
         'Float64',
@@ -207,7 +209,20 @@ class ModelVariable:
         'String',
         'Binary',
         'Clock',
-    ] = field(default=None)
+    ]
+Causality: TypeAlias = Literal['parameter', 'calculatedParameter', 'input', 'output', 'local', 'independent', 'structuralParameter']
+Variability: TypeAlias = Literal['constant', 'fixed', 'tunable', 'discrete', 'continuous']
+Initial: TypeAlias = Literal['exact', 'approx', 'calculated', None]
+IntervalVariability: TypeAlias = Literal['constant', 'fixed', 'tunable', 'changing', 'countdown', 'triggered', None]
+
+@define(eq=False)
+class ModelVariable:
+
+    name: str = field(default=None)
+
+    valueReference: int = field(default=None, repr=False)
+
+    type: VariableType = field(default=None)
 
     shape: tuple[int, ...] | None = field(default=None, repr=False)
 
@@ -215,11 +230,11 @@ class ModelVariable:
 
     description: str | None = field(default=None, repr=False)
 
-    causality: Literal['parameter', 'calculatedParameter', 'input', 'output', 'local', 'independent', 'structuralParameter'] = field(default=None, repr=False)
+    causality: Causality = field(default=None, repr=False)
 
-    variability: Literal['constant', 'fixed', 'tunable', 'discrete', 'continuous'] = field(default=None, repr=False)
+    variability: Variability = field(default=None, repr=False)
 
-    initial: Literal['exact', 'approx', 'calculated', None] = field(default=None, repr=False)
+    initial: Initial = field(default=None, repr=False)
 
     canHandleMultipleSetPerTimeInstant: bool = field(default=True, repr=False)
 
@@ -279,7 +294,7 @@ class ModelVariable:
 
     priority: int | None = field(default=None, repr=False)
 
-    intervalVariability: Literal['constant', 'fixed', 'tunable', 'changing', 'countdown', 'triggered', None] = field(default=None, repr=False)
+    intervalVariability: IntervalVariability = field(default=None, repr=False)
 
     intervalDecimal: float | None = field(default=None, repr=False)
 
@@ -311,6 +326,8 @@ class Unknown:
     sourceline: int = field(default=0, repr=False)
     "Line number in the modelDescription.xml"
 
+FMIMajorVersion: TypeAlias = Literal[1, 2, 3]
+VariableNamingConvention: TypeAlias = Literal["flat", "structured"]
 
 @define(eq=False)
 class ModelDescription:
@@ -325,7 +342,7 @@ class ModelDescription:
     license: str | None = field(default=None, repr=False)
     generationTool: str | None = field(default=None, repr=False)
     generationDateAndTime: str | None = field(default=None, repr=False)
-    variableNamingConvention: Literal['flat', 'structured'] = field(default='flat', repr=False)
+    variableNamingConvention: VariableNamingConvention = field(default='flat', repr=False)
     numberOfContinuousStates: int = field(default=0, repr=False)
     numberOfEventIndicators: int = field(default=0, repr=False)
 
@@ -349,6 +366,11 @@ class ModelDescription:
     clockedStates: list[Unknown] = field(factory=list, repr=False)
     eventIndicators: list[Unknown] = field(factory=list, repr=False)
     initialUnknowns: list[Unknown] = field(factory=list, repr=False)
+
+    @property
+    def fmiMajorVersion(self) -> FMIMajorVersion:
+        segments = self.fmiVersion.split(".")
+        return int(segments[0])  # noqa
 
     @property
     def modelIdentifier(self) -> str:
@@ -1075,7 +1097,7 @@ def _write_fmi3_model_description(model_description: ModelDescription, path: Pat
             ("providesEvaluateDiscreteStates", False),
         ])
 
-    if model_description.modelExchange is not None:
+    if model_description.coSimulation is not None:
         CoSimulation = SubElement(root, "CoSimulation")
         set_attributes(CoSimulation, model_description.coSimulation, implementation_attributes + [
             ("canHandleVariableCommunicationStepSize", False),
@@ -1089,6 +1111,10 @@ def _write_fmi3_model_description(model_description: ModelDescription, path: Pat
             ("hasEventMode", False),
             ("providesEvaluateDiscreteStates", False),
         ])
+
+    if model_description.scheduledExecution is not None:
+        ScheduledExecution = SubElement(root, "ScheduledExecution")
+        set_attributes(ScheduledExecution, model_description.scheduledExecution, implementation_attributes)
 
     if model_description.unitDefinitions:
         UnitDefinitions = SubElement(root, "UnitDefinitions")
@@ -1139,6 +1165,17 @@ def _write_fmi3_model_description(model_description: ModelDescription, path: Pat
                     ("unbounded", None),
                 ],
             )
+            for item in type_defintion.items:
+                Item = SubElement(TypeDefinition, "Item")
+                set_attributes(
+                    Item,
+                    item,
+                    [
+                        ("name", None),
+                        ("description", None),
+                        ("value", None),
+                    ],
+                )
 
     if model_description.logCategories:
         LogCategories = SubElement(root, "LogCategories")

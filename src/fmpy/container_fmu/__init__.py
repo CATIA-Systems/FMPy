@@ -1,3 +1,5 @@
+from typing import Sequence
+
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -5,14 +7,14 @@ import numpy as np
 
 import jinja2
 from fmpy import read_model_description
+from fmpy.container_fmu.config import Configuration
 from fmpy.model_description import ModelVariable
 
-from container_fmu.config import Configuration
 
 __version__ = "0.1.0"
 
 
-def write_model_description(configuration: Configuration, filename: Path):
+def write_model_description_from_configuration(configuration: Configuration, filename: Path):
     template_dir = Path(__file__).parent / "template"
 
     loader = jinja2.FileSystemLoader(searchpath=template_dir)
@@ -60,10 +62,11 @@ def write_model_description(configuration: Configuration, filename: Path):
 
 
 def write_configuration(configuration: Configuration, filename: Path):
+
     data = {
         "containerVersion": __version__,
-        "instantiationToken": configuration.instantiationToken,
-        "fixedStepSize": configuration.fixedStepSize,
+        "instantiationToken": configuration.modelDescription.instantiationToken,
+        "fixedStepSize": configuration.modelDescription.coSimulation.fixedInternalStepSize,
         "parallelDoStep": configuration.parallelDoStep,
         "components": [],
         "variables": [],
@@ -80,7 +83,7 @@ def write_configuration(configuration: Configuration, filename: Path):
         component_map[component.name] = (i, variables)
 
         c = {
-            "fmiMajorVersion": str(component.fmiMajorVersion.value),
+            "fmiMajorVersion": str(component.modelDescription.fmiMajorVersion),
             "name": component.name,
             "instantiationToken": model_description.instantiationToken,
             "modelIdentifier": model_identifier,
@@ -91,51 +94,44 @@ def write_configuration(configuration: Configuration, filename: Path):
 
     variables_map = {}
 
-    for i, v in enumerate(configuration.variables):
+    for i, v in enumerate(configuration.modelDescription.modelVariables):
         variables_map[v.name] = (i, v)
 
-    for i, v in enumerate(configuration.variables):
+    for i, (container_variable, m) in enumerate(configuration.variableMappings.items()):
+
         mappings = []
 
-        for component_name, variable_name in v.mappings:
-            component_index, component_variables = component_map[component_name]
-            value_reference = component_variables[variable_name].valueReference
-            mappings.append((component_index, value_reference))
+        for component, component_variable in m:
+            mappings.append((
+                configuration.components.index(component),
+                component_variable.valueReference
+            ))
 
         variable = {
-            "variableType": v.type,
+            "variableType": container_variable.type,
             "mappings": mappings,
         }
 
-        if v.start is not None:
-            variable["start"] = v.start
+        if container_variable.start is not None:
+            # TODO: handle arrays
+            variable["start"] = [container_variable.start]
 
         data["variables"].append(variable)
 
     for c in configuration.connections:
-        src_value_references = [
-            component_map[c.startElement][1][variable_name].valueReference
-            for variable_name in c.startConnectors
-        ]
-        dst_value_references = [
-            component_map[c.endElement][1][variable_name].valueReference
-            for variable_name in c.endConnectors
-        ]
 
         size = 0
-        for variable_name in c.startConnectors:
-            variable = component_map[c.startElement][1][variable_name]
+
+        for variable in c.startConnectors:
             size += np.prod(variable.shape) if variable.shape else 1
 
         data["connections"].append(
             {
-                "variableType": component_map[c.startElement][1][
-                    c.startConnectors[0]
-                ].type,
-                "srcComponent": component_map[c.startElement][0],
-                "dstComponent": component_map[c.endElement][0],
-                "srcValueReferences": src_value_references,
-                "dstValueReferences": dst_value_references,
+                "variableType": c.startConnectors[0].type,
+                "srcComponent": configuration.components.index(c.startElement),
+                "dstComponent": configuration.components.index(c.endElement),
+                "srcValueReferences": list(map(lambda v: v.valueReference, c.startConnectors)),
+                "dstValueReferences": list(map(lambda v: v.valueReference, c.endConnectors)),
                 "size": size,
             }
         )

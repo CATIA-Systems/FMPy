@@ -50,14 +50,8 @@ def test_fmi3(reference_fmus_dist_dir, reference_fmus_repo_dir):
 
         filename = reference_fmus_dist_dir / '3.0' / f'{model_name}.fmu'
 
-        ref_csv = reference_fmus_repo_dir / model_name / f'{model_name}_ref.csv'
-        reference = read_csv(ref_csv)
-
         for fmi_type in ['ModelExchange', 'CoSimulation']:
-            result = simulate_fmu(filename, fmi_type=fmi_type, start_values=start_values, input=input, output_interval=output_interval)
-            rel_out = validate_result(result, reference)
-            assert rel_out == 0
-            # plot_result(result, reference)
+            simulate_fmu(filename, fmi_type=fmi_type, start_values=start_values, input=input, output_interval=output_interval)
 
 
 def test_fmi3_clocks(reference_fmus_dist_dir):

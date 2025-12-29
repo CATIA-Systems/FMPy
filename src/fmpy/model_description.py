@@ -940,13 +940,16 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
 
                 if dependencies is not None:
                     unknown.dependencies = []
-                    for vr in dependencies.strip().split(' '):
-                        unknown.dependencies.append(modelDescription.modelVariables[int(vr) - 1])
+                    if len(dependencies) > 0:
+                        for vr in dependencies.strip().split(' '):
+                            unknown.dependencies.append(modelDescription.modelVariables[int(vr) - 1])
 
                 dependenciesKind = u.get('dependenciesKind')
 
                 if dependenciesKind is not None:
-                    unknown.dependenciesKind = dependenciesKind.strip().split(' ')
+                    unknown.dependenciesKind = []
+                    if len(dependenciesKind) > 0:
+                        unknown.dependenciesKind = dependenciesKind.strip().split(' ')
 
                 attr.append(unknown)
 

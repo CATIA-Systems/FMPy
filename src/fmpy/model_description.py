@@ -41,19 +41,10 @@ class InterfaceType:
     modelIdentifier: str | None = None
     needsExecutionTool: bool = field(default=False, repr=False)
     canBeInstantiatedOnlyOncePerProcess: bool = field(default=False, repr=False)
-    canGetAndSetFMUState: bool = field(default=False, repr=False)
-    canSerializeFMUState: bool = field(default=False, repr=False)
+    canGetAndSetFMUstate: bool = field(default=False, repr=False)
+    canSerializeFMUstate: bool = field(default=False, repr=False)
     providesAdjointDerivatives: bool = field(default=False, repr=False)
     providesPerElementDependencies: bool = field(default=False, repr=False)
-
-    # for backwards compatibility
-    @property
-    def canGetAndSetFMUstate(self) -> bool:
-        return self.canGetAndSetFMUState
-
-    @canGetAndSetFMUstate.setter
-    def canGetAndSetFMUstate(self, value: bool):
-        self.canGetAndSetFMUState = value
 
     # FMI 2.0
     canNotUseMemoryManagementFunctions: bool = field(default=False, repr=False)
@@ -664,8 +655,8 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
     else:
 
         def get_fmu_state_attributes(element, object):
-            object.canGetAndSetFMUState = element.get('canGetAndSetFMUState') in {'true', '1'}
-            object.canSerializeFMUState = element.get('canSerializeFMUState') in {'true', '1'}
+            object.canGetAndSetFMUstate = element.get('canGetAndSetFMUState') in {'true', '1'}
+            object.canSerializeFMUstate = element.get('canSerializeFMUState') in {'true', '1'}
 
         for me in root.findall('ModelExchange'):
             modelDescription.modelExchange = ModelExchange()
@@ -947,13 +938,14 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
 
                 dependencies = u.get('dependencies')
 
-                if dependencies:
+                if dependencies is not None:
+                    unknown.dependencies = []
                     for vr in dependencies.strip().split(' '):
                         unknown.dependencies.append(modelDescription.modelVariables[int(vr) - 1])
 
                 dependenciesKind = u.get('dependenciesKind')
 
-                if dependenciesKind:
+                if dependenciesKind is not None:
                     unknown.dependenciesKind = dependenciesKind.strip().split(' ')
 
                 attr.append(unknown)
@@ -1082,8 +1074,8 @@ def _write_fmi3_model_description(model_description: ModelDescription, path: Pat
         ("modelIdentifier", None),
         ("needsExecutionTool", False),
         ("canBeInstantiatedOnlyOncePerProcess", False),
-        ("canGetAndSetFMUState", False),
-        ("canSerializeFMUState", False),
+        # ("canGetAndSetFMUstate", False),
+        # ("canSerializeFMUstate", False),
         ("providesDirectionalDerivative", False),
         ("providesAdjointDerivatives", False),
         ("providesPerElementDependencies", False),
@@ -1096,6 +1088,10 @@ def _write_fmi3_model_description(model_description: ModelDescription, path: Pat
             ("needsCompletedIntegratorStep", False),
             ("providesEvaluateDiscreteStates", False),
         ])
+        if model_description.modelExchange.canGetAndSetFMUstate:
+            ModelExchange.set("canGetAndSetFMUState", "true")
+        if model_description.modelExchange.canSerializeFMUstate:
+            ModelExchange.set("canSerializeFMUState", "true")
 
     if model_description.coSimulation is not None:
         CoSimulation = SubElement(root, "CoSimulation")
@@ -1111,10 +1107,18 @@ def _write_fmi3_model_description(model_description: ModelDescription, path: Pat
             ("hasEventMode", False),
             ("providesEvaluateDiscreteStates", False),
         ])
+        if model_description.coSimulation.canGetAndSetFMUstate:
+            CoSimulation.set("canGetAndSetFMUState", "true")
+        if model_description.coSimulation.canSerializeFMUstate:
+            CoSimulation.set("canSerializeFMUState", "true")
 
     if model_description.scheduledExecution is not None:
         ScheduledExecution = SubElement(root, "ScheduledExecution")
         set_attributes(ScheduledExecution, model_description.scheduledExecution, implementation_attributes)
+        if model_description.scheduledExecution.canGetAndSetFMUstate:
+            ScheduledExecution.set("canGetAndSetFMUState", "true")
+        if model_description.scheduledExecution.canSerializeFMUstate:
+            ScheduledExecution.set("canSerializeFMUState", "true")
 
     if model_description.unitDefinitions:
         UnitDefinitions = SubElement(root, "UnitDefinitions")

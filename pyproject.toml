@@ -81,18 +81,18 @@ packages = ["src/fmpy"]
 "src/fmpy/container_fmu/binaries/x86_64-linux/container_fmu.so"      = "fmpy/container_fmu/binaries/x86_64-linux/container_fmu.so"
 "src/fmpy/container_fmu/binaries/x86_64-windows/container_fmu.dll"   = "fmpy/container_fmu/binaries/x86_64-windows/container_fmu.dll"
 
-"src/fmpy/remoting/linux64/client_tcp.so" = "fmpy/remoting/linux64/client_tcp.so"
-"src/fmpy/remoting/linux64/server_tcp"    = "fmpy/remoting/linux64/server_tcp"
-
-"src/fmpy/remoting/win32/client_sm.dll"  = "fmpy/remoting/win32/client_sm.dll"
-"src/fmpy/remoting/win32/client_tcp.dll" = "fmpy/remoting/win32/client_tcp.dll"
-"src/fmpy/remoting/win32/server_tcp.exe" = "fmpy/remoting/win32/server_tcp.exe"
-"src/fmpy/remoting/win32/server_sm.exe"  = "fmpy/remoting/win32/server_sm.exe"
-
-"src/fmpy/remoting/win64/client_sm.dll"  = "fmpy/remoting/win64/client_sm.dll"
-"src/fmpy/remoting/win64/client_tcp.dll" = "fmpy/remoting/win64/client_tcp.dll"
-"src/fmpy/remoting/win64/server_tcp.exe" = "fmpy/remoting/win64/server_tcp.exe"
-"src/fmpy/remoting/win64/server_sm.exe"  = "fmpy/remoting/win64/server_sm.exe"
+#"src/fmpy/remoting/linux64/client_tcp.so" = "fmpy/remoting/linux64/client_tcp.so"
+#"src/fmpy/remoting/linux64/server_tcp"    = "fmpy/remoting/linux64/server_tcp"
+#
+#"src/fmpy/remoting/win32/client_sm.dll"  = "fmpy/remoting/win32/client_sm.dll"
+#"src/fmpy/remoting/win32/client_tcp.dll" = "fmpy/remoting/win32/client_tcp.dll"
+#"src/fmpy/remoting/win32/server_tcp.exe" = "fmpy/remoting/win32/server_tcp.exe"
+#"src/fmpy/remoting/win32/server_sm.exe"  = "fmpy/remoting/win32/server_sm.exe"
+#
+#"src/fmpy/remoting/win64/client_sm.dll"  = "fmpy/remoting/win64/client_sm.dll"
+#"src/fmpy/remoting/win64/client_tcp.dll" = "fmpy/remoting/win64/client_tcp.dll"
+#"src/fmpy/remoting/win64/server_tcp.exe" = "fmpy/remoting/win64/server_tcp.exe"
+#"src/fmpy/remoting/win64/server_sm.exe"  = "fmpy/remoting/win64/server_sm.exe"
 
 "src/fmpy/logging/darwin64/logging.dylib" = "fmpy/logging/darwin64/logging.dylib"
 "src/fmpy/logging/linux64/logging.so"     = "fmpy/logging/linux64/logging.so"

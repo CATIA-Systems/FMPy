@@ -43,10 +43,10 @@ jobs:
     - run: |
         cd native
         python build_binaries.py
-    - if: matrix.name == 'linux' || matrix.name == 'windows'
-      run: |
-        cd native
-        python build_remoting.py
+#    - if: matrix.name == 'linux' || matrix.name == 'windows'
+#      run: |
+#        cd native
+#        python build_remoting.py
     - if: matrix.name == 'darwin'
       uses: actions/upload-artifact@v4
       with:

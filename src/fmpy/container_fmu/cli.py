@@ -30,14 +30,19 @@ def create_container_fmu(config: Configuration, unzipdir: Path, filename: Path) 
 
     write_configuration(config, unzipdir / "resources" / "container.json")
 
-    os.makedirs(unzipdir / "binaries" / "x86_64-windows")
-
     binaries_dir = Path(__file__).parent / "binaries"
 
-    shutil.copyfile(
-        src=binaries_dir / "x86_64-windows" / "container_fmu.dll",
-        dst=unzipdir / "binaries" / "x86_64-windows" / "container_fmu.dll",
-    )
+    for platform_tuple, shared_library in [
+        ("aarch64-darwin", "container_fmu.dylib"),
+        ("x86_64-darwin", "container_fmu.dylib"),
+        ("x86_64-linux", "container_fmu.so"),
+        ("x86_64-windows", "container_fmu.dll"),
+    ]:
+        os.makedirs(unzipdir / "binaries" / platform_tuple)
+        shutil.copyfile(
+            src=binaries_dir / platform_tuple / shared_library,
+            dst=unzipdir / "binaries" / platform_tuple / shared_library,
+        )
 
     shutil.make_archive(
         base_name=str(unzipdir / "Container"), format="zip", root_dir=unzipdir

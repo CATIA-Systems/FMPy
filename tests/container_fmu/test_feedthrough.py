@@ -1,4 +1,6 @@
-from fmpy import simulate_fmu, read_model_description
+import numpy as np
+
+from fmpy import simulate_fmu, read_model_description, read_csv
 from fmpy.container_fmu.cli import create_container_fmu
 from fmpy.container_fmu.config import Configuration, Component, Connection
 from fmpy.fmi3 import (
@@ -9,7 +11,7 @@ from fmpy.model_description import BaseUnit, DisplayUnit, ModelDescription, Simp
     ModelVariable, Unit, CoSimulation
 
 
-def test_feedthrough(work_dir, reference_fmus_dist_dir):
+def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir):
 
     container_input = ModelVariable(
         type="Float64",
@@ -107,6 +109,17 @@ def test_feedthrough(work_dir, reference_fmus_dist_dir):
 
     create_container_fmu(configuration, unzipdir, filename)
 
+    input = np.array(
+        [
+            (0.0, 0.0),
+            (1.0, 1.0),
+        ],
+        dtype=[
+            ('time', 'f8'),
+            ('Float64_continuous_input', 'f8')
+        ]
+    )
+
     result = simulate_fmu(
         filename,
         debug_logging=True,
@@ -114,7 +127,8 @@ def test_feedthrough(work_dir, reference_fmus_dist_dir):
         logger=printLogMessage,
         output_interval=0.5,
         stop_time=1,
-        start_values={"Float64_continuous_input": 1.5},
+        # start_values={"Float64_continuous_input": 1.5},
+        input=input
     )
 
     print(result)

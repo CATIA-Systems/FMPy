@@ -1185,7 +1185,7 @@ impl Container<'_> {
                 self.time, currentCommunicationPoint
             );
             self.logError(&message);
-            return fmi2Error;
+            return fmiError;
         }
 
         let next_time = currentCommunicationPoint + communicationStepSize;

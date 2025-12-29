@@ -122,7 +122,7 @@ jobs:
         name: windows
         path: src/fmpy
     - run: uv sync --all-extras
-    - run: uv run native/copy_sources.py
+#    - run: uv run native/copy_sources.py
     - run: uv run native/compile_resources.py
     - run: uv build --wheel
     - uses: actions/upload-artifact@v4

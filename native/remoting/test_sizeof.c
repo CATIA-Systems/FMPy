@@ -5,7 +5,7 @@
 
 int main(void) {
     int error = 0;
-    
+
 
     if (sizeof(fmi2Boolean)  != 4) {
         printf("%20s: %zd | ERROR: expected %d\n", "fmi2Boolean", sizeof(fmi2Boolean), 4);
@@ -73,4 +73,4 @@ int main(void) {
 
     return error;
 }
-    
+

@@ -52,7 +52,7 @@ typedef struct {
     const char* instanceName;
 
     void* instanceEnvironment;
-    
+
     void* logMessage;
 
     size_t nComponents;
@@ -76,8 +76,8 @@ System* instantiateSystem(
     const char* resourcesDir,
     const char* instanceName,
     void* logMessage,
-    void* instanceEnvironment, 
-    bool loggingOn, 
+    void* instanceEnvironment,
+    bool loggingOn,
     bool visible);
 
 FMIStatus doStep(

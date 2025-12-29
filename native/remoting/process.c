@@ -2,7 +2,7 @@
 #   include <windows.h>
 #else
 #   include <dlfcn.h>
-#   include <stdlib.h> 
+#   include <stdlib.h>
 #   include <signal.h>
 #   include <string.h>
 #   include <errno.h>
@@ -51,7 +51,7 @@ process_handle_t process_spawn(char *const argv[])  {
         FALSE,                          // set handle inheritance to FALSE
         0,                              // creation flags
         NULL,                           // use parent's environment block
-        NULL,                           // use parent's starting directory 
+        NULL,                           // use parent's starting directory
         &si,                            // pointer to STARTUPINFO structure
         &pi                             // pointer to PROCESS_INFORMATION structure
     )) {
@@ -62,7 +62,7 @@ process_handle_t process_spawn(char *const argv[])  {
     switch(handle = fork()) {
         case -1:
             return -1;
-        
+
         case 0:
             /* CHILD (server) */
             execv(argv[0], argv);
@@ -99,7 +99,7 @@ void process_waitfor(process_handle_t handle) {
 #ifdef WIN32
     WaitForSingleObject(handle, INFINITE);
 #else
-    int reason; 
+    int reason;
     waitpid(handle, &reason, WNOHANG);
 #endif
 }

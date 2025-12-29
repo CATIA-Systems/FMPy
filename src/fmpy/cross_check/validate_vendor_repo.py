@@ -279,7 +279,7 @@ if __name__ == '__main__':
     import textwrap
 
     description = """\
-    Validate cross-check results and test FMUs in vendor repositories 
+    Validate cross-check results and test FMUs in vendor repositories
     """
 
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,

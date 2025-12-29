@@ -6,7 +6,7 @@
         <xs:documentation xml:lang="en">
             This is the normative XML Schema 1.0 schema for the MAP SSP
             SystemStructure 1.0 common content across formats.
-            
+
             Version: 1.0
 
             Copyright 2016 -- 2019 Modelica Association Project "SSP"
@@ -40,7 +40,7 @@
             POSSIBILITY OF SUCH DAMAGE.
         </xs:documentation>
     </xs:annotation>
-    
+
     <xs:attributeGroup name="ABaseElement">
         <xs:annotation>
             <xs:documentation xml:lang="en">
@@ -59,69 +59,69 @@
             <xs:annotation>
                 <xs:documentation xml:lang="en">
                     This attribute gives a human readable longer description of the
-                    model element, which can be shown to the user where appropriate. 
+                    model element, which can be shown to the user where appropriate.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:attributeGroup>
-    
+
     <xs:attributeGroup name="ATopLevelMetaData">
         <xs:annotation>
             <xs:documentation xml:lang="en">
-                This attribute group specifies the optional meta-data attributes common to 
+                This attribute group specifies the optional meta-data attributes common to
                 all top-level container elements of all defined file formats.
             </xs:documentation>
         </xs:annotation>
         <xs:attribute name="author" type="xs:string" use="optional">
             <xs:annotation>
                 <xs:documentation xml:lang="en">
-                    This attribute gives the name of the author of this file's content. 
+                    This attribute gives the name of the author of this file's content.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="fileversion" type="xs:normalizedString" use="optional">
             <xs:annotation>
                 <xs:documentation xml:lang="en">
-                    This attribute gives a version number for this file's content. 
+                    This attribute gives a version number for this file's content.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="copyright" type="xs:string" use="optional">
             <xs:annotation>
                 <xs:documentation xml:lang="en">
-                    This attribute gives copyright information for this file's content. 
+                    This attribute gives copyright information for this file's content.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="license" type="xs:string" use="optional">
             <xs:annotation>
                 <xs:documentation xml:lang="en">
-                    This attribute gives license information for this file's content. 
+                    This attribute gives license information for this file's content.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="generationTool" type="xs:normalizedString">
             <xs:annotation>
                 <xs:documentation xml:lang="en">
-                    This attribute gives the name of the tool that generated this file. 
+                    This attribute gives the name of the tool that generated this file.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="generationDateAndTime" type="xs:dateTime">
             <xs:annotation>
                 <xs:documentation xml:lang="en">
-                    This attribute gives the date and time this file was generated. 
+                    This attribute gives the date and time this file was generated.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:attributeGroup>
-    
+
     <xs:complexType name="TEnumerations">
         <xs:sequence>
             <xs:element name="Enumeration" minOccurs="1" maxOccurs="unbounded" type="ssc:TEnumeration"/>
         </xs:sequence>
     </xs:complexType>
-    
+
     <xs:complexType name="TEnumeration">
         <xs:sequence>
             <xs:element name="Item" minOccurs="1" maxOccurs="unbounded">
@@ -150,13 +150,13 @@
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
-    
+
     <xs:complexType name="TUnits">
         <xs:sequence>
             <xs:element name="Unit" minOccurs="1" maxOccurs="unbounded" type="ssc:TUnit"/>
         </xs:sequence>
     </xs:complexType>
-    
+
     <xs:complexType name="TUnit">
         <xs:sequence>
             <xs:element name="BaseUnit">
@@ -217,7 +217,7 @@
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
-    
+
     <xs:complexType name="TAnnotations">
         <xs:sequence maxOccurs="unbounded">
             <xs:element name="Annotation">
@@ -229,15 +229,15 @@
                         <xs:annotation>
                             <xs:documentation xml:lang="en">
                                 The unique name of the type of the annotation.
-                                
+
                                 In order to ensure uniqueness all types should be identified
                                 with reverse domain name notation (cf. Java package names
                                 or Apple UTIs) of a domain that is controlled by the entity
                                 defining the semantics and content of the annotation.
-                                
+
                                 For vendor-specific annotations this would e.g. be a domain
                                 controlled by the tool vendor.
-                                
+
                                 For MAP-SSP defined annotations, this will be a domain under
                                 the org.modelica prefix.
                             </xs:documentation>
@@ -247,7 +247,7 @@
             </xs:element>
         </xs:sequence>
     </xs:complexType>
-    
+
     <xs:group name="GTypeChoice">
         <xs:choice>
             <xs:annotation>
@@ -264,7 +264,7 @@
                                 This attribute gives the unit of the entity and must
                                 reference one of the unit definitions provided in the Units
                                 element of the containing file.
-                                
+
                                 If a unit is not supplied, the unit is determined through
                                 default mechanisms: For FMU components, the unit of the
                                 underlying variable would be used, for systems the units
@@ -314,7 +314,7 @@
                                 connected binary connectors, or provide automatic means of
                                 conversion between different formats.  It should be noted
                                 that the implementation is not required to provide this
-                                service, i.e. it remains the responsibility of the operator 
+                                service, i.e. it remains the responsibility of the operator
                                 to ensure only compatible binary connectors are connected.
                             </xs:documentation>
                         </xs:annotation>
@@ -323,7 +323,7 @@
             </xs:element>
         </xs:choice>
     </xs:group>
-    
+
     <xs:group name="GTransformationChoice">
         <xs:annotation>
             <xs:documentation xml:lang="en">
@@ -346,7 +346,7 @@
                                 This attribute specifies an optional factor value to use in a linear
                                 transformation of the source parameter value to the target parameter
                                 value, i.e. in the calculation target = factor * source + offset.
-                                
+
                                 Note that conversions based on different units are performed, unless
                                 prevented by suppressUnitConversion, prior to the application of the
                                 linear transformation, i.e. the value of source is already converted
@@ -360,7 +360,7 @@
                                 This attribute specifies an optional offset value to use in a linear
                                 transformation of the source parameter value to the target parameter
                                 value, i.e. in the calculation target = factor * source + offset.
-                                
+
                                 Note that conversions based on different units are performed, unless
                                 prevented by suppressUnitConversion, prior to the application of the
                                 linear transformation, i.e. the value of source is already converted
@@ -408,7 +408,7 @@
                 <xs:annotation>
                     <xs:documentation xml:lang="en">
                         This element provides for a transformation of integer parameter values
-                        based on a mapping table and is valid for parameters of integer and 
+                        based on a mapping table and is valid for parameters of integer and
                         enumeration type.  Each mapping table entry is provided by a MapEntry
                         element.
                     </xs:documentation>
@@ -476,5 +476,5 @@
             </xs:element>
         </xs:choice>
     </xs:group>
-    
+
 </xs:schema>

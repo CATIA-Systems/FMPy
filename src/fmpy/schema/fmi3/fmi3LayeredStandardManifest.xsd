@@ -36,7 +36,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ----------------------------------------------------------------------------
         </xs:documentation>
     </xs:annotation>
-    
+
     <xs:attribute name="fmi-ls-name" type="xs:normalizedString">
         <xs:annotation>
             <xs:documentation xml:lang="en">
@@ -64,7 +64,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             </xs:documentation>
         </xs:annotation>
     </xs:attribute>
-    
+
     <xs:attributeGroup name="ALayeredStandardManifest">
         <xs:annotation>
             <xs:documentation xml:lang="en">

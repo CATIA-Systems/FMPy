@@ -13,7 +13,7 @@
             SystemStructureDescription 1.0 format.  It is provided
             as a non-normative alternative to the XML Schema 1.0 schema
             to support simpler cross-namespace validation of SSD files.
-            
+
             Version: 1.0
 
             Copyright 2016 -- 2019 Modelica Association Project "SSP"
@@ -47,12 +47,12 @@
             POSSIBILITY OF SUCH DAMAGE.
         </xs:documentation>
     </xs:annotation>
-    
+
     <xs:import namespace="http://ssp-standard.org/SSP1/SystemStructureCommon" schemaLocation="SystemStructureCommon.xsd"/>
     <xs:import namespace="http://ssp-standard.org/SSP1/SystemStructureParameterValues" schemaLocation="SystemStructureParameterValues.xsd"/>
     <xs:import namespace="http://ssp-standard.org/SSP1/SystemStructureParameterMapping" schemaLocation="SystemStructureParameterMapping.xsd"/>
     <xs:import namespace="http://ssp-standard.org/SSP1/SystemStructureSignalDictionary" schemaLocation="SystemStructureSignalDictionary.xsd"/>
-    
+
     <xs:element name="SystemStructureDescription">
         <xs:complexType>
             <xs:sequence>
@@ -87,7 +87,7 @@
             <xs:attributeGroup ref="ssc:ATopLevelMetaData"/>
         </xs:complexType>
     </xs:element>
-        
+
     <xs:complexType name="TElement">
         <xs:annotation>
             <xs:documentation xml:lang="en">
@@ -100,11 +100,11 @@
                     <xs:documentation xml:lang="en">
                         The set of connectors of this element, which represent
                         the interface of the element to the outside world.
- 
+
                         For components the set of connectors must match variable/ports
                         of the underlying component implementation, e.g. the referenced
                         FMU, by name.
- 
+
                         Note that there is no requirement that connectors must
                         be present for all variables/ports of an underlying
                         component implementation.  Only those connectors must
@@ -123,7 +123,7 @@
                         The optional attribute rotation (in degrees) defines an additional rotation
                         (applied after flipping), where positive numbers indicate left rotation (x->y).
                         The coordinate system is oriented: x -> right, y -> up.
-                        
+
                         The optional attribute iconSource defines an icon URI with the same semantics as
                         for the source attribute of the Component element.  If defined, this icon overrides
                         any icon that may be defined e.g. in an .fmu file (as disccused in the FMI group).
@@ -170,7 +170,7 @@
             </xs:simpleType>
         </xs:attribute>
     </xs:complexType>
-    
+
     <xs:complexType name="TComponent">
         <xs:complexContent>
             <xs:extension base="ssd:TElement">
@@ -199,25 +199,25 @@
                             sources.  For components that are packaged inside an SSP that
                             contains this SSD, this is mandatory (in this way, the SSD URIs
                             remain valid after unpacking the SSP into the filesystem).
-                            
+
                             E.g. for an FMU called MyDemoFMU.fmu, that is located in the
                             resources directory of an SSP, the correct URI would be
                             "resources/MyDemoFMU.fmu".
-                            
+
                             When referencing another SSP, by default the default SSD of the
                             SSP (i.e. SystemStructure.ssd) is referenced.  When a non-default
-                            SSD should be selected, then the name of the non-default SSD must 
-                            be given through a fragment identifier, i.e. the URI 
+                            SSD should be selected, then the name of the non-default SSD must
+                            be given through a fragment identifier, i.e. the URI
                             "resources/SubSSP.ssp#VariantB.ssd" would reference the VariantB.ssd
                             of SubSSP.ssp located in the resources directory relative to this SSD.
-                            
+
                             When the URI is a same-document URI with a fragment identifier, e.g.
                             "#other-system", then the fragment identifier should identify a
                             system element in this SSD document with an id attribute identical
                             to the fragment identifier.  This mechanism can be used to instantiate
                             an embedded system definition multiple times through reference to
                             its definition element.
-                            
+
                             Note that implementations are only required to support relative URIs
                             as specified above, and that especially relative URIs that move beyond
                             the baseURI (e.g. go "up" a level via ..) are not required to be
@@ -260,13 +260,13 @@
                     <xs:documentation xml:lang="en">
                         This element defines a signal dictionary, describing the signal dictionary
                         entries present in the signal dictionary.
-                        
+
                         The contents of the element can be used to provide a signal dictionary
                         inline, in which case the source attribute of the SignalDictionary element
                         must be empty.
-                        
+
                         The contents must be an ssb:SignalDictionary element, if the type attribute
-                        of this element is application/x-ssp-signal-dictionary, or any other valid 
+                        of this element is application/x-ssp-signal-dictionary, or any other valid
                         XML content if the type attribute references another MIME type (in that case
                         there should be a layered specification that defines how embedding the content
                         works for that MIME type).
@@ -285,11 +285,11 @@
                                 This attribute indicates the source of the signal dictionary as a URI
                                 (cf. RFC 3986).  For purposes of the resolution of relative URIs
                                 the base URI is the URI of the SSD.
-                                
+
                                 If the source attribute is missing, the signal dictionary is provided
                                 inline as contents of the SignalDictionary element, which must be
                                 empty otherwise.
-                                
+
                                 For the default type application/x-ssp-signal-dictionary such inline
                                 content must be an ssb:SignalDictionary element.
                             </xs:documentation>
@@ -314,7 +314,7 @@
             </xs:element>
         </xs:sequence>
     </xs:complexType>
-    
+
     <xs:complexType name="TSignalDictionaryReference">
         <xs:complexContent>
             <xs:extension base="ssd:TElement">
@@ -325,7 +325,7 @@
                     <xs:annotation>
                         <xs:documentation xml:lang="en">
                             This attribute gives the name of the signal dictionary that is to
-                            be referenced.  Name lookups occur in hierarchical fashion, i.e. 
+                            be referenced.  Name lookups occur in hierarchical fashion, i.e.
                             the name is first looked up in the system that contains a signal
                             dictionary reference.  If that lookup yields no match, the lookup
                             is performed on the enclosing system, etc., until a match is found.
@@ -336,7 +336,7 @@
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
-    
+
     <xs:complexType name="TSystem">
         <xs:annotation>
             <xs:documentation xml:lang="en">
@@ -370,14 +370,14 @@
                                             Note that connections between connectors on a system are
                                             allowed, so neither startElement nor endElement has to be
                                             supplied.
-                                            
+
                                             Note also that the terms start and end in the attribute names
                                             of the connector, like startElement or endConnector, do not
                                             denote directionality of the data flow implied by the connector.
                                             That is determined by the combination of the semantics of the
                                             actual connectors (variables/ports) connected and their kind
                                             attributes:
-                                            
+
                                             For component to component connections as well as for connections
                                             between two connectors at the system level, currently the kind of
                                             one connector must be output and of another connector must be
@@ -385,7 +385,7 @@
                                             must be calculatedParameter and the other must be parameter.
                                             Information flows from the output/calculatedParameter to the
                                             input/parameter connector.
-                                            
+
                                             For system to component connections the kinds of the connectors
                                             must match, i.e. either both are input or both output or both
                                             parameter or both calculatedParameter.
@@ -409,10 +409,10 @@
                                                         through the coordinates of the corresponding connectors.  The only relevant
                                                         geometry information provided by the connection geometry is a, by default
                                                         empty, list of intermediate waypoint coordinates, which are to be interpreted
-                                                        as for the svg:polyline primitive, i.e. as waypoints for straight line 
+                                                        as for the svg:polyline primitive, i.e. as waypoints for straight line
                                                         segments, with the first and last points added automatically based on the
                                                         translated coordinates of the start and end connectors.
-                                                        
+
                                                         Note that x and y coordinates are in the coordinate system of the
                                                         enclosing system.
                                                     </xs:documentation>
@@ -483,7 +483,7 @@
                                                     available for both start and end definitions.  If this attribute is
                                                     supplied and its value is true, then the environment will not perform
                                                     any automatic unit conversions, otherwise automatic unit
-                                                    conversions can be performed.  This is also useful in conjunction with 
+                                                    conversions can be performed.  This is also useful in conjunction with
                                                     the optional linear transformation supplied via the LinearTransformation
                                                     element: With suppressUnitConversion = true, the linear transformation
                                                     is performed instead of any unit conversions, whereas otherwise the
@@ -500,22 +500,22 @@
                     <xs:element name="SystemGeometry" minOccurs="0">
                         <xs:annotation>
                             <xs:documentation xml:lang="en">
-                                This optional element defines the extent of the system canvas. 
-                                (x1,y1) and (x2,y2) define the lower-left and upper-right 
+                                This optional element defines the extent of the system canvas.
+                                (x1,y1) and (x2,y2) define the lower-left and upper-right
                                 corner, respectively.
 
                                 Different from ElementGeometry, where x1>x2 and y1>y2 indicate
                                 flipping, x1 &lt; x2 and y1 &lt; y2 must hold here.
-                                
+
                                 If undefined, the system canvas extent defaults to the bounding
                                 box of all ElementGeometry elements of the child elements of the
                                 system.
-                                
+
                                 When displaying the content of a sub-system together with the
                                 enclosing parent system, the transformation of co-coordinates
                                 inside the sub-system to co-ordinates in the parent system is defined
-                                by the transformation from SystemGeometry.{x1,y1,x2,y2} to 
-                                ElementGeometry.{x1', y1', x2', y2'}, where ElementGeometry.z' 
+                                by the transformation from SystemGeometry.{x1,y1,x2,y2} to
+                                ElementGeometry.{x1', y1', x2', y2'}, where ElementGeometry.z'
                                 is the respective coordinate of the sub-system when instantiated
                                 in the parent system after rotation.
                             </xs:documentation>
@@ -534,7 +534,7 @@
                                 that are contained in the system, e.g. things like notes, which have no
                                 semantic impact on the system but aid in presentation of the system in
                                 graphical user interfaces.
-                                
+
                                 Currently the only graphical element defined is the Note element, which
                                 allows for simple textual notes to be placed into the system diagram, but
                                 in the future more elements might be added as needed for exchange of
@@ -551,7 +551,7 @@
                                                 enclosing system.  It is sized using the attributes so that the coordinates
                                                 (x1,y1) and (x2,y2) define the positions of the lower-left and upper-right
                                                 corners of the note in the coordinate system of the parent.
-                                                
+
                                                 The note text is given by the text attribute.  The presentation expectation
                                                 is that the text is automatically sized ad wrapped in such a way that it
                                                 fits the note area.  If this would lead to too small text, it might be
@@ -587,7 +587,7 @@
                             <xs:annotation>
                                 <xs:documentation xml:lang="en">
                                     This element gives the type of the connector.
-                                    
+
                                     If a type is not supplied, the type is determined through
                                     default mechanisms: For FMU components, the type of the
                                     underlying variable would be used, for systems the types
@@ -606,7 +606,7 @@
                                     Note that x and y coordinates are in a special coordinate system, where
                                     0,0 is the lower-left corner of the component/system, and 1,1 is the
                                     upper-right corner of the component, regardless of aspect ratio.
-                                    
+
                                     For systems the placement of connectors for the inside and outside
                                     view of the system is identical, the special coordinate system is just
                                     translated to different actual coordinate systems, namely the one
@@ -627,10 +627,10 @@
                             <xs:documentation xml:lang="en">
                                 This attribute gives the connector a name, which
                                 shall be unique within the component or system and,
-                                for components, must match the name of a relevant 
+                                for components, must match the name of a relevant
                                 variable/port in the underlying component implementation,
                                 e.g. the referenced FMU.
-                                
+
                                 Note that there is no requirement that connectors must
                                 be present for all variables/ports of an underlying
                                 component implementation.  Only those connectors must
@@ -649,10 +649,10 @@
                                 For components this must match the related kind of the underlying
                                 component implementation, e.g. for referenced FMUs it must match the
                                 combination of variability and causality.
-                                
+
                                 For FMI 2.0 this means that the causality of the variable must
                                 match the kind of the connector.
-                                
+
                                 For FMI 1.0 this means that for connectors of kind input or output
                                 the causality of the variable must be input or output and the
                                 variability of the variable must be discrete or continuous (for
@@ -661,7 +661,7 @@
                                 variablity must be parameter.  For connectors of kind
                                 calculatedParameter the causality must be output and the variablity
                                 must be parameter.
-                                
+
                                 For SignalDictionaryReferences, the kind of a given connector can
                                 additionally be 'inout', which indicates that the semantics of the
                                 connector are derived from the connections going to the connector.
@@ -695,11 +695,11 @@
                         provided in the parameter source must match the names of the FMU variables, or must be
                         mapped to the names of the FMU variables through a ParameterMapping element, or are
                         ignored if no matching variable is found.
-                        
+
                         For systems the names in the parameter source must either match the hierarchical names
                         of parameters or other variables in the system, or must be mapped to those names through
                         a ParameterMapping element, or are ignored if no matching variable is found.
-                        
+
                         The hierarchical names of the parameters or other variables of a system are formed in the
                         following way: Any variables of the system exposed through connectors of the system have
                         the name of the connector as their name.  For all elements of the system, the hierarchical
@@ -709,14 +709,14 @@
                         a parameter P2, the hierarchical names of the parameters in system A are B.SP1 and B.C.P2
                         respectively.  The hierarchical name of those parameters inside system B are SP1 and C.P2
                         respectively.
-                        
+
                         More than one ParameterBinding can be supplied, in which case all of the parameters found
                         will be used to parametrize the component, with parameter values in ParameterBinding
                         sources appearing at a succeeding position in the element order taking priority over prior
-                        sources at the same hierarchy level, should a parameter be included in more than one 
+                        sources at the same hierarchy level, should a parameter be included in more than one
                         ParameterBinding source.
-                        
-                        When ParameterBinding sources on multiple levels of the hierarchy supply values for the 
+
+                        When ParameterBinding sources on multiple levels of the hierarchy supply values for the
                         same parameter, bindings at a higher hierarchy level take precedence over lower levels,
                         i.e. bindings at a system level take precedence over bindings at a sub-system or component
                         level.
@@ -731,7 +731,7 @@
                         All kinds of system connectors can be parameterized.  In case the system level connectors
                         are connected to FMU components, the parameterization must be compatible with the variable
                         in the connected FMU.
-                        
+
                         ParameterBindings that apply to a component that references another SSD/SSP are handled
                         as if the top-level system of the SSD/SSP was present in the enclosing system instead of
                         the component with one special case: Any parameter bindings in the component are treated
@@ -748,7 +748,7 @@
                                     This optional element can be used to provide parameter values inline
                                     to the parameter binding, in which case the source attribute of the
                                     ParameterBinding element must be empty.
-                                    
+
                                     The contents must be an ssv:ParameterSet element, if the type attribute
                                     of the ParameterBinding element is application/x-ssp-parameter-set, or
                                     any other valid XML content if the type attribute references another
@@ -773,11 +773,11 @@
                                     as is for name matching against the names of parameters in the component
                                     or system and the values of the parameter source are not transformed further
                                     before being applied.
-                                    
+
                                     The contents of the element can be used to provide a parameter mapping
                                     inline, in which case the source attribute of the ParameterMapping element
                                     must be empty.
-                                    
+
                                     The contents must be an ssm:ParameterMapping element, if the type attribute
                                     of this element is application/x-ssp-parameter-mapping, or any other valid
                                     XML content if the type attribute references another MIME type (in that case
@@ -802,7 +802,7 @@
                                             referenced component if the base attribute is specified as component.
                                             This allows the specification of parameter mapping sources that reside
                                             inside the component (e.g. an FMU) through relative URIs.
-                                            
+
                                             If the source attribute is missing, the parameter mapping is provided
                                             inline as contents of the ParameterMapping element, which must be
                                             empty otherwise.
@@ -850,10 +850,10 @@
                                 referenced component if the base attribute is specified as component.
                                 This allows the specification of parameter sources that reside inside
                                 the component (e.g. an FMU) through relative URIs.
-                                
+
                                 Access to parameter sets over the SSP Parameter Repository Protocol
                                 is mediated through URIs with the http or https scheme.
-                                
+
                                 If the source attribute is missing, the parameter mapping is provided
                                 inline as contents of a ParameterValues element, which must not be
                                 present otherwise.
@@ -896,7 +896,7 @@
             </xs:element>
         </xs:sequence>
     </xs:complexType>
-    
+
     <xs:complexType name="TDefaultExperiment">
         <xs:annotation>
             <xs:documentation xml:lang="en">
@@ -916,7 +916,7 @@
         <xs:attribute name="stopTime" type="xs:double" use="optional">
             <xs:annotation>
                 <xs:documentation xml:lang="en">Default stop time of simulation</xs:documentation>
-            </xs:annotation>            
+            </xs:annotation>
         </xs:attribute>
     </xs:complexType>
 </xs:schema>

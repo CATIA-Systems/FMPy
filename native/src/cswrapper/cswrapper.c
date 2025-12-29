@@ -46,10 +46,10 @@ typedef struct {
     fmi2EventInfo eventInfo;
 	fmi2CallbackLogger logger;
 	const char *instanceName;
-    
+
     size_t nx;
     size_t nz;
-    
+
     void *cvode_mem;
     N_Vector x;
     N_Vector abstol;
@@ -103,37 +103,37 @@ typedef struct {
 } Model;
 
 static int f(realtype t, N_Vector y, N_Vector ydot, void *user_data) {
-    
+
     Model *m = (Model *)user_data;
-        
+
     if (m->nx > 0) {
         fmi2Status status;
         status = m->fmi2SetTime(m->c, t);
         status = m->fmi2GetContinuousStates(m->c, NV_DATA_S(y), NV_LENGTH_S(y));
         status = m->fmi2GetDerivatives(m->c, NV_DATA_S(ydot), NV_LENGTH_S(ydot));
     }
-        
+
     return 0;
-    
+
 }
 
 static int g(realtype t, N_Vector y, realtype *gout, void *user_data) {
 
     Model *m = (Model *)user_data;
-    
+
     fmi2Status status = m->fmi2SetTime(m->c, t);
 
     if (m->nx > 0) {
         status = m->fmi2SetContinuousStates(m->c, NV_DATA_S(y), NV_LENGTH_S(y));
     }
-    
+
     status = m->fmi2GetEventIndicators(m->c, gout, m->nz);
 
     return 0;
 }
 
 static void ehfun(int error_code, const char *module, const char *function, char *msg, void *user_data) {
-	
+
 	Model *m = (Model *)user_data;
 
 	m->logger(m, m->instanceName, fmi2Error, "logError", "CVode error(code %d) in module %s, function %s: %s.", error_code, module, function, msg);
@@ -188,7 +188,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
 	m->logger = functions->logger;
 	m->instanceName = strdup(instanceName);
-    
+
 #ifdef _WIN32
 	char path[MAX_PATH];
 	HMODULE hm = NULL;
@@ -210,41 +210,41 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	char* name = strdup(path);
 #else
     Dl_info info;
-    
+
     if (!dladdr(fmi2Instantiate, &info)) {
         if (functions && functions->logger) {
             functions->logger(NULL, instanceName, fmi2Error, "logError", "Failed to get shared library info.");
         }
         return NULL;
     }
-    
+
     char *name = strdup(info.dli_fname);
 #endif
 
     size_t len = strlen(name);
-    
+
     // remove the file extension
     char *sle = SHARED_LIBRARY_EXTENSION;
     size_t slelen = strlen(sle);
-    
+
     name[len-slelen] = '\0';
-    
+
     // number of event indicators as a string
     char *n = strrchr(name, '_');
-    
+
     m->nz = atoi(n+1);
-    
+
     len = strlen(name);
     name[len-strlen(n)] = '\0';
 
     // number of continuous states as a string
     n = strrchr(name, '_');
-    
+
     m->nx = atoi(n+1);
 
     len = strlen(name);
     name[len-strlen(n)] = '\0';
-    
+
     // re-append the file extension
     strcat(name, SHARED_LIBRARY_EXTENSION);
 
@@ -293,9 +293,9 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
     GET(fmi2GetContinuousStates)
     GET(fmi2GetNominalsOfContinuousStates)
 
-    m->c = m->fmi2Instantiate(instanceName, fmi2ModelExchange, fmuGUID, fmuResourceLocation, functions, visible, loggingOn); 
+    m->c = m->fmi2Instantiate(instanceName, fmi2ModelExchange, fmuGUID, fmuResourceLocation, functions, visible, loggingOn);
 	ASSERT_NOT_NULL(m->c)
-    
+
     if (m->nx > 0) {
         m->x = N_VNew_Serial(m->nx);
         m->abstol = N_VNew_Serial(m->nx);
@@ -309,11 +309,11 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
         NV_DATA_S(m->abstol)[0] = RTOL;
         m->A = SUNDenseMatrix(1, 1);
     }
-    
+
     m->cvode_mem = CVodeCreate(CV_BDF);
-    
+
 	int flag;
-		
+
 	flag = CVodeInit(m->cvode_mem, f, 0, m->x);
 	ASSERT_CV_SUCCESS(flag)
 
@@ -324,7 +324,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
         flag = CVodeRootInit(m->cvode_mem, (int)m->nz, g);
 		ASSERT_CV_SUCCESS(flag)
     }
-    
+
     m->LS = SUNLinSol_Dense(m->x, m->A);
 
     flag = CVodeSetLinearSolver(m->cvode_mem, m->LS, m->A);
@@ -393,10 +393,10 @@ fmi2Status fmi2ExitInitializationMode(fmi2Component c) {
     if (!c) { return fmi2Error; }
     Model *m = (Model *)c;
     fmi2Status status;
-    
+
     status = m->fmi2ExitInitializationMode(m->c);
     if (status > fmi2Warning) { return status; }
-    
+
     status = m->fmi2NewDiscreteStates(m->c, &m->eventInfo);
     if (status > fmi2Warning) { return status; }
 
@@ -528,36 +528,36 @@ fmi2Status fmi2DoStep(fmi2Component c,
                       fmi2Real      currentCommunicationPoint,
                       fmi2Real      communicationStepSize,
                       fmi2Boolean   noSetFMUStatePriorToCurrentPoint) {
-    
+
     if (!c) return fmi2Error;
     Model *m = (Model *)c;
-    
+
     fmi2Status status;
-    
+
     realtype tret = currentCommunicationPoint;
     realtype tNext = currentCommunicationPoint + communicationStepSize;
 	realtype epsilon = (1.0 + fabs(tNext)) * EPSILON;
-        
+
     if (m->nx > 0) {
         status = m->fmi2GetContinuousStates(m->c, NV_DATA_S(m->x), NV_LENGTH_S(m->x));
         if (status > fmi2Warning) return status;
     }
-    
+
     while (tret + epsilon < tNext) {
-        
+
         realtype tout = tNext;
-        
+
         if (m->eventInfo.nextEventTimeDefined && m->eventInfo.nextEventTime < tNext) {
             tout = m->eventInfo.nextEventTime;
         }
-    
+
         int flag = CVode(m->cvode_mem, tout, m->x, &tret, CV_NORMAL);
-        
+
         if (flag < 0) {
             // TODO: ehfn()
             return fmi2Error;
         }
-        
+
         status = m->fmi2SetTime(m->c, tret);
         if (status > fmi2Warning) return status;
 
@@ -565,14 +565,14 @@ fmi2Status fmi2DoStep(fmi2Component c,
             status = m->fmi2SetContinuousStates(m->c, NV_DATA_S(m->x), NV_LENGTH_S(m->x));
             if (status > fmi2Warning) return status;
         }
-        
+
         fmi2Boolean enterEventMode, terminateSimulation;
-        
+
         status = m->fmi2CompletedIntegratorStep(m->c, fmi2False, &enterEventMode, &terminateSimulation);
         if (status > fmi2Warning) return status;
-        
+
         if (terminateSimulation) return fmi2Error;
-        
+
         if (flag == CV_ROOT_RETURN || enterEventMode || (m->eventInfo.nextEventTimeDefined && m->eventInfo.nextEventTime == tret)) {
 
             m->fmi2EnterEventMode(m->c);
@@ -590,13 +590,13 @@ fmi2Status fmi2DoStep(fmi2Component c,
                 status = m->fmi2GetContinuousStates(m->c, NV_DATA_S(m->x), NV_LENGTH_S(m->x));
                 if (status > fmi2Warning) return status;
             }
-            
+
             flag = CVodeReInit(m->cvode_mem, tret, m->x);
             if (flag < 0) return fmi2Error;
         }
-        
+
     }
-    
+
     return status;
 }
 

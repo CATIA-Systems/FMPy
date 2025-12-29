@@ -211,7 +211,7 @@ def extract(
 
         # check filenames
         for name in zf.namelist():
-            
+
             if '\\' in name:
                 raise Exception("Illegal path %s found in %s. All slashes must be forward slashes." % (name, filename))
 

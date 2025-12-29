@@ -8,7 +8,7 @@ from ..util import plot_result
 description = """\
 Simulate an SSP
 
-Example: 
+Example:
     > python -m fmpy.ssp.simulate SampleSystem.ssp
 
 """

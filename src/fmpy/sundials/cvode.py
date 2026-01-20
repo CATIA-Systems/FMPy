@@ -8,8 +8,11 @@ from .sundials_nvector import N_Vector
 #  *                and Dan Shumaker @ LLNL
 #  * -----------------------------------------------------------------
 #  * SUNDIALS Copyright Start
-#  * Copyright (c) 2002-2025, Lawrence Livermore National Security
+#  * Copyright (c) 2025, Lawrence Livermore National Security,
+#  * University of Maryland Baltimore County, and the SUNDIALS contributors.
+#  * Copyright (c) 2013-2025, Lawrence Livermore National Security
 #  * and Southern Methodist University.
+#  * Copyright (c) 2002-2013, Lawrence Livermore National Security.
 #  * All rights reserved.
 #  *
 #  * See the top-level LICENSE and NOTICE files for details.
@@ -143,6 +146,9 @@ CVodeSVtolerances.restype = c_int
 #
 # /* Optional input functions */
 #
+# SUNDIALS_EXPORT int CVodeSetOptions(void* cvode_mem, const char* cvid,
+#                                     const char* file_name, int argc,
+#                                     char* argv[]);
 # SUNDIALS_EXPORT int CVodeSetConstraints(void* cvode_mem, N_Vector constraints);
 # SUNDIALS_EXPORT int CVodeSetDeltaGammaMaxLSetup(void* cvode_mem,
 #                                                 sunrealtype dgmax_lsetup);

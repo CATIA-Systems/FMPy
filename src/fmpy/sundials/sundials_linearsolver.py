@@ -1,13 +1,16 @@
 from ctypes import c_void_p
 
 # /* -----------------------------------------------------------------
-#  * Programmer(s): Daniel Reynolds @ SMU
+#  * Programmer(s): Daniel Reynolds @ UMBC
 #  *                David Gardner, Carol Woodward,
 #  *                Slaven Peles, Cody Balos @ LLNL
 #  * -----------------------------------------------------------------
 #  * SUNDIALS Copyright Start
-#  * Copyright (c) 2002-2025, Lawrence Livermore National Security
+#  * Copyright (c) 2025, Lawrence Livermore National Security,
+#  * University of Maryland Baltimore County, and the SUNDIALS contributors.
+#  * Copyright (c) 2013-2025, Lawrence Livermore National Security
 #  * and Southern Methodist University.
+#  * Copyright (c) 2002-2013, Lawrence Livermore National Security.
 #  * All rights reserved.
 #  *
 #  * See the top-level LICENSE and NOTICE files for details.
@@ -97,6 +100,7 @@ from ctypes import c_void_p
 #   SUNLINEARSOLVER_MAGMADENSE,
 #   SUNLINEARSOLVER_ONEMKLDENSE,
 #   SUNLINEARSOLVER_GINKGO,
+#   SUNLINEARSOLVER_GINKGOBATCH,
 #   SUNLINEARSOLVER_KOKKOSDENSE,
 #   SUNLINEARSOLVER_CUSTOM
 # } SUNLinearSolver_ID;
@@ -121,6 +125,8 @@ SUNLinearSolver = c_void_p
 #   SUNErrCode (*setpreconditioner)(SUNLinearSolver, void*, SUNPSetupFn,
 #                                   SUNPSolveFn);
 #   SUNErrCode (*setscalingvectors)(SUNLinearSolver, N_Vector, N_Vector);
+#   SUNErrCode (*setoptions)(SUNLinearSolver, const char* LSid,
+#                            const char* file_name, int argc, char* argv[]);
 #   SUNErrCode (*setzeroguess)(SUNLinearSolver, sunbooleantype);
 #   SUNErrCode (*initialize)(SUNLinearSolver);
 #   int (*setup)(SUNLinearSolver, SUNMatrix);
@@ -170,6 +176,10 @@ SUNLinearSolver = c_void_p
 # SUNDIALS_EXPORT
 # SUNErrCode SUNLinSolSetScalingVectors(SUNLinearSolver S, N_Vector s1,
 #                                       N_Vector s2);
+#
+# SUNDIALS_EXPORT
+# SUNErrCode SUNLinSolSetOptions(SUNLinearSolver S, const char* LSid,
+#                                const char* file_name, int argc, char* argv[]);
 #
 # SUNDIALS_EXPORT
 # SUNErrCode SUNLinSolSetZeroGuess(SUNLinearSolver S, sunbooleantype onoff);

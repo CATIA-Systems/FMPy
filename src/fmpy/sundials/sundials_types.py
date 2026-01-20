@@ -5,8 +5,11 @@ from ctypes import c_double, c_int64, c_int, CFUNCTYPE, c_char_p, c_void_p
 #  *                Aaron Collier, and Slaven Peles @ LLNL
 #  * -----------------------------------------------------------------
 #  * SUNDIALS Copyright Start
-#  * Copyright (c) 2002-2025, Lawrence Livermore National Security
+#  * Copyright (c) 2025, Lawrence Livermore National Security,
+#  * University of Maryland Baltimore County, and the SUNDIALS contributors.
+#  * Copyright (c) 2013-2025, Lawrence Livermore National Security
 #  * and Southern Methodist University.
+#  * Copyright (c) 2002-2013, Lawrence Livermore National Security.
 #  * All rights reserved.
 #  *
 #  * See the top-level LICENSE and NOTICE files for details.

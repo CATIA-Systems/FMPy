@@ -6,8 +6,11 @@ from .sundials_types import *
 #  * Programmer(s): Cody J. Balos @ LLNL
 #  * -----------------------------------------------------------------
 #  * SUNDIALS Copyright Start
-#  * Copyright (c) 2002-2025, Lawrence Livermore National Security
+#  * Copyright (c) 2025, Lawrence Livermore National Security,
+#  * University of Maryland Baltimore County, and the SUNDIALS contributors.
+#  * Copyright (c) 2013-2025, Lawrence Livermore National Security
 #  * and Southern Methodist University.
+#  * Copyright (c) 2002-2013, Lawrence Livermore National Security.
 #  * All rights reserved.
 #  *
 #  * See the top-level LICENSE and NOTICE files for details.
@@ -47,6 +50,7 @@ SUNContext_Create.restype = c_int
 SUNContext_PushErrHandler = getattr(sundials_core, 'SUNContext_PushErrHandler')
 SUNContext_PushErrHandler.argtypes = [SUNContext, SUNErrHandlerFn, c_void_p]
 SUNContext_PushErrHandler.restype = c_int
+#
 # SUNDIALS_EXPORT
 # SUNErrCode SUNContext_PopErrHandler(SUNContext sunctx);
 #

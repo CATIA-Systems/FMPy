@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.10)
 
 project (FMPy)
 
-set(CVODE_INSTALL_DIR "../sundials-5.3.0/win64/static/install" CACHE STRING "CVode installation directory")
+set(CVODE_INSTALL_DIR "../sundials-7.5.0/win64/static/install" CACHE STRING "CVode installation directory")
 
 if (WIN32)
     file(GLOB SUNDIALS_LIBS ${CVODE_INSTALL_DIR}/lib/*.lib)

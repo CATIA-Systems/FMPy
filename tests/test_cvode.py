@@ -1,5 +1,8 @@
 from ctypes import byref, c_char_p
 import numpy as np
+import pytest
+
+from fmpy import platform_tuple
 from fmpy.sundials import SUN_COMM_NULL, SUNErrHandlerFn, SUNErrCode
 from fmpy.sundials.nvector_serial import N_VNew_Serial, N_VDestroy_Serial, NV_DATA_S
 from fmpy.sundials.sunmatrix_dense import SUNDenseMatrix
@@ -9,6 +12,7 @@ from fmpy.sundials.cvode import *
 from fmpy.sundials.cvode_ls import *
 
 
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_bouncing_ball():
     """ Test CVode with a simple bouncing ball equation """
 

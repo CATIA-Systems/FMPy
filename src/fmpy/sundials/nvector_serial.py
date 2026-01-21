@@ -1,8 +1,7 @@
-from ctypes import c_long, Structure, POINTER, cast
+from ctypes import Structure, POINTER, cast
 
-from . import SUNContext
 from .sundials_nvector import N_Vector
-from .sundials_types import sunindextype, sunbooleantype, sunrealtype
+from .sundials_types import sunindextype, sunbooleantype, sunrealtype, SUNContext
 from .libraries import sundials_nvecserial
 
 # /* -----------------------------------------------------------------

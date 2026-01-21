@@ -4,7 +4,7 @@ from fmpy.util import download_test_file
 from fmpy.cswrapper import add_cswrapper
 
 
-@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
+@pytest.mark.skipif(platform_tuple in {"aarch64-darwin", "x86_64-linux"}, reason="Not supported on aarch64-darwin and x86_64-linux")
 def test_cswrapper():
 
     filename = 'CoupledClutches.fmu'

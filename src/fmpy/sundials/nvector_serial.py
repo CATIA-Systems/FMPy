@@ -1,4 +1,6 @@
 from ctypes import c_long, Structure, POINTER, cast
+
+from . import SUNContext
 from .sundials_nvector import N_Vector
 from .sundials_types import sunindextype, sunbooleantype, sunrealtype
 from .libraries import sundials_nvecserial
@@ -80,17 +82,17 @@ N_VectorContent_Serial = POINTER(_N_VectorContent_Serial)
 #  * -----------------------------------------------------------------
 #  */
 #
+# #define NV_CONTENT_S(v) ((N_VectorContent_Serial)(v->content))
 def NV_CONTENT_S(v):
     return cast(v.contents.content, N_VectorContent_Serial)
-# #define NV_CONTENT_S(v) ((N_VectorContent_Serial)(v->content))
 #
 # #define NV_LENGTH_S(v) (NV_CONTENT_S(v)->length)
 #
 # #define NV_OWN_DATA_S(v) (NV_CONTENT_S(v)->own_data)
 #
+# #define NV_DATA_S(v) (NV_CONTENT_S(v)->data)
 def NV_DATA_S(v):
     return NV_CONTENT_S(v).contents.data
-# #define NV_DATA_S(v) (NV_CONTENT_S(v)->data)
 #
 # #define NV_Ith_S(v, i) (NV_DATA_S(v)[i])
 #
@@ -100,14 +102,14 @@ def NV_DATA_S(v):
 #  * -----------------------------------------------------------------
 #  */
 #
-N_VNew_Serial = getattr(sundials_nvecserial, 'N_VNew_Serial')
-N_VNew_Serial.argtypes = [c_long]
-N_VNew_Serial.restype = N_Vector
 # SUNDIALS_EXPORT
 # N_Vector N_VNewEmpty_Serial(sunindextype vec_length, SUNContext sunctx);
 #
 # SUNDIALS_EXPORT
 # N_Vector N_VNew_Serial(sunindextype vec_length, SUNContext sunctx);
+N_VNew_Serial = getattr(sundials_nvecserial, 'N_VNew_Serial')
+N_VNew_Serial.argtypes = [sunindextype, SUNContext]
+N_VNew_Serial.restype = N_Vector
 #
 # SUNDIALS_EXPORT
 # N_Vector N_VMake_Serial(sunindextype vec_length, sunrealtype* v_data,
@@ -131,11 +133,11 @@ N_VNew_Serial.restype = N_Vector
 # SUNDIALS_EXPORT
 # N_Vector N_VClone_Serial(N_Vector w);
 #
+# SUNDIALS_EXPORT
+# void N_VDestroy_Serial(N_Vector v);
 N_VDestroy_Serial = getattr(sundials_nvecserial, 'N_VDestroy_Serial')
 N_VDestroy_Serial.argtypes = [N_Vector]
 N_VDestroy_Serial.restype = None
-# SUNDIALS_EXPORT
-# void N_VDestroy_Serial(N_Vector v);
 #
 # SUNDIALS_DEPRECATED_EXPORT_MSG(
 #   "Work space functions will be removed in version 8.0.0")

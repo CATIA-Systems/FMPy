@@ -83,8 +83,11 @@ class CVodeSolver(object):
 
         self.nz = nz
 
-        self.x      = N_VNew_Serial(self.nx)
-        self.abstol = N_VNew_Serial(self.nx)
+        self.sunctx = SUNContext()
+        _assert_cv_success(SUNContext_Create(SUN_COMM_NULL, byref(self.sunctx)))
+
+        self.x      = N_VNew_Serial(self.nx, self.sunctx)
+        self.abstol = N_VNew_Serial(self.nx, self.sunctx)
 
         self.px       = NV_DATA_S(self.x)
         self.pabstol  = NV_DATA_S(self.abstol)
@@ -100,10 +103,6 @@ class CVodeSolver(object):
             self.get_nominals(self.pabstol, self.nx)
 
         self.npabstol *= self.reltol
-
-        self.sunctx = SUNContext()
-
-        _assert_cv_success(SUNContext_Create(SUN_COMM_NULL, byref(self.sunctx)))
 
         self.cvode_mem = CVodeCreate(CV_BDF, self.sunctx)
 

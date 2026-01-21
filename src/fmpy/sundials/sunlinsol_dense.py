@@ -1,5 +1,5 @@
-from ctypes import c_void_p
 from .libraries import sundials_sunlinsoldense
+from .sundials_types import SUNContext
 from .sundials_linearsolver import SUNLinearSolver
 from .sundials_matrix import SUNMatrix
 from .sundials_nvector import N_Vector
@@ -65,17 +65,11 @@ from .sundials_nvector import N_Vector
 #  * Exported Functions for SUNLINSOL_DENSE
 #  * ---------------------------------------- */
 #
-SUNContext = c_void_p
-
-_SUNLinSol_Dense = getattr(sundials_sunlinsoldense, 'SUNLinSol_Dense')
-_SUNLinSol_Dense.argtypes = [N_Vector, SUNMatrix]
-_SUNLinSol_Dense.restype = SUNLinearSolver
-
-def SUNLinSol_Dense(y: N_Vector, A: SUNMatrix, sunctx: SUNContext) -> SUNLinearSolver:
-    return _SUNLinSol_Dense(y, A, sunctx)
-
 # SUNDIALS_EXPORT
 # SUNLinearSolver SUNLinSol_Dense(N_Vector y, SUNMatrix A, SUNContext sunctx);
+SUNLinSol_Dense = getattr(sundials_sunlinsoldense, 'SUNLinSol_Dense')
+SUNLinSol_Dense.argtypes = [N_Vector, SUNMatrix, SUNContext]
+SUNLinSol_Dense.restype = SUNLinearSolver
 #
 # SUNDIALS_EXPORT
 # SUNLinearSolver_Type SUNLinSolGetType_Dense(SUNLinearSolver S);

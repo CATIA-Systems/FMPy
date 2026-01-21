@@ -74,7 +74,7 @@ def test_bouncing_ball():
     flag = CVodeRootInit(cvode_mem, nz, g)
     assert flag == 0
 
-    A = SUNDenseMatrix(nx, nx)
+    A = SUNDenseMatrix(nx, nx, sunctx)
 
     LS = SUNLinSol_Dense(y, A, sunctx)
 

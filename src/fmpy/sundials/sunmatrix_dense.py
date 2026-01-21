@@ -1,5 +1,5 @@
 from .libraries import sundials_sunmatrixdense
-from .sundials_types import sunindextype
+from .sundials_types import sunindextype, SUNContext
 from .sundials_matrix import SUNMatrix
 
 # /*
@@ -84,11 +84,11 @@ from .sundials_matrix import SUNMatrix
 #  * Exported Functions for SUNMATRIX_DENSE
 #  * --------------------------------------- */
 #
-SUNDenseMatrix = getattr(sundials_sunmatrixdense, 'SUNDenseMatrix')
-SUNDenseMatrix.argtypes = [sunindextype, sunindextype]
-SUNDenseMatrix.restype = SUNMatrix
 # SUNDIALS_EXPORT SUNMatrix SUNDenseMatrix(sunindextype M, sunindextype N,
 #                                          SUNContext sunctx);
+SUNDenseMatrix = getattr(sundials_sunmatrixdense, 'SUNDenseMatrix')
+SUNDenseMatrix.argtypes = [sunindextype, sunindextype, SUNContext]
+SUNDenseMatrix.restype = SUNMatrix
 #
 # SUNDIALS_EXPORT void SUNDenseMatrix_Print(SUNMatrix A, FILE* outfile);
 #

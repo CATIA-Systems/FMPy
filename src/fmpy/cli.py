@@ -43,8 +43,7 @@ Python version:     {sys.version}
     parser.add_argument('--version', action='version', version=f'FMPy version {fmpy.__version__}')
 
     parser.add_argument('command', choices=['info', 'validate', 'simulate', 'compile', 'remove-source-code',
-                                            'add-cswrapper','add-remoting', 'create-cmake-project',
-                                            'create-jupyter-notebook'],
+                                            'add-remoting', 'create-cmake-project', 'create-jupyter-notebook'],
                         help="Command to execute")
     parser.add_argument('fmu_filename', help="Filename of the FMU")
 
@@ -130,11 +129,6 @@ Python version:     {sys.version}
 
         from fmpy.util import remove_source_code
         remove_source_code(filename=args.fmu_filename)
-
-    elif args.command == 'add-cswrapper':
-
-        from fmpy.cswrapper import add_cswrapper
-        add_cswrapper(args.fmu_filename)
 
     elif args.command == 'add-remoting':
 

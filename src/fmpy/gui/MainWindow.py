@@ -289,7 +289,6 @@ class MainWindow(QMainWindow):
         self.ui.actionCreateCMakeProject.triggered.connect(self.createCMakeProject)
         self.ui.actionAddWindows32Remoting.triggered.connect(lambda: self.addRemotingBinaries('win64', 'win32'))
         self.ui.actionAddLinux64Remoting.triggered.connect(lambda: self.addRemotingBinaries('linux64', 'win64'))
-        self.ui.actionAddCoSimulationWrapper.triggered.connect(self.addCoSimulationWrapper)
 
         # help menu
         self.ui.actionOpenFMI3Spec.triggered.connect(lambda: QDesktopServices.openUrl(QUrl('https://fmi-standard.org/docs/3.0.2/')))
@@ -490,9 +489,6 @@ class MainWindow(QMainWindow):
 
         self.ui.actionAddWindows32Remoting.setEnabled(md.fmiVersion == '2.0' and 'win32' in platforms and 'win64' not in platforms)
         self.ui.actionAddLinux64Remoting.setEnabled(md.fmiVersion == '2.0' and 'win64' in platforms and 'linux64' not in platforms)
-
-        can_add_cswrapper = md.fmiVersion == '2.0' and md.coSimulation is None and md.modelExchange is not None
-        self.ui.actionAddCoSimulationWrapper.setEnabled(can_add_cswrapper)
 
         # variables view
         self.treeModel.setModelDescription(md)
@@ -1425,20 +1421,6 @@ class MainWindow(QMainWindow):
                                 f"Failed to add remoting binaries to {self.filename}. {e}")
 
         self.load(self.filename)
-
-
-    def addCoSimulationWrapper(self):
-        """ Add the Co-Simulation Wrapper to the FMU """
-
-        from ..cswrapper import add_cswrapper
-
-        try:
-            add_cswrapper(self.filename)
-        except Exception as ex:
-            QMessageBox.warning(self, "Failed to add Co-Simulation Wrapper",
-                                f"Failed to add Co-Simulation Wrapper {self.filename}. {ex}")
-
-        self.load()
 
 
     def setColorScheme(self, colorScheme: Qt.ColorScheme):

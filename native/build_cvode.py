@@ -35,30 +35,6 @@ with tarfile.open(filename, "r:gz") as tar:
 
 for platform, cmake_options, platform_tuple in generators:
 
-    os.makedirs(f'sundials-7.5.0/{platform}/static')
-
-    # build CVode as static library
-    check_call([
-        'cmake',
-        '-D', 'BUILD_ARKODE=OFF',
-        '-D', 'BUILD_CVODES=OFF',
-        '-D', 'BUILD_IDA=OFF',
-        '-D', 'BUILD_IDAS=OFF',
-        '-D', 'BUILD_KINSOL=OFF',
-        '-D', 'BUILD_SHARED_LIBS=OFF',
-        '-D', f'CMAKE_INSTALL_PREFIX=sundials-7.5.0/{platform}/static/install',
-        '-D', 'CMAKE_POLICY_DEFAULT_CMP0091=NEW',
-        '-D', 'CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded',
-        '-D', 'EXAMPLES_ENABLE_C=OFF',
-        '-D', 'CMAKE_OSX_ARCHITECTURES=arm64;x86_64',
-        '-D', 'CMAKE_POSITION_INDEPENDENT_CODE=ON',
-        '-S', 'sundials-7.5.0',
-        '-B', f'sundials-7.5.0/{platform}/static',
-        '-D', 'CMAKE_POLICY_VERSION_MINIMUM=3.5',  # quick fix for CMake 4.1+
-    ] + cmake_options)
-
-    check_call(['cmake', '--build', f'sundials-7.5.0/{platform}/static', '--target', 'install', '--config', configuration])
-
     os.makedirs(f'sundials-7.5.0/{platform}/dynamic')
 
     # build CVode as dynamic library

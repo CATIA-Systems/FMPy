@@ -262,10 +262,10 @@ System* instantiateSystem(
         s->connections[i].type = mpack_node_int(type);
 
         mpack_node_t startComponent = mpack_node_map_cstr(connection, "startComponent");
-        s->connections[i].startComponent = mpack_node_u64(startComponent);
+        s->connections[i].startComponent = (size_t)mpack_node_u64(startComponent);
 
         mpack_node_t endComponent = mpack_node_map_cstr(connection, "endComponent");
-        s->connections[i].endComponent = mpack_node_u64(endComponent);
+        s->connections[i].endComponent = (size_t)mpack_node_u64(endComponent);
 
         mpack_node_t startValueReference = mpack_node_map_cstr(connection, "startValueReference");
         s->connections[i].startValueReference = mpack_node_u32(startValueReference);
@@ -306,7 +306,7 @@ System* instantiateSystem(
             mpack_node_t component = mpack_node_array_at(components, j);
             mpack_node_t valueReference = mpack_node_array_at(valueReferences, j);
 
-            const size_t ci = mpack_node_u64(component);
+            const size_t ci = (size_t)mpack_node_u64(component);
             const fmi2ValueReference vr = mpack_node_u32(valueReference);
 
             if (hasStartValue) {

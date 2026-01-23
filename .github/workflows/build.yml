@@ -50,6 +50,7 @@ jobs:
          src/fmpy/cswrapper/cswrapper.dylib
          src/fmpy/fmucontainer/binaries/darwin64/FMUContainer.dylib
          src/fmpy/logging/darwin64/logging.dylib
+         src/fmpy/sundials/aarch64-darwin/sundials_core.dylib
          src/fmpy/sundials/aarch64-darwin/sundials_cvode.dylib
          src/fmpy/sundials/aarch64-darwin/sundials_nvecserial.dylib
          src/fmpy/sundials/aarch64-darwin/sundials_sunlinsoldense.dylib
@@ -65,6 +66,7 @@ jobs:
           src/fmpy/remoting/linux64/client_tcp.so
           src/fmpy/remoting/linux64/server_tcp
           src/fmpy/logging/linux64/logging.so
+          src/fmpy/sundials/x86_64-linux/sundials_core.so
           src/fmpy/sundials/x86_64-linux/sundials_cvode.so
           src/fmpy/sundials/x86_64-linux/sundials_nvecserial.so
           src/fmpy/sundials/x86_64-linux/sundials_sunlinsoldense.so
@@ -88,6 +90,7 @@ jobs:
           src/fmpy/remoting/win64/server_sm.exe
           src/fmpy/logging/win32/logging.dll
           src/fmpy/logging/win64/logging.dll
+          src/fmpy/sundials/x86_64-windows/sundials_core.dll
           src/fmpy/sundials/x86_64-windows/sundials_cvode.dll
           src/fmpy/sundials/x86_64-windows/sundials_nvecserial.dll
           src/fmpy/sundials/x86_64-windows/sundials_sunlinsoldense.dll

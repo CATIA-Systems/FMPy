@@ -1,9 +1,13 @@
 """ Interface to the SUNDIALS libraries """
 
 import numpy as np
-from .cvode import *
+from ctypes import create_string_buffer, byref
+from .cvode import CV_SUCCESS, CVodeCreate, CVodeSetMaxStep, CV_BDF, CVodeInit, CVodeSVtolerances, CVodeRootInit, \
+    CVodeSetMaxNumSteps, CVodeSetNoInactiveRootWarn, CVRhsFn, CVRootFn, CVode, CV_NORMAL, CV_ROOT_RETURN, \
+    CVodeGetRootInfo, CVodeReInit, CVodeFree
 from .cvode_ls import *
 from .nvector_serial import *
+from .sundials_context import SUNContext_Create, SUNContext_PushErrHandler
 from .sundials_linearsolver import *
 from .sundials_matrix import *
 from .sundials_nvector import *
@@ -25,8 +29,8 @@ def _assert_version():
     len = 8
     label = create_string_buffer(len)
     _assert_cv_success(SUNDIALSGetVersionNumber(byref(major), byref(minor), byref(patch), label, len))
-    if major.value != 5:
-        raise Exception("Wrong SUNDIALS major version number. Expected 5 but was %d." % major.value)
+    if major.value != 7:
+        raise Exception(f"Wrong SUNDIALS major version number. Expected 7 but was {major.value}.")
 
 
 _assert_version()
@@ -79,8 +83,11 @@ class CVodeSolver(object):
 
         self.nz = nz
 
-        self.x      = N_VNew_Serial(self.nx)
-        self.abstol = N_VNew_Serial(self.nx)
+        self.sunctx = SUNContext()
+        _assert_cv_success(SUNContext_Create(SUN_COMM_NULL, byref(self.sunctx)))
+
+        self.x      = N_VNew_Serial(self.nx, self.sunctx)
+        self.abstol = N_VNew_Serial(self.nx, self.sunctx)
 
         self.px       = NV_DATA_S(self.x)
         self.pabstol  = NV_DATA_S(self.abstol)
@@ -97,12 +104,12 @@ class CVodeSolver(object):
 
         self.npabstol *= self.reltol
 
-        self.cvode_mem = CVodeCreate(CV_BDF)
+        self.cvode_mem = CVodeCreate(CV_BDF, self.sunctx)
 
         # add function pointers as members to save them from GC
         self.f_ = CVRhsFn(self.f)
         self.g_ = CVRootFn(self.g)
-        self.ehfun_ = CVErrHandlerFn(self.ehfun)
+        self.ehfun_ = SUNErrHandlerFn(self.ehfun)
 
         _assert_cv_success(CVodeInit(self.cvode_mem, self.f_, startTime, self.x))
 
@@ -110,9 +117,9 @@ class CVodeSolver(object):
 
         _assert_cv_success(CVodeRootInit(self.cvode_mem, self.nz, self.g_))
 
-        self.A = SUNDenseMatrix(self.nx, self.nx)
+        self.A = SUNDenseMatrix(self.nx, self.nx, self.sunctx)
 
-        self.LS = SUNLinSol_Dense(self.x, self.A)
+        self.LS = SUNLinSol_Dense(self.x, self.A, self.sunctx)
 
         _assert_cv_success(CVodeSetLinearSolver(self.cvode_mem, self.LS, self.A))
 
@@ -122,11 +129,11 @@ class CVodeSolver(object):
 
         _assert_cv_success(CVodeSetNoInactiveRootWarn(self.cvode_mem))
 
-        _assert_cv_success(CVodeSetErrHandlerFn(self.cvode_mem, self.ehfun_, None))
+        _assert_cv_success(SUNContext_PushErrHandler(self.sunctx, self.ehfun_, None))
 
-    def ehfun(self, error_code, module, function, msg,  user_data):
+    def ehfun(self, line: c_int, func: c_char_p, file: c_char_p, msg: c_char_p, err_code: SUNErrCode, err_user_data: c_void_p, sunctx: SUNContext) -> None:
         """ Error handler function """
-        self.error_info = (error_code, module.decode("utf-8"), function.decode("utf-8"), msg.decode("utf-8"))
+        self.error_info = (err_code, func.decode("utf-8"), file.decode("utf-8"), msg.decode("utf-8"))
 
     def f(self, t, y, ydot, user_data):
         """ Right-hand-side function """

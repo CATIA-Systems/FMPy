@@ -11,6 +11,7 @@ else:
     library_dir = library_dir / platform_tuple
 
 # load SUNDIALS shared libraries
+sundials_core           = cdll.LoadLibrary(str(library_dir / f'sundials_core{sharedLibraryExtension}'))
 sundials_nvecserial     = cdll.LoadLibrary(str(library_dir / f'sundials_nvecserial{sharedLibraryExtension}'))
 sundials_sunmatrixdense = cdll.LoadLibrary(str(library_dir / f'sundials_sunmatrixdense{sharedLibraryExtension}'))
 sundials_sunlinsoldense = cdll.LoadLibrary(str(library_dir / f'sundials_sunlinsoldense{sharedLibraryExtension}'))

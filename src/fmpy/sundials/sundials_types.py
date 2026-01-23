@@ -1,12 +1,15 @@
-from ctypes import *
+from ctypes import c_double, c_int64, c_int, CFUNCTYPE, c_char_p, c_void_p
 
 # /* -----------------------------------------------------------------
 #  * Programmer(s): Scott Cohen, Alan Hindmarsh, Radu Serban,
 #  *                Aaron Collier, and Slaven Peles @ LLNL
 #  * -----------------------------------------------------------------
 #  * SUNDIALS Copyright Start
-#  * Copyright (c) 2002-2019, Lawrence Livermore National Security
+#  * Copyright (c) 2025, Lawrence Livermore National Security,
+#  * University of Maryland Baltimore County, and the SUNDIALS contributors.
+#  * Copyright (c) 2013-2025, Lawrence Livermore National Security
 #  * and Southern Methodist University.
+#  * Copyright (c) 2002-2013, Lawrence Livermore National Security.
 #  * All rights reserved.
 #  *
 #  * See the top-level LICENSE and NOTICE files for details.
@@ -14,18 +17,18 @@ from ctypes import *
 #  * SPDX-License-Identifier: BSD-3-Clause
 #  * SUNDIALS Copyright End
 #  * -----------------------------------------------------------------
-#  * This header file exports three types: realtype, sunindextype and
-#  * booleantype, as well as the constants SUNTRUE and SUNFALSE.
+#  * This header file exports three types: sunrealtype, sunindextype,
+#  * and sunbooleantype, as well as the constants SUNTRUE and SUNFALSE.
 #  *
 #  * Users should include the header file sundials_types.h in every
-#  * program file and use the exported name realtype instead of
+#  * program file and use the exported name sunrealtype instead of
 #  * float, double or long double.
 #  *
 #  * The constants SUNDIALS_SINGLE_PRECISION, SUNDIALS_DOUBLE_PRECISION
 #  * and SUNDIALS_LONG_DOUBLE_PRECISION indicate the underlying data
-#  * type of realtype.
+#  * type of sunrealtype.
 #  *
-#  * The legal types for realtype are float, double and long double.
+#  * The legal types for sunrealtype are float, double and long double.
 #  *
 #  * The constants SUNDIALS_INT64_T and SUNDIALS_INT32_T indicate
 #  * the underlying data type of sunindextype -- the integer data type
@@ -33,33 +36,33 @@ from ctypes import *
 #  *
 #  * Data types are set at the configuration stage.
 #  *
-#  * The macro RCONST gives the user a convenient way to define
+#  * The macro SUN_RCONST gives the user a convenient way to define
 #  * real-valued literal constants. To use the constant 1.0, for example,
 #  * the user should write the following:
 #  *
-#  *   #define ONE RCONST(1.0)
+#  *   #define ONE SUN_RCONST(1.0)
 #  *
-#  * If realtype is defined as a double, then RCONST(1.0) expands
-#  * to 1.0. If realtype is defined as a float, then RCONST(1.0)
-#  * expands to 1.0F. If realtype is defined as a long double,
-#  * then RCONST(1.0) expands to 1.0L. There is never a need to
-#  * explicitly cast 1.0 to (realtype). The macro can be used for
+#  * If sunrealtype is defined as a double, then SUN_RCONST(1.0) expands
+#  * to 1.0. If sunrealtype is defined as a float, then SUN_RCONST(1.0)
+#  * expands to 1.0F. If sunrealtype is defined as a long double,
+#  * then SUN_RCONST(1.0) expands to 1.0L. There is never a need to
+#  * explicitly cast 1.0 to (sunrealtype). The macro can be used for
 #  * literal constants only. It cannot be used for expressions.
 #  * -----------------------------------------------------------------*/
 #
-# #ifndef _SUNDIALSTYPES_H
-# #define _SUNDIALSTYPES_H
-#
-# #ifndef _SUNDIALS_CONFIG_H
-# #define _SUNDIALS_CONFIG_H
-# #include <sundials/sundials_config.h>
-# #endif
+# #ifndef _SUNDIALS_TYPES_H
+# #define _SUNDIALS_TYPES_H
 #
 # #include <float.h>
 # #include <stddef.h>
 # #include <stdint.h>
+# #include <sundials/sundials_config.h>
 #
-# #ifdef __cplusplus  /* wrapper to enable C++ usage */
+# #if SUNDIALS_MPI_ENABLED
+# #include <mpi.h>
+# #endif
+#
+# #ifdef __cplusplus /* wrapper to enable C++ usage */
 # extern "C" {
 # #endif
 #
@@ -80,39 +83,53 @@ from ctypes import *
 #
 # /*
 #  *------------------------------------------------------------------
-#  * Type realtype
-#  * Macro RCONST
-#  * Constants BIG_REAL, SMALL_REAL, and UNIT_ROUNDOFF
+#  * Type sunrealtype
+#  * Macro SUN_RCONST
+#  * Constants SUN_SMALL_REAL, SUN_BIG_REAL, and SUN_UNIT_ROUNDOFF
 #  *------------------------------------------------------------------
 #  */
 #
+# #define SUN_STRING_HELPER(x) #x
+# #define SUN_STRING(x)        SUN_STRING_HELPER(x)
+#
 # #if defined(SUNDIALS_SINGLE_PRECISION)
 #
-# typedef float realtype;
 realtype = c_double
-# # define RCONST(x) x##F
-# # define BIG_REAL FLT_MAX
-# # define SMALL_REAL FLT_MIN
-# # define UNIT_ROUNDOFF FLT_EPSILON
+# typedef float sunrealtype;
+# #define SUN_RCONST(x)     x##F
+# #define SUN_BIG_REAL      FLT_MAX
+# #define SUN_SMALL_REAL    FLT_MIN
+# #define SUN_UNIT_ROUNDOFF FLT_EPSILON
+# // TODO(SBR): In C11, FLT_DECIMAL_DIG may be a better choice
+# #define SUN_FORMAT_E "% ." SUN_STRING(FLT_DIG) "e"
+# #define SUN_FORMAT_G "%." SUN_STRING(FLT_DIG) "g"
+# // TODO(SBR): This can probably be removed once a complex format macro is added
+# #define SUN_FORMAT_SG "%+." SUN_STRING(FLT_DIG) "g"
 #
 # #elif defined(SUNDIALS_DOUBLE_PRECISION)
 #
-# typedef double realtype;
-# # define RCONST(x) x
-# # define BIG_REAL DBL_MAX
-# # define SMALL_REAL DBL_MIN
-# # define UNIT_ROUNDOFF DBL_EPSILON
+# typedef double sunrealtype;
+sunrealtype = c_double
+# #define SUN_RCONST(x)     x
+# #define SUN_BIG_REAL      DBL_MAX
+# #define SUN_SMALL_REAL    DBL_MIN
+# #define SUN_UNIT_ROUNDOFF DBL_EPSILON
+# #define SUN_FORMAT_E      "% ." SUN_STRING(DBL_DIG) "e"
+# #define SUN_FORMAT_G      "%." SUN_STRING(DBL_DIG) "g"
+# #define SUN_FORMAT_SG     "%+." SUN_STRING(DBL_DIG) "g"
 #
 # #elif defined(SUNDIALS_EXTENDED_PRECISION)
 #
-# typedef long double realtype;
-# # define RCONST(x) x##L
-# # define BIG_REAL LDBL_MAX
-# # define SMALL_REAL LDBL_MIN
-# # define UNIT_ROUNDOFF LDBL_EPSILON
+# typedef long double sunrealtype;
+# #define SUN_RCONST(x)     x##L
+# #define SUN_BIG_REAL      LDBL_MAX
+# #define SUN_SMALL_REAL    LDBL_MIN
+# #define SUN_UNIT_ROUNDOFF LDBL_EPSILON
+# #define SUN_FORMAT_E      "% ." SUN_STRING(LDBL_DIG) "Le"
+# #define SUN_FORMAT_G      "%." SUN_STRING(LDBL_DIG) "Lg"
+# #define SUN_FORMAT_SG     "%+." SUN_STRING(LDBL_DIG) "Lg"
 #
 # #endif
-#
 #
 # /*
 #  *------------------------------------------------------------------
@@ -130,26 +147,35 @@ sunindextype = c_int64
 #
 # /*
 #  *------------------------------------------------------------------
-#  * Type : booleantype
+#  * Type : suncountertype
+#  *------------------------------------------------------------------
+#  * Defines integer type to be used for counters within sundials.
+#  *------------------------------------------------------------------
+#  */
+#
+# typedef SUNDIALS_COUNTER_TYPE suncountertype;
+#
+# /*
+#  *------------------------------------------------------------------
+#  * Type : sunbooleantype
 #  *------------------------------------------------------------------
 #  * Constants : SUNFALSE and SUNTRUE
 #  *------------------------------------------------------------------
 #  * ANSI C does not have a built-in boolean data type. Below is the
-#  * definition for a new type called booleantype. The advantage of
-#  * using the name booleantype (instead of int) is an increase in
+#  * definition for a new type called sunbooleantype. The advantage of
+#  * using the name sunbooleantype (instead of int) is an increase in
 #  * code readability. It also allows the programmer to make a
 #  * distinction between int and boolean data. Variables of type
-#  * booleantype are intended to have only the two values SUNFALSE and
+#  * sunbooleantype are intended to have only the two values SUNFALSE and
 #  * SUNTRUE which are defined below to be equal to 0 and 1,
 #  * respectively.
 #  *------------------------------------------------------------------
 #  */
 #
-# #ifndef booleantype
-# #define booleantype int
+# #ifndef sunbooleantype
+# #define sunbooleantype int
 # #endif
-booleantype = c_int
-#
+sunbooleantype = c_int
 #
 # #ifndef SUNFALSE
 # #define SUNFALSE 0
@@ -159,8 +185,101 @@ booleantype = c_int
 # #define SUNTRUE 1
 # #endif
 #
+# /*
+#  *------------------------------------------------------------------
+#  * Type : SUNOutputFormat
+#  *------------------------------------------------------------------
+#  * Constants for different output formats
+#  *------------------------------------------------------------------
+#  */
+#
+# typedef enum
+# {
+#   SUN_OUTPUTFORMAT_TABLE,
+#   SUN_OUTPUTFORMAT_CSV
+# } SUNOutputFormat;
+#
+# /*
+#  *------------------------------------------------------------------
+#  * Type : SUNErrCode
+#  *------------------------------------------------------------------
+#  * Error code type
+#  *------------------------------------------------------------------
+#  */
+#
+# typedef int SUNErrCode;
+SUNErrCode = c_int
+#
+# /* -----------------------------------------------------------------------------
+#  * Forward declarations of SUNDIALS objects
+#  * ---------------------------------------------------------------------------*/
+#
+# /* SUNDIALS context -- see sundials_context_impl.h */
+# typedef struct SUNContext_* SUNContext;
+SUNContext = c_void_p
+#
+# /* SUNDIALS error handler -- see sundials_errors.h */
+# typedef struct SUNErrHandler_* SUNErrHandler;
+#
+# /* SUNDIALS profiler */
+# typedef struct SUNProfiler_* SUNProfiler;
+#
+# /* SUNDIALS logger */
+# typedef struct SUNLogger_* SUNLogger;
+#
+# /* -----------------------------------------------------------------------------
+#  * SUNDIALS function types
+#  * ---------------------------------------------------------------------------*/
+#
+# /* Error handler function */
+# typedef void (*SUNErrHandlerFn)(int line, const char* func, const char* file,
+#                                 const char* msg, SUNErrCode err_code,
+#                                 void* err_user_data, SUNContext sunctx);
+SUNErrHandlerFn = CFUNCTYPE(None, c_int, c_char_p, c_char_p, c_char_p, c_int, c_void_p, c_void_p)
+#
+# /*
+#  *------------------------------------------------------------------
+#  * Type : SUNComm
+#  *------------------------------------------------------------------
+#  * SUNComm replaces MPI_Comm use in SUNDIALS code. It maps to
+#  * MPI_Comm when MPI is enabled.
+#  *------------------------------------------------------------------
+#  */
+#
+# /* We don't define SUN_COMM_NULL when SWIG is processing the header
+#     because we manually insert the wrapper code for SUN_COMM_NULL
+#     (and %ignoring it in the SWIG code doesn't seem to work). */
+#
+# #if SUNDIALS_MPI_ENABLED
+# #ifndef SWIG
+# #define SUN_COMM_NULL MPI_COMM_NULL
+# #endif
+# typedef MPI_Comm SUNComm;
+# #else
+# #ifndef SWIG
+# #define SUN_COMM_NULL 0
+SUN_COMM_NULL = 0
+# #endif
+# typedef int SUNComm;
+SUNComm = c_int
+# #endif
+#
 # #ifdef __cplusplus
 # }
 # #endif
 #
-# #endif  /* _SUNDIALSTYPES_H */
+# /*
+#  *------------------------------------------------------------------
+#  * Type : SUNDataIOMode
+#  *------------------------------------------------------------------
+#  * Type that controls IO modes for certain data operations, notably
+#  * checkpoints for adjoints.
+#  *------------------------------------------------------------------
+#  */
+#
+# typedef enum
+# {
+#   SUNDATAIOMODE_INMEM,
+# } SUNDataIOMode;
+#
+# #endif /* _SUNDIALS_TYPES_H */

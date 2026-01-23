@@ -1,9 +1,12 @@
+from ctypes import byref, c_char_p
+import numpy as np
+from fmpy.sundials import SUN_COMM_NULL, SUNErrHandlerFn, SUNErrCode
 from fmpy.sundials.nvector_serial import N_VNew_Serial, N_VDestroy_Serial, NV_DATA_S
 from fmpy.sundials.sunmatrix_dense import SUNDenseMatrix
 from fmpy.sundials.sunlinsol_dense import SUNLinSol_Dense
+from fmpy.sundials.sundials_context import SUNContext_Create, SUNContext_PushErrHandler
 from fmpy.sundials.cvode import *
 from fmpy.sundials.cvode_ls import *
-import numpy as np
 
 
 def test_bouncing_ball():
@@ -16,6 +19,11 @@ def test_bouncing_ball():
     T0 = 0.0
     nx = 2  # number of states (height, velocity)
     nz = 1  # number of event indicators
+
+    def ehfun(line: c_int, func: c_char_p, file: c_char_p, msg: c_char_p, err_code: SUNErrCode, err_user_data: c_void_p, sunctx: SUNContext) -> None:
+        print(msg)
+
+    e = SUNErrHandlerFn(ehfun)
 
     def rhsf(t, y, ydot, user_data):
         x = np.ctypeslib.as_array(NV_DATA_S(y), (2,))
@@ -38,33 +46,45 @@ def test_bouncing_ball():
 
     RTOL = 1e-5
 
-    abstol = N_VNew_Serial(nx)
+    sunctx = SUNContext()
+
+    flag = SUNContext_Create(SUN_COMM_NULL, byref(sunctx))
+    assert flag == 0
+
+    abstol = N_VNew_Serial(nx, sunctx)
     abstol_array = np.ctypeslib.as_array(NV_DATA_S(abstol), (nx,))
     abstol_array[:] = RTOL
 
-    y = N_VNew_Serial(nx)
+    y = N_VNew_Serial(nx, sunctx)
     x_ = np.ctypeslib.as_array(NV_DATA_S(y), (nx,))
     x_[0] = 1
     x_[1] = 5
 
-    cvode_mem = CVodeCreate(CV_BDF)
+    cvode_mem = CVodeCreate(CV_BDF, sunctx)
+
+    flag = SUNContext_PushErrHandler(sunctx, e, None)
+    assert flag == 0
 
     flag = CVodeInit(cvode_mem, f, T0, y)
+    assert flag == 0
 
     flag = CVodeSVtolerances(cvode_mem, RTOL, abstol)
+    assert flag == 0
 
     flag = CVodeRootInit(cvode_mem, nz, g)
+    assert flag == 0
 
-    A = SUNDenseMatrix(nx, nx)
+    A = SUNDenseMatrix(nx, nx, sunctx)
 
-    LS = SUNLinSol_Dense(y, A);
+    LS = SUNLinSol_Dense(y, A, sunctx)
 
     flag = CVodeSetLinearSolver(cvode_mem, LS, A)
+    assert flag == 0
 
     # flag = CVDense(cvode_mem, nx)
     #
     tNext = 2.0
-    tret = realtype(0.0)
+    tret = sunrealtype(0.0)
 
     while tret.value < 2.0:
 
@@ -75,12 +95,17 @@ def test_bouncing_ball():
             rootsfound = (c_int * nz)()
 
             flag = CVodeGetRootInfo(cvode_mem, rootsfound)
+            assert flag == CV_SUCCESS
 
             if rootsfound[0] == -1:
                 x_[1] = -x_[1] * 0.5
 
             # reset solver
             flag = CVodeReInit(cvode_mem, tret, y)
+            assert flag == CV_SUCCESS
+
+        else:
+            assert flag == CV_SUCCESS
 
     # clean up
     CVodeFree(byref(c_void_p(cvode_mem)))

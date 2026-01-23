@@ -1,15 +1,19 @@
 from .libraries import sundials_sunlinsoldense
-from .sundials_linearsolver import *
-from .sundials_matrix import *
-from .sundials_nvector import *
+from .sundials_types import SUNContext
+from .sundials_linearsolver import SUNLinearSolver
+from .sundials_matrix import SUNMatrix
+from .sundials_nvector import N_Vector
 
 # /*
 #  * -----------------------------------------------------------------
-#  * Programmer(s): Daniel Reynolds, Ashley Crawford @ SMU
+#  * Programmer(s): Daniel Reynolds, Ashley Crawford @ UMBC
 #  * -----------------------------------------------------------------
 #  * SUNDIALS Copyright Start
-#  * Copyright (c) 2002-2019, Lawrence Livermore National Security
+#  * Copyright (c) 2025, Lawrence Livermore National Security,
+#  * University of Maryland Baltimore County, and the SUNDIALS contributors.
+#  * Copyright (c) 2013-2025, Lawrence Livermore National Security
 #  * and Southern Methodist University.
+#  * Copyright (c) 2002-2013, Lawrence Livermore National Security.
 #  * All rights reserved.
 #  *
 #  * See the top-level LICENSE and NOTICE files for details.
@@ -23,24 +27,24 @@ from .sundials_nvector import *
 #  * Notes:
 #  *   - The definition of the generic SUNLinearSolver structure can
 #  *     be found in the header file sundials_linearsolver.h.
-#  *   - The definition of the type 'realtype' can be found in the
+#  *   - The definition of the type 'sunrealtype' can be found in the
 #  *     header file sundials_types.h, and it may be changed (at the
 #  *     configuration stage) according to the user's needs.
 #  *     The sundials_types.h file also contains the definition
-#  *     for the type 'booleantype' and 'indextype'.
+#  *     for the type 'sunbooleantype' and 'indextype'.
 #  * -----------------------------------------------------------------
 #  */
 #
 # #ifndef _SUNLINSOL_DENSE_H
 # #define _SUNLINSOL_DENSE_H
 #
+# #include <sundials/sundials_dense.h>
 # #include <sundials/sundials_linearsolver.h>
 # #include <sundials/sundials_matrix.h>
 # #include <sundials/sundials_nvector.h>
-# #include <sundials/sundials_dense.h>
 # #include <sunmatrix/sunmatrix_dense.h>
 #
-# #ifdef __cplusplus  /* wrapper to enable C++ usage */
+# #ifdef __cplusplus /* wrapper to enable C++ usage */
 # extern "C" {
 # #endif
 #
@@ -48,38 +52,51 @@ from .sundials_nvector import *
 #  * Dense Implementation of SUNLinearSolver
 #  * ---------------------------------------- */
 #
-# struct _SUNLinearSolverContent_Dense {
+# struct _SUNLinearSolverContent_Dense
+# {
 #   sunindextype N;
-#   sunindextype *pivots;
+#   sunindextype* pivots;
 #   sunindextype last_flag;
 # };
 #
-# typedef struct _SUNLinearSolverContent_Dense *SUNLinearSolverContent_Dense;
+# typedef struct _SUNLinearSolverContent_Dense* SUNLinearSolverContent_Dense;
 #
 # /* ----------------------------------------
 #  * Exported Functions for SUNLINSOL_DENSE
 #  * ---------------------------------------- */
 #
-# SUNDIALS_EXPORT SUNLinearSolver SUNLinSol_Dense(N_Vector y, SUNMatrix A);
+# SUNDIALS_EXPORT
+# SUNLinearSolver SUNLinSol_Dense(N_Vector y, SUNMatrix A, SUNContext sunctx);
 SUNLinSol_Dense = getattr(sundials_sunlinsoldense, 'SUNLinSol_Dense')
-SUNLinSol_Dense.argtypes = [N_Vector, SUNMatrix]
+SUNLinSol_Dense.argtypes = [N_Vector, SUNMatrix, SUNContext]
 SUNLinSol_Dense.restype = SUNLinearSolver
 #
-# /* deprecated */
-# SUNDIALS_EXPORT SUNLinearSolver SUNDenseLinearSolver(N_Vector y,
-#                                                      SUNMatrix A);
+# SUNDIALS_EXPORT
+# SUNLinearSolver_Type SUNLinSolGetType_Dense(SUNLinearSolver S);
 #
-# SUNDIALS_EXPORT SUNLinearSolver_Type SUNLinSolGetType_Dense(SUNLinearSolver S);
-# SUNDIALS_EXPORT SUNLinearSolver_ID SUNLinSolGetID_Dense(SUNLinearSolver S);
-# SUNDIALS_EXPORT int SUNLinSolInitialize_Dense(SUNLinearSolver S);
-# SUNDIALS_EXPORT int SUNLinSolSetup_Dense(SUNLinearSolver S, SUNMatrix A);
-# SUNDIALS_EXPORT int SUNLinSolSolve_Dense(SUNLinearSolver S, SUNMatrix A,
-#                                          N_Vector x, N_Vector b, realtype tol);
-# SUNDIALS_EXPORT sunindextype SUNLinSolLastFlag_Dense(SUNLinearSolver S);
-# SUNDIALS_EXPORT int SUNLinSolSpace_Dense(SUNLinearSolver S,
-#                                          long int *lenrwLS,
-#                                          long int *leniwLS);
-# SUNDIALS_EXPORT int SUNLinSolFree_Dense(SUNLinearSolver S);
+# SUNDIALS_EXPORT
+# SUNLinearSolver_ID SUNLinSolGetID_Dense(SUNLinearSolver S);
+#
+# SUNDIALS_EXPORT
+# SUNErrCode SUNLinSolInitialize_Dense(SUNLinearSolver S);
+#
+# SUNDIALS_EXPORT
+# int SUNLinSolSetup_Dense(SUNLinearSolver S, SUNMatrix A);
+#
+# SUNDIALS_EXPORT
+# int SUNLinSolSolve_Dense(SUNLinearSolver S, SUNMatrix A, N_Vector x, N_Vector b,
+#                          sunrealtype tol);
+#
+# SUNDIALS_EXPORT
+# sunindextype SUNLinSolLastFlag_Dense(SUNLinearSolver S);
+#
+# SUNDIALS_DEPRECATED_EXPORT_MSG(
+#   "Work space functions will be removed in version 8.0.0")
+# SUNErrCode SUNLinSolSpace_Dense(SUNLinearSolver S, long int* lenrwLS,
+#                                 long int* leniwLS);
+#
+# SUNDIALS_EXPORT
+# SUNErrCode SUNLinSolFree_Dense(SUNLinearSolver S);
 #
 # #ifdef __cplusplus
 # }

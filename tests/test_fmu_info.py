@@ -50,8 +50,9 @@ Model Info
 
 Default Experiment
 
-  Stop Time          3.0
-  Step Size          0.01
+  Start Time         0
+  Stop Time          3
+  Step Size          1e-2
 
 Variables (input, output)
 

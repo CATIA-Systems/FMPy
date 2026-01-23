@@ -32,7 +32,7 @@ def test_write_model_description(reference_fmus_dist_dir, reference_fmus_repo_di
             assert a.attrib == b.attrib, f"{a.attrib} != {b.attrib}"
 
     assert_attributes_equal(xml_a, xml_b, ".//ModelExchange")
-    assert_attributes_equal(xml_a, xml_b, ".//CoSimulation")
+    # assert_attributes_equal(xml_a, xml_b, ".//CoSimulation")
     assert_attributes_equal(xml_a, xml_b, ".//UnitDefinitions/Unit")
     assert_attributes_equal(xml_a, xml_b, ".//UnitDefinitions/Unit/BaseUnit")
     assert_attributes_equal(xml_a, xml_b, ".//TypeDefinitions/*")

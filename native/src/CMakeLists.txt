@@ -43,27 +43,3 @@ add_custom_command(TARGET logging POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
   "$<TARGET_FILE:logging>"
   "${CMAKE_CURRENT_SOURCE_DIR}/../../src/fmpy/logging/${FMI_PLATFORM}"
 )
-
-add_library(cswrapper SHARED
-  ../../src/fmpy/c-code/fmi2Functions.h
-  ../../src/fmpy/c-code/fmi2FunctionTypes.h
-  ../../src/fmpy/c-code/fmi2TypesPlatform.h
-  cswrapper/cswrapper.c
-)
-
-SET_TARGET_PROPERTIES(cswrapper PROPERTIES PREFIX "")
-
-target_include_directories(cswrapper PUBLIC
-  ../../src/fmpy/c-code
-  ${CVODE_INSTALL_DIR}/include
-)
-
-target_link_libraries(cswrapper
-  ${SUNDIALS_LIBS}
-  ${CMAKE_DL_LIBS}
-)
-
-add_custom_command(TARGET cswrapper POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
-  "$<TARGET_FILE:cswrapper>"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../../src/fmpy/cswrapper"
-)

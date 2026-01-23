@@ -43,3 +43,4 @@ tests/Rectifier/
 
 # generated documentation
 _build
+native/remoting/.vs

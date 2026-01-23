@@ -33,6 +33,9 @@ process_handle_t process_spawn(char *const argv[])  {
 #ifdef WIN32
     char cmd[MAX_PATH];
     STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+
+    ZeroMemory(&pi, sizeof(pi));
     ZeroMemory(&si, sizeof(si));
     si.cb = sizeof(si);
 
@@ -43,9 +46,9 @@ process_handle_t process_spawn(char *const argv[])  {
         strncat(cmd, argv[i], sizeof(cmd) - strlen(cmd));
         strncat(cmd, " ", sizeof(cmd) - strlen(cmd));
     }
-    PROCESS_INFORMATION pi;
+    
     if (CreateProcessA(NULL,            // the path
-        (LPSTR)cmd,                     // command line
+        cmd,                            // command line
         NULL,                           // process handle not inheritable
         NULL,                           // thread handle not inheritable
         FALSE,                          // set handle inheritance to FALSE

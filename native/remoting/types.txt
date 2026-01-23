@@ -1,8 +1,0 @@
-fmi2Boolean,4
-fmi2Byte,1
-fmi2Integer,4
-fmi2Real,8
-fmi2StatusKind,4
-fmi2Type,4
-fmi2ValueReference,4
-portable_size_t,4

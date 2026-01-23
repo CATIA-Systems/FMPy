@@ -13,10 +13,47 @@ if (WIN32)
         set(FMI_PLATFORM win32)
 	endif ()
 else ()
-    set(FMI_PLATFORM linux64)
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Threads REQUIRED)
+    
+    include(CheckFunctionExists)
+    check_function_exists(semtimedop HAVE_SEMTIMEDOP)
+
+    if (APPLE)
+        set(FMI_PLATFORM darwin64)
+        # Compilation in 32 bits mode is no longer supported in MacOS 
+    else ()
+        if (BUILD_32)
+           set(FMI_PLATFORM linux32)
+           set(BITNESS "-m32")
+        else ()
+           set(FMI_PLATFORM linux64)
+        endif ()
+    endif()
 endif ()
 
 message("FMI_PLATFORM: ${FMI_PLATFORM}")
+
+# Version.h creation
+find_package(Git QUIET)
+if(NOT Git_FOUND)
+    message(WARNING "Git not found")
+    set(GIT_TAG, "LOCAL Version")
+else()
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} describe --tags --always
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_TAG
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE GIT_RESULT
+    )
+endif()
+message("--- Version: ${GIT_TAG}")
+configure_file(
+    ${CMAKE_SOURCE_DIR}/version.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/version.h
+)
+
 
 if (MSVC)
   # link statically against the the Visual C runtime
@@ -142,7 +179,6 @@ if (WIN32)
     add_executable(server_sm
         communication.c communication.h
         process.c process.h 
-        remote.c remote.h
         server.c server.h
         ${CMAKE_CURRENT_BINARY_DIR}/config.h
     )
@@ -164,7 +200,6 @@ if (WIN32)
         client.c client.h
         communication.c communication.h
         process.c process.h 
-        remote.c remote.h
         ${CMAKE_CURRENT_BINARY_DIR}/config.h
     )
 
@@ -195,31 +230,3 @@ target_include_directories(client_test PUBLIC
 target_link_libraries(client_test
   ${CMAKE_DL_LIBS}
 )
-
-if (BUILD_TESTER)
-
-    add_executable(test_sizeof
-        ${CMAKE_CURRENT_SOURCE_DIR}/test_sizeof.c
-        remote.h
-    )
-
-    target_include_directories(test_sizeof PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/fmpy/c-code
-    )
-
-    add_custom_command(OUTPUT test_sizeof.c
-        COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/gen_sizeof.py
-        DEPENDS gen_sizeof.py
-    )
-
-    add_executable(test_server
-        ${CMAKE_CURRENT_SOURCE_DIR}/test_server.c
-    )
-    target_include_directories(test_server PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/fmpy/c-code)
-
-    target_include_directories(test_sizeof PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/fmpy/c-code
-    )
-
-endif ()

@@ -1,6 +1,12 @@
- # Generate test_sizeof.c for basic sanity checks.
+#
+#   ___                  __                __ 
+# .'  _|.--------.--.--.|  |_.-----.-----.|  |
+# |   _||        |  |  ||   _|  _  |  _  ||  |
+# |__|  |__|__|__|_____||____|_____|_____||__|
+# 
+#
  
-import sys
+ import sys
 import os
 
 

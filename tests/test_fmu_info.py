@@ -21,7 +21,7 @@ def test_unsupported_fmi_type(reference_fmus_dist_dir):
 
     assert 'FMI type "CoSimulation" is not supported by the FMU' == str(context.value)
 
-def notest_fmu_info(reference_fmus_dist_dir):
+def test_fmu_info(reference_fmus_dist_dir):
 
     filename = reference_fmus_dist_dir / '2.0' / 'BouncingBall.fmu'
 

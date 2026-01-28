@@ -3,7 +3,6 @@
 
 #include "communication.h"
 #include "process.h"
-#include "remote.h"
 
 /*-----------------------------------------------------------------------------
                                C L I E N T _ T
@@ -18,6 +17,7 @@ typedef struct {
 	communication_t				*communication;
 	process_handle_t			server_handle;
 	char						shared_key[COMMUNICATION_KEY_LEN];
+	communication_data_t		data;
 } client_t;
 
 #endif

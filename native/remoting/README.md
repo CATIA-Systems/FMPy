@@ -1,36 +1,59 @@
-## Purpose
+# FMU-Remoting
 
-Run model contained inside FMU (which is a shared library) into a separate process.
-The calling process may be in different bitness than the model (shared library).
+## Rationale
+
+Some OS can support 32-bits and 64-bits. Remoting feature adds a new interface to a existing FMU and let
+the user mix bitness between fmi-importer and the DLL contained into the FMU.
 
 ## Implementation
 
-Current implementation relies on Shared Memory and is available on Windows, Linux and MacOS only.
+Current implementation relies on Shared Memory and Semaphore. It is available on Windows and Linux only.
+Primary OS is Windows.
+
+This version supports:
+   - ONLY FMI 2.0, ONLY for co-simulation mode
+   - Strings are NOT supported
+
+### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant env as Simulation Environment
+    participant importer as FMI-importer
     participant client as client.dll
     participant server as server.exe
     participant dll as model.dll
-    Note over env,dll: Initialization
-    env->>client: fmi2Initialize
+    Note over importer,dll: Initialization
+    importer->>client: fmi2Initialize
     client->>+server: spawn
     server->>-client: acknowledge
-    client->>server:fmi2Initialize
+    client->>server:RPC_fmi2Initialize
     server->>dll: load
     server->>+dll: fmi2Initialize
     dll->>-server: fmi2Component (server_t *)
     server->>client: status
-    client->>env: fmi2Component (client_t*)
-    Note over env,dll: Main loop until fmi2FreeInstance
-    env->>client: fmi2 function
-    client->>server: fmi2 function
-    server->>+dll: fmi2 function
+    client->>importer: fmi2Component (client_t*)
+    Note over importer,dll: Main loop until fmi2FreeInstance
+    importer->>+client: fmi2SetXXX
+    client->>-importer: status
+    importer->>+client: fmi2GetXXX
+    client->>-importer: values
+    importer->>client: fmi2DoStep
+    client->>server: values
+    client->>server: RPC_fmi2DoStep
+    server->>+dll: fmiSetXXX
+    server->>+dll: fmi2DoStep
     dll->>-server: status
+    server->>+dll: fmiGetXXX
+    server->>client: values
     server->>client: status
-    client->>env: status
+    client->>importer: status
 ```
+
+### Performances
+
+To improve performance, this implementation minimize the number of Inter Process Communication calls. So that,
+values of signal of the DLL are cached on client side in local buffers.
+
 
 ### How it's work ?
 
@@ -47,7 +70,7 @@ When Simulation Enviroment will use the FMU on 32 bits OS:
 
 #### Add remoting win64: simulate 32 bits FMU 64 bits OS
   1. Copy `client_sm.dll` (64 bits) as `model.dll` in `binaries/win64`
-  3. Copy `server_sm.exe` (32 bits) in `binaries/win32`
+  2. Copy `server_sm.exe` (32 bits) in `binaries/win32`
   
   When Simulation Enviroment will use the FMU on 64bits kernel:
   1. it will load  `win64/model.dll` (which is a copy of `client_sm.dll`)
@@ -55,22 +78,18 @@ When Simulation Enviroment will use the FMU on 32 bits OS:
   3. which will load `win32/model.dll` 
 
 
-## TODO List
+## Usage with `fmutool`
 
-- [X] Unique name for event/memory
-- [X] Deep tests for Stings getters/setters
-- [X] Perfomances tests (and improvement if needed)
-- [X] Support for more fmi2 function
-- [ ] Support for fmi3
-- [ ] network communication (multi-OS communication)
+This feature is available easily with `fmutool` command line or with its graphical user interface:
+```fmutool -input model64.fmu -add-remoting32 -output model64+32.fmu```
 
 
 ## LICENSE
 
-The remoting code is written by Nicolas.LAURENT@Renault.com. It is based on FMPy original ideas.
-This code is released under the 2-Clause BSD license:
+The remoting code is part of [fmu-manipulation-toolbox](https://github.com/grouperenault/fmu_manipulation_toolbox)
+It is released under the 2-Clause BSD license:
 
-Copyright 2023 Renault SAS
+Copyright 2023-2026 Renault SAS
 
 Redistribution and use in source and binary forms, with or without modification, are permitted
 provided that the following conditions are met:
@@ -82,7 +101,7 @@ provided that the following conditions are met:
    and the following disclaimer in the documentation and/or other materials provided with 
    the distribution.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS �AS IS� AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
 FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR 
 CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 

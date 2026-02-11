@@ -3,6 +3,7 @@
 pub mod types;
 
 use libloading::{Library, Symbol};
+use std::error::Error;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_void;
 use std::path::Path;
@@ -12,7 +13,7 @@ use std::sync::Arc;
 use types::*;
 use url::Url;
 
-use crate::types::*;
+use crate::{SHARED_LIBRARY_EXTENSION, types::*};
 
 #[cfg(all(target_arch = "aarch64", target_os = "linux"))]
 pub const PLATFORM: &str = "aarch64-linux";
@@ -92,18 +93,29 @@ macro_rules! fmi2_set {
 
         if let Some(cb) = &$self.logFMICall {
             let message = format!(
-                "{}(valueReferences={:?}, nvr={}, values={:?}) -> {:?}",
+                "{}(valueReferences={:?}, nvr={}, values={:?})",
                 stringify!($func),
                 $value_refs,
                 $value_refs.len(),
-                $values,
-                status
+                $values
             );
             cb(&status, message.as_str());
         }
 
         status
     }};
+}
+
+impl<'lib> Drop for FMU2<'lib> {
+    fn drop(&mut self) {
+        if !self.component.is_null() {
+            unsafe { (self.fmi2FreeInstance)(self.component) };
+            self.component = null_mut();
+            if let Some(cb) = &self.logFMICall {
+                cb(&fmi2OK, "fmi2FreeInstance()");
+            }
+        }
+    }
 }
 
 pub struct FMU2<'lib> {
@@ -222,12 +234,27 @@ fn try_get_symbol<'lib, T>(lib: &Library, symbol_name: &[u8]) -> Option<Symbol<'
 
 impl<'lib> FMU2<'lib> {
     pub fn new(
-        path: &Path,
+        unzipdir: &Path,
+        modelIdentifier: &str,
         instanceName: &str,
+        interfaceType: fmi2Type,
+        guid: &str,
+        visible: bool,
+        loggingOn: bool,
         logFMICall: Option<Box<LogFMICallCallback>>,
         logMessage: Option<Box<LogMessageCallback>>,
-    ) -> Result<FMU2<'lib>, String> {
-        let lib = Box::new(unsafe { Library::new(path).expect("Failed to load shared library.") });
+    ) -> Result<FMU2<'lib>, Box<dyn Error>> {
+
+        let shared_library_path = unzipdir
+            .join("binaries")
+            .join(PLATFORM)
+            .join(format!("{modelIdentifier}{SHARED_LIBRARY_EXTENSION}"));
+
+        if !shared_library_path.is_file() {
+            return Err(format!("Missing shared library {shared_library_path:?}.").into())
+        }
+
+        let lib = Box::new(unsafe { Library::new(shared_library_path)? });
 
         // Load all symbols using the generic get_symbol function
         let fmi2GetVersion = get_symbol::<fmi2GetVersionTYPE>(&lib, b"fmi2GetVersion")?;
@@ -324,7 +351,7 @@ impl<'lib> FMU2<'lib> {
         let fmi2GetStringStatus =
             try_get_symbol::<fmi2GetStringStatusTYPE>(&lib, b"fmi2GetStringStatus");
 
-        Ok(FMU2 {
+        let mut fmu = FMU2 {
             instanceName: String::from(instanceName),
             logFMICall: logFMICall.map(|cb| Arc::from(cb)),
             logMessage: logMessage.map(|cb| Arc::from(cb)),
@@ -374,7 +401,23 @@ impl<'lib> FMU2<'lib> {
             fmi2GetBooleanStatus,
             fmi2GetStringStatus,
             component: ptr::null_mut(),
-        })
+        };
+
+        let resource_path = unzipdir.join("resources").join("");
+
+        let resourceUrl = if resource_path.is_dir() {
+            Url::from_directory_path(resource_path).ok()
+        } else {
+            None
+        };
+
+        fmu.component = fmu.instantiate(instanceName, interfaceType, guid, resourceUrl.as_ref(), visible, loggingOn);
+        
+        if fmu.component.is_null() {
+            Err("Failed to instantiate FMU.".into())
+        } else {
+            Ok(fmu)
+        }
     }
 
     pub fn getVersion(&self) -> String {
@@ -401,7 +444,7 @@ impl<'lib> FMU2<'lib> {
         types_platform
     }
 
-    pub fn instantiate(
+    fn instantiate(
         &mut self,
         instanceName: &str,
         interfaceType: fmi2Type,
@@ -409,7 +452,7 @@ impl<'lib> FMU2<'lib> {
         resourceUrl: Option<&Url>,
         visible: bool,
         loggingOn: bool,
-    ) -> fmi2Status {
+    ) -> fmi2Component {
         let instance_name_cstr = CString::new(instanceName).unwrap();
         let fmu_guid_cstr = CString::new(guid).unwrap();
 
@@ -449,7 +492,7 @@ impl<'lib> FMU2<'lib> {
         }
 
         unsafe extern "C" fn step_finished(_env: fmi2ComponentEnvironment, _status: fmi2Status) {
-            // Default implementation - do nothing
+            // default implementation - do nothing
         }
 
         let callbacks = fmi2CallbackFunctions {
@@ -486,21 +529,18 @@ impl<'lib> FMU2<'lib> {
 
             if component.is_null() {
                 cb(&fmi2Error, &message);
-                return fmi2Error;
             } else {
                 cb(&fmi2OK, &message);
             }
         }
 
-        self.component = component;
-        fmi2OK
+        component
     }
 
     pub fn terminate(&self) -> fmi2Status {
         let status = unsafe { (self.fmi2Terminate)(self.component) };
         if let Some(cb) = &self.logFMICall {
-            let message = format!("fmi2Terminate() -> {:?}", status);
-            cb(&status, message.as_str());
+            cb(&status, "fmi2Terminate()");
         }
         status
     }
@@ -536,8 +576,8 @@ impl<'lib> FMU2<'lib> {
 
         if let Some(cb) = &self.logFMICall {
             let message = format!(
-                "fmi2SetupExperiment(toleranceDefined={}, tolerance={}, startTime={}, stopTimeDefined={}, stopTime={}) -> {:?}",
-                toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime, status
+                "fmi2SetupExperiment(toleranceDefined={}, tolerance={}, startTime={}, stopTimeDefined={}, stopTime={})",
+                toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime
             );
             cb(&status, message.as_str());
         }
@@ -548,8 +588,7 @@ impl<'lib> FMU2<'lib> {
     pub fn enterInitializationMode(&self) -> fmi2Status {
         let status = unsafe { (self.fmi2EnterInitializationMode)(self.component) };
         if let Some(cb) = &self.logFMICall {
-            let message = format!("fmi2EnterInitializationMode() -> {:?}", status);
-            cb(&status, message.as_str());
+            cb(&status, "fmi2EnterInitializationMode()");
         }
         status
     }
@@ -557,8 +596,7 @@ impl<'lib> FMU2<'lib> {
     pub fn exitInitializationMode(&self) -> fmi2Status {
         let status = unsafe { (self.fmi2ExitInitializationMode)(self.component) };
         if let Some(cb) = &self.logFMICall {
-            let message = format!("fmi2ExitInitializationMode() -> {:?}", status);
-            cb(&status, message.as_str());
+            cb(&status, "fmi2ExitInitializationMode()");
         }
         status
     }
@@ -566,13 +604,12 @@ impl<'lib> FMU2<'lib> {
     pub fn reset(&self) -> fmi2Status {
         let status = unsafe { (self.fmi2Reset)(self.component) };
         if let Some(cb) = &self.logFMICall {
-            let message = format!("fmi2Reset() -> {:?}", status);
-            cb(&status, message.as_str());
+            cb(&status, "fmi2Reset()");
         }
         status
     }
 
-    pub fn freeInstance(&mut self) {
+    fn freeInstance(&mut self) {
         unsafe { (self.fmi2FreeInstance)(self.component) };
         self.component = null_mut();
         if let Some(cb) = &self.logFMICall {
@@ -720,11 +757,10 @@ impl<'lib> FMU2<'lib> {
 
         if let Some(cb) = &self.logFMICall {
             let message = format!(
-                "fmi2DoStep(currentCommunicationPoint={}, communicationStepSize={}, noSetFMUStatePriorToCurrentPoint={}) -> {:?}",
+                "fmi2DoStep(currentCommunicationPoint={}, communicationStepSize={}, noSetFMUStatePriorToCurrentPoint={})",
                 currentCommunicationPoint,
                 communicationStepSize,
-                noSetFMUStatePriorToCurrentPoint,
-                status
+                noSetFMUStatePriorToCurrentPoint
             );
             cb(&status, message.as_str());
         }

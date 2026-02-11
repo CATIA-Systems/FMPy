@@ -110,16 +110,16 @@ macro_rules! set_variables {
 type ContainerLogMessageCallback = dyn Fn(&fmiStatus, &str, &str) + Send + Sync;
 type ContainerLogFMICallCallback = dyn Fn(&fmiStatus, &str, &str) + Send + Sync;
 
-impl<'a> Drop for Container<'a> {
-    fn drop(&mut self) {
-        for instance in &mut self.instances {
-            match instance {
-                FMUInstance::FMI2(fmu) => fmu.freeInstance(),
-                FMUInstance::FMI3(fmu) => fmu.freeInstance(),
-            }
-        }
-    }
-}
+// impl<'a> Drop for Container<'a> {
+//     fn drop(&mut self) {
+//         for instance in &mut self.instances {
+//             match instance {
+//                 FMUInstance::FMI2(fmu) => fmu.freeInstance(),
+//                 FMUInstance::FMI3(fmu) => fmu.freeInstance(),
+//             }
+//         }
+//     }
+// }
 
 macro_rules! set_start_value {
     ($self:ident, $value_references:ident, $start:ident, $setter:ident, $variable_type:ty) => {{
@@ -161,19 +161,22 @@ impl Container<'_> {
         let mut instances: Vec<FMUInstance> = Vec::new();
 
         for component in &system.components {
-            let shared_library_name =
-                format!("{}{}", component.modelIdentifier, SHARED_LIBRARY_EXTENSION);
 
-            let platform_dir = match component.fmiMajorVersion {
-                FMIMajorVersion::FMIMajorVersion2 => fmi::fmi2::PLATFORM,
-                FMIMajorVersion::FMIMajorVersion3 => fmi::fmi3::PLATFORM_TUPLE,
-            };
+            let unzipdir = resource_path.join(&component.path);
 
-            let shared_library_path = resource_path
-                .join(&component.path)
-                .join("binaries")
-                .join(platform_dir)
-                .join(shared_library_name);
+            // let shared_library_name =
+            //     format!("{}{}", component.modelIdentifier, SHARED_LIBRARY_EXTENSION);
+
+            // let platform_dir = match component.fmiMajorVersion {
+            //     FMIMajorVersion::FMIMajorVersion2 => fmi::fmi2::PLATFORM,
+            //     FMIMajorVersion::FMIMajorVersion3 => fmi::fmi3::PLATFORM_TUPLE,
+            // };
+
+            // let shared_library_path = resource_path
+            //     .join(&component.path)
+            //     .join("binaries")
+            //     .join(platform_dir)
+            //     .join(shared_library_name);
 
             let name = component.name.clone();
             let log_fmi_call_clone = log_fmi_call.clone();
@@ -203,8 +206,13 @@ impl Container<'_> {
                 FMIMajorVersion::FMIMajorVersion2 => {
                     let component_name: String = component.name.clone();
                     match FMU2::new(
-                        shared_library_path.as_ref(),
-                        &component.name.clone(),
+                        &unzipdir,
+                        &component.modelIdentifier,
+                        &component.name,
+                        fmi2Type::fmi2CoSimulation,
+                        &component.instantiationToken,
+                        false,
+                        loggingOn,
                         if loggingOn {
                             Some(Box::new(log_component_fmi_call))
                         } else {
@@ -214,9 +222,8 @@ impl Container<'_> {
                     ) {
                         Ok(fmu) => FMUInstance::FMI2(Box::new(fmu)),
                         Err(error) => {
-                            let message = format!(
-                                "Failed to load the shared library {:?} for component {:?}. {:?}",
-                                shared_library_path, component.name, error
+                            let message = format!("Failed to instantiate the component {:?}. {:?}",
+                                component.name, error
                             );
                             let message = CString::new(message).unwrap();
                             let message = message.as_ptr() as fmi3String;
@@ -225,9 +232,16 @@ impl Container<'_> {
                     }
                 }
                 FMIMajorVersion::FMIMajorVersion3 => {
-                    match FMU3::new(
-                        shared_library_path.as_ref(),
-                        &component.name.clone(),
+                    match FMU3::instantiateCoSimulation(
+                        &unzipdir,
+                        &component.modelIdentifier,
+                        &component.name,
+                        &component.instantiationToken,
+                        false,
+                        loggingOn,
+                        false,
+                        false,
+                        &[],
                         if loggingOn {
                             Some(Box::new(log_component_fmi_call))
                         } else {
@@ -237,9 +251,8 @@ impl Container<'_> {
                     ) {
                         Ok(fmu) => FMUInstance::FMI3(Box::new(fmu)),
                         Err(error) => {
-                            let message = format!(
-                                "Failed to load the shared library {:?} for component {:?}. {:?}",
-                                shared_library_path, component.name, error
+                            let message = format!("Failed to instantiate the component {:?}. {:?}",
+                                component.name, error
                             );
                             let message = CString::new(message).unwrap();
                             let message = message.as_ptr() as fmi3String;
@@ -249,50 +262,50 @@ impl Container<'_> {
                 }
             };
 
-            let component_resource_path = resource_path
-                .join(&component.path)
-                .join("resources")
-                .join("");
+            // let component_resource_path = resource_path
+            //     .join(&component.path)
+            //     .join("resources")
+            //     .join("");
 
-            let status = match &mut fmu_instance {
-                FMUInstance::FMI2(fmu) => {
-                    let resource_url = if component_resource_path.is_dir() {
-                        Some(Url::from_directory_path(&component_resource_path).unwrap())
-                    } else {
-                        None
-                    };
-                    fmu.instantiate(
-                        &component.name,
-                        fmi2Type::fmi2CoSimulation,
-                        &component.instantiationToken,
-                        resource_url.as_ref(),
-                        visible,
-                        loggingOn,
-                    )
-                }
-                FMUInstance::FMI3(fmu) => {
-                    let resource_path = if component_resource_path.is_dir() {
-                        Some(component_resource_path.as_path())
-                    } else {
-                        None
-                    };
-                    fmu.instantiateCoSimulation(
-                        &component.name,
-                        &component.instantiationToken,
-                        resource_path,
-                        visible,
-                        loggingOn,
-                        false,
-                        false,
-                        &[],
-                    )
-                }
-            };
+            // let status = match &mut fmu_instance {
+            //     FMUInstance::FMI2(fmu) => {
+            //         let resource_url = if component_resource_path.is_dir() {
+            //             Some(Url::from_directory_path(&component_resource_path).unwrap())
+            //         } else {
+            //             None
+            //         };
+            //         fmu.instantiate(
+            //             &component.name,
+            //             fmi2Type::fmi2CoSimulation,
+            //             &component.instantiationToken,
+            //             resource_url.as_ref(),
+            //             visible,
+            //             loggingOn,
+            //         )
+            //     }
+            //     FMUInstance::FMI3(fmu) => {
+            //         let resource_path = if component_resource_path.is_dir() {
+            //             Some(component_resource_path.as_path())
+            //         } else {
+            //             None
+            //         };
+            //         fmu.instantiateCoSimulation(
+            //             &component.name,
+            //             &component.instantiationToken,
+            //             resource_path,
+            //             visible,
+            //             loggingOn,
+            //             false,
+            //             false,
+            //             &[],
+            //         )
+            //     }
+            // };
 
-            if !matches!(status, fmiOK | fmiWarning) {
-                let message = format!("Failed to instantiate component {}.", component.name);
-                return Err(message);
-            }
+            // if !matches!(status, fmiOK | fmiWarning) {
+            //     let message = format!("Failed to instantiate component {}.", component.name);
+            //     return Err(message);
+            // }
 
             instances.push(fmu_instance);
         }

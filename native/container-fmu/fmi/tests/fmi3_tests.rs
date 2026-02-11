@@ -1,8 +1,7 @@
 #![allow(non_camel_case_types, non_snake_case)]
 
-use fmi::SHARED_LIBRARY_EXTENSION;
 use fmi::fmi3::*;
-use fmi::fmi3::{PLATFORM_TUPLE, types::*};
+use fmi::fmi3::types::*;
 use fmi::types::fmiStatus;
 use std::{env, path::PathBuf};
 
@@ -13,16 +12,12 @@ macro_rules! assert_ok {
 }
 
 fn create_fmu() -> FMU3<'static> {
-    let shared_library_name = format!("Feedthrough{SHARED_LIBRARY_EXTENSION}");
 
-    let dll_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+    let unzipdir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests")
         .join("resources")
         .join("fmi3")
-        .join("Feedthrough")
-        .join("binaries")
-        .join(PLATFORM_TUPLE)
-        .join(shared_library_name);
+        .join("Feedthrough");
 
     let log_message = move |status: &fmiStatus, category: &str, message: &str| {
         println!("[{status:?}] [{category}] {message}")
@@ -30,24 +25,20 @@ fn create_fmu() -> FMU3<'static> {
 
     let log_fmi_call = move |status: &fmiStatus, message: &str| println!("[{status:?}] {message}");
 
-    let mut fmu = FMU3::new(
-        &dll_path,
-        "main",
-        Some(Box::new(log_fmi_call)),
-        Some(Box::new(log_message)),
-    )
-    .unwrap();
-
-    assert_ok!(fmu.instantiateCoSimulation(
+    let fmu = FMU3::instantiateCoSimulation(
+        &unzipdir,
+        "Feedthrough",
         "main",
         "{37B954F1-CC86-4D8F-B97F-C7C36F6670D2}",
-        None,
         false,
         true,
         false,
         false,
-        &[]
-    ));
+        &[],
+        Some(Box::new(log_fmi_call)),
+        Some(Box::new(log_message)),
+    )
+    .unwrap();
 
     let version = fmu.getVersion();
     assert!(version.starts_with("3."));
@@ -60,7 +51,7 @@ fn create_fmu() -> FMU3<'static> {
 
 #[test]
 fn test_float32() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let input_vr = [1];
     let input_values = [42.5f32];
@@ -73,12 +64,11 @@ fn test_float32() {
     assert_eq!(output_values, input_values);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
 #[test]
 fn test_float64() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let input_vr = [7];
     let input_values = [123.456789];
@@ -91,12 +81,11 @@ fn test_float64() {
     assert_eq!(output_values, input_values);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
 #[test]
 fn test_int8() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let input_vr = [11];
     let input_values = [42i8];
@@ -109,12 +98,11 @@ fn test_int8() {
     assert_eq!(output_values, input_values);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
 #[test]
 fn test_uint8() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let input_vr = [13];
     let input_values = [200u8];
@@ -127,12 +115,11 @@ fn test_uint8() {
     assert_eq!(output_values, input_values);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
 #[test]
 fn test_int16() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let input_vr = [15];
     let input_values = [-12345i16];
@@ -145,12 +132,11 @@ fn test_int16() {
     assert_eq!(output_values, input_values);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
 #[test]
 fn test_uint16() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let input_vr = [17];
     let input_values = [54321u16];
@@ -163,12 +149,11 @@ fn test_uint16() {
     assert_eq!(output_values, input_values);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
 #[test]
 fn test_int32() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let input_vr = [19];
     let input_values = [-987654321i32];
@@ -181,12 +166,11 @@ fn test_int32() {
     assert_eq!(output_values, input_values);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
 #[test]
 fn test_uint32() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let input_vr = [21];
     let input_values = [3000000000u32];
@@ -199,12 +183,11 @@ fn test_uint32() {
     assert_eq!(output_values, input_values);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
 #[test]
 fn test_int64() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let input_vr = [23];
     let input_values = [-9223372036854775807i64];
@@ -217,12 +200,11 @@ fn test_int64() {
     assert_eq!(output_values, input_values);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
 #[test]
 fn test_uint64() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let input_vr = [25];
     let input_values = [18446744073709551615u64];
@@ -235,12 +217,11 @@ fn test_uint64() {
     assert_eq!(output_values, input_values);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
 #[test]
 fn test_boolean() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let input_vr = [27];
     let input_values = [true];
@@ -261,12 +242,11 @@ fn test_boolean() {
     assert_eq!(output_values_false, input_values_false);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
 #[test]
 fn test_string() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let input_vr = [29];
     let input_values = ["Hello, FMI3!"];
@@ -280,12 +260,11 @@ fn test_string() {
     assert_eq!(output_values[0], input_values[0]);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
 #[test]
 fn test_binary() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let input_vr = [31];
     let input_data = b"Hello, Binary World!";
@@ -308,12 +287,11 @@ fn test_binary() {
     assert_eq!(returned_data, input_data);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
 #[test]
 fn test_multiple_variables() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     // Test setting and getting multiple different variable types in one test
 
@@ -351,12 +329,11 @@ fn test_multiple_variables() {
     assert_eq!(bool_output_values, bool_input_values);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
 #[test]
 fn test_edge_cases() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     // Test extreme values for different types
 
@@ -399,5 +376,4 @@ fn test_edge_cases() {
     assert_eq!(int32_output, min_int32);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }

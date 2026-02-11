@@ -16,3 +16,6 @@ url = "2"
 
 [build-dependencies]
 static_vcruntime = "2.0"
+
+[dev-dependencies]
+rstest = "0.26.1"

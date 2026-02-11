@@ -2,8 +2,9 @@
 
 pub mod types;
 
-use crate::types::*;
+use crate::{SHARED_LIBRARY_EXTENSION, types::*};
 use libloading::{Library, Symbol};
+use std::error::Error;
 use std::ffi::{CStr, CString};
 use std::os::raw::{c_uint, c_void};
 use std::path::Path;
@@ -109,12 +110,24 @@ macro_rules! fmi_set {
 //     message: String,
 // }
 
-pub struct FMU3<'lib> {
-    instanceName: String,
+impl<'lib> Drop for FMU3<'lib> {
+    fn drop(&mut self) {
+        if !self.instance.is_null() {
+            unsafe { (self.fmi3FreeInstance)(self.instance) };
+            self.instance = null_mut();
+            if let Some(cb) = &self.logFMICall {
+                cb(&fmi3OK, "fmi3FreeInstance()");
+            }
+        }
+    }
+}
 
+pub struct FMU3<'lib> {
+    // instanceName: String,
+    
     logFMICall: Option<Arc<LogFMICallCallback>>,
     logMessage: Option<Arc<LogMessageCallback>>,
-
+    
     _lib: Box<Library>,
 
     fmi3GetVersion: Symbol<'lib, fmi3GetVersionTYPE>,
@@ -237,13 +250,24 @@ fn get_symbol<'lib, T>(
 }
 
 impl<'lib> FMU3<'lib> {
-    pub fn new(
-        path: &Path,
-        instanceName: &str,
+
+    fn new(
+        unzipdir: &Path,
+        modelIdentifier: &str,
         logFMICall: Option<Box<LogFMICallCallback>>,
         logMessage: Option<Box<LogMessageCallback>>,
-    ) -> Result<FMU3<'lib>, libloading::Error> {
-        let lib = Box::new(unsafe { Library::new(path)? });
+    ) -> Result<FMU3<'lib>, Box<dyn Error>> {
+
+        let shared_library_path = unzipdir
+            .join("binaries")
+            .join(PLATFORM_TUPLE)
+            .join(format!("{modelIdentifier}{SHARED_LIBRARY_EXTENSION}"));
+
+        if !shared_library_path.is_file() {
+            return Err(format!("Missing shared library {shared_library_path:?}.").into())
+        }
+
+        let lib = Box::new(unsafe { Library::new(shared_library_path)? });
 
         /***************************************************
         Common Functions
@@ -375,7 +399,7 @@ impl<'lib> FMU3<'lib> {
             get_symbol::<fmi3ActivateModelPartitionTYPE>(&lib, b"fmi3ActivateModelPartition")?;
 
         Ok(FMU3 {
-            instanceName: String::from(instanceName),
+            // instanceName: String::from(instanceName),
             // logMessage: Box::new(logMessage),
             logFMICall: logFMICall.map(|cb| Arc::from(cb)),
             logMessage: logMessage.map(|cb| Arc::from(cb)),
@@ -472,6 +496,39 @@ impl<'lib> FMU3<'lib> {
     }
 
     pub fn instantiateCoSimulation(
+        unzipdir: &Path,
+        modelIdentifier: &str,
+        instanceName: &str,
+        instantiationToken: &str,
+        visible: bool,
+        loggingOn: bool,
+        eventModeUsed: bool,
+        earlyReturnAllowed: bool,
+        requiredIntermediateVariables: &[c_uint],
+        logFMICall: Option<Box<LogFMICallCallback>>,
+        logMessage: Option<Box<LogMessageCallback>>,
+    ) -> Result<FMU3<'lib>, Box<dyn Error>> {
+        
+        let mut fmu = FMU3::new(unzipdir, modelIdentifier, logFMICall, logMessage)?;
+
+        let resource_path = unzipdir.join("resources").join("");
+
+        let resourcePath = if resource_path.is_dir() {
+            Some(resource_path.as_path())
+        } else {
+            None
+        };
+
+        fmu.instance = fmu._instantiateCoSimulation(instanceName, instantiationToken, resourcePath, visible, loggingOn, eventModeUsed, earlyReturnAllowed, requiredIntermediateVariables);
+
+        if fmu.instance.is_null() {
+            Err("Failed to instantiate FMU.".into())
+        } else {
+            Ok(fmu)
+        }
+    }
+
+    fn _instantiateCoSimulation(
         &mut self,
         instanceName: &str,
         instantiationToken: &str,
@@ -481,7 +538,7 @@ impl<'lib> FMU3<'lib> {
         eventModeUsed: bool,
         earlyReturnAllowed: bool,
         requiredIntermediateVariables: &[c_uint],
-    ) -> fmi3Status {
+    ) -> fmi3Instance {
         let instance_name_cstr = CString::new(instanceName).unwrap();
 
         let instantiation_token_cstr = CString::new(instantiationToken).unwrap();
@@ -505,7 +562,7 @@ impl<'lib> FMU3<'lib> {
 
         let intermediateUpdate_ptr = ptr::null();
 
-        self.instance = unsafe {
+        let instance = unsafe {
             (self.fmi3InstantiateCoSimulation)(
                 /* instanceName */ instance_name_cstr.as_ptr(),
                 /* instantiationToken */ instantiation_token_cstr.as_ptr(),
@@ -546,11 +603,7 @@ impl<'lib> FMU3<'lib> {
             cb(&status, &message);
         }
 
-        if self.instance.is_null() {
-            return fmi3Error;
-        }
-
-        status
+        instance
     }
 
     pub fn terminate(&self) -> fmi3Status {
@@ -1006,13 +1059,13 @@ impl<'lib> FMU3<'lib> {
         status
     }
 
-    pub fn freeInstance(&mut self) {
-        unsafe { (self.fmi3FreeInstance)(self.instance) };
-        self.instance = null_mut();
-        if let Some(cb) = &self.logFMICall {
-            cb(&fmi3OK, "fmi3FreeInstance()");
-        }
-    }
+    // fn freeInstance(&mut self) {
+    //     unsafe { (self.fmi3FreeInstance)(self.instance) };
+    //     self.instance = null_mut();
+    //     if let Some(cb) = &self.logFMICall {
+    //         cb(&fmi3OK, "fmi3FreeInstance()");
+    //     }
+    // }
 
     pub fn enterEventMode(&self) -> fmi3Status {
         let status = unsafe { (self.fmi3EnterEventMode)(self.instance) };
@@ -1563,49 +1616,32 @@ impl<'lib> FMU3<'lib> {
 
     pub fn updateDiscreteStates(
         &self,
-    ) -> Result<
-        (
-            fmi3Boolean,
-            fmi3Boolean,
-            fmi3Boolean,
-            fmi3Boolean,
-            fmi3Float64,
-        ),
-        fmi3Status,
-    > {
-        let mut discreteStatesNeedUpdate = false;
-        let mut terminateSimulation = false;
-        let mut nominalsOfContinuousStatesChanged = false;
-        let mut valuesOfContinuousStatesChanged = false;
-        let mut nextEventTime = 0.0;
+        discreteStatesNeedUpdate: &mut fmi3Boolean,
+        terminateSimulation: &mut fmi3Boolean,
+        nominalsOfContinuousStatesChanged: &mut fmi3Boolean,
+        valuesOfContinuousStatesChanged: &mut fmi3Boolean,
+        nextEventTimeDefined: &mut fmi3Boolean,
+        nextEventTime: &mut fmi3Float64,
+    ) -> fmi3Status {
 
         let status = unsafe {
             (self.fmi3UpdateDiscreteStates)(
                 self.instance,
-                &mut discreteStatesNeedUpdate,
-                &mut terminateSimulation,
-                &mut nominalsOfContinuousStatesChanged,
-                &mut valuesOfContinuousStatesChanged,
-                &mut nextEventTime,
-            )
-        };
-
-        if let Some(cb) = &self.logFMICall {
-            let message = format!("fmi3UpdateDiscreteStates()");
-            cb(&status, &message);
-        }
-
-        if status == fmi3OK {
-            Ok((
                 discreteStatesNeedUpdate,
                 terminateSimulation,
                 nominalsOfContinuousStatesChanged,
                 valuesOfContinuousStatesChanged,
+                nextEventTimeDefined,
                 nextEventTime,
-            ))
-        } else {
-            Err(status)
+            )
+        };
+
+        if let Some(cb) = &self.logFMICall {
+            let message = format!("fmi3UpdateDiscreteStates(discreteStatesNeedUpdate={discreteStatesNeedUpdate}, terminateSimulation={terminateSimulation}, nominalsOfContinuousStatesChanged={nominalsOfContinuousStatesChanged}, valuesOfContinuousStatesChanged={valuesOfContinuousStatesChanged}, nextEventTimeDefined={nextEventTimeDefined}, nextEventTime={nextEventTime})");
+            cb(&status, &message);
         }
+
+        status
     }
 
     pub fn getOutputDerivatives(

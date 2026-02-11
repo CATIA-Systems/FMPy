@@ -1,12 +1,12 @@
 #![allow(non_camel_case_types, non_snake_case)]
 
+use rstest::*;
 use fmi::fmi2::types::*;
 use fmi::{SHARED_LIBRARY_EXTENSION, fmi2::*};
 use std::{
     env,
     path::{Path, PathBuf},
 };
-use url::Url;
 
 macro_rules! assert_ok {
     ($expression:expr) => {
@@ -15,15 +15,26 @@ macro_rules! assert_ok {
 }
 
 fn create_fmu() -> FMU2<'static> {
-    let resource_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+
+    let binding = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let project_root =  binding.parent().unwrap();
+
+    let unzipdir = project_root
+        .join("container-fmu")
         .join("tests")
         .join("resources")
-        .join("fmi2")
-        .join("resources");
+        .join("fmi2");
 
     let dll_prefix = if cfg!(windows) { "" } else { "lib" };
-    let dll_path = format!("{}container_fmu{}", dll_prefix, SHARED_LIBRARY_EXTENSION);
-    let dll_path = Path::new(&dll_path);
+    let dll_filename = format!("{}container_fmu{}", dll_prefix, SHARED_LIBRARY_EXTENSION);
+    let dll_path = project_root.join("target").join("debug").join(&dll_filename);
+    
+    let platform_binary_path = unzipdir.join("binaries").join(PLATFORM).join(dll_filename);
+
+    dbg!(&dll_path);
+    dbg!(&platform_binary_path);
+
+    // copy(dll_path, platform_binary_path).unwrap();
 
     let log_message = move |status: &fmi2Status, category: &str, message: &str| {
         println!(" [{status:?}] [{category}] {message}")
@@ -32,31 +43,25 @@ fn create_fmu() -> FMU2<'static> {
     let log_fmi_call =
         move |status: &fmi2Status, message: &str| println!(">[{status:?}] {message}");
 
-    let mut fmu = FMU2::new(
-        dll_path,
-        "main",
+    let fmu = FMU2::new(
+        &unzipdir,
+        "container_fmu",
+        "container",
+        fmi2Type::fmi2CoSimulation,
+        "f6cda2ea-6875-475c-b7dc-a43a33e69094",
+        false,
+        true,
         Some(Box::new(log_fmi_call)),
         Some(Box::new(log_message)),
     )
     .unwrap();
 
-    let resource_url = Url::from_directory_path(resource_path).unwrap();
-
-    assert_ok!(fmu.instantiate(
-        "container",
-        fmi2Type::fmi2CoSimulation,
-        "f6cda2ea-6875-475c-b7dc-a43a33e69094",
-        Some(&resource_url),
-        false,
-        true,
-    ));
-
     fmu
 }
 
-#[test]
+#[rstest]
 fn test_fmi2_real_continuous_connections() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let Real_continuous_input_vr = [3];
     let mut Real_continuous_input_values = [1.1];
@@ -92,13 +97,11 @@ fn test_fmi2_real_continuous_connections() {
     assert_eq!(Real_continuous_output_values, Real_continuous_input_values);
 
     assert_ok!(fmu.terminate());
-
-    fmu.freeInstance();
 }
 
-#[test]
+#[rstest]
 fn test_fmi2_real_discrete_connections() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let Real_discrete_input_vr = [5];
     let mut Real_discrete_input_values = [2.5];
@@ -124,12 +127,11 @@ fn test_fmi2_real_discrete_connections() {
     assert_eq!(Real_discrete_output_values, Real_discrete_input_values);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
-#[test]
+#[rstest]
 fn test_fmi2_integer_connections() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let Integer_input_vr = [7];
     let mut Integer_input_values = [42];
@@ -155,12 +157,11 @@ fn test_fmi2_integer_connections() {
     assert_eq!(Integer_output_values, Integer_input_values);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
-#[test]
+#[rstest]
 fn test_fmi2_boolean_connections() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let Boolean_input_vr = [9];
     let mut Boolean_input_values = [fmi2True];
@@ -186,12 +187,11 @@ fn test_fmi2_boolean_connections() {
     assert_eq!(Boolean_output_values, Boolean_input_values);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
-#[test]
+#[rstest]
 fn test_fmi2_string_connections() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let String_input_vr = [11];
     let String_input_values = ["test_string"];
@@ -217,12 +217,11 @@ fn test_fmi2_string_connections() {
     assert_eq!(String_output_values[0], new_string_values[0]);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }
 
-#[test]
+#[rstest]
 fn test_fmi2_enumeration_connections() {
-    let mut fmu = create_fmu();
+    let fmu = create_fmu();
 
     let Enumeration_input_vr = [13];
     let mut Enumeration_input_values = [1]; // Option 1
@@ -248,5 +247,4 @@ fn test_fmi2_enumeration_connections() {
     assert_eq!(Enumeration_output_values, Enumeration_input_values);
 
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }

@@ -1,12 +1,11 @@
 #![allow(non_camel_case_types, non_snake_case)]
 
-use fmi::fmi2::types::*;
-use fmi::{SHARED_LIBRARY_EXTENSION, fmi2::*};
+use fmi::fmi2::{FMU2, types::*};
 use std::{
     env,
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
-use url::Url;
+use rstest::*;
 
 macro_rules! assert_ok {
     ($expression:expr) => {
@@ -14,11 +13,50 @@ macro_rules! assert_ok {
     };
 }
 
+#[fixture]
+pub fn fmu() -> FMU2<'static> {
+
+    let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).parent().unwrap().to_path_buf();
+
+    let unzipdir = workspace_root
+        .join("container-fmu")
+        .join("tests")
+        .join("resources")
+        .join("fmi2");
+
+    // Setup logging callbacks
+    let log_message = move |status: &fmi2Status, category: &str, message: &str| {
+        // println!("[{status:?}] [{category}] {message}")
+    };
+
+    let log_fmi_call = move |status: &fmi2Status, message: &str| {
+        // println!("[{status:?}] {message}")
+    };
+
+    // Create and initialize FMU
+    let fmu = FMU2::new(
+        &unzipdir,
+        "container_fmu",
+        "container",
+        fmi2Type::fmi2CoSimulation,
+        "f6cda2ea-6875-475c-b7dc-a43a33e69094",
+        false,
+        true,
+        Some(Box::new(log_fmi_call)),
+        Some(Box::new(log_message)),
+    ).unwrap();
+
+    assert!(fmu.getVersion().starts_with("2."));
+
+    fmu
+}
+
+
 /// Test to verify that all start values defined in the container configuration
 /// are correctly set when the container FMU is instantiated and initialized.
 /// Note: Container start values override individual FMU model description start values.
-#[test]
-fn test_fmi2_start_values() {
+#[rstest]
+fn test_fmi2_start_values(fmu: FMU2) {
     // Expected start values from container.json configuration
     // Only input variables and parameters have start values defined
     let expected_real_fixed_parameter = 1.0;      // container variable index 0: "start": ["1"]
@@ -49,50 +87,6 @@ fn test_fmi2_start_values() {
     let mut boolean_input_values = [fmi2False]; // Initialize to opposite of expected
     let mut string_input_values = [String::new()];
     let mut enumeration_input_values = [0];
-
-    // Setup paths
-    let resource_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("tests")
-        .join("resources")
-        .join("fmi2")
-        .join("resources");
-
-    let dll_prefix = if cfg!(windows) { "" } else { "lib" };
-    let dll_path = format!("{}container_fmu{}", dll_prefix, SHARED_LIBRARY_EXTENSION);
-    let dll_path = Path::new(&dll_path);
-
-    // Setup logging callbacks
-    let log_message = move |status: &fmi2Status, category: &str, message: &str| {
-        println!("[{status:?}] [{category}] {message}")
-    };
-
-    let log_fmi_call = move |status: &fmi2Status, message: &str| {
-        println!("[{status:?}] {message}")
-    };
-
-    // Create and initialize FMU
-    let mut fmu = FMU2::new(
-        dll_path,
-        "main",
-        Some(Box::new(log_fmi_call)),
-        Some(Box::new(log_message)),
-    )
-    .unwrap();
-
-    let resource_url = Url::from_directory_path(resource_path).unwrap();
-
-    // Verify FMI version
-    assert!(fmu.getVersion().starts_with("2."));
-
-    // Instantiate the FMU
-    assert_ok!(fmu.instantiate(
-        "container",
-        fmi2Type::fmi2CoSimulation,
-        "f6cda2ea-6875-475c-b7dc-a43a33e69094",
-        Some(&resource_url),
-        false,
-        true,
-    ));
 
     // Setup experiment and enter initialization mode
     assert_ok!(fmu.setupExperiment(Some(1e-5), 0.0, Some(1.0)));
@@ -204,7 +198,6 @@ fn test_fmi2_start_values() {
 
     // Clean up
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 
     println!("✅ All input and parameter start values verified successfully!");
     println!("   Note: Output variables do not have start values as they are calculated from inputs.");
@@ -212,48 +205,9 @@ fn test_fmi2_start_values() {
 
 /// Test to verify that start values can be modified during initialization mode
 /// and that the changes persist after exiting initialization mode.
-#[test]
-fn test_fmi2_start_values_modification() {
-    // Setup paths
-    let resource_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("tests")
-        .join("resources")
-        .join("fmi2")
-        .join("resources");
-
-    let dll_prefix = if cfg!(windows) { "" } else { "lib" };
-    let dll_path = format!("{}container_fmu{}", dll_prefix, SHARED_LIBRARY_EXTENSION);
-    let dll_path = Path::new(&dll_path);
-
-    // Setup logging callbacks
-    let log_message = move |status: &fmi2Status, category: &str, message: &str| {
-        println!("[{status:?}] [{category}] {message}")
-    };
-
-    let log_fmi_call = move |status: &fmi2Status, message: &str| {
-        println!("[{status:?}] {message}")
-    };
-
-    // Create and initialize FMU
-    let mut fmu = FMU2::new(
-        dll_path,
-        "main",
-        Some(Box::new(log_fmi_call)),
-        Some(Box::new(log_message)),
-    )
-    .unwrap();
-
-    let resource_url = Url::from_directory_path(resource_path).unwrap();
-
-    assert_ok!(fmu.instantiate(
-        "container",
-        fmi2Type::fmi2CoSimulation,
-        "f6cda2ea-6875-475c-b7dc-a43a33e69094",
-        Some(&resource_url),
-        false,
-        true,
-    ));
-
+#[rstest]
+fn test_fmi2_start_values_modification(fmu: FMU2) {
+    
     assert_ok!(fmu.setupExperiment(Some(1e-5), 0.0, Some(1.0)));
     assert_ok!(fmu.enterInitializationMode());
 
@@ -329,5 +283,4 @@ fn test_fmi2_start_values_modification() {
 
     // Clean up
     assert_ok!(fmu.terminate());
-    fmu.freeInstance();
 }

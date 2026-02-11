@@ -550,6 +550,7 @@ pub type fmi3UpdateDiscreteStatesTYPE = unsafe extern "C" fn(
     terminateSimulation: *mut fmi3Boolean,
     nominalsOfContinuousStatesChanged: *mut fmi3Boolean,
     valuesOfContinuousStatesChanged: *mut fmi3Boolean,
+    nextEventTimeDefined: *mut fmi3Boolean,
     nextEventTime: *mut fmi3Float64,
 ) -> fmi3Status;
 

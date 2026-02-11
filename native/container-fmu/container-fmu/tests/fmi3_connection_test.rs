@@ -1,56 +1,15 @@
 #![allow(non_camel_case_types, non_snake_case)]
 
+mod common;
+
+use common::create_fmi3_container;
 use fmi::fmi3::types::*;
-use fmi::fmi3::*;
-use std::{
-    env,
-    path::PathBuf,
-};
+
 
 macro_rules! assert_ok {
     ($expression:expr) => {
         assert_eq!($expression, fmi3OK);
     };
-}
-
-/// Creates and initializes an FMI3 container FMU instance
-fn create_fmu() -> FMU3<'static> {
-
-    let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .to_path_buf();
-
-    let unzipdir = workspace_root
-        .join("container-fmu")
-        .join("tests")
-        .join("resources")
-        .join("fmi3");
-
-    let log_message = move |status: &fmi3Status, category: &str, message: &str| {
-        println!(" [{status:?}] [{category}] {message}")
-    };
-
-    let log_fmi_call =
-        move |status: &fmi3Status, message: &str| println!(">[{status:?}] {message}");
-
-    // Create and initialize FMU
-    let fmu = FMU3::instantiateCoSimulation(
-        &unzipdir,
-        "container_fmu",
-        "container",
-        "{088cfe7e-cb81-4ca1-a83d-e7a5c3ff47fd}",
-        false,
-        true,
-        false,
-        false,
-        &[],
-        Some(Box::new(log_fmi_call)),
-        Some(Box::new(log_message)),
-    )
-    .unwrap();
-
-    fmu
 }
 
 /// Test FMI3 Float32 connections
@@ -60,7 +19,7 @@ fn create_fmu() -> FMU3<'static> {
 /// - VR 3 (input to component 0) -> VR 4 (output from component 0) -> VR 3 (input to component 1)
 #[test]
 fn test_fmi3_float32_connections() {
-    let fmu = create_fmu();
+    let fmu = create_fmi3_container();
 
     // Float32 input/output pairs based on model description
     let float32_input_vr = [1, 3]; // Input variables
@@ -117,7 +76,7 @@ fn test_fmi3_float32_connections() {
 /// - VR 9 (input to component 0) -> VR 10 (output from component 0) -> VR 9 (input to component 1)
 #[test]
 fn test_fmi3_float64_connections() {
-    let fmu = create_fmu();
+    let fmu = create_fmi3_container();
 
     let float64_input_vr = [7, 9]; // Input variables
     let mut float64_input_values = [1.1_f64, 2.2_f64];
@@ -166,7 +125,7 @@ fn test_fmi3_float64_connections() {
 /// - VR 11 (input to component 0) -> VR 12 (output from component 0) -> VR 11 (input to component 1)
 #[test]
 fn test_fmi3_int8_connections() {
-    let fmu = create_fmu();
+    let fmu = create_fmi3_container();
 
     let int8_input_vr = [11]; // Input variable
     let mut int8_input_values = [42_i8];
@@ -212,7 +171,7 @@ fn test_fmi3_int8_connections() {
 /// - VR 27 (input to component 0) -> VR 28 (output from component 0) -> VR 27 (input to component 1)
 #[test]
 fn test_fmi3_boolean_connections() {
-    let fmu = create_fmu();
+    let fmu = create_fmi3_container();
 
     let boolean_input_vr = [27]; // Input variable
     let mut boolean_input_values = [fmi3True];
@@ -258,7 +217,7 @@ fn test_fmi3_boolean_connections() {
 /// - VR 29 (input to component 0) -> VR 30 (output from component 0) -> VR 29 (input to component 1)
 #[test]
 fn test_fmi3_string_connections() {
-    let fmu = create_fmu();
+    let fmu = create_fmi3_container();
 
     let string_input_vr = [29]; // Input variable
     let string_input_values = ["test_string_fmi3"];
@@ -305,7 +264,7 @@ fn test_fmi3_string_connections() {
 /// Note: Only testing one Int64 connection as VR 33/34 are enumeration variables
 #[test]
 fn test_fmi3_int64_connections() {
-    let fmu = create_fmu();
+    let fmu = create_fmi3_container();
 
     let int64_input_vr = [23]; // Input variable
     let mut int64_input_values = [42_i64];
@@ -350,7 +309,7 @@ fn test_fmi3_int64_connections() {
 /// - VR 13 (input to component 0) -> VR 14 (output from component 0) -> VR 13 (input to component 1)
 #[test]
 fn test_fmi3_uint8_connections() {
-    let fmu = create_fmu();
+    let fmu = create_fmi3_container();
 
     let uint8_input_vr = [13]; // Input variable
     let mut uint8_input_values = [42_u8];
@@ -396,7 +355,7 @@ fn test_fmi3_uint8_connections() {
 /// - VR 15 (input to component 0) -> VR 16 (output from component 0) -> VR 15 (input to component 1)
 #[test]
 fn test_fmi3_int16_connections() {
-    let fmu = create_fmu();
+    let fmu = create_fmi3_container();
 
     let int16_input_vr = [15]; // Input variable
     let mut int16_input_values = [1234_i16];
@@ -442,7 +401,7 @@ fn test_fmi3_int16_connections() {
 /// - VR 17 (input to component 0) -> VR 18 (output from component 0) -> VR 17 (input to component 1)
 #[test]
 fn test_fmi3_uint16_connections() {
-    let fmu = create_fmu();
+    let fmu = create_fmi3_container();
 
     let uint16_input_vr = [17]; // Input variable
     let mut uint16_input_values = [12345_u16];
@@ -488,7 +447,7 @@ fn test_fmi3_uint16_connections() {
 /// - VR 19 (input to component 0) -> VR 20 (output from component 0) -> VR 19 (input to component 1)
 #[test]
 fn test_fmi3_int32_connections() {
-    let fmu = create_fmu();
+    let fmu = create_fmi3_container();
 
     let int32_input_vr = [19]; // Input variable
     let mut int32_input_values = [123456789_i32];
@@ -534,7 +493,7 @@ fn test_fmi3_int32_connections() {
 /// - VR 21 (input to component 0) -> VR 22 (output from component 0) -> VR 21 (input to component 1)
 #[test]
 fn test_fmi3_uint32_connections() {
-    let fmu = create_fmu();
+    let fmu = create_fmi3_container();
 
     let uint32_input_vr = [21]; // Input variable
     let mut uint32_input_values = [123456789_u32];
@@ -580,7 +539,7 @@ fn test_fmi3_uint32_connections() {
 /// - VR 25 (input to component 0) -> VR 26 (output from component 0) -> VR 25 (input to component 1)
 #[test]
 fn test_fmi3_uint64_connections() {
-    let fmu = create_fmu();
+    let fmu = create_fmi3_container();
 
     let uint64_input_vr = [25]; // Input variable
     let mut uint64_input_values = [12345678901234567890_u64];
@@ -627,7 +586,7 @@ fn test_fmi3_uint64_connections() {
 /// Note: Enumerations in FMI3 are handled as Int64 values in the container connections
 #[test]
 fn test_fmi3_enumeration_connections() {
-    let fmu = create_fmu();
+    let fmu = create_fmi3_container();
 
     // Enumeration variables are accessed as Int64 in FMI3
     let enum_input_vr = [31]; // Enumeration input variable
@@ -690,7 +649,7 @@ fn test_fmi3_enumeration_connections() {
 /// to remove connections for unsupported types.
 #[test]
 fn test_fmi3_container_limitation() {
-    let fmu = create_fmu();
+    let fmu = create_fmi3_container();
 
     // Container instantiation succeeds
     println!("✅ Container instantiated successfully");

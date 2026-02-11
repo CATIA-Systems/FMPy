@@ -2,9 +2,9 @@
 
 mod common;
 
-use fmi::fmi2::{FMU2, types::*};
+use common::create_fmi2_container;
+use fmi::fmi2::types::*;
 use rstest::*;
-use common::fmu;
 
 macro_rules! assert_ok {
     ($expression:expr) => {
@@ -17,7 +17,10 @@ macro_rules! assert_ok {
 /// are correctly set when the container FMU is instantiated and initialized.
 /// Note: Container start values override individual FMU model description start values.
 #[rstest]
-fn test_fmi2_start_values(fmu: FMU2) {
+fn test_fmi2_start_values() {
+
+    let fmu = create_fmi2_container();
+
     // Expected start values from container.json configuration
     // Only input variables and parameters have start values defined
     let expected_real_fixed_parameter = 1.0;      // container variable index 0: "start": ["1"]
@@ -167,7 +170,9 @@ fn test_fmi2_start_values(fmu: FMU2) {
 /// Test to verify that start values can be modified during initialization mode
 /// and that the changes persist after exiting initialization mode.
 #[rstest]
-fn test_fmi2_start_values_modification(fmu: FMU2) {
+fn test_fmi2_start_values_modification() {
+
+    let fmu = create_fmi2_container();
     
     assert_ok!(fmu.setupExperiment(Some(1e-5), 0.0, Some(1.0)));
     assert_ok!(fmu.enterInitializationMode());

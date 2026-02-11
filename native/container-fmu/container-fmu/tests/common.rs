@@ -1,9 +1,9 @@
-use fmi::fmi2::{FMU2, types::*};
+use fmi::{fmi2::{FMU2, types::*}, fmi3::{FMU3, types::fmi3Status}};
 use rstest::*;
 use std::{env, path::PathBuf};
 
 #[fixture]
-pub fn fmu() -> FMU2<'static> {
+pub fn create_fmi2_container() -> FMU2<'static> {
     let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .unwrap()
@@ -25,7 +25,7 @@ pub fn fmu() -> FMU2<'static> {
     };
 
     // Create and initialize FMU
-    let fmu = FMU2::new(
+    FMU2::new(
         &unzipdir,
         "container_fmu",
         "container",
@@ -36,9 +36,44 @@ pub fn fmu() -> FMU2<'static> {
         Some(Box::new(log_fmi_call)),
         Some(Box::new(log_message)),
     )
-    .unwrap();
+    .unwrap()
+}
 
-    assert!(fmu.getVersion().starts_with("2."));
+/// Creates and initializes an FMI3 container FMU instance
+pub fn create_fmi3_container() -> FMU3<'static> {
 
-    fmu
+    let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .to_path_buf();
+
+    let unzipdir = workspace_root
+        .join("container-fmu")
+        .join("tests")
+        .join("resources")
+        .join("fmi3");
+
+    let log_message = move |status: &fmi3Status, category: &str, message: &str| {
+        // println!(" [{status:?}] [{category}] {message}")
+    };
+
+    let log_fmi_call = move |status: &fmi3Status, message: &str| {   
+        // println!(">[{status:?}] {message}");
+    };
+
+    // Create and initialize FMU
+    FMU3::instantiateCoSimulation(
+        &unzipdir,
+        "container_fmu",
+        "container",
+        "{088cfe7e-cb81-4ca1-a83d-e7a5c3ff47fd}",
+        false,
+        true,
+        false,
+        false,
+        &[],
+        Some(Box::new(log_fmi_call)),
+        Some(Box::new(log_message)),
+    )
+    .unwrap()
 }

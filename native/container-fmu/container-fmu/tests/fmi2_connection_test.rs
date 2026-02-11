@@ -4,8 +4,7 @@ mod common;
 
 use rstest::*;
 use fmi::fmi2::types::*;
-use fmi::fmi2::FMU2;
-use common::fmu;
+use common::create_fmi2_container;
 
 macro_rules! assert_ok {
     ($expression:expr) => {
@@ -14,7 +13,9 @@ macro_rules! assert_ok {
 }
 
 #[rstest]
-fn test_fmi2_real_continuous_connections(fmu: FMU2) {
+fn test_fmi2_real_continuous_connections() {
+
+    let fmu = create_fmi2_container();
 
     let Real_continuous_input_vr = [3];
     let mut Real_continuous_input_values = [1.1];
@@ -53,7 +54,9 @@ fn test_fmi2_real_continuous_connections(fmu: FMU2) {
 }
 
 #[rstest]
-fn test_fmi2_real_discrete_connections(fmu: FMU2) {
+fn test_fmi2_real_discrete_connections() {
+
+    let fmu = create_fmi2_container();
 
     let Real_discrete_input_vr = [5];
     let mut Real_discrete_input_values = [2.5];
@@ -82,7 +85,9 @@ fn test_fmi2_real_discrete_connections(fmu: FMU2) {
 }
 
 #[rstest]
-fn test_fmi2_integer_connections(fmu: FMU2) {
+fn test_fmi2_integer_connections() {
+
+    let fmu = create_fmi2_container();
 
     let Integer_input_vr = [7];
     let mut Integer_input_values = [42];
@@ -111,7 +116,9 @@ fn test_fmi2_integer_connections(fmu: FMU2) {
 }
 
 #[rstest]
-fn test_fmi2_boolean_connections(fmu: FMU2) {
+fn test_fmi2_boolean_connections() {
+
+    let fmu = create_fmi2_container();
 
     let Boolean_input_vr = [9];
     let mut Boolean_input_values = [fmi2True];
@@ -140,7 +147,9 @@ fn test_fmi2_boolean_connections(fmu: FMU2) {
 }
 
 #[rstest]
-fn test_fmi2_string_connections(fmu: FMU2) {
+fn test_fmi2_string_connections() {
+
+    let fmu = create_fmi2_container();
 
     let String_input_vr = [11];
     let String_input_values = ["test_string"];
@@ -169,7 +178,9 @@ fn test_fmi2_string_connections(fmu: FMU2) {
 }
 
 #[rstest]
-fn test_fmi2_enumeration_connections(fmu: FMU2) {
+fn test_fmi2_enumeration_connections() {
+
+    let fmu = create_fmi2_container();
 
     let Enumeration_input_vr = [13];
     let mut Enumeration_input_values = [1]; // Option 1

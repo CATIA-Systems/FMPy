@@ -1,84 +1,58 @@
-// #![allow(non_camel_case_types, non_snake_case)]
+#![allow(non_camel_case_types, non_snake_case)]
 
-// use fmi::fmi2::types::*;
-// use fmi::{fmi2::*};
-// use std::{
-//     path::{Path, PathBuf},
-// };
-// use url::Url;
+mod common;
 
-// macro_rules! assert_ok {
-//     ($expression:expr) => {
-//         assert_eq!($expression, fmi2OK);
-//     };
-// }
+use common::create_fmi2_container;
+use fmi::fmi2::types::*;
+use fmi::{fmi2::*};
+use std::{
+    path::{Path, PathBuf},
+};
+use url::Url;
 
-// #[test]
-// fn test_fmi2_container() {
+macro_rules! assert_ok {
+    ($expression:expr) => {
+        assert_eq!($expression, fmi2OK);
+    };
+}
 
-//     let resource_path = PathBuf::from(r"E:\WS\FMPy\tests\work\resources");
-//     let dll_path = Path::new(r"E:\WS\FMPy\tests\work\binaries\win64\container_fmu.dll");
+#[test]
+fn test_fmi2_container() {
 
-//     let log_message = move |status: &fmi2Status, category: &str, message: &str| {
-//         println!(" [{status:?}] [{category}] {message}")
-//     };
+    let fmu = create_fmi2_container();
 
-//     let log_fmi_call =
-//         move |status: &fmi2Status, message: &str| println!(">[{status:?}] {message}");
+    let Real_continuous_input_vr = [3];
+    let mut Real_continuous_input_values = [1.1];
 
-//     let mut fmu = FMU2::new(
-//         dll_path,
-//         "main",
-//         Some(Box::new(log_fmi_call)),
-//         Some(Box::new(log_message)),
-//     )
-//     .unwrap();
+    let Real_continuous_output_vr = [4];
+    let mut Real_continuous_output_values = [0.0];
 
-//     let resource_url = Url::from_directory_path(resource_path).unwrap();
+    // set an input value
+    assert_ok!(fmu.setReal(&Real_continuous_input_vr, &Real_continuous_input_values));
 
-//     assert_ok!(fmu.instantiate(
-//         "container",
-//         fmi2Type::fmi2CoSimulation,
-//         "",
-//         Some(&resource_url),
-//         false,
-//         true,
-//     ));
+    assert_ok!(fmu.setupExperiment(None, 0.0, None));
+    assert_ok!(fmu.enterInitializationMode());
+    assert_ok!(fmu.exitInitializationMode());
 
-//     // let Real_continuous_input_vr = [3];
-//     // let mut Real_continuous_input_values = [1.1];
+    // check if the value has been forwarded after exiting intialization mode
+    assert_ok!(fmu.getReal(
+        &Real_continuous_output_vr,
+        &mut Real_continuous_output_values
+    ));
+    assert_eq!(Real_continuous_output_values, Real_continuous_input_values);
 
-//     // let Real_continuous_output_vr = [4];
-//     // let mut Real_continuous_output_values = [0.0];
+    // set a different input value
+    Real_continuous_input_values[0] = 1.2;
+    assert_ok!(fmu.setReal(&Real_continuous_input_vr, &Real_continuous_input_values));
 
-//     // // set an input value
-//     // assert_ok!(fmu.setReal(&Real_continuous_input_vr, &Real_continuous_input_values));
+    assert_ok!(fmu.doStep(0.0, 0.5, fmi2True));
 
-//     assert_ok!(fmu.setupExperiment(None, 0.0, None));
-//     assert_ok!(fmu.enterInitializationMode());
-//     assert_ok!(fmu.exitInitializationMode());
+    // check if the value has been forwarded after the doStep
+    assert_ok!(fmu.getReal(
+        &Real_continuous_output_vr,
+        &mut Real_continuous_output_values
+    ));
+    assert_eq!(Real_continuous_output_values, Real_continuous_input_values);
 
-//     // // check if the value has been forwarded after exiting intialization mode
-//     // assert_ok!(fmu.getReal(
-//     //     &Real_continuous_output_vr,
-//     //     &mut Real_continuous_output_values
-//     // ));
-//     // assert_eq!(Real_continuous_output_values, Real_continuous_input_values);
-
-//     // // set a different input value
-//     // Real_continuous_input_values[0] = 1.2;
-//     // assert_ok!(fmu.setReal(&Real_continuous_input_vr, &Real_continuous_input_values));
-
-//     // assert_ok!(fmu.doStep(0.0, 0.5, fmi2True));
-
-//     // // check if the value has been forwarded after the doStep
-//     // assert_ok!(fmu.getReal(
-//     //     &Real_continuous_output_vr,
-//     //     &mut Real_continuous_output_values
-//     // ));
-//     // assert_eq!(Real_continuous_output_values, Real_continuous_input_values);
-
-//     assert_ok!(fmu.terminate());
-
-//     fmu.freeInstance();
-// }
+    assert_ok!(fmu.terminate());
+}

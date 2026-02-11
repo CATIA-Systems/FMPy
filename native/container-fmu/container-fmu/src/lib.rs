@@ -19,7 +19,6 @@ use std::os::raw::c_void;
 use std::path::Path;
 
 use std::sync::Arc;
-use url::Url;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -202,7 +201,7 @@ impl Container<'_> {
                     );
                 };
 
-            let mut fmu_instance = match component.fmiMajorVersion {
+            let fmu_instance = match component.fmiMajorVersion {
                 FMIMajorVersion::FMIMajorVersion2 => {
                     let component_name: String = component.name.clone();
                     match FMU2::new(

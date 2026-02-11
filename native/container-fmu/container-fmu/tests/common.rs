@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use fmi::{fmi2::{FMU2, types::*}, fmi3::{FMU3, types::fmi3Status}};
 use rstest::*;
 use std::{env, path::PathBuf};

@@ -2,10 +2,15 @@
 
 use fmi::{SHARED_LIBRARY_EXTENSION, fmi2::{FMU2, PLATFORM, types::*}, fmi3::{FMU3, PLATFORM_TUPLE, types::fmi3Status}};
 use rstest::*;
-use std::{env, path::PathBuf};
+use std::{env, path::PathBuf, sync::Mutex};
+use std::sync::OnceLock;
+
+static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
 
 #[fixture]
 pub fn create_fmi2_container() -> FMU2<'static> {
+
+    let _guard = LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
 
     let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -52,6 +57,8 @@ pub fn create_fmi2_container() -> FMU2<'static> {
 }
 
 pub fn create_fmi3_container() -> FMU3<'static> {
+
+    let _guard = LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
 
     let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()

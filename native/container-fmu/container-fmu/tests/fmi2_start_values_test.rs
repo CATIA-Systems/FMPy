@@ -1,54 +1,15 @@
 #![allow(non_camel_case_types, non_snake_case)]
 
+mod common;
+
 use fmi::fmi2::{FMU2, types::*};
-use std::{
-    env,
-    path::PathBuf,
-};
 use rstest::*;
+use common::fmu;
 
 macro_rules! assert_ok {
     ($expression:expr) => {
         assert_eq!($expression, fmi2OK);
     };
-}
-
-#[fixture]
-pub fn fmu() -> FMU2<'static> {
-
-    let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).parent().unwrap().to_path_buf();
-
-    let unzipdir = workspace_root
-        .join("container-fmu")
-        .join("tests")
-        .join("resources")
-        .join("fmi2");
-
-    // Setup logging callbacks
-    let log_message = move |status: &fmi2Status, category: &str, message: &str| {
-        // println!("[{status:?}] [{category}] {message}")
-    };
-
-    let log_fmi_call = move |status: &fmi2Status, message: &str| {
-        // println!("[{status:?}] {message}")
-    };
-
-    // Create and initialize FMU
-    let fmu = FMU2::new(
-        &unzipdir,
-        "container_fmu",
-        "container",
-        fmi2Type::fmi2CoSimulation,
-        "f6cda2ea-6875-475c-b7dc-a43a33e69094",
-        false,
-        true,
-        Some(Box::new(log_fmi_call)),
-        Some(Box::new(log_message)),
-    ).unwrap();
-
-    assert!(fmu.getVersion().starts_with("2."));
-
-    fmu
 }
 
 

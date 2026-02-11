@@ -1,11 +1,12 @@
 #![allow(unused)]
 
-use fmi::{fmi2::{FMU2, types::*}, fmi3::{FMU3, types::fmi3Status}};
+use fmi::{SHARED_LIBRARY_EXTENSION, fmi2::{FMU2, PLATFORM, types::*}, fmi3::{FMU3, PLATFORM_TUPLE, types::fmi3Status}};
 use rstest::*;
 use std::{env, path::PathBuf};
 
 #[fixture]
 pub fn create_fmi2_container() -> FMU2<'static> {
+
     let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .unwrap()
@@ -17,7 +18,17 @@ pub fn create_fmi2_container() -> FMU2<'static> {
         .join("resources")
         .join("fmi2");
 
-    // Setup logging callbacks
+    let platform_binary = unzipdir
+        .join("binaries")
+        .join(PLATFORM)
+        .join(format!("container_fmu{SHARED_LIBRARY_EXTENSION}"));
+
+    if !platform_binary.is_file() {
+        let shared_library_name = format!("{}container_fmu{}", if cfg!(windows) { "" } else { "lib" }, SHARED_LIBRARY_EXTENSION);
+        let shared_library_artifact = workspace_root.join("target").join("debug").join(shared_library_name);
+        std::fs::copy(shared_library_artifact, platform_binary).unwrap();
+    }
+
     let log_message = move |_status: &fmi2Status, _category: &str, _message: &str| {
         // println!("[{_status:?}] [{_category}] {_message}")
     };
@@ -26,7 +37,6 @@ pub fn create_fmi2_container() -> FMU2<'static> {
         // println!("[{_status:?}] {_message}")
     };
 
-    // Create and initialize FMU
     FMU2::new(
         &unzipdir,
         "container_fmu",
@@ -41,7 +51,6 @@ pub fn create_fmi2_container() -> FMU2<'static> {
     .unwrap()
 }
 
-/// Creates and initializes an FMI3 container FMU instance
 pub fn create_fmi3_container() -> FMU3<'static> {
 
     let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -55,6 +64,17 @@ pub fn create_fmi3_container() -> FMU3<'static> {
         .join("resources")
         .join("fmi3");
 
+    let platform_binary = unzipdir
+        .join("binaries")
+        .join(PLATFORM_TUPLE)
+        .join(format!("container_fmu{SHARED_LIBRARY_EXTENSION}"));
+
+    if !platform_binary.is_file() {
+        let shared_library_name = format!("{}container_fmu{}", if cfg!(windows) { "" } else { "lib" }, SHARED_LIBRARY_EXTENSION);
+        let shared_library_artifact = workspace_root.join("target").join("debug").join(shared_library_name);
+        std::fs::copy(shared_library_artifact, platform_binary).unwrap();
+    }
+
     let log_message = move |status: &fmi3Status, category: &str, message: &str| {
         // println!(" [{status:?}] [{category}] {message}")
     };
@@ -63,7 +83,6 @@ pub fn create_fmi3_container() -> FMU3<'static> {
         // println!(">[{status:?}] {message}");
     };
 
-    // Create and initialize FMU
     FMU3::instantiateCoSimulation(
         &unzipdir,
         "container_fmu",

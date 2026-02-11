@@ -107,8 +107,15 @@ def write_configuration(configuration: Configuration, filename: Path):
                 component_variable.valueReference
             ))
 
+        variable_type = container_variable.type
+
+        if variable_type == "Real":
+            variable_type = "Float64"
+        elif variable_type == "Integer":
+            variable_type = "Int32"
+
         variable = {
-            "variableType": container_variable.type,
+            "variableType": variable_type,
             "mappings": mappings,
         }
 

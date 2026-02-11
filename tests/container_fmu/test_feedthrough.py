@@ -14,7 +14,7 @@ from fmpy.model_description import BaseUnit, DisplayUnit, ModelDescription, Simp
 def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir):
 
     container_input = ModelVariable(
-        type="Float64",
+        type="Real",
         variability="continuous",
         causality="input",
         name="Float64_continuous_input",
@@ -22,7 +22,7 @@ def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir):
     )
 
     container_output = ModelVariable(
-        type="Float64",
+        type="Real",
         initial="calculated",
         variability="continuous",
         causality="output",
@@ -30,7 +30,7 @@ def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir):
     )
 
     model_description = ModelDescription(
-        fmiVersion="3.0.2",
+        fmiVersion="2.0",
         modelName="Feedthrough",
         instantiationToken="",
         unitDefinitions=[
@@ -41,7 +41,7 @@ def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir):
             ),
         ],
         typeDefinitions=[
-            SimpleType(name='AngularVelocity', type="Float64", quantity='AngularVelocity', unit='rad/s',
+            SimpleType(name='AngularVelocity', type="Real", quantity='AngularVelocity', unit='rad/s',
                        displayUnit='rpm'),
             SimpleType(name='Option', type='Enumeration', items=[
                 Item(name='Option 1', value="1", description="First option"),
@@ -56,7 +56,7 @@ def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir):
         ),
         modelVariables=[
             ModelVariable(
-                type="Float64",
+                type="Real",
                 variability="continuous",
                 causality="independent",
                 name="time",

@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<fmiModelDescription fmiVersion="3.0" modelName="ContainerFMI3" instantiationToken="{FMI3-CONTAINER-TEST-TOKEN}"
+<fmiModelDescription
+  fmiVersion="3.0" 
+  modelName="ContainerFMI3" 
+  instantiationToken="{088cfe7e-cb81-4ca1-a83d-e7a5c3ff47fd}"
   description="FMI3 Container model with comprehensive variable type testing"
   generationTool="ContainerFMU Test Suite"
   generationDateAndTime="2025-01-01T00:00:00Z">
 
   <CoSimulation modelIdentifier="container"/>
-
-  <LogCategories>
-    <Category name="logStatusError" description="Log error messages"/>
-  </LogCategories>
 
   <DefaultExperiment startTime="0" stopTime="1" stepSize="0.1"/>
 
@@ -74,13 +73,19 @@
 
     <!-- String variables -->
     <String name="String_input" valueReference="29" causality="input">
-        <Start value="container_fmi3_string"/>
+      <Start value="container_fmi3_string"/>
     </String>
     <String name="String_output" valueReference="30" causality="output"/>
 
+    <!-- Binary variables -->
+    <Binary name="Binary_input" valueReference="31" causality="input">
+      <Start value="666f6f"/>
+    </Binary>
+    <Binary name="Binary_output" valueReference="32" causality="output"/>
+
     <!-- Enumeration variables -->
-    <Enumeration name="Enumeration_input" declaredType="Option" valueReference="31" causality="input" start="2"/>
-    <Enumeration name="Enumeration_output" declaredType="Option" valueReference="32" causality="output"/>
+    <Enumeration name="Enumeration_input" declaredType="Option" valueReference="33" causality="input" start="2"/>
+    <Enumeration name="Enumeration_output" declaredType="Option" valueReference="34" causality="output"/>
 
   </ModelVariables>
 
@@ -99,6 +104,7 @@
     <Output valueReference="26" dependencies="25" dependenciesKind="constant"/>
     <Output valueReference="28" dependencies="27" dependenciesKind="constant"/>
     <Output valueReference="30" dependencies="29" dependenciesKind="constant"/>
+    <Output valueReference="32" dependencies="31" dependenciesKind="constant"/>
     <Output valueReference="34" dependencies="33" dependenciesKind="constant"/>
     <InitialUnknown valueReference="2" dependencies="1" dependenciesKind="constant"/>
     <InitialUnknown valueReference="4" dependencies="3" dependenciesKind="constant"/>
@@ -114,6 +120,7 @@
     <InitialUnknown valueReference="26" dependencies="25" dependenciesKind="constant"/>
     <InitialUnknown valueReference="28" dependencies="27" dependenciesKind="constant"/>
     <InitialUnknown valueReference="30" dependencies="29" dependenciesKind="constant"/>
+    <InitialUnknown valueReference="32" dependencies="31" dependenciesKind="constant"/>
     <InitialUnknown valueReference="34" dependencies="33" dependenciesKind="constant"/>
   </ModelStructure>
 

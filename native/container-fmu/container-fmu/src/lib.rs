@@ -14,6 +14,8 @@ use fmi::types::fmiStatus::*;
 use fmi::types::*;
 use fmi::*;
 use rayon::prelude::*;
+use serde_json::value;
+use std::error::Error;
 use std::ffi::CString;
 use std::os::raw::c_void;
 use std::path::Path;
@@ -335,6 +337,7 @@ impl Container<'_> {
     }
 
     fn setStartValues(&self) -> fmiStatus {
+
         let mut status = fmiOK;
 
         for (i, variable) in self.system.variables.iter().enumerate() {
@@ -363,20 +366,52 @@ impl Container<'_> {
                             set_start_value!(self, valueReferences, start, setInt64, fmiInt64),
                         VariableType::UInt64 =>
                             set_start_value!(self, valueReferences, start, setUInt64, fmiUInt64),
-                        VariableType::Boolean =>
+                        VariableType::Boolean | VariableType::Clock =>
                             set_start_value!(self, valueReferences, start, setBoolean, fmiBoolean),
                         VariableType::String => {
                             let start: Vec<&str> = start.iter().map(String::as_str).collect();
                             self.setString(valueReferences, &start)
-                        }
-                        _ => {
-                            let message = format!(
-                                "Start value of type {:?} is not supported.",
-                                variable.variableType
-                            );
-                            self.logError(&message);
-                            fmiError
-                        }
+                        },
+                        VariableType::Binary => {
+                            let values: Result<Vec<Vec<fmiByte>>, Box<dyn Error>> = start.into_iter().map(|hex_str| {
+                                    
+                                    if hex_str.len() % 2 != 0 {
+                                        return Err(format!("Invalid hex string length: {}", hex_str).into());
+                                    }
+                                    
+                                    let mut bytes = Vec::new();
+
+                                    for i in (0..hex_str.len()).step_by(2) {
+                                        let byte_str = &hex_str[i..i+2];
+                                        match u8::from_str_radix(byte_str, 16) {
+                                            Ok(byte) => bytes.push(byte),
+                                            Err(e) => return Err(format!("Invalid hex byte '{}': {}", byte_str, e).into()),
+                                        }
+                                    }
+
+                                    Ok(bytes)
+                                })
+                                .collect();
+
+                            match values {
+                                Ok(v) => {
+                                    self.setBinary(valueReferences, &v)
+                                },
+                                Err(e) => {
+                                    self.logError("message");
+                                    fmiError
+                                }
+                            }
+                            
+                        },
+                        // _ => {
+                        //     let message = format!(
+                        //         "Start value of type {:?} is not supported.",
+                        //         variable.variableType
+                        //     );
+                        //     self.logError(&message);
+                        //     fmiError
+                        // }
                     }
                 );
             }
@@ -715,6 +750,59 @@ impl Container<'_> {
         self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
     }
 
+    fn getBinary(
+        &self,
+        valueReferences: &[fmiValueReference],
+        sizes: &mut [usize],
+        values: &mut [fmiBinary],
+    ) -> fmiStatus {
+        let mut status = fmiOK;
+        let mut size_idx = 0;
+        let mut value_idx = 0;
+
+        for valueReference in valueReferences {
+            let variable = match self.getVariable(*valueReference, VariableType::Binary) {
+                Ok(var) => var,
+                Err(e) => {
+                    self.logError(e.as_str());
+                    return fmi3Error;
+                }
+            };
+
+            let mapping = &variable.mappings[0];
+            let var_size = variable.size.unwrap_or(1);
+            let instance = &self.instances[mapping.component as usize];
+
+            if size_idx + var_size > sizes.len() || value_idx + var_size > values.len() {
+                self.logError("Argument sizes or values array is too small.");
+                return fmi3Error;
+            }
+
+            let size_slice = &mut sizes[size_idx..size_idx + var_size];
+            let value_slice = &mut values[value_idx..value_idx + var_size];
+            let vrs: [u32; 1] = [mapping.valueReference];
+
+            let s = match instance {
+                FMUInstance::FMI2(fmu) => {
+                    self.logError("Binary variables are not supported for FMI 2.");
+                    fmiError
+                }
+                FMUInstance::FMI3(fmu) => fmu.getBinary(&vrs, size_slice, value_slice),
+            };
+
+            if s >= fmiError {
+                return s;
+            } else if s > status {
+                status = s;
+            }
+
+            size_idx += var_size;
+            value_idx += var_size;
+        }
+
+        status
+    }
+
     fn getValues<
         T,
         U: Fn(&FMU2, &[fmiValueReference], &mut [T]) -> fmiStatus,
@@ -944,6 +1032,18 @@ impl Container<'_> {
         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
     }
 
+    fn setBinary(&self, valueReferences: &[fmiValueReference], values: &[Vec<u8>]) -> fmiStatus {
+        let fmi2_setter = |fmu: &FMU2, valueReferences: &[fmi2ValueReference], values: &[Vec<u8>]| {
+            fmiError
+        };
+        let fmi3_setter = |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[Vec<u8>]| {
+            let sizes: Vec<usize> = values.iter().map(|v| v.len()).collect();
+            let values: Vec<*const u8> = values.iter().map(|v| v.as_ptr()).collect();
+            fmu.setBinary(valueReferences, &sizes, &values)
+        };
+        set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
+    }
+
     fn updateConnections(&self) -> fmiStatus {
         let status = fmiOK;
 
@@ -1101,6 +1201,24 @@ impl Container<'_> {
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => fmu.setString(&dstValueReferences, &values),
                         FMUInstance::FMI3(fmu) => fmu.setString(&dstValueReferences, &values),
+                    });
+                }
+                VariableType::Binary => {
+                    let mut sizes = vec![0usize; size];
+                    let mut value_ptrs = vec![std::ptr::null::<u8>(); size];
+                    fmi_check_status!(match srcInstance {
+                        FMUInstance::FMI2(fmu) => {
+                            self.logError("Binary variables are not supported for FMI 2.");
+                            return fmiError; 
+                        },
+                        FMUInstance::FMI3(fmu) => fmu.getBinary(&srcValueReferences, &mut sizes, &mut value_ptrs),
+                    });
+                    fmi_check_status!(match dstInstance {
+                        FMUInstance::FMI2(fmu) =>  {
+                            self.logError("Binary variables are not supported for FMI 2.");
+                            return fmiError; 
+                        },
+                        FMUInstance::FMI3(fmu) => fmu.setBinary(&dstValueReferences, &sizes, &value_ptrs),
                     });
                 }
                 _ => {

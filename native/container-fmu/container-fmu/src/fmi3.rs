@@ -362,10 +362,36 @@ pub extern "C" fn fmi3GetBinary(
     valueReferences: *const fmi3ValueReference,
     nValueReferences: usize,
     valueSizes: *mut usize,
-    values: *mut *const fmi3Binary,
+    values: *mut fmi3Binary,
     nValues: usize,
 ) -> fmi3Status {
-    NOT_IMPLEMENTED(instance)
+    if instance.is_null() {
+        eprintln!("Argument instance must not be NULL.");
+        return fmi3Error;
+    }
+
+    let container = unsafe { &*(instance as *mut Container) };
+
+    if valueReferences.is_null() {
+        container.logError("Argument valueReferences must not be NULL.");
+        return fmi3Error;
+    }
+
+    if valueSizes.is_null() {
+        container.logError("Argument valueSizes must not be NULL.");
+        return fmi3Error;
+    }
+
+    if values.is_null() {
+        container.logError("Argument values must not be NULL.");
+        return fmi3Error;
+    }
+
+    let valueReferences = unsafe { std::slice::from_raw_parts(valueReferences, nValueReferences) };
+    let sizes = unsafe { std::slice::from_raw_parts_mut(valueSizes, nValues) };
+    let values = unsafe { std::slice::from_raw_parts_mut(values, nValues) };
+
+    container.getBinary(valueReferences, sizes, values)
 }
 
 #[unsafe(no_mangle)]

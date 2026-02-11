@@ -26,9 +26,9 @@ pub enum VariableType {
     Int64,
     UInt64,
     Boolean,
-    Char,
+    // Char,
     String,
-    Byte,
+    // Byte,
     Binary,
     Clock,
 }

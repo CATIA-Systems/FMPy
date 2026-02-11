@@ -589,10 +589,10 @@ fn test_fmi3_enumeration_connections() {
     let fmu = create_fmi3_container();
 
     // Enumeration variables are accessed as Int64 in FMI3
-    let enum_input_vr = [31]; // Enumeration input variable
+    let enum_input_vr = [33]; // Enumeration input variable
     let mut enum_input_values = [2_i64]; // Option 2
 
-    let enum_output_vr = [32]; // Enumeration output variable
+    let enum_output_vr = [34]; // Enumeration output variable
     let mut enum_output_values = [0_i64];
 
     // Set enumeration value (Option 2)

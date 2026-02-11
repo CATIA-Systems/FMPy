@@ -35,7 +35,7 @@ fn test_fmi3_start_values() {
     let expected_uint64_input = 25u64; // container variable index 24: "start": ["25"]
     let expected_boolean_input = true; // container variable index 26: "start": ["true"]
     let expected_string_input = "container_fmi3_string"; // container variable index 28: "start": ["container_fmi3_string"]
-
+    let expected_binary_input = b"foo";
     let expected_enumeration_input = 2i64; // container variable index 32: "start": ["2"] (Option 2)
 
     // Value references from modelDescription.xml (only for variables with start values)
@@ -55,8 +55,8 @@ fn test_fmi3_start_values() {
     let uint64_input_vr = [25];
     let boolean_input_vr = [27];
     let string_input_vr = [29];
-
-    let enumeration_input_vr = [31];
+    let binary_input_vr = [31];
+    let enumeration_input_vr = [33];
 
     // Output buffers (only for variables with start values)
     let mut float32_continuous_input_values = [0.0f32];
@@ -75,7 +75,8 @@ fn test_fmi3_start_values() {
     let mut uint64_input_values = [0u64];
     let mut boolean_input_values = [false]; // Initialize to opposite of expected
     let mut string_input_values = [String::new()];
-
+    let mut binary_input_sizes = [1usize];
+    let mut binary_input_values = [std::ptr::null::<u8>()];
     let mut enumeration_input_values = [0i64];
 
     let fmu = create_fmi3_container();
@@ -231,6 +232,27 @@ fn test_fmi3_start_values() {
         "String_input start value mismatch. Expected: '{}', Got: '{}'",
         expected_string_input, string_input_values[0]
     );
+
+    // Test 17: Binary input (start="666f6f" which is "foo" in hex)
+    assert_ok!(fmu.getBinary(&binary_input_vr, &mut binary_input_sizes, &mut binary_input_values));
+    
+    // Verify the size matches expected
+    assert_eq!(
+        binary_input_sizes[0], expected_binary_input.len(),
+        "Binary_input size mismatch. Expected: {}, Got: {}",
+        expected_binary_input.len(), binary_input_sizes[0]
+    );
+    
+    // Convert the pointer to a slice and compare with expected value
+    let binary_slice = unsafe { 
+        std::slice::from_raw_parts(binary_input_values[0], binary_input_sizes[0]) 
+    };
+    assert_eq!(
+        binary_slice, expected_binary_input,
+        "Binary_input start value mismatch. Expected: {:?}, Got: {:?}",
+        expected_binary_input, binary_slice
+    );
+
 
     // Test 18: Enumeration input (start="2")
     assert_ok!(fmu.getInt64(&enumeration_input_vr, &mut enumeration_input_values));

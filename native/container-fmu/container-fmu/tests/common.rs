@@ -30,7 +30,12 @@ pub fn create_fmi2_container() -> FMU2<'static> {
 
     if !platform_binary.is_file() {
         let shared_library_name = format!("{}container_fmu{}", if cfg!(windows) { "" } else { "lib" }, SHARED_LIBRARY_EXTENSION);
-        let shared_library_artifact = workspace_root.join("target").join("debug").join(shared_library_name);
+        let build_type = if cfg!(debug_assertions) { "debug" } else { "release" };
+        let shared_library_artifact = workspace_root.join("target").join(build_type).join(shared_library_name);
+        
+        dbg!(&shared_library_artifact);
+        dbg!(&platform_binary);
+        
         std::fs::copy(shared_library_artifact, platform_binary).unwrap();
     }
 
@@ -78,7 +83,8 @@ pub fn create_fmi3_container() -> FMU3<'static> {
 
     if !platform_binary.is_file() {
         let shared_library_name = format!("{}container_fmu{}", if cfg!(windows) { "" } else { "lib" }, SHARED_LIBRARY_EXTENSION);
-        let shared_library_artifact = workspace_root.join("target").join("debug").join(shared_library_name);
+        let build_type = if cfg!(debug_assertions) { "debug" } else { "release" };
+        let shared_library_artifact = workspace_root.join("target").join(build_type).join(shared_library_name);
         std::fs::copy(shared_library_artifact, platform_binary).unwrap();
     }
 

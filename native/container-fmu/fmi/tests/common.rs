@@ -15,7 +15,7 @@ const REFERENCE_FMUS_URL: &str = "https://github.com/modelica/Reference-FMUs/rel
 const EXPECTED_SHA256: &str = "6863d55e5818e1ca4e4614c4d4ba4047a921b4495f6336e7002874ed791f6c2a";
 
 /// Setup fixture that ensures Feedthrough FMUs are available
-fn ensure_feedthrough_fmus() -> Result<(), Box<dyn std::error::Error>> {
+pub fn ensure_feedthrough_fmus() -> Result<(), Box<dyn std::error::Error>> {
     let mut setup_done = SETUP_DONE.get_or_init(|| Mutex::new(false)).lock().unwrap();
     
     if *setup_done {
@@ -28,19 +28,17 @@ fn ensure_feedthrough_fmus() -> Result<(), Box<dyn std::error::Error>> {
         .to_path_buf();
 
     let fmi2_feedthrough = workspace_root
-        .join("container-fmu")
+        .join("fmi")
         .join("tests")
         .join("resources")
         .join("fmi2")
-        .join("resources")
         .join("Feedthrough");
 
     let fmi3_feedthrough = workspace_root
-        .join("container-fmu")
+        .join("fmi")
         .join("tests")
         .join("resources")
         .join("fmi3")
-        .join("resources")
         .join("Feedthrough");
 
     // Check if both directories exist
@@ -148,115 +146,4 @@ fn ensure_feedthrough_fmus() -> Result<(), Box<dyn std::error::Error>> {
 
     *setup_done = true;
     Ok(())
-}
-
-#[fixture]
-pub fn create_fmi2_container() -> FMU2<'static> {
-
-    let _guard = LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
-
-    // Ensure Feedthrough FMUs are available
-    ensure_feedthrough_fmus().expect("Failed to setup Feedthrough FMUs");
-
-    let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .to_path_buf();
-
-    let unzipdir = workspace_root
-        .join("container-fmu")
-        .join("tests")
-        .join("resources")
-        .join("fmi2");
-
-    let platform_binary = unzipdir
-        .join("binaries")
-        .join(PLATFORM)
-        .join(format!("container_fmu{SHARED_LIBRARY_EXTENSION}"));
-
-    if !platform_binary.is_file() {
-        let shared_library_name = format!("{}container_fmu{}", if cfg!(windows) { "" } else { "lib" }, SHARED_LIBRARY_EXTENSION);
-        let build_type = if cfg!(debug_assertions) { "debug" } else { "release" };
-        let shared_library_artifact = workspace_root.join("target").join(build_type).join(shared_library_name);
-        
-        dbg!(&shared_library_artifact);
-        dbg!(&platform_binary);
-        
-        std::fs::copy(shared_library_artifact, platform_binary).unwrap();
-    }
-
-    let log_message = move |status: &fmi2Status, category: &str, message: &str| {
-        println!("[{status:?}] [{category}] {message}")
-    };
-
-    let log_fmi_call = move |_status: &fmi2Status, _message: &str| {
-        // println!("[{_status:?}] {_message}")
-    };
-
-    FMU2::new(
-        &unzipdir,
-        "container_fmu",
-        "container",
-        fmi2Type::fmi2CoSimulation,
-        "f6cda2ea-6875-475c-b7dc-a43a33e69094",
-        false,
-        true,
-        Some(Box::new(log_fmi_call)),
-        Some(Box::new(log_message)),
-    )
-    .unwrap()
-}
-
-pub fn create_fmi3_container() -> FMU3<'static> {
-
-    let _guard = LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
-
-    // Ensure Feedthrough FMUs are available
-    ensure_feedthrough_fmus().expect("Failed to setup Feedthrough FMUs");
-
-    let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .to_path_buf();
-
-    let unzipdir = workspace_root
-        .join("container-fmu")
-        .join("tests")
-        .join("resources")
-        .join("fmi3");
-
-    let platform_binary = unzipdir
-        .join("binaries")
-        .join(PLATFORM_TUPLE)
-        .join(format!("container_fmu{SHARED_LIBRARY_EXTENSION}"));
-
-    if !platform_binary.is_file() {
-        let shared_library_name = format!("{}container_fmu{}", if cfg!(windows) { "" } else { "lib" }, SHARED_LIBRARY_EXTENSION);
-        let build_type = if cfg!(debug_assertions) { "debug" } else { "release" };
-        let shared_library_artifact = workspace_root.join("target").join(build_type).join(shared_library_name);
-        std::fs::copy(shared_library_artifact, platform_binary).unwrap();
-    }
-
-    let log_message = move |status: &fmi3Status, category: &str, message: &str| {
-        println!(" [{status:?}] [{category}] {message}")
-    };
-
-    let log_fmi_call = move |status: &fmi3Status, message: &str| {   
-        // println!(">[{status:?}] {message}");
-    };
-
-    FMU3::instantiateCoSimulation(
-        &unzipdir,
-        "container_fmu",
-        "container",
-        "{088cfe7e-cb81-4ca1-a83d-e7a5c3ff47fd}",
-        false,
-        true,
-        false,
-        false,
-        &[],
-        Some(Box::new(log_fmi_call)),
-        Some(Box::new(log_message)),
-    )
-    .unwrap()
 }

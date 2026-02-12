@@ -20,7 +20,7 @@
             "variableType": "Float32",
             "mappings": [
                 {
-                    "component": 0,
+                    "component": 1,
                     "valueReference": 2
                 }
             ]
@@ -41,7 +41,7 @@
             "variableType": "Float32",
             "mappings": [
                 {
-                    "component": 0,
+                    "component": 1,
                     "valueReference": 4
                 }
             ]
@@ -51,6 +51,10 @@
             "mappings": [
                 {
                     "component": 0,
+                    "valueReference": 5
+                },
+                {
+                    "component": 1,
                     "valueReference": 5
                 }
             ],
@@ -63,6 +67,10 @@
             "mappings": [
                 {
                     "component": 0,
+                    "valueReference": 6
+                },
+                {
+                    "component": 1,
                     "valueReference": 6
                 }
             ],
@@ -86,7 +94,7 @@
             "variableType": "Float64",
             "mappings": [
                 {
-                    "component": 0,
+                    "component": 1,
                     "valueReference": 8
                 }
             ]
@@ -107,7 +115,7 @@
             "variableType": "Float64",
             "mappings": [
                 {
-                    "component": 0,
+                    "component": 1,
                     "valueReference": 10
                 }
             ]
@@ -128,7 +136,7 @@
             "variableType": "Int8",
             "mappings": [
                 {
-                    "component": 0,
+                    "component": 1,
                     "valueReference": 12
                 }
             ]
@@ -149,7 +157,7 @@
             "variableType": "UInt8",
             "mappings": [
                 {
-                    "component": 0,
+                    "component": 1,
                     "valueReference": 14
                 }
             ]
@@ -170,7 +178,7 @@
             "variableType": "Int16",
             "mappings": [
                 {
-                    "component": 0,
+                    "component": 1,
                     "valueReference": 16
                 }
             ]
@@ -191,7 +199,7 @@
             "variableType": "UInt16",
             "mappings": [
                 {
-                    "component": 0,
+                    "component": 1,
                     "valueReference": 18
                 }
             ]
@@ -212,7 +220,7 @@
             "variableType": "Int32",
             "mappings": [
                 {
-                    "component": 0,
+                    "component": 1,
                     "valueReference": 20
                 }
             ]
@@ -233,7 +241,7 @@
             "variableType": "UInt32",
             "mappings": [
                 {
-                    "component": 0,
+                    "component": 1,
                     "valueReference": 22
                 }
             ]
@@ -254,7 +262,7 @@
             "variableType": "Int64",
             "mappings": [
                 {
-                    "component": 0,
+                    "component": 1,
                     "valueReference": 24
                 }
             ]
@@ -275,7 +283,7 @@
             "variableType": "UInt64",
             "mappings": [
                 {
-                    "component": 0,
+                    "component": 1,
                     "valueReference": 26
                 }
             ]
@@ -296,7 +304,7 @@
             "variableType": "Boolean",
             "mappings": [
                 {
-                    "component": 0,
+                    "component": 1,
                     "valueReference": 28
                 }
             ]
@@ -317,7 +325,7 @@
             "variableType": "String",
             "mappings": [
                 {
-                    "component": 0,
+                    "component": 1,
                     "valueReference": 30
                 }
             ]
@@ -338,7 +346,7 @@
             "variableType": "Binary",
             "mappings": [
                 {
-                    "component": 0,
+                    "component": 1,
                     "valueReference": 32
                 }
             ]
@@ -359,7 +367,7 @@
             "variableType": "Int64",
             "mappings": [
                 {
-                    "component": 0,
+                    "component": 1,
                     "valueReference": 34
                 }
             ]

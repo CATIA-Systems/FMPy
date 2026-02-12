@@ -1,6 +1,7 @@
 import numpy as np
+import pytest
 
-from fmpy import simulate_fmu, read_model_description, read_csv
+from fmpy import simulate_fmu, read_model_description, read_csv, platform_tuple
 from fmpy.container_fmu.cli import create_container_fmu
 from fmpy.container_fmu.config import Configuration, Component, Connection
 from fmpy.fmi3 import (
@@ -11,6 +12,7 @@ from fmpy.model_description import BaseUnit, DisplayUnit, ModelDescription, Simp
     ModelVariable, Unit, CoSimulation
 
 
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="FMI 2.0 does not support aarch64-darwin")
 def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir):
 
     container_input = ModelVariable(

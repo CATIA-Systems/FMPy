@@ -14,7 +14,7 @@ macro_rules! assert_ok {
     };
 }
 
-fn create_fmu() -> FMU3<'static> {
+fn create_fmu() -> FMU3 {
 
     ensure_feedthrough_fmus().expect("Failed to setup Feedthrough FMUs");
 

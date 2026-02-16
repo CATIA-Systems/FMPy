@@ -151,7 +151,7 @@ fn ensure_feedthrough_fmus() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[fixture]
-pub fn create_fmi2_container() -> FMU2<'static> {
+pub fn create_fmi2_container() -> FMU2 {
 
     let _guard = LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
 
@@ -207,7 +207,7 @@ pub fn create_fmi2_container() -> FMU2<'static> {
     .unwrap()
 }
 
-pub fn create_fmi3_container() -> FMU3<'static> {
+pub fn create_fmi3_container() -> FMU3 {
 
     let _guard = LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
 

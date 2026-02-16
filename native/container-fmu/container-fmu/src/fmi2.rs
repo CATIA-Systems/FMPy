@@ -13,7 +13,7 @@ fn NOT_IMPLEMENTED(c: fmi2Component) -> fmi2Status {
     if c.is_null() {
         return fmi2Fatal;
     }
-    let container: &mut Container<'_> = unsafe { &mut *(c as *mut Container) };
+    let container: &mut Container = unsafe { &mut *(c as *mut Container) };
     container.logError("Function is not implemented.");
     fmi2Error
 }

@@ -14,7 +14,6 @@ use fmi::types::fmiStatus::*;
 use fmi::types::*;
 use fmi::*;
 use rayon::prelude::*;
-use serde_json::value;
 use std::error::Error;
 use std::ffi::CString;
 use std::os::raw::c_void;
@@ -28,18 +27,18 @@ const LOG_STATUS_ERROR: fmi3String = "logStatusError\0".as_ptr() as fmi3String;
 const LOG_FMI_CALLS: fmi3String = "logFMICalls\0".as_ptr() as fmi3String;
 const LOG_NESTED: fmi3String = "logNested\0".as_ptr() as fmi3String;
 
-enum FMUInstance<'a> {
-    FMI2(Box<FMU2<'a>>),
-    FMI3(Box<FMU3<'a>>),
+enum FMUInstance {
+    FMI2(Box<FMU2>),
+    FMI3(Box<FMU3>),
 }
 
-struct Container<'a> {
+struct Container {
     time: f64,
     tolerance: Option<f64>,
     startTime: f64,
     stopTime: Option<f64>,
     terminated: bool,
-    instances: Vec<FMUInstance<'a>>,
+    instances: Vec<FMUInstance>,
     system: System,
     logMessage: fmi3LogMessageCallback,
     instanceEnvironment: fmi3InstanceEnvironment,
@@ -111,7 +110,7 @@ macro_rules! set_variables {
 type ContainerLogMessageCallback = dyn Fn(&fmiStatus, &str, &str) + Send + Sync;
 type ContainerLogFMICallCallback = dyn Fn(&fmiStatus, &str, &str) + Send + Sync;
 
-// impl<'a> Drop for Container<'a> {
+// impl Drop for Container {
 //     fn drop(&mut self) {
 //         for instance in &mut self.instances {
 //             match instance {
@@ -135,7 +134,7 @@ macro_rules! set_start_value {
     }};
 }
 
-impl Container<'_> {
+impl Container {
     fn instantiate(
         instantiation_token: &str,
         resource_path: &Path,
@@ -1248,7 +1247,7 @@ impl Container<'_> {
         let currentCommunicationPoint = self.time;
         let communicationStepSize = self.system.fixedStepSize;
 
-        let do_step = |instance: &FMUInstance<'_>| match instance {
+        let do_step = |instance: &FMUInstance| match instance {
             FMUInstance::FMI2(fmu) => {
                 let status = fmu.doStep(currentCommunicationPoint, communicationStepSize, fmi2True);
 

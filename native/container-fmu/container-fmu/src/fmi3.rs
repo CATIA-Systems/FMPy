@@ -13,7 +13,7 @@ fn NOT_IMPLEMENTED(instance: fmi3Instance) -> fmi3Status {
     if instance.is_null() {
         return fmi3Fatal;
     }
-    let container: &mut Container<'_> = unsafe { &mut *(instance as *mut Container) };
+    let container: &mut Container = unsafe { &mut *(instance as *mut Container) };
     container.logError("Function is not implemented.");
     fmi3Error
 }

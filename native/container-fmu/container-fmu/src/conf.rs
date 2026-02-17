@@ -117,7 +117,10 @@ impl System {
         }
 
         if system.fixedStepSize < 0.0 {
-            let message = format!("The fixed step size must be > 0 but was {}.", system.fixedStepSize);
+            let message = format!(
+                "The fixed step size must be > 0 but was {}.",
+                system.fixedStepSize
+            );
             return Err(message);
         }
 

@@ -110,17 +110,6 @@ macro_rules! set_variables {
 type ContainerLogMessageCallback = dyn Fn(&fmiStatus, &str, &str) + Send + Sync;
 type ContainerLogFMICallCallback = dyn Fn(&fmiStatus, &str, &str) + Send + Sync;
 
-// impl Drop for Container {
-//     fn drop(&mut self) {
-//         for instance in &mut self.instances {
-//             match instance {
-//                 FMUInstance::FMI2(fmu) => fmu.freeInstance(),
-//                 FMUInstance::FMI3(fmu) => fmu.freeInstance(),
-//             }
-//         }
-//     }
-// }
-
 macro_rules! set_start_value {
     ($self:ident, $value_references:ident, $start:ident, $setter:ident, $variable_type:ty) => {{
         let result: Result<Vec<$variable_type>, _> = $start.iter().map(|s| s.parse()).collect();
@@ -161,22 +150,7 @@ impl Container {
         let mut instances: Vec<FMUInstance> = Vec::new();
 
         for component in &system.components {
-
             let unzipdir = resource_path.join(&component.path);
-
-            // let shared_library_name =
-            //     format!("{}{}", component.modelIdentifier, SHARED_LIBRARY_EXTENSION);
-
-            // let platform_dir = match component.fmiMajorVersion {
-            //     FMIMajorVersion::FMIMajorVersion2 => fmi::fmi2::PLATFORM,
-            //     FMIMajorVersion::FMIMajorVersion3 => fmi::fmi3::PLATFORM_TUPLE,
-            // };
-
-            // let shared_library_path = resource_path
-            //     .join(&component.path)
-            //     .join("binaries")
-            //     .join(platform_dir)
-            //     .join(shared_library_name);
 
             let name = component.name.clone();
             let log_fmi_call_clone = log_fmi_call.clone();
@@ -222,7 +196,8 @@ impl Container {
                     ) {
                         Ok(fmu) => FMUInstance::FMI2(Box::new(fmu)),
                         Err(error) => {
-                            let message = format!("Failed to instantiate the component {:?}. {:?}",
+                            let message = format!(
+                                "Failed to instantiate the component {:?}. {:?}",
                                 component.name, error
                             );
                             let message = CString::new(message).unwrap();
@@ -251,7 +226,8 @@ impl Container {
                     ) {
                         Ok(fmu) => FMUInstance::FMI3(Box::new(fmu)),
                         Err(error) => {
-                            let message = format!("Failed to instantiate the component {:?}. {:?}",
+                            let message = format!(
+                                "Failed to instantiate the component {:?}. {:?}",
                                 component.name, error
                             );
                             let message = CString::new(message).unwrap();
@@ -261,51 +237,6 @@ impl Container {
                     }
                 }
             };
-
-            // let component_resource_path = resource_path
-            //     .join(&component.path)
-            //     .join("resources")
-            //     .join("");
-
-            // let status = match &mut fmu_instance {
-            //     FMUInstance::FMI2(fmu) => {
-            //         let resource_url = if component_resource_path.is_dir() {
-            //             Some(Url::from_directory_path(&component_resource_path).unwrap())
-            //         } else {
-            //             None
-            //         };
-            //         fmu.instantiate(
-            //             &component.name,
-            //             fmi2Type::fmi2CoSimulation,
-            //             &component.instantiationToken,
-            //             resource_url.as_ref(),
-            //             visible,
-            //             loggingOn,
-            //         )
-            //     }
-            //     FMUInstance::FMI3(fmu) => {
-            //         let resource_path = if component_resource_path.is_dir() {
-            //             Some(component_resource_path.as_path())
-            //         } else {
-            //             None
-            //         };
-            //         fmu.instantiateCoSimulation(
-            //             &component.name,
-            //             &component.instantiationToken,
-            //             resource_path,
-            //             visible,
-            //             loggingOn,
-            //             false,
-            //             false,
-            //             &[],
-            //         )
-            //     }
-            // };
-
-            // if !matches!(status, fmiOK | fmiWarning) {
-            //     let message = format!("Failed to instantiate component {}.", component.name);
-            //     return Err(message);
-            // }
 
             instances.push(fmu_instance);
         }
@@ -336,7 +267,6 @@ impl Container {
     }
 
     fn setStartValues(&self) -> fmiStatus {
-
         let mut status = fmiOK;
 
         for (i, variable) in self.system.variables.iter().enumerate() {
@@ -370,21 +300,32 @@ impl Container {
                         VariableType::String => {
                             let start: Vec<&str> = start.iter().map(String::as_str).collect();
                             self.setString(valueReferences, &start)
-                        },
+                        }
                         VariableType::Binary => {
-                            let values: Result<Vec<Vec<fmiByte>>, Box<dyn Error>> = start.into_iter().map(|hex_str| {
-                                    
+                            let values: Result<Vec<Vec<fmiByte>>, Box<dyn Error>> = start
+                                .into_iter()
+                                .map(|hex_str| {
                                     if hex_str.len() % 2 != 0 {
-                                        return Err(format!("Invalid hex string length: {}", hex_str).into());
+                                        return Err(format!(
+                                            "Invalid hex string length: {}",
+                                            hex_str
+                                        )
+                                        .into());
                                     }
-                                    
+
                                     let mut bytes = Vec::new();
 
                                     for i in (0..hex_str.len()).step_by(2) {
-                                        let byte_str = &hex_str[i..i+2];
+                                        let byte_str = &hex_str[i..i + 2];
                                         match u8::from_str_radix(byte_str, 16) {
                                             Ok(byte) => bytes.push(byte),
-                                            Err(e) => return Err(format!("Invalid hex byte '{}': {}", byte_str, e).into()),
+                                            Err(e) => {
+                                                return Err(format!(
+                                                    "Invalid hex byte '{}': {}",
+                                                    byte_str, e
+                                                )
+                                                .into());
+                                            }
                                         }
                                     }
 
@@ -393,24 +334,13 @@ impl Container {
                                 .collect();
 
                             match values {
-                                Ok(v) => {
-                                    self.setBinary(valueReferences, &v)
-                                },
+                                Ok(v) => self.setBinary(valueReferences, &v),
                                 Err(e) => {
                                     self.logError("message");
                                     fmiError
                                 }
                             }
-                            
-                        },
-                        // _ => {
-                        //     let message = format!(
-                        //         "Start value of type {:?} is not supported.",
-                        //         variable.variableType
-                        //     );
-                        //     self.logError(&message);
-                        //     fmiError
-                        // }
+                        }
                     }
                 );
             }
@@ -1032,14 +962,14 @@ impl Container {
     }
 
     fn setBinary(&self, valueReferences: &[fmiValueReference], values: &[Vec<u8>]) -> fmiStatus {
-        let fmi2_setter = |fmu: &FMU2, valueReferences: &[fmi2ValueReference], values: &[Vec<u8>]| {
-            fmiError
-        };
-        let fmi3_setter = |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[Vec<u8>]| {
-            let sizes: Vec<usize> = values.iter().map(|v| v.len()).collect();
-            let values: Vec<*const u8> = values.iter().map(|v| v.as_ptr()).collect();
-            fmu.setBinary(valueReferences, &sizes, &values)
-        };
+        let fmi2_setter =
+            |fmu: &FMU2, valueReferences: &[fmi2ValueReference], values: &[Vec<u8>]| fmiError;
+        let fmi3_setter =
+            |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[Vec<u8>]| {
+                let sizes: Vec<usize> = values.iter().map(|v| v.len()).collect();
+                let values: Vec<*const u8> = values.iter().map(|v| v.as_ptr()).collect();
+                fmu.setBinary(valueReferences, &sizes, &values)
+            };
         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
     }
 
@@ -1208,16 +1138,18 @@ impl Container {
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => {
                             self.logError("Binary variables are not supported for FMI 2.");
-                            return fmiError; 
-                        },
-                        FMUInstance::FMI3(fmu) => fmu.getBinary(&srcValueReferences, &mut sizes, &mut value_ptrs),
+                            return fmiError;
+                        }
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.getBinary(&srcValueReferences, &mut sizes, &mut value_ptrs),
                     });
                     fmi_check_status!(match dstInstance {
-                        FMUInstance::FMI2(fmu) =>  {
+                        FMUInstance::FMI2(fmu) => {
                             self.logError("Binary variables are not supported for FMI 2.");
-                            return fmiError; 
-                        },
-                        FMUInstance::FMI3(fmu) => fmu.setBinary(&dstValueReferences, &sizes, &value_ptrs),
+                            return fmiError;
+                        }
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setBinary(&dstValueReferences, &sizes, &value_ptrs),
                     });
                 }
                 _ => {
@@ -1235,9 +1167,7 @@ impl Container {
 
     fn doFixedStep(&mut self) -> fmiStatus {
         let mut status = fmiOK;
-
         let communicationStepSize = self.system.fixedStepSize;
-
         let noSetFMUStatePriorToCurrentPoint = true;
 
         // Note: Direct parallelization of FMU instances is not possible due to

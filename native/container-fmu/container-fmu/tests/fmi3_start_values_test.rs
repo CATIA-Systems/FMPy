@@ -5,7 +5,6 @@ mod common;
 use common::create_fmi3_container;
 use fmi::fmi3::types::*;
 
-
 macro_rules! assert_ok {
     ($expression:expr) => {
         assert_eq!($expression, fmi3OK);
@@ -234,25 +233,29 @@ fn test_fmi3_start_values() {
     );
 
     // Test 17: Binary input (start="666f6f" which is "foo" in hex)
-    assert_ok!(fmu.getBinary(&binary_input_vr, &mut binary_input_sizes, &mut binary_input_values));
-    
+    assert_ok!(fmu.getBinary(
+        &binary_input_vr,
+        &mut binary_input_sizes,
+        &mut binary_input_values
+    ));
+
     // Verify the size matches expected
     assert_eq!(
-        binary_input_sizes[0], expected_binary_input.len(),
+        binary_input_sizes[0],
+        expected_binary_input.len(),
         "Binary_input size mismatch. Expected: {}, Got: {}",
-        expected_binary_input.len(), binary_input_sizes[0]
+        expected_binary_input.len(),
+        binary_input_sizes[0]
     );
-    
+
     // Convert the pointer to a slice and compare with expected value
-    let binary_slice = unsafe { 
-        std::slice::from_raw_parts(binary_input_values[0], binary_input_sizes[0]) 
-    };
+    let binary_slice =
+        unsafe { std::slice::from_raw_parts(binary_input_values[0], binary_input_sizes[0]) };
     assert_eq!(
         binary_slice, expected_binary_input,
         "Binary_input start value mismatch. Expected: {:?}, Got: {:?}",
         expected_binary_input, binary_slice
     );
-
 
     // Test 18: Enumeration input (start="2")
     assert_ok!(fmu.getInt64(&enumeration_input_vr, &mut enumeration_input_values));

@@ -318,7 +318,6 @@ pub extern "C" fn fmi3GetString(
     values: *mut fmi3String,
     nValues: usize,
 ) -> fmi3Status {
-
     if instance.is_null() {
         eprintln!("Argument instance must not be NULL.");
         return fmi3Error;
@@ -336,16 +335,17 @@ pub extern "C" fn fmi3GetString(
         return fmi3Error;
     }
 
-    let valueReferences =
-        unsafe { std::slice::from_raw_parts(valueReferences, nValueReferences) };
+    let valueReferences = unsafe { std::slice::from_raw_parts(valueReferences, nValueReferences) };
     let values = unsafe { std::slice::from_raw_parts_mut(values, nValueReferences) };
 
     let mut buffer = vec![String::new(); values.len()];
 
     let status = container.getString(valueReferences, buffer.as_mut());
 
-    container.stringValues.resize(values.len(), CString::new("").unwrap());
-    
+    container
+        .stringValues
+        .resize(values.len(), CString::new("").unwrap());
+
     for (i, v) in buffer.iter().enumerate() {
         container.stringValues[i] = CString::new(v.as_str()).unwrap();
         values[i] = container.stringValues[i].as_ptr();
@@ -483,9 +483,9 @@ pub extern "C" fn fmi3SetString(
     let values_slice = unsafe { std::slice::from_raw_parts(values, nValues) };
 
     let values_vec: Vec<String> = values_slice
-                .iter()
-                .map(|&v| unsafe { CStr::from_ptr(v).to_string_lossy().into_owned() })
-                .collect();
+        .iter()
+        .map(|&v| unsafe { CStr::from_ptr(v).to_string_lossy().into_owned() })
+        .collect();
 
     let v: Vec<&str> = values_vec.iter().map(|v| v.as_str()).collect();
 

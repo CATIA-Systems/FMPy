@@ -2,11 +2,11 @@
 
 mod common;
 
-use fmi::fmi3::*;
+use common::ensure_feedthrough_fmus;
 use fmi::fmi3::types::*;
+use fmi::fmi3::*;
 use fmi::types::fmiStatus;
 use std::{env, path::PathBuf};
-use common::ensure_feedthrough_fmus;
 
 macro_rules! assert_ok {
     ($status:expr) => {
@@ -15,7 +15,6 @@ macro_rules! assert_ok {
 }
 
 fn create_fmu() -> FMU3 {
-
     ensure_feedthrough_fmus().expect("Failed to setup Feedthrough FMUs");
 
     let unzipdir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))

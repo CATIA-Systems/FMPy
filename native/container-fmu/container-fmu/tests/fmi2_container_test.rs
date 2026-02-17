@@ -13,7 +13,6 @@ macro_rules! assert_ok {
 
 #[test]
 fn test_fmi2_container() {
-
     let fmu = create_fmi2_container();
 
     let Real_continuous_input_vr = [3];

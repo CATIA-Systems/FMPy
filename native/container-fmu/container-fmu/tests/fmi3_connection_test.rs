@@ -5,7 +5,6 @@ mod common;
 use common::create_fmi3_container;
 use fmi::fmi3::types::*;
 
-
 macro_rules! assert_ok {
     ($expression:expr) => {
         assert_eq!($expression, fmi3OK);
@@ -663,12 +662,16 @@ fn test_fmi3_container_limitation() {
     let result = fmu.exitInitializationMode();
 
     if result != fmi3OK {
-        println!("❌ Exit initialization mode failed as expected due to unsupported connection types");
-        println!("   Current container limitations: UInt8, UInt16, UInt32, UInt64, Int16, Int32 connections not supported");
+        println!(
+            "❌ Exit initialization mode failed as expected due to unsupported connection types"
+        );
+        println!(
+            "   Current container limitations: UInt8, UInt16, UInt32, UInt64, Int16, Int32 connections not supported"
+        );
 
         // Terminate the FMU even though initialization failed
         let _ = fmu.terminate();
-    
+
         // This is expected behavior, so we don't panic
         return;
     }

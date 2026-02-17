@@ -117,10 +117,9 @@ impl Drop for FMU3 {
 }
 
 pub struct FMU3 {
-    
     logFMICall: Option<Arc<LogFMICallCallback>>,
     logMessage: Option<Arc<LogMessageCallback>>,
-    
+
     _lib: Box<Library>,
 
     fmi3GetVersion: Symbol<'static, fmi3GetVersionTYPE>,
@@ -243,21 +242,19 @@ fn get_symbol<T>(
 }
 
 impl FMU3 {
-
     fn new(
         unzipdir: &Path,
         modelIdentifier: &str,
         logFMICall: Option<Box<LogFMICallCallback>>,
         logMessage: Option<Box<LogMessageCallback>>,
     ) -> Result<FMU3, Box<dyn Error>> {
-
         let shared_library_path = unzipdir
             .join("binaries")
             .join(PLATFORM_TUPLE)
             .join(format!("{modelIdentifier}{SHARED_LIBRARY_EXTENSION}"));
 
         if !shared_library_path.is_file() {
-            return Err(format!("Missing shared library {shared_library_path:?}.").into())
+            return Err(format!("Missing shared library {shared_library_path:?}.").into());
         }
 
         let lib = Box::new(unsafe { Library::new(shared_library_path)? });
@@ -499,7 +496,6 @@ impl FMU3 {
         logFMICall: Option<Box<LogFMICallCallback>>,
         logMessage: Option<Box<LogMessageCallback>>,
     ) -> Result<FMU3, Box<dyn Error>> {
-        
         let mut fmu = FMU3::new(unzipdir, modelIdentifier, logFMICall, logMessage)?;
 
         let resource_path = unzipdir.join("resources").join("");
@@ -510,7 +506,16 @@ impl FMU3 {
             None
         };
 
-        fmu.instance = fmu._instantiateCoSimulation(instanceName, instantiationToken, resourcePath, visible, loggingOn, eventModeUsed, earlyReturnAllowed, requiredIntermediateVariables);
+        fmu.instance = fmu._instantiateCoSimulation(
+            instanceName,
+            instantiationToken,
+            resourcePath,
+            visible,
+            loggingOn,
+            eventModeUsed,
+            earlyReturnAllowed,
+            requiredIntermediateVariables,
+        );
 
         if fmu.instance.is_null() {
             Err("Failed to instantiate FMU.".into())
@@ -800,7 +805,7 @@ impl FMU3 {
         debug_assert!(valueReferences.len() <= values.len());
 
         let mut buffer: Vec<fmi3String> = vec![null(); values.len()];
-        
+
         let status = unsafe {
             (self.fmi3GetString)(
                 self.instance,
@@ -810,11 +815,11 @@ impl FMU3 {
                 buffer.len(),
             )
         };
-        
+
         for (i, v) in buffer.iter().enumerate() {
             values[i] = unsafe { CStr::from_ptr(*v).to_string_lossy().into_owned() };
         }
-        
+
         if let Some(cb) = &self.logFMICall {
             let message = format!(
                 "fmi3GetString(valueReferences={:?}, nValueReferences={}, values={:?}, nValues={})",
@@ -1606,7 +1611,6 @@ impl FMU3 {
         nextEventTimeDefined: &mut fmi3Boolean,
         nextEventTime: &mut fmi3Float64,
     ) -> fmi3Status {
-
         let status = unsafe {
             (self.fmi3UpdateDiscreteStates)(
                 self.instance,
@@ -1620,7 +1624,9 @@ impl FMU3 {
         };
 
         if let Some(cb) = &self.logFMICall {
-            let message = format!("fmi3UpdateDiscreteStates(discreteStatesNeedUpdate={discreteStatesNeedUpdate}, terminateSimulation={terminateSimulation}, nominalsOfContinuousStatesChanged={nominalsOfContinuousStatesChanged}, valuesOfContinuousStatesChanged={valuesOfContinuousStatesChanged}, nextEventTimeDefined={nextEventTimeDefined}, nextEventTime={nextEventTime})");
+            let message = format!(
+                "fmi3UpdateDiscreteStates(discreteStatesNeedUpdate={discreteStatesNeedUpdate}, terminateSimulation={terminateSimulation}, nominalsOfContinuousStatesChanged={nominalsOfContinuousStatesChanged}, valuesOfContinuousStatesChanged={valuesOfContinuousStatesChanged}, nextEventTimeDefined={nextEventTimeDefined}, nextEventTime={nextEventTime})"
+            );
             cb(&status, &message);
         }
 

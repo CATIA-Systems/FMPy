@@ -2,9 +2,9 @@
 
 mod common;
 
-use rstest::*;
-use fmi::fmi2::types::*;
 use common::create_fmi2_container;
+use fmi::fmi2::types::*;
+use rstest::*;
 
 macro_rules! assert_ok {
     ($expression:expr) => {
@@ -14,7 +14,6 @@ macro_rules! assert_ok {
 
 #[rstest]
 fn test_fmi2_real_continuous_connections() {
-
     let fmu = create_fmi2_container();
 
     let Real_continuous_input_vr = [3];
@@ -55,7 +54,6 @@ fn test_fmi2_real_continuous_connections() {
 
 #[rstest]
 fn test_fmi2_real_discrete_connections() {
-
     let fmu = create_fmi2_container();
 
     let Real_discrete_input_vr = [5];
@@ -86,7 +84,6 @@ fn test_fmi2_real_discrete_connections() {
 
 #[rstest]
 fn test_fmi2_integer_connections() {
-
     let fmu = create_fmi2_container();
 
     let Integer_input_vr = [7];
@@ -117,7 +114,6 @@ fn test_fmi2_integer_connections() {
 
 #[rstest]
 fn test_fmi2_boolean_connections() {
-
     let fmu = create_fmi2_container();
 
     let Boolean_input_vr = [9];
@@ -148,7 +144,6 @@ fn test_fmi2_boolean_connections() {
 
 #[rstest]
 fn test_fmi2_string_connections() {
-
     let fmu = create_fmi2_container();
 
     let String_input_vr = [11];
@@ -179,7 +174,6 @@ fn test_fmi2_string_connections() {
 
 #[rstest]
 fn test_fmi2_enumeration_connections() {
-
     let fmu = create_fmi2_container();
 
     let Enumeration_input_vr = [13];

@@ -12,25 +12,23 @@ macro_rules! assert_ok {
     };
 }
 
-
 /// Test to verify that all start values defined in the container configuration
 /// are correctly set when the container FMU is instantiated and initialized.
 /// Note: Container start values override individual FMU model description start values.
 #[rstest]
 fn test_fmi2_start_values() {
-
     let fmu = create_fmi2_container();
 
     // Expected start values from container.json configuration
     // Only input variables and parameters have start values defined
-    let expected_real_fixed_parameter = 1.0;      // container variable index 0: "start": ["1"]
-    let expected_real_tunable_parameter = 2.0;    // container variable index 1: "start": ["2"]
-    let expected_real_continuous_input = 3.0;     // container variable index 2: "start": ["3"]
-    let expected_real_discrete_input = 5.0;       // container variable index 4: "start": ["5"]
-    let expected_integer_input = 7;               // container variable index 6: "start": ["7"]
-    let expected_boolean_input = fmi2True;        // container variable index 8: "start": ["true"]
-    let expected_string_input = "container_string_1";  // container variable index 10: "start": ["container_string_1"]
-    let expected_enumeration_input = 2;           // container variable index 12: "start": ["2"] (Option 2)
+    let expected_real_fixed_parameter = 1.0; // container variable index 0: "start": ["1"]
+    let expected_real_tunable_parameter = 2.0; // container variable index 1: "start": ["2"]
+    let expected_real_continuous_input = 3.0; // container variable index 2: "start": ["3"]
+    let expected_real_discrete_input = 5.0; // container variable index 4: "start": ["5"]
+    let expected_integer_input = 7; // container variable index 6: "start": ["7"]
+    let expected_boolean_input = fmi2True; // container variable index 8: "start": ["true"]
+    let expected_string_input = "container_string_1"; // container variable index 10: "start": ["container_string_1"]
+    let expected_enumeration_input = 2; // container variable index 12: "start": ["2"] (Option 2)
 
     // Value references from modelDescription.xml (only for variables with start values)
     let real_fixed_parameter_vr = [1];
@@ -59,81 +57,78 @@ fn test_fmi2_start_values() {
     // Test 1: Real fixed parameter (start="1")
     assert_ok!(fmu.getReal(&real_fixed_parameter_vr, &mut real_fixed_parameter_values));
     assert_eq!(
-        real_fixed_parameter_values[0], 
-        expected_real_fixed_parameter,
+        real_fixed_parameter_values[0], expected_real_fixed_parameter,
         "Real_fixed_parameter start value mismatch. Expected: {}, Got: {}",
-        expected_real_fixed_parameter,
-        real_fixed_parameter_values[0]
+        expected_real_fixed_parameter, real_fixed_parameter_values[0]
     );
 
     // Test 2: Real tunable parameter (start="2")
-    assert_ok!(fmu.getReal(&real_tunable_parameter_vr, &mut real_tunable_parameter_values));
+    assert_ok!(fmu.getReal(
+        &real_tunable_parameter_vr,
+        &mut real_tunable_parameter_values
+    ));
     assert_eq!(
-        real_tunable_parameter_values[0], 
-        expected_real_tunable_parameter,
+        real_tunable_parameter_values[0], expected_real_tunable_parameter,
         "Real_tunable_parameter start value mismatch. Expected: {}, Got: {}",
-        expected_real_tunable_parameter,
-        real_tunable_parameter_values[0]
+        expected_real_tunable_parameter, real_tunable_parameter_values[0]
     );
 
     // Test 3: Real continuous input (start="3")
     assert_ok!(fmu.getReal(&real_continuous_input_vr, &mut real_continuous_input_values));
     assert_eq!(
-        real_continuous_input_values[0], 
-        expected_real_continuous_input,
+        real_continuous_input_values[0], expected_real_continuous_input,
         "Real_continuous_input start value mismatch. Expected: {}, Got: {}",
-        expected_real_continuous_input,
-        real_continuous_input_values[0]
+        expected_real_continuous_input, real_continuous_input_values[0]
     );
 
     // Test 4: Real discrete input (start="5")
     assert_ok!(fmu.getReal(&real_discrete_input_vr, &mut real_discrete_input_values));
     assert_eq!(
-        real_discrete_input_values[0], 
-        expected_real_discrete_input,
+        real_discrete_input_values[0], expected_real_discrete_input,
         "Real_discrete_input start value mismatch. Expected: {}, Got: {}",
-        expected_real_discrete_input,
-        real_discrete_input_values[0]
+        expected_real_discrete_input, real_discrete_input_values[0]
     );
 
     // Test 5: Integer input (start="7")
     assert_ok!(fmu.getInteger(&integer_input_vr, &mut integer_input_values));
     assert_eq!(
-        integer_input_values[0], 
-        expected_integer_input,
+        integer_input_values[0], expected_integer_input,
         "Integer_input start value mismatch. Expected: {}, Got: {}",
-        expected_integer_input,
-        integer_input_values[0]
+        expected_integer_input, integer_input_values[0]
     );
 
     // Test 6: Boolean input (start="false")
     assert_ok!(fmu.getBoolean(&boolean_input_vr, &mut boolean_input_values));
     assert_eq!(
-        boolean_input_values[0], 
+        boolean_input_values[0],
         expected_boolean_input,
         "Boolean_input start value mismatch. Expected: {}, Got: {}",
-        if expected_boolean_input == fmi2True { "true" } else { "false" },
-        if boolean_input_values[0] == fmi2True { "true" } else { "false" }
+        if expected_boolean_input == fmi2True {
+            "true"
+        } else {
+            "false"
+        },
+        if boolean_input_values[0] == fmi2True {
+            "true"
+        } else {
+            "false"
+        }
     );
 
     // Test 7: String input (start="foo")
     assert_ok!(fmu.getString(&string_input_vr, &mut string_input_values));
     assert_eq!(
-        string_input_values[0], 
-        expected_string_input,
+        string_input_values[0], expected_string_input,
         "String_input start value mismatch. Expected: '{}', Got: '{}'",
-        expected_string_input,
-        string_input_values[0]
+        expected_string_input, string_input_values[0]
     );
 
     // Test 8: Enumeration input (start="2")
     assert_ok!(fmu.getInteger(&enumeration_input_vr, &mut enumeration_input_values));
     assert_eq!(
-        enumeration_input_values[0], 
-        expected_enumeration_input,
+        enumeration_input_values[0], expected_enumeration_input,
         "Enumeration_input start value mismatch. Expected: {} (Option 2), Got: {}",
-        expected_enumeration_input,
-        enumeration_input_values[0]
+        expected_enumeration_input, enumeration_input_values[0]
     );
 
     // Exit initialization mode to complete the test
@@ -164,16 +159,17 @@ fn test_fmi2_start_values() {
     assert_ok!(fmu.terminate());
 
     println!("✅ All input and parameter start values verified successfully!");
-    println!("   Note: Output variables do not have start values as they are calculated from inputs.");
+    println!(
+        "   Note: Output variables do not have start values as they are calculated from inputs."
+    );
 }
 
 /// Test to verify that start values can be modified during initialization mode
 /// and that the changes persist after exiting initialization mode.
 #[rstest]
 fn test_fmi2_start_values_modification() {
-
     let fmu = create_fmi2_container();
-    
+
     assert_ok!(fmu.setupExperiment(Some(1e-5), 0.0, Some(1.0)));
     assert_ok!(fmu.enterInitializationMode());
 
@@ -184,7 +180,7 @@ fn test_fmi2_start_values_modification() {
 
     // Set new value
     assert_ok!(fmu.setReal(&tunable_param_vr, &new_tunable_value));
-    
+
     // Verify it was set
     assert_ok!(fmu.getReal(&tunable_param_vr, &mut retrieved_value));
     assert_eq!(retrieved_value[0], new_tunable_value[0]);

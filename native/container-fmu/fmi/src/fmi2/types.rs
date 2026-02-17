@@ -1,7 +1,7 @@
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
 
-use std::os::raw::{c_char, c_void};
 use crate::types::*;
+use std::os::raw::{c_char, c_void};
 
 pub type fmi2Real = f64;
 pub type fmi2Integer = i32;

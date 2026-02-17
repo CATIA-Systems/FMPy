@@ -1,6 +1,6 @@
-pub mod types;
 pub mod fmi2;
 pub mod fmi3;
+pub mod types;
 
 #[cfg(all(target_os = "linux"))]
 pub const SHARED_LIBRARY_EXTENSION: &str = ".so";

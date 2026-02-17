@@ -295,7 +295,6 @@ pub extern "C" fn fmi2GetString(
     nvr: usize,
     value: *mut fmi2String,
 ) -> fmi2Status {
-
     if c.is_null() {
         eprintln!("Argument c must not be NULL.");
         return fmi2Error;
@@ -320,8 +319,10 @@ pub extern "C" fn fmi2GetString(
 
     let status = container.getString(valueReferences, buffer.as_mut());
 
-    container.stringValues.resize(values.len(), CString::new("").unwrap());
-    
+    container
+        .stringValues
+        .resize(values.len(), CString::new("").unwrap());
+
     for (i, v) in buffer.iter().enumerate() {
         container.stringValues[i] = CString::new(v.as_str()).unwrap();
         values[i] = container.stringValues[i].as_ptr();
@@ -415,7 +416,6 @@ pub extern "C" fn fmi2SetString(
     nvr: usize,
     value: *const fmi2String,
 ) -> fmi2Status {
-
     if c.is_null() {
         eprintln!("Argument c must not be NULL.");
         return fmi2Error;
@@ -437,9 +437,9 @@ pub extern "C" fn fmi2SetString(
     let values = unsafe { std::slice::from_raw_parts(value, nvr) };
 
     let values: Vec<String> = values
-                .iter()
-                .map(|&v| unsafe { CStr::from_ptr(v).to_string_lossy().into_owned() })
-                .collect();
+        .iter()
+        .map(|&v| unsafe { CStr::from_ptr(v).to_string_lossy().into_owned() })
+        .collect();
 
     let v: Vec<&str> = values.iter().map(|v| v.as_str()).collect();
 

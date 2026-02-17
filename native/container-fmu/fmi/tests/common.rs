@@ -1,12 +1,16 @@
 #![allow(unused)]
 
-use fmi::{SHARED_LIBRARY_EXTENSION, fmi2::{FMU2, PLATFORM, types::*}, fmi3::{FMU3, PLATFORM_TUPLE, types::fmi3Status}};
+use fmi::{
+    SHARED_LIBRARY_EXTENSION,
+    fmi2::{FMU2, PLATFORM, types::*},
+    fmi3::{FMU3, PLATFORM_TUPLE, types::fmi3Status},
+};
 use rstest::*;
-use std::{env, path::PathBuf, sync::Mutex};
-use std::sync::OnceLock;
+use sha2::{Digest, Sha256};
 use std::fs;
 use std::io::{Read, Write};
-use sha2::{Sha256, Digest};
+use std::sync::OnceLock;
+use std::{env, path::PathBuf, sync::Mutex};
 
 static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
 static SETUP_DONE: OnceLock<Mutex<bool>> = OnceLock::new();
@@ -17,7 +21,7 @@ const EXPECTED_SHA256: &str = "6863d55e5818e1ca4e4614c4d4ba4047a921b4495f6336e70
 /// Setup fixture that ensures Feedthrough FMUs are available
 pub fn ensure_feedthrough_fmus() -> Result<(), Box<dyn std::error::Error>> {
     let mut setup_done = SETUP_DONE.get_or_init(|| Mutex::new(false)).lock().unwrap();
-    
+
     if *setup_done {
         return Ok(());
     }
@@ -63,7 +67,8 @@ pub fn ensure_feedthrough_fmus() -> Result<(), Box<dyn std::error::Error>> {
         return Err(format!(
             "SHA256 checksum mismatch. Expected: {}, Got: {}",
             EXPECTED_SHA256, hash
-        ).into());
+        )
+        .into());
     }
 
     println!("SHA256 checksum validated successfully");
@@ -82,21 +87,21 @@ pub fn ensure_feedthrough_fmus() -> Result<(), Box<dyn std::error::Error>> {
 
     // Extract FMI2 Feedthrough.fmu
     let fmi2_fmu_path = "2.0/Feedthrough.fmu";
-    
+
     if let Ok(mut fmu_file) = archive.by_name(fmi2_fmu_path) {
         let mut fmu_bytes = Vec::new();
         fmu_file.read_to_end(&mut fmu_bytes)?;
-        
+
         // Extract the FMU (which is also a zip file)
         let fmu_cursor = std::io::Cursor::new(fmu_bytes);
         let mut fmu_archive = zip::ZipArchive::new(fmu_cursor)?;
-        
+
         fs::create_dir_all(&fmi2_feedthrough)?;
-        
+
         for i in 0..fmu_archive.len() {
             let mut file = fmu_archive.by_index(i)?;
             let outpath = fmi2_feedthrough.join(file.name());
-            
+
             if file.is_dir() {
                 fs::create_dir_all(&outpath)?;
             } else {
@@ -118,17 +123,17 @@ pub fn ensure_feedthrough_fmus() -> Result<(), Box<dyn std::error::Error>> {
     if let Ok(mut fmu_file) = archive.by_name(fmi3_fmu_path) {
         let mut fmu_bytes = Vec::new();
         fmu_file.read_to_end(&mut fmu_bytes)?;
-        
+
         // Extract the FMU (which is also a zip file)
         let fmu_cursor = std::io::Cursor::new(fmu_bytes);
         let mut fmu_archive = zip::ZipArchive::new(fmu_cursor)?;
-        
+
         fs::create_dir_all(&fmi3_feedthrough)?;
-        
+
         for i in 0..fmu_archive.len() {
             let mut file = fmu_archive.by_index(i)?;
             let outpath = fmi3_feedthrough.join(file.name());
-            
+
             if file.is_dir() {
                 fs::create_dir_all(&outpath)?;
             } else {

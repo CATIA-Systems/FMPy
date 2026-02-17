@@ -30,11 +30,11 @@ pub const fmi3False: fmi3Boolean = false;
 
 pub type fmi3Status = fmiStatus;
 
-pub use crate::types::fmiStatus::fmiOK as fmi3OK;
-pub use crate::types::fmiStatus::fmiWarning as fmi3Warning;
 pub use crate::types::fmiStatus::fmiError as fmi3Error;
 pub use crate::types::fmiStatus::fmiFatal as fmi3Fatal;
+pub use crate::types::fmiStatus::fmiOK as fmi3OK;
 pub use crate::types::fmiStatus::fmiPending as fmi3Pending;
+pub use crate::types::fmiStatus::fmiWarning as fmi3Warning;
 
 #[repr(i32)]
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -140,7 +140,8 @@ pub type fmi3EnterInitializationModeTYPE = unsafe extern "C" fn(
     stopTime: fmi3Float64,
 ) -> fmi3Status;
 
-pub type fmi3ExitInitializationModeTYPE = unsafe extern "C" fn(instance: fmi3Instance) -> fmi3Status;
+pub type fmi3ExitInitializationModeTYPE =
+    unsafe extern "C" fn(instance: fmi3Instance) -> fmi3Status;
 
 pub type fmi3EnterEventModeTYPE = unsafe extern "C" fn(instance: fmi3Instance) -> fmi3Status;
 
@@ -444,13 +445,10 @@ pub type fmi3GetAdjointDerivativeTYPE = unsafe extern "C" fn(
     nSensitivity: usize,
 ) -> fmi3Status;
 
-pub type fmi3EnterConfigurationModeTYPE = unsafe extern "C" fn(
-    instance: fmi3Instance
-) -> fmi3Status;
+pub type fmi3EnterConfigurationModeTYPE =
+    unsafe extern "C" fn(instance: fmi3Instance) -> fmi3Status;
 
-pub type fmi3ExitConfigurationModeTYPE = unsafe extern "C" fn(
-    instance: fmi3Instance
-) -> fmi3Status;
+pub type fmi3ExitConfigurationModeTYPE = unsafe extern "C" fn(instance: fmi3Instance) -> fmi3Status;
 
 pub type fmi3DoStepTYPE = unsafe extern "C" fn(
     instance: fmi3Instance,
@@ -470,7 +468,8 @@ pub type fmi3ActivateModelPartitionTYPE = unsafe extern "C" fn(
     priority: fmi3Float64,
 ) -> fmi3Status;
 
-pub type fmi3EnterContinuousTimeModeTYPE = unsafe extern "C" fn(instance: fmi3Instance) -> fmi3Status;
+pub type fmi3EnterContinuousTimeModeTYPE =
+    unsafe extern "C" fn(instance: fmi3Instance) -> fmi3Status;
 
 pub type fmi3CompletedIntegratorStepTYPE = unsafe extern "C" fn(
     instance: fmi3Instance,
@@ -509,7 +508,7 @@ pub type fmi3GetEventIndicatorsTYPE = unsafe extern "C" fn(
 pub type fmi3GetContinuousStatesChangedTYPE =
     unsafe extern "C" fn(instance: fmi3Instance, statesChanged: *mut fmi3Boolean) -> fmi3Status;
 
-    pub type fmi3GetNominalsOfContinuousStatesTYPE = unsafe extern "C" fn(
+pub type fmi3GetNominalsOfContinuousStatesTYPE = unsafe extern "C" fn(
     instance: fmi3Instance,
     nominals: *mut fmi3Float64,
     nNominals: usize,
@@ -615,4 +614,5 @@ pub type fmi3SetShiftFractionTYPE = unsafe extern "C" fn(
     resolutions: *const fmi3UInt64,
 ) -> fmi3Status;
 
-pub type fmi3EvaluateDiscreteStatesTYPE = unsafe extern "C" fn(instance: fmi3Instance) -> fmi3Status;
+pub type fmi3EvaluateDiscreteStatesTYPE =
+    unsafe extern "C" fn(instance: fmi3Instance) -> fmi3Status;

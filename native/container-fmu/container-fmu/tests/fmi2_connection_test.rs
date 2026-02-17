@@ -4,7 +4,6 @@ mod common;
 
 use rstest::*;
 use fmi::fmi2::types::*;
-use fmi::fmi2::FMU2Common;
 use common::create_fmi2_container;
 
 macro_rules! assert_ok {

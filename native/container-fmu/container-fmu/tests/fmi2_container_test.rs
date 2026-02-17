@@ -4,7 +4,6 @@ mod common;
 
 use common::create_fmi2_container;
 use fmi::fmi2::types::*;
-use fmi::fmi2::FMU2Common;
 
 macro_rules! assert_ok {
     ($expression:expr) => {

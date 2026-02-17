@@ -305,6 +305,7 @@ pub enum fmi2StatusKind {
 }
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct fmi2EventInfo {
     pub newDiscreteStatesNeeded: fmi2Boolean,
     pub terminateSimulation: fmi2Boolean,

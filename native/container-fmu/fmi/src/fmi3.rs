@@ -104,12 +104,6 @@ macro_rules! fmi_set {
     }};
 }
 
-// pub struct LogMessageStruct {
-//     status: fmi3Status,
-//     category: String,
-//     message: String,
-// }
-
 impl Drop for FMU3 {
     fn drop(&mut self) {
         if !self.instance.is_null() {
@@ -123,7 +117,6 @@ impl Drop for FMU3 {
 }
 
 pub struct FMU3 {
-    // instanceName: String,
     
     logFMICall: Option<Arc<LogFMICallCallback>>,
     logMessage: Option<Arc<LogMessageCallback>>,
@@ -399,8 +392,6 @@ impl FMU3 {
             get_symbol::<fmi3ActivateModelPartitionTYPE>(&lib, b"fmi3ActivateModelPartition")?;
 
         Ok(FMU3 {
-            // instanceName: String::from(instanceName),
-            // logMessage: Box::new(logMessage),
             logFMICall: logFMICall.map(|cb| Arc::from(cb)),
             logMessage: logMessage.map(|cb| Arc::from(cb)),
             _lib: lib,
@@ -564,18 +555,18 @@ impl FMU3 {
 
         let instance = unsafe {
             (self.fmi3InstantiateCoSimulation)(
-                /* instanceName */ instance_name_cstr.as_ptr(),
-                /* instantiationToken */ instantiation_token_cstr.as_ptr(),
-                /* resourcePath */ path_ptr,
-                /* visible */ visible,
-                /* loggingOn */ loggingOn,
-                /* eventModeUsed */ eventModeUsed,
-                /* earlyReturnAllowed */ earlyReturnAllowed,
-                /* requiredIntermediateVariables */ requiredIntermediateVariables.as_ptr(),
-                /* nRequiredIntermediateVariables */ requiredIntermediateVariables.len(),
-                /* instanceEnvironment */ userdata,
-                /* logMessage */ logMessage_ptr,
-                /* intermediateUpdate */ intermediateUpdate_ptr,
+                instance_name_cstr.as_ptr(),
+                instantiation_token_cstr.as_ptr(),
+                path_ptr,
+                visible,
+                loggingOn,
+                eventModeUsed,
+                earlyReturnAllowed,
+                requiredIntermediateVariables.as_ptr(),
+                requiredIntermediateVariables.len(),
+                userdata,
+                logMessage_ptr,
+                intermediateUpdate_ptr,
             )
         };
 
@@ -635,12 +626,12 @@ impl FMU3 {
 
         let status = unsafe {
             (self.fmi3EnterInitializationMode)(
-                self.instance,    // instance
-                toleranceDefined, // toleranceDefined
-                tolerance,        // tolerance
-                startTime,        // startTime
-                stopTimeDefined,  // stopTimeDefined
-                stopTime,         // stopTime
+                self.instance,
+                toleranceDefined,
+                tolerance,
+                startTime,
+                stopTimeDefined,
+                stopTime,
             )
         };
 
@@ -1058,14 +1049,6 @@ impl FMU3 {
 
         status
     }
-
-    // fn freeInstance(&mut self) {
-    //     unsafe { (self.fmi3FreeInstance)(self.instance) };
-    //     self.instance = null_mut();
-    //     if let Some(cb) = &self.logFMICall {
-    //         cb(&fmi3OK, "fmi3FreeInstance()");
-    //     }
-    // }
 
     pub fn enterEventMode(&self) -> fmi3Status {
         let status = unsafe { (self.fmi3EnterEventMode)(self.instance) };
@@ -1697,5 +1680,5 @@ impl FMU3 {
     }
 }
 
-// Explicitly implement Sync for FMU3 since all fields are now Sync
+// Explicitly implement Sync for FMU3 since all fields are Sync
 unsafe impl Sync for FMU3 {}

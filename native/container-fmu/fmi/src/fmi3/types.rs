@@ -82,7 +82,6 @@ pub type fmi3LockPreemptionCallback = unsafe extern "C" fn();
 
 pub type fmi3UnlockPreemptionCallback = unsafe extern "C" fn();
 
-// FMI 3.0 Common API function types
 pub type fmi3GetVersionTYPE = unsafe extern "C" fn() -> fmi3String;
 
 pub type fmi3SetDebugLoggingTYPE = unsafe extern "C" fn(
@@ -92,7 +91,6 @@ pub type fmi3SetDebugLoggingTYPE = unsafe extern "C" fn(
     categories: *const fmi3String,
 ) -> fmi3Status;
 
-// FMI 3.0 Creation and Destruction
 pub type fmi3InstantiateModelExchangeTYPE = unsafe extern "C" fn(
     instanceName: fmi3String,
     instantiationToken: fmi3String,
@@ -133,7 +131,6 @@ pub type fmi3InstantiateScheduledExecutionTYPE = unsafe extern "C" fn(
 
 pub type fmi3FreeInstanceTYPE = unsafe extern "C" fn(instance: fmi3Instance);
 
-// FMI 3.0 Initialization, Termination, and Reset
 pub type fmi3EnterInitializationModeTYPE = unsafe extern "C" fn(
     instance: fmi3Instance,
     toleranceDefined: fmi3Boolean,
@@ -153,7 +150,6 @@ pub type fmi3TerminateTYPE = unsafe extern "C" fn(instance: fmi3Instance) -> fmi
 
 pub type fmi3ResetTYPE = unsafe extern "C" fn(instance: fmi3Instance) -> fmi3Status;
 
-// FMI 3.0 Getting and Setting Variable Values
 pub type fmi3GetFloat32TYPE = unsafe extern "C" fn(
     instance: fmi3Instance,
     valueReferences: *const fmi3ValueReference,
@@ -380,7 +376,6 @@ pub type fmi3SetClockTYPE = unsafe extern "C" fn(
     nValues: usize,
 ) -> fmi3Status;
 
-// FMI 3.0 Getting Variable Dependency Information
 pub type fmi3GetNumberOfVariableDependenciesTYPE = unsafe extern "C" fn(
     instance: fmi3Instance,
     valueReference: fmi3ValueReference,
@@ -396,7 +391,6 @@ pub type fmi3GetVariableDependenciesTYPE = unsafe extern "C" fn(
     dependencyKinds: *mut fmi3DependencyKind,
 ) -> fmi3Status;
 
-// FMI 3.0 Getting and Setting the Complete FMU State
 pub type fmi3GetFMUStateTYPE =
     unsafe extern "C" fn(instance: fmi3Instance, FMUState: *mut fmi3FMUState) -> fmi3Status;
 
@@ -426,7 +420,6 @@ pub type fmi3DeserializeFMUStateTYPE = unsafe extern "C" fn(
     FMUState: *mut fmi3FMUState,
 ) -> fmi3Status;
 
-// FMI 3.0 Getting Partial Derivatives
 pub type fmi3GetDirectionalDerivativeTYPE = unsafe extern "C" fn(
     instance: fmi3Instance,
     unknowns: *const fmi3ValueReference,
@@ -459,7 +452,6 @@ pub type fmi3ExitConfigurationModeTYPE = unsafe extern "C" fn(
     instance: fmi3Instance
 ) -> fmi3Status;
 
-// FMI 3.0 Co-Simulation specific functions
 pub type fmi3DoStepTYPE = unsafe extern "C" fn(
     instance: fmi3Instance,
     currentCommunicationPoint: fmi3Float64,
@@ -478,7 +470,6 @@ pub type fmi3ActivateModelPartitionTYPE = unsafe extern "C" fn(
     priority: fmi3Float64,
 ) -> fmi3Status;
 
-// FMI 3.0 Model Exchange specific functions
 pub type fmi3EnterContinuousTimeModeTYPE = unsafe extern "C" fn(instance: fmi3Instance) -> fmi3Status;
 
 pub type fmi3CompletedIntegratorStepTYPE = unsafe extern "C" fn(
@@ -530,7 +521,6 @@ pub type fmi3GetNumberOfEventIndicatorsTYPE =
 pub type fmi3GetNumberOfContinuousStatesTYPE =
     unsafe extern "C" fn(instance: fmi3Instance, nContinuousStates: *mut usize) -> fmi3Status;
 
-// FMI 3.0 Scheduled Execution specific functions
 pub type fmi3CallbackIntermediateUpdateTYPE = unsafe extern "C" fn(
     instanceEnvironment: fmi3InstanceEnvironment,
     intermediateUpdateTime: fmi3Float64,
@@ -554,7 +544,6 @@ pub type fmi3UpdateDiscreteStatesTYPE = unsafe extern "C" fn(
     nextEventTime: *mut fmi3Float64,
 ) -> fmi3Status;
 
-// Additional FMI 3.0 functions that might be missing
 pub type fmi3GetOutputDerivativesTYPE = unsafe extern "C" fn(
     instance: fmi3Instance,
     valueReferences: *const fmi3ValueReference,

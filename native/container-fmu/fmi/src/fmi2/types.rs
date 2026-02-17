@@ -3,7 +3,6 @@
 use std::os::raw::{c_char, c_void};
 use crate::types::*;
 
-// FMI 2.0 Basic Types
 pub type fmi2Real = f64;
 pub type fmi2Integer = i32;
 pub type fmi2Boolean = i32;
@@ -53,7 +52,6 @@ pub enum fmi2VariableType {
     String,
 }
 
-// FMI 2.0 Callback Functions
 pub type fmi2CallbackLogger = unsafe extern "C" fn(
     componentEnvironment: fmi2ComponentEnvironment,
     instanceName: fmi2String,
@@ -78,7 +76,6 @@ pub struct fmi2CallbackFunctions {
     pub componentEnvironment: fmi2ComponentEnvironment,
 }
 
-// FMI 2.0 Common API function types
 pub type fmi2GetVersionTYPE = unsafe extern "C" fn() -> fmi2String;
 
 pub type fmi2GetTypesPlatformTYPE = unsafe extern "C" fn() -> fmi2String;
@@ -90,7 +87,6 @@ pub type fmi2SetDebugLoggingTYPE = unsafe extern "C" fn(
     categories: *const fmi2String,
 ) -> fmi2Status;
 
-// FMI 2.0 Creation and Destruction
 pub type fmi2InstantiateTYPE = unsafe extern "C" fn(
     instanceName: fmi2String,
     fmuType: fmi2Type,
@@ -103,7 +99,6 @@ pub type fmi2InstantiateTYPE = unsafe extern "C" fn(
 
 pub type fmi2FreeInstanceTYPE = unsafe extern "C" fn(c: fmi2Component);
 
-// FMI 2.0 Enter and exit initialization mode, terminate and reset
 pub type fmi2SetupExperimentTYPE = unsafe extern "C" fn(
     c: fmi2Component,
     toleranceDefined: fmi2Boolean,
@@ -121,7 +116,6 @@ pub type fmi2TerminateTYPE = unsafe extern "C" fn(c: fmi2Component) -> fmi2Statu
 
 pub type fmi2ResetTYPE = unsafe extern "C" fn(c: fmi2Component) -> fmi2Status;
 
-// FMI 2.0 Getting and setting variable values
 pub type fmi2GetRealTYPE = unsafe extern "C" fn(
     c: fmi2Component,
     vr: *const fmi2ValueReference,
@@ -178,7 +172,6 @@ pub type fmi2SetStringTYPE = unsafe extern "C" fn(
     value: *const fmi2String,
 ) -> fmi2Status;
 
-// FMI 2.0 Getting and setting the internal FMU state
 pub type fmi2GetFMUstateTYPE =
     unsafe extern "C" fn(c: fmi2Component, FMUstate: *mut fmi2FMUstate) -> fmi2Status;
 
@@ -205,7 +198,6 @@ pub type fmi2DeSerializeFMUstateTYPE = unsafe extern "C" fn(
     FMUstate: *mut fmi2FMUstate,
 ) -> fmi2Status;
 
-// FMI 2.0 Getting partial derivatives
 pub type fmi2GetDirectionalDerivativeTYPE = unsafe extern "C" fn(
     c: fmi2Component,
     vUnknown_ref: *const fmi2ValueReference,
@@ -216,7 +208,6 @@ pub type fmi2GetDirectionalDerivativeTYPE = unsafe extern "C" fn(
     dvUnknown: *mut fmi2Real,
 ) -> fmi2Status;
 
-// FMI 2.0 Model Exchange specific types
 pub type fmi2EnterEventModeTYPE = unsafe extern "C" fn(c: fmi2Component) -> fmi2Status;
 
 pub type fmi2NewDiscreteStatesTYPE =
@@ -248,7 +239,6 @@ pub type fmi2GetContinuousStatesTYPE =
 pub type fmi2GetNominalsOfContinuousStatesTYPE =
     unsafe extern "C" fn(c: fmi2Component, x_nominal: *mut fmi2Real, nx: usize) -> fmi2Status;
 
-// FMI 2.0 Co-Simulation specific types
 pub type fmi2SetRealInputDerivativesTYPE = unsafe extern "C" fn(
     c: fmi2Component,
     vr: *const fmi2ValueReference,

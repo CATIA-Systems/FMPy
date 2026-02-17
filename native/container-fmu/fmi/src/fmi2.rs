@@ -1089,5 +1089,5 @@ impl FMU2 {
 
 }
 
-// Explicitly implement Sync for FMU2 since all fields are now Sync
+// Explicitly implement Sync for FMU2 since all fields are Sync
 unsafe impl Sync for FMU2 {}

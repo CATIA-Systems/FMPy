@@ -4,21 +4,17 @@ import pytest
 from fmpy import simulate_fmu, read_model_description, read_csv, platform_tuple
 from fmpy.container_fmu.cli import create_container_fmu
 from fmpy.container_fmu.config import Configuration, Component, Connection
-from fmpy.fmi3 import (
-
-    printLogMessage,
-)
 from fmpy.model_description import BaseUnit, DisplayUnit, ModelDescription, SimpleType, Item, DefaultExperiment, \
     ModelVariable, Unit, CoSimulation, VariableType
 
 
-@pytest.mark.parametrize("fmi_version", ["2.0", "3.0"])
-def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir, fmi_version):
+@pytest.mark.parametrize("fmi_major_version", [2, 3])
+def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir, fmi_major_version):
 
     if platform_tuple == "aarch64-darwin":
         pytest.skip("FMI 2.0 does not support aarch64-darwin")
 
-    variable_type: VariableType = "Real" if fmi_version == "2.0" else "Float64"
+    variable_type: VariableType = "Real" if fmi_major_version == 2 else "Float64"
 
     container_input = ModelVariable(
         type=variable_type,
@@ -37,7 +33,7 @@ def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir, fmi_versi
     )
 
     model_description = ModelDescription(
-        fmiVersion=fmi_version,
+        fmiVersion=f"{fmi_major_version}.0",
         modelName="Feedthrough",
         instantiationToken="",
         unitDefinitions=[
@@ -112,7 +108,7 @@ def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir, fmi_versi
 
     unzipdir = work_dir
 
-    filename = unzipdir / f"Container_fmi{fmi_version[0]}.fmu"
+    filename = unzipdir / f"Container_fmi{fmi_major_version}.fmu"
 
     create_container_fmu(configuration, unzipdir, filename)
 
@@ -129,13 +125,13 @@ def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir, fmi_versi
 
     result = simulate_fmu(
         filename,
-        debug_logging=True,
-        fmi_call_logger=print,
-        # logger=printLogMessage,
+        # debug_logging=True,
+        # fmi_call_logger=print,
         output_interval=0.5,
         stop_time=1,
         # start_values={"Float64_continuous_input": 1.5},
         input=input
     )
 
-    print(result)
+    assert np.all(result["time"] == [0.0, 0.5, 1.0])
+    assert np.all(result["Float64_continuous_output"] == [0.0, 0.0, 0.5])

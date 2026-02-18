@@ -409,10 +409,11 @@ impl Container {
         status
     }
 
-    fn reset(&self) -> fmiStatus {
+    fn reset(&mut self) -> fmiStatus {
         let mut status = fmiOK;
         return_on_error!(status, self.call_all(|fmu| fmu.reset(), |fmu| fmu.reset()));
         return_on_error!(status, self.setStartValues());
+        self.nSteps = 0;
         status
     }
 
@@ -1252,13 +1253,18 @@ impl Container {
             return fmiError;
         }
 
+        if communicationStepSize < 0.0 || relative_eq!(communicationStepSize, 0.0) {
+            self.logError("Argument communicationStepSize must be greater than 0.");
+            return fmiError;
+        }
+
         let n_steps_float = communicationStepSize / self.system.fixedStepSize;
         let n_steps = n_steps_float.round() as u64;
 
         if n_steps == 0 || !relative_eq!(n_steps as f64, n_steps_float) {
             let message = format!(
-                "The communicationStepSize={} must be an even multiple of the fixedStepSize={}.",
-                self.system.fixedStepSize, communicationStepSize
+                "Argument communicationStepSize={} must be an even multiple of fixedStepSize={}.",
+                communicationStepSize, self.system.fixedStepSize
             );
             self.logError(&message);
             return fmiError;

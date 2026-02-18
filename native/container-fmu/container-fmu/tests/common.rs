@@ -201,12 +201,11 @@ pub fn create_fmi2_container() -> FMU2 {
     }
 
     let log_message = move |status: &fmi2Status, category: &str, message: &str| {
-        println!("[{status:?}] [{category}] {message}")
+        println!(" [{status:?}] [{category}] {message}")
     };
 
-    let log_fmi_call = move |_status: &fmi2Status, _message: &str| {
-        // println!("[{_status:?}] {_message}")
-    };
+    let log_fmi_call =
+        move |_status: &fmi2Status, _message: &str| println!(">[{_status:?}] {_message}");
 
     FMU2::new(
         &unzipdir,

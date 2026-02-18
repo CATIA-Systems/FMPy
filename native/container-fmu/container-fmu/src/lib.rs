@@ -5,7 +5,7 @@ pub mod fmi2;
 pub mod fmi3;
 
 use crate::conf::*;
-use approx::relative_ne;
+use approx::{relative_eq, relative_ne};
 use fmi::fmi2::types::*;
 use fmi::fmi2::*;
 use fmi::fmi3::types::*;
@@ -33,10 +33,10 @@ enum FMUInstance {
 }
 
 struct Container {
-    time: f64,
     tolerance: Option<f64>,
     startTime: f64,
     stopTime: Option<f64>,
+    nSteps: u64,
     terminated: bool,
     instances: Vec<FMUInstance>,
     system: System,
@@ -244,10 +244,10 @@ impl Container {
         let stringValues = Vec::new();
 
         let container = Container {
-            time: 0.0,
             tolerance: None,
             startTime: 0.0,
             stopTime: None,
+            nSteps: 0,
             terminated: false,
             instances,
             system,
@@ -420,6 +420,10 @@ impl Container {
         self.call_all(|fmu| fmu.terminate(), |fmu| fmu.terminate())
     }
 
+    fn time(&self) -> f64 {
+        self.startTime + self.nSteps as f64 * self.system.fixedStepSize
+    }
+
     fn getVariable(
         &self,
         valueReference: fmi3ValueReference,
@@ -464,7 +468,7 @@ impl Container {
 
         for valueReference in valueReferences {
             if *valueReference == 0 {
-                values[0] = self.time;
+                values[0] = self.time();
                 values = &mut values[1..];
             } else {
                 let variable = match self.getVariable(*valueReference, VariableType::Float64) {
@@ -1174,7 +1178,7 @@ impl Container {
         // thread safety constraints (FMU callbacks are not Sync).
         // The FMU doStep calls must be executed sequentially.
 
-        let currentCommunicationPoint = self.time;
+        let currentCommunicationPoint = self.time();
         let communicationStepSize = self.system.fixedStepSize;
 
         let do_step = |instance: &FMUInstance| match instance {
@@ -1226,7 +1230,7 @@ impl Container {
 
         return_on_error!(status, self.updateConnections());
 
-        self.time += communicationStepSize;
+        self.nSteps += 1;
 
         status
     }
@@ -1238,18 +1242,29 @@ impl Container {
     ) -> fmiStatus {
         let mut status = fmiOK;
 
-        if relative_ne!(currentCommunicationPoint, self.time) {
+        if relative_ne!(currentCommunicationPoint, self.time()) {
             let message = format!(
                 "Expected currentCommunicationPoint={} but was {}",
-                self.time, currentCommunicationPoint
+                self.time(),
+                currentCommunicationPoint
             );
             self.logError(&message);
             return fmiError;
         }
 
-        let next_time = currentCommunicationPoint + communicationStepSize;
+        let n_steps_float = communicationStepSize / self.system.fixedStepSize;
+        let n_steps = n_steps_float.round() as u64;
 
-        while self.time < next_time && relative_ne!(self.time, next_time) {
+        if n_steps == 0 || !relative_eq!(n_steps as f64, n_steps_float) {
+            let message = format!(
+                "The communicationStepSize={} must be an even multiple of the fixedStepSize={}.",
+                self.system.fixedStepSize, communicationStepSize
+            );
+            self.logError(&message);
+            return fmiError;
+        }
+
+        for _ in 0..n_steps {
             return_on_error!(status, self.doFixedStep());
         }
 

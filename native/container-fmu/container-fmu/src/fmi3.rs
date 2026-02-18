@@ -883,7 +883,7 @@ pub extern "C" fn fmi3DoStep(
         *eventHandlingNeeded = false;
         *terminateSimulation = container.terminated;
         *earlyReturn = false;
-        *lastSuccessfulTime = container.time
+        *lastSuccessfulTime = container.time();
     };
 
     status

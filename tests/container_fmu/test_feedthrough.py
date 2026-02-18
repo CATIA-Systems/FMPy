@@ -9,14 +9,19 @@ from fmpy.fmi3 import (
     printLogMessage,
 )
 from fmpy.model_description import BaseUnit, DisplayUnit, ModelDescription, SimpleType, Item, DefaultExperiment, \
-    ModelVariable, Unit, CoSimulation
+    ModelVariable, Unit, CoSimulation, VariableType
 
 
-@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="FMI 2.0 does not support aarch64-darwin")
-def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir):
+@pytest.mark.parametrize("fmi_version", ["2.0", "3.0"])
+def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir, fmi_version):
+
+    if platform_tuple == "aarch64-darwin":
+        pytest.skip("FMI 2.0 does not support aarch64-darwin")
+
+    variable_type: VariableType = "Real" if fmi_version == "2.0" else "Float64"
 
     container_input = ModelVariable(
-        type="Real",
+        type=variable_type,
         variability="continuous",
         causality="input",
         name="Float64_continuous_input",
@@ -24,7 +29,7 @@ def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir):
     )
 
     container_output = ModelVariable(
-        type="Real",
+        type=variable_type,
         initial="calculated",
         variability="continuous",
         causality="output",
@@ -32,7 +37,7 @@ def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir):
     )
 
     model_description = ModelDescription(
-        fmiVersion="2.0",
+        fmiVersion=fmi_version,
         modelName="Feedthrough",
         instantiationToken="",
         unitDefinitions=[
@@ -43,7 +48,7 @@ def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir):
             ),
         ],
         typeDefinitions=[
-            SimpleType(name='AngularVelocity', type="Real", quantity='AngularVelocity', unit='rad/s',
+            SimpleType(name='AngularVelocity', type=variable_type, quantity='AngularVelocity', unit='rad/s',
                        displayUnit='rpm'),
             SimpleType(name='Option', type='Enumeration', items=[
                 Item(name='Option 1', value="1", description="First option"),
@@ -58,7 +63,7 @@ def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir):
         ),
         modelVariables=[
             ModelVariable(
-                type="Real",
+                type=variable_type,
                 variability="continuous",
                 causality="independent",
                 name="time",
@@ -107,7 +112,7 @@ def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir):
 
     unzipdir = work_dir
 
-    filename = unzipdir / "Container.fmu"
+    filename = unzipdir / f"Container_fmi{fmi_version[0]}.fmu"
 
     create_container_fmu(configuration, unzipdir, filename)
 
@@ -126,7 +131,7 @@ def test_feedthrough(work_dir, reference_fmus_dist_dir, resources_dir):
         filename,
         debug_logging=True,
         fmi_call_logger=print,
-        logger=printLogMessage,
+        # logger=printLogMessage,
         output_interval=0.5,
         stop_time=1,
         # start_values={"Float64_continuous_input": 1.5},

@@ -1,64 +1,11 @@
-from typing import Sequence
-
 import json
-from datetime import datetime, timezone
 from pathlib import Path
 import numpy as np
-
-import jinja2
 from fmpy import read_model_description
 from fmpy.container_fmu.config import Configuration
 from fmpy.model_description import ModelVariable
 
-
 __version__ = "0.1.0"
-
-
-def write_model_description_from_configuration(configuration: Configuration, filename: Path):
-    template_dir = Path(__file__).parent / "template"
-
-    loader = jinja2.FileSystemLoader(searchpath=template_dir)
-    environment = jinja2.Environment(loader=loader, trim_blocks=True)
-    template = environment.get_template("FMI3.xml")
-
-    def xml_encode(s):
-        """Escape non-ASCII characters"""
-
-        if s is None:
-            return s
-
-        s = s.replace("&", "&amp;")
-        s = s.replace("<", "&lt;")
-        s = s.replace(">", "&gt;")
-        s = s.replace('"', "&quot;")
-
-        for c in s:
-            if ord(c) > 127:
-                s = s.replace(c, "&#x" + format(ord(c), "x") + ";")
-
-        return s
-
-    def to_literal(value):
-        if isinstance(value, bool):
-            return "true" if value else "false"
-        else:
-            return str(value)
-
-    template.globals.update(
-        {
-            "xml_encode": xml_encode,
-            "to_literal": to_literal,
-        }
-    )
-
-    xml = template.render(
-        container_fmu_version=__version__,
-        generationDateAndTime=datetime.now(timezone.utc).isoformat(),
-        system=configuration,
-    )
-
-    with open(filename, "w") as f:
-        f.write(xml)
 
 
 def write_configuration(configuration: Configuration, filename: Path):

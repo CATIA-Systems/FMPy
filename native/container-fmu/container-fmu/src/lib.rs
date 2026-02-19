@@ -43,6 +43,21 @@ struct Container {
     logMessage: fmi3LogMessageCallback,
     instanceEnvironment: fmi3InstanceEnvironment,
     stringValues: Vec<CString>,
+
+    f32_buffer: Vec<f32>,
+    f64_buffer: Vec<f64>,
+    i8_buffer: Vec<i8>,
+    u8_buffer: Vec<u8>,
+    i16_buffer: Vec<i16>,
+    u16_buffer: Vec<u16>,
+    i32_buffer: Vec<i32>,
+    u32_buffer: Vec<u32>,
+    i64_buffer: Vec<i64>,
+    u64_buffer: Vec<u64>,
+    bool_buffer: Vec<bool>,
+    string_buffer: Vec<String>,
+    binary_buffer: Vec<*const u8>,
+    usize_buffer: Vec<usize>,
 }
 
 macro_rules! return_on_error {
@@ -254,6 +269,20 @@ impl Container {
             logMessage,
             instanceEnvironment,
             stringValues,
+            f32_buffer: Vec::new(),
+            f64_buffer: Vec::new(),
+            i8_buffer: Vec::new(),
+            u8_buffer: Vec::new(),
+            i16_buffer: Vec::new(),
+            u16_buffer: Vec::new(),
+            i32_buffer: Vec::new(),
+            u32_buffer: Vec::new(),
+            i64_buffer: Vec::new(),
+            u64_buffer: Vec::new(),
+            bool_buffer: Vec::new(),
+            string_buffer: Vec::new(),
+            binary_buffer: Vec::new(),
+            usize_buffer: Vec::new(),
         };
 
         let status = container.setStartValues();
@@ -396,7 +425,7 @@ impl Container {
         })
     }
 
-    fn exitInitializationMode(&self) -> fmiStatus {
+    fn exitInitializationMode(&mut self) -> fmiStatus {
         let mut status = fmiOK;
         return_on_error!(status, self.updateConnections());
         return_on_error!(
@@ -978,7 +1007,7 @@ impl Container {
         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
     }
 
-    fn updateConnections(&self) -> fmiStatus {
+    fn updateConnections(&mut self) -> fmiStatus {
         let status = fmiOK;
 
         for connection in &self.system.connections {
@@ -992,161 +1021,161 @@ impl Container {
 
             match connection.variableType {
                 VariableType::Float32 => {
-                    let mut values = vec![0f32; size];
+                    self.f32_buffer.resize(size, 0.0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.getFloat32(&srcValueReferences, &mut values),
+                        FMUInstance::FMI3(fmu) => fmu.getFloat32(&srcValueReferences, &mut self.f32_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.setFloat32(&dstValueReferences, &values),
+                        FMUInstance::FMI3(fmu) => fmu.setFloat32(&dstValueReferences, &self.f32_buffer),
                     });
                 }
                 VariableType::Float64 => {
-                    let mut values = vec![0f64; size];
+                    self.f64_buffer.resize(size, 0.0);
                     fmi_check_status!(match srcInstance {
-                        FMUInstance::FMI2(fmu) => fmu.getReal(&srcValueReferences, &mut values),
-                        FMUInstance::FMI3(fmu) => fmu.getFloat64(&srcValueReferences, &mut values),
+                        FMUInstance::FMI2(fmu) => fmu.getReal(&srcValueReferences, &mut self.f64_buffer),
+                        FMUInstance::FMI3(fmu) => fmu.getFloat64(&srcValueReferences, &mut self.f64_buffer),
                     });
                     fmi_check_status!(match dstInstance {
-                        FMUInstance::FMI2(fmu) => fmu.setReal(&dstValueReferences, &values),
-                        FMUInstance::FMI3(fmu) => fmu.setFloat64(&dstValueReferences, &values),
+                        FMUInstance::FMI2(fmu) => fmu.setReal(&dstValueReferences, &self.f64_buffer),
+                        FMUInstance::FMI3(fmu) => fmu.setFloat64(&dstValueReferences, &self.f64_buffer),
                     });
                 }
                 VariableType::Int8 => {
-                    let mut values = vec![0i8; size];
+                    self.i8_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.getInt8(&srcValueReferences, &mut values),
+                        FMUInstance::FMI3(fmu) => fmu.getInt8(&srcValueReferences, &mut self.i8_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.setInt8(&dstValueReferences, &values),
+                        FMUInstance::FMI3(fmu) => fmu.setInt8(&dstValueReferences, &self.i8_buffer),
                     });
                 }
                 VariableType::UInt8 => {
-                    let mut values = vec![0u8; size];
+                    self.u8_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.getUInt8(&srcValueReferences, &mut values),
+                        FMUInstance::FMI3(fmu) => fmu.getUInt8(&srcValueReferences, &mut self.u8_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.setUInt8(&dstValueReferences, &values),
+                        FMUInstance::FMI3(fmu) => fmu.setUInt8(&dstValueReferences, &self.u8_buffer),
                     });
                 }
                 VariableType::Int16 => {
-                    let mut values = vec![0i16; size];
+                    self.i16_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.getInt16(&srcValueReferences, &mut values),
+                        FMUInstance::FMI3(fmu) => fmu.getInt16(&srcValueReferences, &mut self.i16_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.setInt16(&dstValueReferences, &values),
+                        FMUInstance::FMI3(fmu) => fmu.setInt16(&dstValueReferences, &self.i16_buffer),
                     });
                 }
                 VariableType::UInt16 => {
-                    let mut values = vec![0u16; size];
+                    self.u16_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.getUInt16(&srcValueReferences, &mut values),
+                        FMUInstance::FMI3(fmu) => fmu.getUInt16(&srcValueReferences, &mut self.u16_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.setUInt16(&dstValueReferences, &values),
+                        FMUInstance::FMI3(fmu) => fmu.setUInt16(&dstValueReferences, &self.u16_buffer),
                     });
                 }
                 VariableType::Int32 => {
-                    let mut values = vec![0i32; size];
+                    self.i32_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
-                        FMUInstance::FMI2(fmu) => fmu.getInteger(&srcValueReferences, &mut values),
-                        FMUInstance::FMI3(fmu) => fmu.getInt32(&srcValueReferences, &mut values),
+                        FMUInstance::FMI2(fmu) => fmu.getInteger(&srcValueReferences, &mut self.i32_buffer),
+                        FMUInstance::FMI3(fmu) => fmu.getInt32(&srcValueReferences, &mut self.i32_buffer),
                     });
                     fmi_check_status!(match dstInstance {
-                        FMUInstance::FMI2(fmu) => fmu.setInteger(&dstValueReferences, &values),
-                        FMUInstance::FMI3(fmu) => fmu.setInt32(&dstValueReferences, &values),
+                        FMUInstance::FMI2(fmu) => fmu.setInteger(&dstValueReferences, &self.i32_buffer),
+                        FMUInstance::FMI3(fmu) => fmu.setInt32(&dstValueReferences, &self.i32_buffer),
                     });
                 }
                 VariableType::UInt32 => {
-                    let mut values = vec![0u32; size];
+                    self.u32_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.getUInt32(&srcValueReferences, &mut values),
+                        FMUInstance::FMI3(fmu) => fmu.getUInt32(&srcValueReferences, &mut self.u32_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.setUInt32(&dstValueReferences, &values),
+                        FMUInstance::FMI3(fmu) => fmu.setUInt32(&dstValueReferences, &self.u32_buffer),
                     });
                 }
                 VariableType::Int64 => {
-                    let mut values = vec![0i64; size];
+                    self.i64_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.getInt64(&srcValueReferences, &mut values),
+                        FMUInstance::FMI3(fmu) => fmu.getInt64(&srcValueReferences, &mut self.i64_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.setInt64(&dstValueReferences, &values),
+                        FMUInstance::FMI3(fmu) => fmu.setInt64(&dstValueReferences, &self.i64_buffer),
                     });
                 }
                 VariableType::UInt64 => {
-                    let mut values = vec![0u64; size];
+                    self.u64_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.getUInt64(&srcValueReferences, &mut values),
+                        FMUInstance::FMI3(fmu) => fmu.getUInt64(&srcValueReferences, &mut self.u64_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.setUInt64(&dstValueReferences, &values),
+                        FMUInstance::FMI3(fmu) => fmu.setUInt64(&dstValueReferences, &self.u64_buffer),
                     });
                 }
                 VariableType::Boolean => {
-                    let mut values = vec![false; size];
+                    self.bool_buffer.resize(size, false);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => {
-                            let mut buffer = vec![fmi2False; size];
-                            let status = fmu.getBoolean(&srcValueReferences, &mut buffer);
-                            for (i, value) in buffer.iter().enumerate() {
-                                values[i] = buffer[i] != fmi2False;
+                            self.i32_buffer.resize(size, 0);
+                            let status = fmu.getBoolean(&srcValueReferences, &mut self.i32_buffer);
+                            for (i, value) in self.i32_buffer.iter().enumerate() {
+                                self.bool_buffer[i] = *value != fmi2False;
                             }
                             status
                         }
-                        FMUInstance::FMI3(fmu) => fmu.getBoolean(&srcValueReferences, &mut values),
+                        FMUInstance::FMI3(fmu) => fmu.getBoolean(&srcValueReferences, &mut self.bool_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => {
-                            let buffer: Vec<fmi2Boolean> = values
-                                .iter()
-                                .map(|&v| if v { fmi2True } else { fmi2False })
-                                .collect();
-                            fmu.setBoolean(&dstValueReferences, &buffer)
+                            self.i32_buffer.resize(size, 0);
+                            for (i, &value) in self.bool_buffer.iter().enumerate() {
+                                self.i32_buffer[i] = if value { fmi2True } else { fmi2False };
+                            }
+                            fmu.setInteger(&dstValueReferences, &self.i32_buffer)
                         }
-                        FMUInstance::FMI3(fmu) => fmu.setBoolean(&dstValueReferences, &values),
+                        FMUInstance::FMI3(fmu) => fmu.setBoolean(&dstValueReferences, &self.bool_buffer),
                     });
                 }
                 VariableType::String => {
-                    let mut values = vec![String::new(); size];
+                    self.string_buffer.resize(size, String::new());
                     fmi_check_status!(match srcInstance {
-                        FMUInstance::FMI2(fmu) => fmu.getString(&srcValueReferences, &mut values),
-                        FMUInstance::FMI3(fmu) => fmu.getString(&srcValueReferences, &mut values),
+                        FMUInstance::FMI2(fmu) => fmu.getString(&srcValueReferences, &mut self.string_buffer),
+                        FMUInstance::FMI3(fmu) => fmu.getString(&srcValueReferences, &mut self.string_buffer),
                     });
-                    let values: Vec<&str> = values.iter().map(String::as_str).collect();
+                    let values: Vec<&str> = self.string_buffer.iter().map(String::as_str).collect();
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => fmu.setString(&dstValueReferences, &values),
                         FMUInstance::FMI3(fmu) => fmu.setString(&dstValueReferences, &values),
                     });
                 }
                 VariableType::Binary => {
-                    let mut sizes = vec![0usize; size];
-                    let mut value_ptrs = vec![std::ptr::null::<u8>(); size];
+                    self.binary_buffer.resize(size, std::ptr::null::<u8>());
+                    self.usize_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => {
                             self.logError("Binary variables are not supported for FMI 2.");
                             return fmiError;
                         }
                         FMUInstance::FMI3(fmu) =>
-                            fmu.getBinary(&srcValueReferences, &mut sizes, &mut value_ptrs),
+                            fmu.getBinary(&srcValueReferences, &mut self.usize_buffer, &mut self.binary_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => {
@@ -1154,7 +1183,7 @@ impl Container {
                             return fmiError;
                         }
                         FMUInstance::FMI3(fmu) =>
-                            fmu.setBinary(&dstValueReferences, &sizes, &value_ptrs),
+                            fmu.setBinary(&dstValueReferences, &self.usize_buffer, &self.binary_buffer),
                     });
                 }
                 _ => {

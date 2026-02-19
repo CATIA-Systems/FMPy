@@ -324,7 +324,7 @@ impl Container {
                             set_start_value!(self, valueReferences, start, setInt64, fmiInt64),
                         VariableType::UInt64 =>
                             set_start_value!(self, valueReferences, start, setUInt64, fmiUInt64),
-                        VariableType::Boolean | VariableType::Clock =>
+                        VariableType::Boolean =>
                             set_start_value!(self, valueReferences, start, setBoolean, fmiBoolean),
                         VariableType::String => {
                             let start: Vec<&str> = start.iter().map(String::as_str).collect();
@@ -369,7 +369,9 @@ impl Container {
                                     fmiError
                                 }
                             }
-                        }
+                        },
+                        VariableType::Clock =>
+                            set_start_value!(self, valueReferences, start, setClock, fmiClock),
                     }
                 );
             }
@@ -1007,6 +1009,16 @@ impl Container {
         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
     }
 
+    fn setClock(&self, valueReferences: &[fmiValueReference], values: &[fmiBoolean]) -> fmiStatus {
+        let fmi2_setter =
+            |fmu: &FMU2, valueReferences: &[fmi2ValueReference], values: &[fmiBoolean]| fmiError;
+        let fmi3_setter =
+            |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmiBoolean]| {
+                fmu.setClock(valueReferences, values)
+            };
+        set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
+    }
+
     fn updateConnections(&mut self) -> fmiStatus {
         let status = fmiOK;
 
@@ -1149,7 +1161,7 @@ impl Container {
                             for (i, &value) in self.bool_buffer.iter().enumerate() {
                                 self.i32_buffer[i] = if value { fmi2True } else { fmi2False };
                             }
-                            fmu.setInteger(&dstValueReferences, &self.i32_buffer)
+                            fmu.setBoolean(&dstValueReferences, &self.i32_buffer)
                         }
                         FMUInstance::FMI3(fmu) => fmu.setBoolean(&dstValueReferences, &self.bool_buffer),
                     });

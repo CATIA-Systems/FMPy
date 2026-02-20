@@ -6,7 +6,7 @@ use fmi::fmi3::types::*;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_void;
 use std::path::Path;
-use std::ptr::null_mut;
+use std::ptr;
 use std::sync::Arc;
 
 fn NOT_IMPLEMENTED(instance: fmi3Instance) -> fmi3Status {
@@ -69,7 +69,7 @@ pub extern "C" fn fmi3InstantiateModelExchange(
         };
     }
 
-    null_mut()
+    ptr::null_mut()
 }
 
 #[unsafe(no_mangle)]
@@ -88,7 +88,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
     intermediateUpdate: fmi3IntermediateUpdateCallback,
 ) -> fmi3Instance {
     if let None = logMessage {
-        return null_mut();
+        return ptr::null_mut();
     }
 
     let logMessage = logMessage.unwrap();
@@ -107,7 +107,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
 
     if instantiationToken.is_null() {
         log_error("Argument instantiationToken must not be NULL.");
-        return null_mut();
+        return ptr::null_mut();
     }
 
     let instantiation_token = unsafe { CStr::from_ptr(instantiationToken) };
@@ -115,7 +115,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
 
     if resourcePath.is_null() {
         log_error("Argument resourcePath must not be NULL.");
-        return null_mut();
+        return ptr::null_mut();
     }
 
     let resource_path = unsafe { CStr::from_ptr(resourcePath) };
@@ -164,7 +164,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         }
         Err(error) => {
             log_error(&error);
-            null_mut()
+            ptr::null_mut()
         }
     }
 }
@@ -194,7 +194,7 @@ pub extern "C" fn fmi3InstantiateScheduledExecution(
         };
     }
 
-    null_mut()
+    ptr::null_mut()
 }
 
 #[unsafe(no_mangle)]

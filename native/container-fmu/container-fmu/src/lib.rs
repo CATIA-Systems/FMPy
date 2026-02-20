@@ -369,7 +369,7 @@ impl Container {
                                     fmiError
                                 }
                             }
-                        },
+                        }
                         VariableType::Clock =>
                             set_start_value!(self, valueReferences, start, setClock, fmiClock),
                     }
@@ -1036,29 +1036,36 @@ impl Container {
                     self.f32_buffer.resize(size, 0.0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.getFloat32(&srcValueReferences, &mut self.f32_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.getFloat32(&srcValueReferences, &mut self.f32_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.setFloat32(&dstValueReferences, &self.f32_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setFloat32(&dstValueReferences, &self.f32_buffer),
                     });
                 }
                 VariableType::Float64 => {
                     self.f64_buffer.resize(size, 0.0);
                     fmi_check_status!(match srcInstance {
-                        FMUInstance::FMI2(fmu) => fmu.getReal(&srcValueReferences, &mut self.f64_buffer),
-                        FMUInstance::FMI3(fmu) => fmu.getFloat64(&srcValueReferences, &mut self.f64_buffer),
+                        FMUInstance::FMI2(fmu) =>
+                            fmu.getReal(&srcValueReferences, &mut self.f64_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.getFloat64(&srcValueReferences, &mut self.f64_buffer),
                     });
                     fmi_check_status!(match dstInstance {
-                        FMUInstance::FMI2(fmu) => fmu.setReal(&dstValueReferences, &self.f64_buffer),
-                        FMUInstance::FMI3(fmu) => fmu.setFloat64(&dstValueReferences, &self.f64_buffer),
+                        FMUInstance::FMI2(fmu) =>
+                            fmu.setReal(&dstValueReferences, &self.f64_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setFloat64(&dstValueReferences, &self.f64_buffer),
                     });
                 }
                 VariableType::Int8 => {
                     self.i8_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.getInt8(&srcValueReferences, &mut self.i8_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.getInt8(&srcValueReferences, &mut self.i8_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
@@ -1069,77 +1076,93 @@ impl Container {
                     self.u8_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.getUInt8(&srcValueReferences, &mut self.u8_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.getUInt8(&srcValueReferences, &mut self.u8_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.setUInt8(&dstValueReferences, &self.u8_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setUInt8(&dstValueReferences, &self.u8_buffer),
                     });
                 }
                 VariableType::Int16 => {
                     self.i16_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.getInt16(&srcValueReferences, &mut self.i16_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.getInt16(&srcValueReferences, &mut self.i16_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.setInt16(&dstValueReferences, &self.i16_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setInt16(&dstValueReferences, &self.i16_buffer),
                     });
                 }
                 VariableType::UInt16 => {
                     self.u16_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.getUInt16(&srcValueReferences, &mut self.u16_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.getUInt16(&srcValueReferences, &mut self.u16_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.setUInt16(&dstValueReferences, &self.u16_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setUInt16(&dstValueReferences, &self.u16_buffer),
                     });
                 }
                 VariableType::Int32 => {
                     self.i32_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
-                        FMUInstance::FMI2(fmu) => fmu.getInteger(&srcValueReferences, &mut self.i32_buffer),
-                        FMUInstance::FMI3(fmu) => fmu.getInt32(&srcValueReferences, &mut self.i32_buffer),
+                        FMUInstance::FMI2(fmu) =>
+                            fmu.getInteger(&srcValueReferences, &mut self.i32_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.getInt32(&srcValueReferences, &mut self.i32_buffer),
                     });
                     fmi_check_status!(match dstInstance {
-                        FMUInstance::FMI2(fmu) => fmu.setInteger(&dstValueReferences, &self.i32_buffer),
-                        FMUInstance::FMI3(fmu) => fmu.setInt32(&dstValueReferences, &self.i32_buffer),
+                        FMUInstance::FMI2(fmu) =>
+                            fmu.setInteger(&dstValueReferences, &self.i32_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setInt32(&dstValueReferences, &self.i32_buffer),
                     });
                 }
                 VariableType::UInt32 => {
                     self.u32_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.getUInt32(&srcValueReferences, &mut self.u32_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.getUInt32(&srcValueReferences, &mut self.u32_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.setUInt32(&dstValueReferences, &self.u32_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setUInt32(&dstValueReferences, &self.u32_buffer),
                     });
                 }
                 VariableType::Int64 => {
                     self.i64_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.getInt64(&srcValueReferences, &mut self.i64_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.getInt64(&srcValueReferences, &mut self.i64_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.setInt64(&dstValueReferences, &self.i64_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setInt64(&dstValueReferences, &self.i64_buffer),
                     });
                 }
                 VariableType::UInt64 => {
                     self.u64_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.getUInt64(&srcValueReferences, &mut self.u64_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.getUInt64(&srcValueReferences, &mut self.u64_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu.setUInt64(&dstValueReferences, &self.u64_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setUInt64(&dstValueReferences, &self.u64_buffer),
                     });
                 }
                 VariableType::Boolean => {
@@ -1153,7 +1176,8 @@ impl Container {
                             }
                             status
                         }
-                        FMUInstance::FMI3(fmu) => fmu.getBoolean(&srcValueReferences, &mut self.bool_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.getBoolean(&srcValueReferences, &mut self.bool_buffer),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => {
@@ -1163,14 +1187,17 @@ impl Container {
                             }
                             fmu.setBoolean(&dstValueReferences, &self.i32_buffer)
                         }
-                        FMUInstance::FMI3(fmu) => fmu.setBoolean(&dstValueReferences, &self.bool_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setBoolean(&dstValueReferences, &self.bool_buffer),
                     });
                 }
                 VariableType::String => {
                     self.string_buffer.resize(size, String::new());
                     fmi_check_status!(match srcInstance {
-                        FMUInstance::FMI2(fmu) => fmu.getString(&srcValueReferences, &mut self.string_buffer),
-                        FMUInstance::FMI3(fmu) => fmu.getString(&srcValueReferences, &mut self.string_buffer),
+                        FMUInstance::FMI2(fmu) =>
+                            fmu.getString(&srcValueReferences, &mut self.string_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.getString(&srcValueReferences, &mut self.string_buffer),
                     });
                     let values: Vec<&str> = self.string_buffer.iter().map(String::as_str).collect();
                     fmi_check_status!(match dstInstance {
@@ -1186,16 +1213,22 @@ impl Container {
                             self.logError("Binary variables are not supported for FMI 2.");
                             return fmiError;
                         }
-                        FMUInstance::FMI3(fmu) =>
-                            fmu.getBinary(&srcValueReferences, &mut self.usize_buffer, &mut self.binary_buffer),
+                        FMUInstance::FMI3(fmu) => fmu.getBinary(
+                            &srcValueReferences,
+                            &mut self.usize_buffer,
+                            &mut self.binary_buffer
+                        ),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => {
                             self.logError("Binary variables are not supported for FMI 2.");
                             return fmiError;
                         }
-                        FMUInstance::FMI3(fmu) =>
-                            fmu.setBinary(&dstValueReferences, &self.usize_buffer, &self.binary_buffer),
+                        FMUInstance::FMI3(fmu) => fmu.setBinary(
+                            &dstValueReferences,
+                            &self.usize_buffer,
+                            &self.binary_buffer
+                        ),
                     });
                 }
                 _ => {

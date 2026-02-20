@@ -351,8 +351,6 @@ pub extern "C" fn fmi3GetString(
         values[i] = container.stringValues[i].as_ptr();
     }
 
-    println!("container.stringValues: {:?}", container.stringValues);
-
     status
 }
 

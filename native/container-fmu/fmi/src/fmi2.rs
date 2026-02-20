@@ -7,8 +7,7 @@ use std::error::Error;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_void;
 use std::path::Path;
-use std::ptr::null;
-use std::ptr::{self, null_mut};
+use std::ptr;
 use std::sync::Arc;
 use types::*;
 use url::Url;
@@ -379,7 +378,7 @@ impl FMU2 {
 
         let mut fmu = FMU2 {
             instanceName: instanceName.to_string(),
-            component: null_mut(),
+            component: ptr::null_mut(),
             logFMICall: logFMICall.map(|cb| Arc::from(cb)),
             logMessage: logMessage.map(|cb| Arc::from(cb)),
             _lib: lib,
@@ -462,7 +461,7 @@ impl FMU2 {
             url_cstr = CString::new(url.to_string()).unwrap();
             url_cstr.as_ptr() as fmi2String
         } else {
-            null() as fmi2String
+            ptr::null() as fmi2String
         };
 
         // Create callback functions structure
@@ -652,7 +651,7 @@ impl FMU2 {
     ) -> fmi2Status {
         debug_assert_eq!(valueReferences.len(), values.len());
 
-        let mut buffer: Vec<fmi2String> = vec![null(); values.len()];
+        let mut buffer: Vec<fmi2String> = vec![ptr::null(); values.len()];
 
         let status = unsafe {
             (self.fmi2GetString)(
@@ -1060,7 +1059,7 @@ impl FMU2 {
 
     pub fn getStringStatus(&self, s: &fmi2StatusKind, value: &mut String) -> fmi2Status {
         if let InterfaceType::CoSimulation(functions) = &self.interfaceType {
-            let mut buffer: fmi2String = null();
+            let mut buffer: fmi2String = ptr::null();
 
             let status =
                 unsafe { (functions.fmi2GetStringStatus)(self.component, *s, &mut buffer) };

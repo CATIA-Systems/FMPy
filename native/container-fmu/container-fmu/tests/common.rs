@@ -178,25 +178,31 @@ pub fn create_fmi2_container() -> FMU2 {
         .join(PLATFORM)
         .join(format!("container_fmu{SHARED_LIBRARY_EXTENSION}"));
 
-    if !platform_binary.is_file() {
-        let shared_library_name = format!(
-            "{}container_fmu{}",
-            if cfg!(windows) { "" } else { "lib" },
-            SHARED_LIBRARY_EXTENSION
+    let shared_library_name = format!(
+        "{}container_fmu{}",
+        if cfg!(windows) { "" } else { "lib" },
+        SHARED_LIBRARY_EXTENSION
+    );
+
+    let build_type = if cfg!(debug_assertions) {
+        "debug"
+    } else {
+        "release"
+    };
+
+    let shared_library_artifact = workspace_root
+        .join("target")
+        .join(build_type)
+        .join(shared_library_name);
+
+    if !platform_binary.is_file()
+        || std::fs::read(&platform_binary).unwrap()
+            != std::fs::read(&shared_library_artifact).unwrap()
+    {
+        println!(
+            "Copying shared library from {:?} to {:?}",
+            shared_library_artifact, platform_binary
         );
-        let build_type = if cfg!(debug_assertions) {
-            "debug"
-        } else {
-            "release"
-        };
-        let shared_library_artifact = workspace_root
-            .join("target")
-            .join(build_type)
-            .join(shared_library_name);
-
-        dbg!(&shared_library_artifact);
-        dbg!(&platform_binary);
-
         std::fs::copy(shared_library_artifact, platform_binary).unwrap();
     }
 
@@ -243,21 +249,27 @@ pub fn create_fmi3_container() -> FMU3 {
         .join(PLATFORM_TUPLE)
         .join(format!("container_fmu{SHARED_LIBRARY_EXTENSION}"));
 
-    if !platform_binary.is_file() {
-        let shared_library_name = format!(
-            "{}container_fmu{}",
-            if cfg!(windows) { "" } else { "lib" },
-            SHARED_LIBRARY_EXTENSION
-        );
-        let build_type = if cfg!(debug_assertions) {
-            "debug"
-        } else {
-            "release"
-        };
-        let shared_library_artifact = workspace_root
-            .join("target")
-            .join(build_type)
-            .join(shared_library_name);
+    let build_type = if cfg!(debug_assertions) {
+        "debug"
+    } else {
+        "release"
+    };
+
+    let shared_library_name = format!(
+        "{}container_fmu{}",
+        if cfg!(windows) { "" } else { "lib" },
+        SHARED_LIBRARY_EXTENSION
+    );
+
+    let shared_library_artifact = workspace_root
+        .join("target")
+        .join(build_type)
+        .join(shared_library_name);
+
+    if !platform_binary.is_file()
+        || std::fs::read(&platform_binary).unwrap()
+            != std::fs::read(&shared_library_artifact).unwrap()
+    {
         std::fs::copy(shared_library_artifact, platform_binary).unwrap();
     }
 

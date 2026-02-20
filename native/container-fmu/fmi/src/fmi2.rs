@@ -744,7 +744,7 @@ impl FMU2 {
             }
             status
         } else {
-            fmi2Error
+            panic!("fmi2EnterEventMode is only available for Model Exchange FMUs.");
         }
     }
 
@@ -757,7 +757,7 @@ impl FMU2 {
             }
             status
         } else {
-            fmi2Error
+            panic!("fmi2NewDiscreteStates is only available for Model Exchange FMUs.");
         }
     }
 
@@ -769,7 +769,7 @@ impl FMU2 {
             }
             status
         } else {
-            fmi2Error
+            panic!("fmi2EnterContinuousTimeMode is only available for Model Exchange FMUs.");
         }
     }
 
@@ -797,7 +797,7 @@ impl FMU2 {
             }
             status
         } else {
-            fmi2Error
+            panic!("fmi2CompletedIntegratorStep is only available for Model Exchange FMUs.");
         }
     }
 
@@ -810,7 +810,7 @@ impl FMU2 {
             }
             status
         } else {
-            fmi2Error
+            panic!("fmi2SetTime is only available for Model Exchange FMUs.");
         }
     }
 
@@ -824,7 +824,7 @@ impl FMU2 {
             }
             status
         } else {
-            fmi2Error
+            panic!("fmi2SetContinuousStates is only available for Model Exchange FMUs.");
         }
     }
 
@@ -847,7 +847,7 @@ impl FMU2 {
             }
             status
         } else {
-            fmi2Error
+            panic!("fmi2GetDerivatives is only available for Model Exchange FMUs.");
         }
     }
 
@@ -870,7 +870,7 @@ impl FMU2 {
             }
             status
         } else {
-            fmi2Error
+            panic!("fmi2GetEventIndicators is only available for Model Exchange FMUs.");
         }
     }
 
@@ -885,7 +885,7 @@ impl FMU2 {
             }
             status
         } else {
-            fmi2Error
+            panic!("fmi2GetContinuousStates is only available for Model Exchange FMUs.");
         }
     }
 
@@ -908,7 +908,7 @@ impl FMU2 {
             }
             status
         } else {
-            fmi2Error
+            panic!("fmi2GetNominalsOfContinuousStates is only available for Model Exchange FMUs.");
         }
     }
 
@@ -941,7 +941,7 @@ impl FMU2 {
             }
             status
         } else {
-            fmi2Error
+            panic!("fmi2SetRealInputDerivatives is only available for Co-Simulation FMUs.");
         }
     }
 
@@ -973,7 +973,7 @@ impl FMU2 {
             }
             status
         } else {
-            fmi2Error
+            panic!("fmi2GetRealOutputDerivatives is only available for Co-Simulation FMUs.");
         }
     }
 
@@ -1003,7 +1003,7 @@ impl FMU2 {
             }
             status
         } else {
-            fmi2Error
+            panic!("fmi2DoStep is only available for Co-Simulation FMUs.");
         }
     }
 
@@ -1028,7 +1028,7 @@ impl FMU2 {
             }
             status
         } else {
-            fmi2Error
+            panic!("fmi2GetRealStatus is only available for Co-Simulation FMUs.");
         }
     }
 
@@ -1041,7 +1041,7 @@ impl FMU2 {
             }
             status
         } else {
-            fmi2Error
+            panic!("fmi2GetIntegerStatus is only available for Co-Simulation FMUs.");
         }
     }
 
@@ -1054,7 +1054,7 @@ impl FMU2 {
             }
             status
         } else {
-            fmi2Error
+            panic!("fmi2GetBooleanStatus is only available for Co-Simulation FMUs.");
         }
     }
 
@@ -1076,7 +1076,7 @@ impl FMU2 {
 
             status
         } else {
-            fmi2Error
+            panic!("fmi2GetStringStatus is only available for Co-Simulation FMUs.");
         }
     }
 }

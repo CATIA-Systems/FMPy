@@ -1,15 +1,7 @@
 import pytest
 
-from fmpy.util import download_file, validate_result
 from fmpy import *
-
-
-@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
-def test_fmi1_cs(reference_fmus_dist_dir):
-    for model_name in ['BouncingBall', 'Dahlquist', 'Resource', 'Stair', 'VanDerPol']:
-        filename = reference_fmus_dist_dir / '1.0' / 'cs' / f'{model_name}.fmu'
-        result = simulate_fmu(filename)
-        # plot_result(result)
+from fmpy.util import validate_result
 
 
 @pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")

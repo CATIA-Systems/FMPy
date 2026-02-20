@@ -1,19 +1,38 @@
 """ Object model and loader for the modelDescription.xml """
 from __future__ import annotations
+
 from os import PathLike
 from pathlib import Path
 
-from typing import IO, Literal
+from typing import IO, Literal, TypeAlias, NewType, TypeGuard, Annotated
 from attrs import define, field, evolve
+
+
+FloatLiteral: TypeAlias = Annotated[str, "float-parsable string"]
+
+def is_float_literal(s: str) -> TypeGuard[FloatLiteral]:
+    """Type guard: returns True if s can be parsed as a float."""
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
+@define(eq=False)
+class Category:
+
+    name: str = None
+    description: str | None = None
 
 
 @define(eq=False)
 class DefaultExperiment:
 
-    startTime: str | None = None
-    stopTime: str | None = None
-    tolerance: str | None = None
-    stepSize: str | None = None
+    startTime: FloatLiteral | None = None
+    stopTime: FloatLiteral | None = None
+    tolerance: FloatLiteral | None = None
+    stepSize: FloatLiteral | None = None
 
 
 @define(eq=False)
@@ -24,7 +43,6 @@ class InterfaceType:
     canBeInstantiatedOnlyOncePerProcess: bool = field(default=False, repr=False)
     canGetAndSetFMUstate: bool = field(default=False, repr=False)
     canSerializeFMUstate: bool = field(default=False, repr=False)
-    providesDirectionalDerivative: bool = field(default=False, repr=False)
     providesAdjointDerivatives: bool = field(default=False, repr=False)
     providesPerElementDependencies: bool = field(default=False, repr=False)
 
@@ -38,7 +56,7 @@ class ModelExchange(InterfaceType):
 
     needsCompletedIntegratorStep: bool = field(default=False, repr=False)
     providesEvaluateDiscreteStates: bool = field(default=False, repr=False)
-
+    completedIntegratorStepNotNeeded: bool = field(default=False, repr=False)
 
 @define(eq=False)
 class CoSimulation(InterfaceType):
@@ -49,16 +67,18 @@ class CoSimulation(InterfaceType):
     recommendedIntermediateInputSmoothness: int = field(default=0, repr=False)
     canInterpolateInputs: bool = field(default=False, repr=False)
     providesIntermediateUpdate: bool = field(default=False, repr=False)
+    mightReturnEarlyFromDoStep: bool = field(default=False, repr=False)
     canReturnEarlyAfterIntermediateUpdate: bool = field(default=False, repr=False)
     hasEventMode: bool = field(default=False, repr=False)
     providesEvaluateDiscreteStates: bool = field(default=False, repr=False)
+
+    # FMI 2.0
     canRunAsynchronuously: bool = field(default=False, repr=False)
 
 
 @define(eq=False)
 class ScheduledExecution(InterfaceType):
-
-    pass
+    ...
 
 
 @define(eq=False)
@@ -162,15 +182,7 @@ class VariableAlias:
     description: str | None = field(default=None, repr=False)
     displayUnit: str | None = field(default=None, repr=False)
 
-
-@define(eq=False)
-class ModelVariable:
-
-    name: str = field(default=None)
-
-    valueReference: int = field(default=None, repr=False)
-
-    type: Literal[
+VariableType: TypeAlias = Literal[
         'Real',
         'Float32',
         'Float64',
@@ -188,7 +200,20 @@ class ModelVariable:
         'String',
         'Binary',
         'Clock',
-    ] = field(default=None)
+    ]
+Causality: TypeAlias = Literal['parameter', 'calculatedParameter', 'input', 'output', 'local', 'independent', 'structuralParameter']
+Variability: TypeAlias = Literal['constant', 'fixed', 'tunable', 'discrete', 'continuous']
+Initial: TypeAlias = Literal['exact', 'approx', 'calculated', None]
+IntervalVariability: TypeAlias = Literal['constant', 'fixed', 'tunable', 'changing', 'countdown', 'triggered', None]
+
+@define(eq=False)
+class ModelVariable:
+
+    name: str = field(default=None)
+
+    valueReference: int = field(default=None, repr=False)
+
+    type: VariableType = field(default=None)
 
     shape: tuple[int, ...] | None = field(default=None, repr=False)
 
@@ -196,11 +221,11 @@ class ModelVariable:
 
     description: str | None = field(default=None, repr=False)
 
-    causality: Literal['parameter', 'calculatedParameter', 'input', 'output', 'local', 'independent', 'structuralParameter'] = field(default=None, repr=False)
+    causality: Causality = field(default=None, repr=False)
 
-    variability: Literal['constant', 'fixed', 'tunable', 'discrete', 'continuous'] = field(default=None, repr=False)
+    variability: Variability = field(default=None, repr=False)
 
-    initial: Literal['exact', 'approx', 'calculated', None] = field(default=None, repr=False)
+    initial: Initial = field(default=None, repr=False)
 
     canHandleMultipleSetPerTimeInstant: bool = field(default=True, repr=False)
 
@@ -260,7 +285,7 @@ class ModelVariable:
 
     priority: int | None = field(default=None, repr=False)
 
-    intervalVariability: Literal['constant', 'fixed', 'tunable', 'changing', 'countdown', 'triggered', None] = field(default=None, repr=False)
+    intervalVariability: IntervalVariability = field(default=None, repr=False)
 
     intervalDecimal: float | None = field(default=None, repr=False)
 
@@ -287,11 +312,13 @@ class Unknown:
 
     index: int = field(default=0, repr=False)
     variable: ModelVariable | None = None
-    dependencies: list[ModelVariable] = field(factory=list, repr=False)
-    dependenciesKind: list[str] = field(factory=list, repr=False)
+    dependencies: list[ModelVariable] | None = field(default=None, repr=False)
+    dependenciesKind: list[str] | None = field(default=None, repr=False)
     sourceline: int = field(default=0, repr=False)
     "Line number in the modelDescription.xml"
 
+FMIMajorVersion: TypeAlias = Literal[1, 2, 3]
+VariableNamingConvention: TypeAlias = Literal["flat", "structured"]
 
 @define(eq=False)
 class ModelDescription:
@@ -306,9 +333,11 @@ class ModelDescription:
     license: str | None = field(default=None, repr=False)
     generationTool: str | None = field(default=None, repr=False)
     generationDateAndTime: str | None = field(default=None, repr=False)
-    variableNamingConvention: Literal['flat', 'structured'] = field(default='flat', repr=False)
+    variableNamingConvention: VariableNamingConvention = field(default='flat', repr=False)
     numberOfContinuousStates: int = field(default=0, repr=False)
     numberOfEventIndicators: int = field(default=0, repr=False)
+
+    logCategories: list[Category] = field(factory=list, repr=False)
 
     defaultExperiment: DefaultExperiment = field(default=None, repr=False)
 
@@ -328,6 +357,11 @@ class ModelDescription:
     clockedStates: list[Unknown] = field(factory=list, repr=False)
     eventIndicators: list[Unknown] = field(factory=list, repr=False)
     initialUnknowns: list[Unknown] = field(factory=list, repr=False)
+
+    @property
+    def fmiMajorVersion(self) -> FMIMajorVersion:
+        segments = self.fmiVersion.split(".")
+        return int(segments[0])  # noqa
 
     @property
     def modelIdentifier(self) -> str:
@@ -562,14 +596,19 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
     elif is_fmi2:
         modelDescription.numberOfContinuousStates = len(root.findall('ModelStructure/Derivatives/Unknown'))
 
+    # log categories
+    for l in root.findall('LogCategories/Category'):
+        category = Category(name=l.get("name"), description=l.get("description"))
+        modelDescription.logCategories.append(category)
+
     # default experiment
     for d in root.findall('DefaultExperiment'):
-
-        modelDescription.defaultExperiment = DefaultExperiment()
-
-        for attribute in ['startTime', 'stopTime', 'tolerance', 'stepSize']:
-            if attribute in d.attrib:
-                setattr(modelDescription.defaultExperiment, attribute, float(d.get(attribute)))
+        modelDescription.defaultExperiment = DefaultExperiment(
+            startTime=d.get("startTime"),
+            stopTime=d.get("stopTime"),
+            tolerance=d.get("tolerance"),
+            stepSize=d.get("stepSize"),
+        )
 
     # model description
     if is_fmi1:
@@ -899,14 +938,18 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
 
                 dependencies = u.get('dependencies')
 
-                if dependencies:
-                    for vr in dependencies.strip().split(' '):
-                        unknown.dependencies.append(modelDescription.modelVariables[int(vr) - 1])
+                if dependencies is not None:
+                    unknown.dependencies = []
+                    if len(dependencies) > 0:
+                        for vr in dependencies.strip().split(' '):
+                            unknown.dependencies.append(modelDescription.modelVariables[int(vr) - 1])
 
                 dependenciesKind = u.get('dependenciesKind')
 
-                if dependenciesKind:
-                    unknown.dependenciesKind = dependenciesKind.strip().split(' ')
+                if dependenciesKind is not None:
+                    unknown.dependenciesKind = []
+                    if len(dependenciesKind) > 0:
+                        unknown.dependenciesKind = dependenciesKind.strip().split(' ')
 
                 attr.append(unknown)
 
@@ -945,16 +988,19 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
                 unknown.sourceline = u.sourceline
                 unknown.variable = variables[int(u.get('valueReference'))]
 
-                dependencies = u.get('dependencies')
+                if "dependencies" in u.attrib:
+                    dependencies = u.get('dependencies').strip()
+                    if len(dependencies) == 0:
+                        unknown.dependencies = []
+                    else:
+                        unknown.dependencies = list(map(lambda vr: variables[int(vr)], dependencies.split(' ')))
 
-                if dependencies:
-                    for vr in dependencies.strip().split(' '):
-                        unknown.dependencies.append(variables[int(vr)])
-
-                dependenciesKind = u.get('dependenciesKind')
-
-                if dependenciesKind:
-                    unknown.dependenciesKind = dependenciesKind.strip().split(' ')
+                if "dependenciesKind" in u.attrib:
+                    dependenciesKind = u.get('dependenciesKind').strip()
+                    if len(dependenciesKind) == 0:
+                        unknown.dependenciesKind = []
+                    else:
+                        unknown.dependenciesKind = dependenciesKind.split(' ')
 
                 attr.append(unknown)
 
@@ -988,3 +1034,456 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
             raise ValidationError(problems)
 
     return modelDescription
+
+def _write_fmi2_model_description(model_description: ModelDescription, path: Path):
+
+    from lxml.etree import ElementTree, Element, SubElement
+
+    def to_literal(value):
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        return str(value)
+
+    def set_attributes(element, object, attributes):
+        for attribute_name, default_value in attributes:
+            value = getattr(object, attribute_name)
+            if value != default_value:
+                element.set(attribute_name, to_literal(value))
+
+    fmiModelDescription = Element("fmiModelDescription")
+
+    # basic attributes
+    model_description_attributes = [
+        ("fmiVersion", None),
+        ("modelName", None),
+        ("guid", None),
+        ("description", None),
+        ("author", None),
+        ("version", None),
+        ("copyright", None),
+        ("license", None),
+        ("generationTool", None),
+        ("generationDateAndTime", None),
+        ("variableNamingConvention", "flat"),
+        ("numberOfEventIndicators", 0),
+    ]
+
+    set_attributes(fmiModelDescription, model_description, model_description_attributes)
+
+    implementation_attributes = [
+        ("modelIdentifier", None),
+        ("needsExecutionTool", False),
+        ("canBeInstantiatedOnlyOncePerProcess", False),
+        ("canNotUseMemoryManagementFunctions", False),
+        ("canGetAndSetFMUstate", False),
+        ("canSerializeFMUstate", False),
+        ("providesDirectionalDerivative", False),
+    ]
+
+    if model_description.modelExchange is not None:
+        from lxml.etree import SubElement
+        ModelExchange = SubElement(fmiModelDescription, "ModelExchange")
+        set_attributes(ModelExchange, model_description.modelExchange, implementation_attributes + [
+            ("completedIntegratorStepNotNeeded", False),
+        ])
+
+    if model_description.coSimulation is not None:
+        CoSimulation = SubElement(fmiModelDescription, "CoSimulation")
+        set_attributes(CoSimulation, model_description.coSimulation, implementation_attributes + [
+            ("canHandleVariableCommunicationStepSize", False),
+            ("canInterpolateInputs", False),
+            ("maxOutputDerivativeOrder", False),
+            ("canRunAsynchronuously", False),
+        ])
+
+    if model_description.scheduledExecution is not None:
+        ScheduledExecution = SubElement(fmiModelDescription, "ScheduledExecution")
+        set_attributes(ScheduledExecution, model_description.scheduledExecution, implementation_attributes)
+        if model_description.scheduledExecution.canGetAndSetFMUstate:
+            ScheduledExecution.set("canGetAndSetFMUState", "true")
+        if model_description.scheduledExecution.canSerializeFMUstate:
+            ScheduledExecution.set("canSerializeFMUState", "true")
+
+    if model_description.unitDefinitions:
+        UnitDefinitions = SubElement(fmiModelDescription, "UnitDefinitions")
+        for unit in model_description.unitDefinitions:
+            Unit = SubElement(UnitDefinitions, "Unit")
+            Unit.set("name", unit.name)
+            BaseUnit = SubElement(Unit, "BaseUnit")
+            set_attributes(
+                BaseUnit,
+                unit.baseUnit,
+                [
+                    ("kg", 0),
+                    ("m", 0),
+                    ("s", 0),
+                    ("A", 0),
+                    ("K", 0),
+                    ("mol", 0),
+                    ("cd", 0),
+                    ("rad", 0),
+                    ("factor", 1.0),
+                    ("offset", 0.0),
+                ],
+            )
+            for display_unit in unit.displayUnits:
+                DisplayUnit = SubElement(Unit, "DisplayUnit")
+                set_attributes(DisplayUnit, display_unit, [("name", None), ("factor", 1.0), ("offset", 0.0)])
+
+    if model_description.typeDefinitions:
+        TypeDefintions = SubElement(fmiModelDescription, "TypeDefinitions")
+        for type_defintion in model_description.typeDefinitions:
+            SimpleType = SubElement(TypeDefintions, "SimpleType")
+            set_attributes(SimpleType, type_defintion, [("name", None), ("description", None)])
+            TypeDefinition = SubElement(
+                SimpleType, type_defintion.type
+            )
+            set_attributes(
+                TypeDefinition,
+                type_defintion,
+                [
+                    ("quantity", None),
+                    ("unit", None),
+                    ("displayUnit", None),
+                    ("relativeQuantity", None),
+                    ("min", None),
+                    ("max", None),
+                    ("nominal", None),
+                    ("nominal", None),
+                    ("unbounded", None),
+                ],
+            )
+            for item in type_defintion.items:
+                Item = SubElement(TypeDefinition, "Item")
+                set_attributes(
+                    Item,
+                    item,
+                    [
+                        ("name", None),
+                        ("description", None),
+                        ("value", None),
+                    ],
+                )
+
+    if model_description.logCategories:
+        LogCategories = SubElement(fmiModelDescription, "LogCategories")
+        for category in model_description.logCategories:
+            Category = SubElement(LogCategories, "Category")
+            set_attributes(Category, category, [("name", None), ("description", None)])
+
+    if model_description.defaultExperiment is not None:
+        DefaultExperiment = SubElement(fmiModelDescription, "DefaultExperiment")
+        set_attributes(DefaultExperiment, model_description.defaultExperiment, [("startTime", None), ("stopTime", None), ("stepSize", None)])
+
+    ModelVariables = SubElement(fmiModelDescription, "ModelVariables")
+
+    for variable in model_description.modelVariables:
+
+        if variable.alias is not None:
+            continue
+
+        ScalarVariable = SubElement(ModelVariables, "ScalarVariable")
+        set_attributes(
+            ScalarVariable,
+            variable,
+            [
+                ("name", None),
+                ("valueReference", None),
+                ("description", None),
+                ("causality", None),
+                ("variability", None),
+                ("initial", None),
+                ("canHandleMultipleSetPerTimeInstant", False),
+            ],
+        )
+
+        ModelVariable = SubElement(ScalarVariable, variable.type)
+        set_attributes(
+            ModelVariable,
+            variable,
+            [
+                ("declaredType", None),
+                ("quantity", None),
+                ("unit", None),
+                ("displayUnit", None),
+                ("relativeQuantity", False),
+                ("min", None),
+                ("max", None),
+                ("nominal", None),
+                ("unbounded", False),
+                ("start", None),
+                ("derivative", None),
+                ("reinit", False),
+            ],
+        )
+
+        if variable.derivative is not None:
+            ModelVariable.set("derivative", str(model_description.modelVariables.index(variable.derivative) + 1))
+
+        if variable.declaredType is not None:
+            ModelVariable.set("declaredType", variable.declaredType.name)
+
+        for alias in variable.aliases:
+            Alias = SubElement(ModelVariable, "Alias")
+            Alias.set("name", alias.name)
+            Alias.set("description", alias.description)
+            Alias.set("displayUnit", alias.displayUnit)
+
+    ModelStructure = SubElement(fmiModelDescription, "ModelStructure")
+
+    for element_name, unknowns in [
+        ("Outputs", model_description.outputs),
+        ("Derivatives", model_description.derivatives),
+        ("InitialUnknowns", model_description.initialUnknowns),
+    ]:
+        if unknowns:
+            Unknowns = SubElement(ModelStructure, element_name)
+            for unknown in unknowns:
+                Unknown = SubElement(Unknowns, "Unknown")
+                index = model_description.modelVariables.index(unknown.variable)
+                Unknown.set("index", str(index + 1))
+                if unknown.dependencies is not None:
+                    Unknown.set(
+                        "dependencies",
+                        " ".join(
+                            map(lambda v: str(model_description.modelVariables.index(v) + 1), unknown.dependencies)
+                        ),
+                    )
+                if unknown.dependenciesKind is not None:
+                    Unknown.set("dependenciesKind", " ".join(unknown.dependenciesKind))
+
+    tree = ElementTree(fmiModelDescription)
+
+    tree.write(path, encoding="utf-8", xml_declaration=True, pretty_print=True)
+
+
+def _write_fmi3_model_description(model_description: ModelDescription, path: Path):
+
+    from lxml.etree import ElementTree, Element, SubElement
+
+    def to_literal(value):
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        return str(value)
+
+    def set_attributes(element, object, attributes):
+        for attribute_name, default_value in attributes:
+            value = getattr(object, attribute_name)
+            if value != default_value:
+                element.set(attribute_name, to_literal(value))
+
+    root = Element("fmiModelDescription")
+
+    # basic attributes
+    for attr in (
+        "fmiVersion",
+        "modelName",
+        "instantiationToken",
+        "description",
+        "author",
+        "version",
+        "copyright",
+        "license",
+        "generationTool",
+        "generationDateAndTime",
+        "variableNamingConvention",
+    ):
+        val = getattr(model_description, attr, None)
+        if val is not None:
+            root.set(attr, to_literal(val))
+
+    implementation_attributes = [
+        ("modelIdentifier", None),
+        ("needsExecutionTool", False),
+        ("canBeInstantiatedOnlyOncePerProcess", False),
+        # ("canGetAndSetFMUstate", False),
+        # ("canSerializeFMUstate", False),
+        ("providesDirectionalDerivative", False),
+        ("providesAdjointDerivatives", False),
+        ("providesPerElementDependencies", False),
+    ]
+
+    if model_description.modelExchange is not None:
+        from lxml.etree import SubElement
+        ModelExchange = SubElement(root, "ModelExchange")
+        set_attributes(ModelExchange, model_description.modelExchange, implementation_attributes + [
+            ("needsCompletedIntegratorStep", False),
+            ("providesEvaluateDiscreteStates", False),
+        ])
+        if model_description.modelExchange.canGetAndSetFMUstate:
+            ModelExchange.set("canGetAndSetFMUState", "true")
+        if model_description.modelExchange.canSerializeFMUstate:
+            ModelExchange.set("canSerializeFMUState", "true")
+
+    if model_description.coSimulation is not None:
+        CoSimulation = SubElement(root, "CoSimulation")
+        set_attributes(CoSimulation, model_description.coSimulation, implementation_attributes + [
+            ("canHandleVariableCommunicationStepSize", False),
+            ("fixedInternalStepSize", None),
+            ("maxOutputDerivativeOrder", False),
+            ("recommendedIntermediateInputSmoothness", False),
+            ("canInterpolateInputs", False),
+            ("providesIntermediateUpdate", False),
+            ("mightReturnEarlyFromDoStep", False),
+            ("canReturnEarlyAfterIntermediateUpdate", False),
+            ("hasEventMode", False),
+            ("providesEvaluateDiscreteStates", False),
+        ])
+        if model_description.coSimulation.canGetAndSetFMUstate:
+            CoSimulation.set("canGetAndSetFMUState", "true")
+        if model_description.coSimulation.canSerializeFMUstate:
+            CoSimulation.set("canSerializeFMUState", "true")
+
+    if model_description.scheduledExecution is not None:
+        ScheduledExecution = SubElement(root, "ScheduledExecution")
+        set_attributes(ScheduledExecution, model_description.scheduledExecution, implementation_attributes)
+        if model_description.scheduledExecution.canGetAndSetFMUstate:
+            ScheduledExecution.set("canGetAndSetFMUState", "true")
+        if model_description.scheduledExecution.canSerializeFMUstate:
+            ScheduledExecution.set("canSerializeFMUState", "true")
+
+    if model_description.unitDefinitions:
+        UnitDefinitions = SubElement(root, "UnitDefinitions")
+        for unit in model_description.unitDefinitions:
+            Unit = SubElement(UnitDefinitions, "Unit")
+            Unit.set("name", unit.name)
+            BaseUnit = SubElement(Unit, "BaseUnit")
+            set_attributes(
+                BaseUnit,
+                unit.baseUnit,
+                [
+                    ("kg", 0),
+                    ("m", 0),
+                    ("s", 0),
+                    ("A", 0),
+                    ("K", 0),
+                    ("mol", 0),
+                    ("cd", 0),
+                    ("rad", 0),
+                    ("factor", 1.0),
+                    ("offset", 0.0),
+                ],
+            )
+            for display_unit in unit.displayUnits:
+                DisplayUnit = SubElement(Unit, "DisplayUnit")
+                set_attributes(DisplayUnit, display_unit, [("name", None), ("factor", 1.0), ("offset", 0.0)])
+
+    if model_description.typeDefinitions:
+        TypeDefintions = SubElement(root, "TypeDefinitions")
+        for type_defintion in model_description.typeDefinitions:
+            TypeDefinition = SubElement(
+                TypeDefintions, type_defintion.type + "Type"
+            )
+            set_attributes(
+                TypeDefinition,
+                type_defintion,
+                [
+                    ("name", None),
+                    ("description", None),
+                    ("quantity", None),
+                    ("unit", None),
+                    ("displayUnit", None),
+                    ("relativeQuantity", None),
+                    ("min", None),
+                    ("max", None),
+                    ("nominal", None),
+                    ("nominal", None),
+                    ("unbounded", None),
+                ],
+            )
+            for item in type_defintion.items:
+                Item = SubElement(TypeDefinition, "Item")
+                set_attributes(
+                    Item,
+                    item,
+                    [
+                        ("name", None),
+                        ("description", None),
+                        ("value", None),
+                    ],
+                )
+
+    if model_description.logCategories:
+        LogCategories = SubElement(root, "LogCategories")
+        for category in model_description.logCategories:
+            Category = SubElement(LogCategories, "Category")
+            set_attributes(Category, category, [("name", None), ("description", None)])
+
+    if model_description.defaultExperiment is not None:
+        DefaultExperiment = SubElement(root, "DefaultExperiment")
+        set_attributes(DefaultExperiment, model_description.defaultExperiment, [("startTime", None), ("stopTime", None), ("stepSize", None)])
+
+    ModelVariables = SubElement(root, "ModelVariables")
+
+    for variable in model_description.modelVariables:
+        if variable.alias is not None:
+            continue
+
+        ModelVariable = SubElement(ModelVariables, variable.type)
+
+        set_attributes(
+            ModelVariable,
+            variable,
+            [
+                ("name", None),
+                ("valueReference", None),
+                ("causality", None),
+                ("start", None),
+                ("variability", None),
+                ("initial", None),
+                ("declaredType", None),
+                ("derivative", None),
+                ("description", None),
+            ],
+        )
+
+        if variable.derivative is not None:
+            ModelVariable.set("derivative", str(variable.derivative.valueReference))
+
+        if variable.declaredType is not None:
+            ModelVariable.set("declaredType", variable.declaredType.name)
+
+        for alias in variable.aliases:
+            Alias = SubElement(ModelVariable, "Alias")
+            Alias.set("name", alias.name)
+            Alias.set("description", alias.description)
+            Alias.set("displayUnit", alias.displayUnit)
+
+    ModelStructure = SubElement(root, "ModelStructure")
+
+    for element_name, unknowns in [
+        ("Output", model_description.outputs),
+        ("ContinuousStateDerivative", model_description.derivatives),
+        ("InitialUnknown", model_description.initialUnknowns),
+        ("EventIndicator", model_description.eventIndicators),
+    ]:
+        for unknown in unknowns:
+            Unknown = SubElement(ModelStructure, element_name)
+            Unknown.set("valueReference", str(unknown.variable.valueReference))
+            if unknown.dependencies is not None:
+                Unknown.set(
+                    "dependencies",
+                    " ".join(
+                        map(lambda v: str(v.valueReference), unknown.dependencies)
+                    ),
+                )
+            if unknown.dependenciesKind is not None:
+                Unknown.set("dependenciesKind", " ".join(unknown.dependenciesKind))
+
+    tree = ElementTree(root)
+
+    tree.write(path, encoding="utf-8", xml_declaration=True, pretty_print=True)
+
+
+def write_model_description(model_description: ModelDescription, path: Path):
+
+    if model_description.fmiMajorVersion == 2:
+        _write_fmi2_model_description(model_description, path)
+    elif model_description.fmiMajorVersion == 3:
+        _write_fmi3_model_description(model_description, path)
+    else:
+        raise Exception(f"Writing modelDescription.xml for FMI version {model_description.fmiVersion} is not supported.")

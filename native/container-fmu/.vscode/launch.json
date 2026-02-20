@@ -1,0 +1,57 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug fmi3_connection_test",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--package=container_fmu",
+                    "--test=fmi3_connection_test"
+                ],
+                "filter": {
+                    "name": "fmi3_connection_test",
+                    "kind": "test"
+                }
+            },
+            "args": ["--nocapture"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug fmi2_connection_test",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--package=container_fmu",
+                    "--test=fmi2_connection_test"
+                ],
+                "filter": {
+                    "name": "fmi2_connection_test",
+                    "kind": "test"
+                }
+            },
+            "args": ["--nocapture"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug current test",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--package=container_fmu"
+                ]
+            },
+            "args": ["--nocapture", "--test-threads=1"],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

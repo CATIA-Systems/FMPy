@@ -732,8 +732,8 @@ def simulate_fmu(filename,
 
     stop_time = float(stop_time)
 
-    if relative_tolerance is None and experiment is not None:
-        relative_tolerance = experiment.tolerance
+    if relative_tolerance is None and experiment is not None and experiment.tolerance is not None:
+        relative_tolerance = float(experiment.tolerance)
 
     if step_size is None:
         total_time = stop_time - start_time

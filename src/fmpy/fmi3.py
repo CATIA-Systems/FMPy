@@ -185,7 +185,7 @@ class _FMU3(_FMU):
         nRequiredIntermediateVariables: c_size_t | int,
         instanceEnvironment: fmi3InstanceEnvironment,
         logMessage: fmi3LogMessageCallback,
-        intermediateUpdat: fmi3IntermediateUpdateCallback,
+        intermediateUpdate: fmi3IntermediateUpdateCallback,
     ) -> fmi3Instance:
         return self._call(
             "fmi3InstantiateCoSimulation",
@@ -200,7 +200,7 @@ class _FMU3(_FMU):
             nRequiredIntermediateVariables,
             instanceEnvironment,
             logMessage,
-            intermediateUpdat,
+            intermediateUpdate,
         )
 
     def fmi3InstantiateScheduledExecution(

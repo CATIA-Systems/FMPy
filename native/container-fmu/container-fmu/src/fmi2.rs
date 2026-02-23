@@ -62,6 +62,9 @@ pub extern "C" fn fmi2Instantiate(
     visible: fmi2Boolean,
     loggingOn: fmi2Boolean,
 ) -> fmi2Component {
+
+    // TODO: check pointers
+
     let resource_path = unsafe { CStr::from_ptr(fmuResourceLocation) };
     let s = resource_path.to_str().unwrap();
     let url = Url::parse(s).unwrap();

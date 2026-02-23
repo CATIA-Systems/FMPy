@@ -1,0 +1,242 @@
+{
+    "containerVersion": "0.1.0",
+    "instantiationToken": "f6cda2ea-6875-475c-b7dc-a43a33e69094",
+    "fixedStepSize": 0.5,
+    "parallelDoStep": false,
+    "variables": [
+        {
+            "variableType": "Float64",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 5
+                },
+                {
+                    "component": 1,
+                    "valueReference": 5
+                }
+            ],
+            "start": [
+                "1"
+            ]
+        },
+        {
+            "variableType": "Float64",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 6
+                },
+                {
+                    "component": 1,
+                    "valueReference": 6
+                }
+            ],
+            "start": [
+                "2"
+            ]
+        },
+        {
+            "variableType": "Float64",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 7
+                }
+            ],
+            "start": [
+                "3"
+            ]
+        },
+        {
+            "variableType": "Float64",
+            "mappings": [
+                {
+                    "component": 1,
+                    "valueReference": 8
+                }
+            ]
+        },
+        {
+            "variableType": "Float64",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 9
+                }
+            ],
+            "start": [
+                "5"
+            ]
+        },
+        {
+            "variableType": "Float64",
+            "mappings": [
+                {
+                    "component": 1,
+                    "valueReference": 10
+                }
+            ]
+        },
+        {
+            "variableType": "Int32",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 19
+                }
+            ],
+            "start": [
+                "7"
+            ]
+        },
+        {
+            "variableType": "Int32",
+            "mappings": [
+                {
+                    "component": 1,
+                    "valueReference": 20
+                }
+            ]
+        },
+        {
+            "variableType": "Boolean",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 27
+                }
+            ],
+            "start": [
+                "true"
+            ]
+        },
+        {
+            "variableType": "Boolean",
+            "mappings": [
+                {
+                    "component": 1,
+                    "valueReference": 28
+                }
+            ]
+        },
+        {
+            "variableType": "String",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 29
+                }
+            ],
+            "start": [
+                "container_string_1"
+            ]
+        },
+        {
+            "variableType": "String",
+            "mappings": [
+                {
+                    "component": 1,
+                    "valueReference": 30
+                }
+            ]
+        },
+        {
+            "variableType": "Int32",
+            "mappings": [
+                {
+                    "component": 0,
+                    "valueReference": 33
+                }
+            ],
+            "start": [
+                "2"
+            ]
+        },
+        {
+            "variableType": "Int32",
+            "mappings": [
+                {
+                    "component": 1,
+                    "valueReference": 34
+                }
+            ]
+        }
+    ],
+    "components": [
+        {
+            "fmiMajorVersion": "2",
+            "name": "instance1",
+            "modelIdentifier": "Feedthrough",
+            "path": "Feedthrough",
+            "instantiationToken": "{37B954F1-CC86-4D8F-B97F-C7C36F6670D2}"
+        },
+        {
+            "fmiMajorVersion": "2",
+            "name": "instance2",
+            "modelIdentifier": "Feedthrough",
+            "path": "Feedthrough",
+            "instantiationToken": "{37B954F1-CC86-4D8F-B97F-C7C36F6670D2}"
+        }
+    ],
+    "connections": [
+        {
+            "variableType": "Float64",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                8,
+                10
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                7,
+                9
+            ],
+            "size": 2
+        },
+        {
+            "variableType": "Int32",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                20
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                19
+            ]
+        },
+        {
+            "variableType": "Boolean",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                28
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                27
+            ]
+        },
+        {
+            "variableType": "String",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                30
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                29
+            ]
+        },
+        {
+            "variableType": "Int32",
+            "srcComponent": 0,
+            "srcValueReferences": [
+                34
+            ],
+            "dstComponent": 1,
+            "dstValueReferences": [
+                33
+            ]
+        }
+    ]
+}

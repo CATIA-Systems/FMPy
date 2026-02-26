@@ -176,7 +176,7 @@ class _FMU3(_FMU):
         self,
         instanceName: fmi3String | bytes,
         instantiationToken: fmi3String | bytes,
-        resourcePath: fmi3String | bytes,
+        resourcePath: fmi3String | bytes | None,
         visible: fmi3Boolean | bool,
         loggingOn: fmi3Boolean | bool,
         eventModeUsed: fmi3Boolean | bool,
@@ -1898,11 +1898,17 @@ class FMU3Slave(_FMU3):
         earlyReturnAllowed=False,
         logMessage=None,
         intermediateUpdate=None,
+        requiredIntermediateVariables=None,
     ):
         # save callbacks from GC
         self.logMessage = fmi3LogMessageCallback(
             printLogMessage if logMessage is None else logMessage
         )
+
+        if requiredIntermediateVariables is None:
+            requiredIntermediateVariables = (fmi3ValueReference * 0)()
+        else:
+            requiredIntermediateVariables = (fmi3ValueReference * len(requiredIntermediateVariables))(*requiredIntermediateVariables)
 
         if intermediateUpdate is None:
             self.intermediateUpdate = fmi3IntermediateUpdateCallback()
@@ -1919,8 +1925,8 @@ class FMU3Slave(_FMU3):
             fmi3Boolean(loggingOn),
             fmi3Boolean(eventModeUsed),
             fmi3Boolean(earlyReturnAllowed),
-            None,
-            0,
+            requiredIntermediateVariables,
+            len(requiredIntermediateVariables),
             fmi3InstanceEnvironment(),
             self.logMessage,
             self.intermediateUpdate,

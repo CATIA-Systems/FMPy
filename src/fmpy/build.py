@@ -17,6 +17,7 @@ Generator = Literal[
     "Visual Studio 14 2015",
     "MinGW Makefiles",
     "Unix Makefiles",
+    "Xcode",
 ]
 
 Platform = Literal["ARM", "Win32", "x64"]

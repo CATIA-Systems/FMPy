@@ -1453,6 +1453,10 @@ def _write_fmi3_model_description(model_description: ModelDescription, path: Pat
             Alias.set("description", alias.description)
             Alias.set("displayUnit", alias.displayUnit)
 
+        for dimension in variable.dimensions:
+            Dimension = SubElement(ModelVariable, "Dimension")
+            set_attributes(Dimension, dimension, [("start", None), ("valueReference", None)])
+
     ModelStructure = SubElement(root, "ModelStructure")
 
     for element_name, unknowns in [

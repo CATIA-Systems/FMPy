@@ -201,8 +201,10 @@ def _validate_model_structure(model_description: ModelDescription) -> List[str]:
         ("initial unknown", model_description.initialUnknowns),
     ]:
         for unknown in unknowns:
-            if unknown.dependencies is None and unknown.dependenciesKind is None:
-                continue
+            if unknown.dependenciesKind is None:
+                continue  # okay
+            elif unknown.dependencies is None and unknown.dependenciesKind is not None:
+                problems.append(f"If dependenciesKind exists dependencies must also exist in the {name} (line {unknown.sourceline}).")
             if type(unknown.dependencies) != type(unknown.dependenciesKind):
                 problems.append(f"Either both or none of the dependencies and dependenciesKind attributes must exist in the {name} (line {unknown.sourceline}).")
             elif len(unknown.dependencies) != len(unknown.dependenciesKind):

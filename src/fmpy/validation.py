@@ -192,6 +192,24 @@ def _validate_model_structure(model_description: ModelDescription) -> List[str]:
 
     problems = []
 
+    # assert matching number of elements in dependencies and dependenciesKind
+    for name, unknowns in [
+        ("outputs", model_description.outputs),
+        ("derivative", model_description.derivatives),
+        ("clocked state", model_description.clockedStates),
+        ("event indicator", model_description.eventIndicators),
+        ("initial unknown", model_description.initialUnknowns),
+    ]:
+        for unknown in unknowns:
+            if unknown.dependenciesKind is None:
+                continue  # okay
+            elif unknown.dependencies is None and unknown.dependenciesKind is not None:
+                problems.append(f"If dependenciesKind exists dependencies must also exist in the {name} (line {unknown.sourceline}).")
+            if type(unknown.dependencies) != type(unknown.dependenciesKind):
+                problems.append(f"Either both or none of the dependencies and dependenciesKind attributes must exist in the {name} (line {unknown.sourceline}).")
+            elif len(unknown.dependencies) != len(unknown.dependenciesKind):
+                problems.append(f"The number of elements in the dependencies and dependenciesKind attributes of the {name} (line {unknown.sourceline}) do not match.")
+
     # validate outputs
     expected_outputs = set(v for v in model_description.modelVariables if v.causality == 'output' and not v.alias)
     outputs = set(u.variable for u in model_description.outputs)

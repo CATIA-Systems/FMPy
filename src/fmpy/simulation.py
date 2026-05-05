@@ -1135,8 +1135,6 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
 
         if input_event or time_event or state_event or step_event:
 
-            reset_solver = False
-
             if record_events:
                 recorder.sample(time, force=True)
 
@@ -1176,8 +1174,6 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                      next_event_time_defined,
                      next_event_time) = fmu.newDiscreteStates()
 
-                    reset_solver |= nominals_of_continuous_states_changed or values_of_continuous_states_changed
-
                 if terminate_simulation:
                     break
 
@@ -1200,15 +1196,12 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                      next_event_time_defined,
                      next_event_time) = fmu.updateDiscreteStates()
 
-                    reset_solver |= nominals_of_continuous_states_changed or values_of_continuous_states_changed
-
                 if terminate_simulation:
                     break
 
                 fmu.enterContinuousTimeMode()
 
-            if reset_solver:
-                solver.reset(time)
+            solver.reset(time)
 
         if step_finished is not None and not step_finished(time, recorder):
             break

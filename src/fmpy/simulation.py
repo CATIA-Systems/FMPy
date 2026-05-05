@@ -500,9 +500,9 @@ def apply_start_values(fmu, model_description, start_values, settable=None):
             unit = None
 
         if unit is None or unit == variable.unit:
-            pass
+            ...
         elif variable.declaredType is not None and unit == variable.declaredType.unit:
-            pass
+            ...
         else:
             if variable.unit is not None:
                 base_unit = variable.unit
@@ -516,7 +516,18 @@ def apply_start_values(fmu, model_description, start_values, settable=None):
                 raise Exception(f'The unit "{unit}" of the start value for variable {variable.name} is not defined.')
 
             display_unit = unit_definitions[base_unit][unit]
-            value = (value - display_unit.offset) / display_unit.factor
+
+            is_relative_quantity = False
+
+            if variable.relativeQuantity is not None:
+                is_relative_quantity = variable.relativeQuantity
+            elif variable.declaredType and variable.declaredType.relativeQuantity is not None:
+                is_relative_quantity = True
+
+            if is_relative_quantity:
+                value = value / display_unit.factor
+            else:
+                value = (value - display_unit.offset) / display_unit.factor
 
         vr = variable.valueReference
 
@@ -544,8 +555,8 @@ def apply_start_values(fmu, model_description, start_values, settable=None):
                 value = value.split()
             value = list(map(lambda e: variable._python_type(e), value))
             if len(value) != np.prod(variable.shape):
-                raise ArgumentError(f'The start value for variable "{variable.name}" must have'
-                                    f' {np.prod(variable.shape)} elements but has {len(value)}.')
+                raise Exception(f'The start value for variable "{variable.name}" must have'
+                                f' {np.prod(variable.shape)} elements but has {len(value)}.')
         else:
             value = [variable._python_type(value)]
 

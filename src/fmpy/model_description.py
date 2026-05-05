@@ -136,7 +136,7 @@ class SimpleType:
     quantity: str | None = field(default=None, repr=False)
     unit: str | None = None
     displayUnit: str | None = field(default=None, repr=False)
-    relativeQuantity: str | None = field(default=None, repr=False)
+    relativeQuantity: bool = field(default=False, repr=False)
     min: str | None = field(default=None, repr=False)
     max: str | None = field(default=None, repr=False)
     nominal: str | None = field(default=None, repr=False)
@@ -253,7 +253,7 @@ class ModelVariable:
     displayUnit: str | None = field(default=None, repr=False)
     "Default display unit"
 
-    relativeQuantity: bool = field(default=False, repr=False)
+    relativeQuantity: bool | None = field(default=None, repr=False)
     "Relative quantity"
 
     min: str | None = field(default=None, repr=False)
@@ -738,10 +738,14 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
 
             first = t[0]  # first element
 
+            attrib = dict(first.attrib)
+
+            attrib["relativeQuantity"] = attrib.get("relativeQuantity") in {"true", "1"}
+
             simple_type = SimpleType(
                 name=t.get('name'),
                 type=first.tag[:-len('Type')] if is_fmi1 else first.tag,
-                **dict(first.attrib)
+                **attrib
             )
 
             # add enumeration items
@@ -762,7 +766,11 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
                              'EnumerationType'}:
                 continue
 
-            simple_type = SimpleType(type=t.tag[:-4], **dict(t.attrib))
+            attrib = dict(t.attrib)
+
+            attrib["relativeQuantity"] = attrib.get("relativeQuantity") in {"true", "1"}
+
+            simple_type = SimpleType(type=t.tag[:-4], **attrib)
 
             # add enumeration items
             for item in t.findall('Item'):
@@ -850,7 +858,8 @@ def read_model_description(filename: str | PathLike | IO, validate: bool = True,
         if sv.type in ['Real', 'Float32', 'Float64']:
             sv.unit = value.get('unit')
             sv.displayUnit = value.get('displayUnit')
-            sv.relativeQuantity = value.get('relativeQuantity') in {'true', '1'}
+            if "relativeQuantity" in value:
+                sv.relativeQuantity = value.get('relativeQuantity') in {'true', '1'}
             sv.derivative = value.get('derivative')
             sv.nominal = value.get('nominal')
             sv.unbounded = value.get('unbounded') in {'true', '1'}
@@ -1147,7 +1156,7 @@ def _write_fmi2_model_description(model_description: ModelDescription, path: Pat
                     ("quantity", None),
                     ("unit", None),
                     ("displayUnit", None),
-                    ("relativeQuantity", None),
+                    ("relativeQuantity", False),
                     ("min", None),
                     ("max", None),
                     ("nominal", None),
@@ -1208,7 +1217,7 @@ def _write_fmi2_model_description(model_description: ModelDescription, path: Pat
                 ("quantity", None),
                 ("unit", None),
                 ("displayUnit", None),
-                ("relativeQuantity", False),
+                ("relativeQuantity", None),
                 ("min", None),
                 ("max", None),
                 ("nominal", None),
@@ -1387,7 +1396,7 @@ def _write_fmi3_model_description(model_description: ModelDescription, path: Pat
                     ("quantity", None),
                     ("unit", None),
                     ("displayUnit", None),
-                    ("relativeQuantity", None),
+                    ("relativeQuantity", False),
                     ("min", None),
                     ("max", None),
                     ("nominal", None),

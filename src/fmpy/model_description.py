@@ -1120,23 +1120,24 @@ def _write_fmi2_model_description(model_description: ModelDescription, path: Pat
         for unit in model_description.unitDefinitions:
             Unit = SubElement(UnitDefinitions, "Unit")
             Unit.set("name", unit.name)
-            BaseUnit = SubElement(Unit, "BaseUnit")
-            set_attributes(
-                BaseUnit,
-                unit.baseUnit,
-                [
-                    ("kg", 0),
-                    ("m", 0),
-                    ("s", 0),
-                    ("A", 0),
-                    ("K", 0),
-                    ("mol", 0),
-                    ("cd", 0),
-                    ("rad", 0),
-                    ("factor", 1.0),
-                    ("offset", 0.0),
-                ],
-            )
+            if unit.baseUnit:
+                BaseUnit = SubElement(Unit, "BaseUnit")
+                set_attributes(
+                    BaseUnit,
+                    unit.baseUnit,
+                    [
+                        ("kg", 0),
+                        ("m", 0),
+                        ("s", 0),
+                        ("A", 0),
+                        ("K", 0),
+                        ("mol", 0),
+                        ("cd", 0),
+                        ("rad", 0),
+                        ("factor", 1.0),
+                        ("offset", 0.0),
+                    ],
+                )
             for display_unit in unit.displayUnits:
                 DisplayUnit = SubElement(Unit, "DisplayUnit")
                 set_attributes(DisplayUnit, display_unit, [("name", None), ("factor", 1.0), ("offset", 0.0)])
@@ -1360,23 +1361,24 @@ def _write_fmi3_model_description(model_description: ModelDescription, path: Pat
         for unit in model_description.unitDefinitions:
             Unit = SubElement(UnitDefinitions, "Unit")
             Unit.set("name", unit.name)
-            BaseUnit = SubElement(Unit, "BaseUnit")
-            set_attributes(
-                BaseUnit,
-                unit.baseUnit,
-                [
-                    ("kg", 0),
-                    ("m", 0),
-                    ("s", 0),
-                    ("A", 0),
-                    ("K", 0),
-                    ("mol", 0),
-                    ("cd", 0),
-                    ("rad", 0),
-                    ("factor", 1.0),
-                    ("offset", 0.0),
-                ],
-            )
+            if unit.baseUnit:
+                BaseUnit = SubElement(Unit, "BaseUnit")
+                set_attributes(
+                    BaseUnit,
+                    unit.baseUnit,
+                    [
+                        ("kg", 0),
+                        ("m", 0),
+                        ("s", 0),
+                        ("A", 0),
+                        ("K", 0),
+                        ("mol", 0),
+                        ("cd", 0),
+                        ("rad", 0),
+                        ("factor", 1.0),
+                        ("offset", 0.0),
+                    ],
+                )
             for display_unit in unit.displayUnits:
                 DisplayUnit = SubElement(Unit, "DisplayUnit")
                 set_attributes(DisplayUnit, display_unit, [("name", None), ("factor", 1.0), ("offset", 0.0)])

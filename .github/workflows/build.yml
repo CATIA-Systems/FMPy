@@ -48,7 +48,7 @@ jobs:
         cd native
         python build_remoting.py
     - if: matrix.name == 'darwin'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
        name: ${{ matrix.name }}
        path: |
@@ -63,7 +63,7 @@ jobs:
          src/fmpy/sundials/aarch64-darwin/sundials_sunmatrixdense.dylib
        if-no-files-found: error
     - if: matrix.name == 'linux'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ matrix.name }}
         path: |
@@ -79,7 +79,7 @@ jobs:
           src/fmpy/sundials/x86_64-linux/sundials_sunmatrixdense.so
         if-no-files-found: error
     - if: matrix.name == 'windows'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ matrix.name }}
         path: |
@@ -124,7 +124,7 @@ jobs:
     - run: uv sync --all-extras
     - run: uv run native/compile_resources.py
     - run: uv build --wheel
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
        name: dist
        path: dist

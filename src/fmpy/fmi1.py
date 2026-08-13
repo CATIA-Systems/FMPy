@@ -35,7 +35,7 @@ from ctypes import (
     Structure,
     CFUNCTYPE,
 )
-from . import free, freeLibrary, platform, sharedLibraryExtension, calloc
+from . import free, freeLibrary, platform, platform_tuple, sharedLibraryExtension, calloc
 
 
 fmi1Component = c_void_p
@@ -178,7 +178,17 @@ class _FMU(object):
         work_dir = os.getcwd()
 
         if libraryPath is None:
-            library_dir = os.path.join(unzipDirectory, "binaries", platform)
+            # FMI 2.0 only defines platform names for x86 and x86-64 (e.g.
+            # "darwin64"). On other architectures (e.g. Apple Silicon) FMUs use
+            # the FMI 3.0 platform tuple. Prefer the platform tuple, which is
+            # unambiguous about the architecture, and fall back to the legacy
+            # platform name (e.g. for a dual-architecture FMU, the legacy
+            # directory may contain a binary for a different architecture).
+            library_dir = os.path.join(unzipDirectory, "binaries", platform_tuple)
+            if not os.path.isfile(
+                os.path.join(library_dir, self.modelIdentifier + sharedLibraryExtension)
+            ):
+                library_dir = os.path.join(unzipDirectory, "binaries", platform)
             library_dir = os.path.abspath(library_dir)
             libraryPath = str(
                 os.path.join(library_dir, self.modelIdentifier + sharedLibraryExtension)

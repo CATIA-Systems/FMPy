@@ -1448,6 +1448,7 @@ def _write_fmi3_model_description(model_description: ModelDescription, path: Pat
                 ("initial", None),
                 ("declaredType", None),
                 ("derivative", None),
+                ("unit", None),
                 ("description", None),
             ],
         )

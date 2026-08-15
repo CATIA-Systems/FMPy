@@ -214,7 +214,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName, fmi2Type fmuType, fmi2Str
         // create lock file
         const char *lockFilePath = tempnam(NULL, "");
 
-        int lockFile = open(lockFilePath, O_CREAT | O_EXCL);
+        int lockFile = open(lockFilePath, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
 
         if (lockFile == -1) {
             s_logger(s_componentEnvironment, instanceName, fmi2Error, "error", "Failed to create lock file %s.", lockFilePath);

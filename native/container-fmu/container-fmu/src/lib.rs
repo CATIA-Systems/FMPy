@@ -252,7 +252,7 @@ impl Container {
                         &component.instantiationToken,
                         false,
                         loggingOn,
-                        false,
+                        true,
                         Box::new(DefaultLogger::default()),
                         true,
                     ) {

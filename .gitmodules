@@ -4,3 +4,6 @@
 [submodule "native/thirdparty/Reference-FMUs"]
 	path = native/thirdparty/Reference-FMUs
 	url = https://github.com/modelica/Reference-FMUs.git
+[submodule "native/container-fmu/fmi-rs"]
+	path = native/container-fmu/fmi-rs
+	url = https://github.com/CATIA-Systems/fmi-rs.git

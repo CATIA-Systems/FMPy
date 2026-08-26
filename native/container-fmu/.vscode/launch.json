@@ -52,6 +52,15 @@
             },
             "args": ["--nocapture", "--test-threads=1"],
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Debug fmi2_container_test",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/target/debug/deps/fmi2_container_test-2e6b5d5b003da0b1.exe",
+            "args": ["--exact", "test_fmi2_container", "--nocapture", "--test-threads=1"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
         }
     ]
 }

@@ -1,3 +1,11 @@
 [workspace]
 resolver = "3"
-members = ["container-fmu", "fmi"]
+members = ["container-fmu"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "BSD-2-Clause"
+
+[workspace.dependencies]
+fmi-rs = { path = "fmi-rs/fmi-rs", version = "0.1.0" }

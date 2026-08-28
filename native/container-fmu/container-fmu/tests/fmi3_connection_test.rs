@@ -4,6 +4,7 @@ mod common;
 
 use common::create_fmi3_container;
 use fmi_rs::fmi3::types::*;
+use rstest::rstest;
 
 macro_rules! assert_ok {
     ($expression:expr) => {
@@ -16,7 +17,7 @@ macro_rules! assert_ok {
 /// Tests the connection between Float32 variables:
 /// - VR 1 (input to component 0) -> VR 2 (output from component 0) -> VR 1 (input to component 1)
 /// - VR 3 (input to component 0) -> VR 4 (output from component 0) -> VR 3 (input to component 1)
-#[test]
+#[rstest]
 fn test_fmi3_float32_connections() {
     let fmu = create_fmi3_container();
 
@@ -73,7 +74,7 @@ fn test_fmi3_float32_connections() {
 /// Tests the connection between Float64 variables:
 /// - VR 7 (input to component 0) -> VR 8 (output from component 0) -> VR 7 (input to component 1)
 /// - VR 9 (input to component 0) -> VR 10 (output from component 0) -> VR 9 (input to component 1)
-#[test]
+#[rstest]
 fn test_fmi3_float64_connections() {
     let fmu = create_fmi3_container();
 
@@ -122,7 +123,7 @@ fn test_fmi3_float64_connections() {
 ///
 /// Tests the connection between Int8 variables:
 /// - VR 11 (input to component 0) -> VR 12 (output from component 0) -> VR 11 (input to component 1)
-#[test]
+#[rstest]
 fn test_fmi3_int8_connections() {
     let fmu = create_fmi3_container();
 
@@ -168,7 +169,7 @@ fn test_fmi3_int8_connections() {
 ///
 /// Tests the connection between Boolean variables:
 /// - VR 27 (input to component 0) -> VR 28 (output from component 0) -> VR 27 (input to component 1)
-#[test]
+#[rstest]
 fn test_fmi3_boolean_connections() {
     let fmu = create_fmi3_container();
 
@@ -214,7 +215,7 @@ fn test_fmi3_boolean_connections() {
 ///
 /// Tests the connection between String variables:
 /// - VR 29 (input to component 0) -> VR 30 (output from component 0) -> VR 29 (input to component 1)
-#[test]
+#[rstest]
 fn test_fmi3_string_connections() {
     let fmu = create_fmi3_container();
 
@@ -261,7 +262,7 @@ fn test_fmi3_string_connections() {
 /// Tests the connection between Int64 variables:
 /// - VR 23 (input to component 0) -> VR 24 (output from component 0) -> VR 23 (input to component 1)
 /// Note: Only testing one Int64 connection as VR 33/34 are enumeration variables
-#[test]
+#[rstest]
 fn test_fmi3_int64_connections() {
     let fmu = create_fmi3_container();
 
@@ -306,7 +307,7 @@ fn test_fmi3_int64_connections() {
 ///
 /// Tests the connection between UInt8 variables:
 /// - VR 13 (input to component 0) -> VR 14 (output from component 0) -> VR 13 (input to component 1)
-#[test]
+#[rstest]
 fn test_fmi3_uint8_connections() {
     let fmu = create_fmi3_container();
 
@@ -352,7 +353,7 @@ fn test_fmi3_uint8_connections() {
 ///
 /// Tests the connection between Int16 variables:
 /// - VR 15 (input to component 0) -> VR 16 (output from component 0) -> VR 15 (input to component 1)
-#[test]
+#[rstest]
 fn test_fmi3_int16_connections() {
     let fmu = create_fmi3_container();
 
@@ -398,7 +399,7 @@ fn test_fmi3_int16_connections() {
 ///
 /// Tests the connection between UInt16 variables:
 /// - VR 17 (input to component 0) -> VR 18 (output from component 0) -> VR 17 (input to component 1)
-#[test]
+#[rstest]
 fn test_fmi3_uint16_connections() {
     let fmu = create_fmi3_container();
 
@@ -444,7 +445,7 @@ fn test_fmi3_uint16_connections() {
 ///
 /// Tests the connection between Int32 variables:
 /// - VR 19 (input to component 0) -> VR 20 (output from component 0) -> VR 19 (input to component 1)
-#[test]
+#[rstest]
 fn test_fmi3_int32_connections() {
     let fmu = create_fmi3_container();
 
@@ -490,7 +491,7 @@ fn test_fmi3_int32_connections() {
 ///
 /// Tests the connection between UInt32 variables:
 /// - VR 21 (input to component 0) -> VR 22 (output from component 0) -> VR 21 (input to component 1)
-#[test]
+#[rstest]
 fn test_fmi3_uint32_connections() {
     let fmu = create_fmi3_container();
 
@@ -536,7 +537,7 @@ fn test_fmi3_uint32_connections() {
 ///
 /// Tests the connection between UInt64 variables:
 /// - VR 25 (input to component 0) -> VR 26 (output from component 0) -> VR 25 (input to component 1)
-#[test]
+#[rstest]
 fn test_fmi3_uint64_connections() {
     let fmu = create_fmi3_container();
 
@@ -583,7 +584,7 @@ fn test_fmi3_uint64_connections() {
 /// Tests the connection between Enumeration variables (handled as Int64):
 /// - VR 31 (enumeration input) -> VR 32 (enumeration output) via Int64 connection VR 33→34
 /// Note: Enumerations in FMI3 are handled as Int64 values in the container connections
-#[test]
+#[rstest]
 fn test_fmi3_enumeration_connections() {
     let fmu = create_fmi3_container();
 
@@ -646,7 +647,7 @@ fn test_fmi3_enumeration_connections() {
 ///
 /// To test individual connection types, the container.json would need to be modified
 /// to remove connections for unsupported types.
-#[test]
+#[rstest]
 fn test_fmi3_container_limitation() {
     let fmu = create_fmi3_container();
 

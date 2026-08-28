@@ -3,12 +3,12 @@
 mod common;
 
 use common::create_fmi2_container;
-use fmi::fmi2::types::*;
+use fmi_rs::fmi2::types::*;
 use rstest::*;
 
 macro_rules! assert_ok {
     ($expression:expr) => {
-        assert_eq!($expression, fmi2OK);
+        assert_eq!($expression, fmi2Status::fmi2OK);
     };
 }
 

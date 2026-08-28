@@ -379,12 +379,24 @@ pub extern "C" fn fmi3GetBinary(
         container.logError("Argument values must not be NULL.");
         return fmi3Status::fmi3Error;
     }
-
-    let valueReferences = unsafe { std::slice::from_raw_parts(valueReferences, nValueReferences) };
-
+    
     let mut buffer = container.binary_buffer.borrow_mut();
+    
+    buffer.resize(nValues, Vec::new());
+    
+    let valueReferences = unsafe { std::slice::from_raw_parts(valueReferences, nValueReferences) };
+    
+    let status = container.getBinary(valueReferences, &mut buffer[..]);
+    
+    let valueSizes_slice = unsafe { std::slice::from_raw_parts_mut(valueSizes, nValues) };
+    let values_slice = unsafe { std::slice::from_raw_parts_mut(values, nValues) };
 
-    container.getBinary(valueReferences, &mut buffer[..]).into()
+    for (i, value) in buffer.iter().enumerate() {
+        valueSizes_slice[i] = value.len();
+        values_slice[i] = value.as_ptr();
+    }
+
+    status.into()
 }
 
 #[unsafe(no_mangle)]

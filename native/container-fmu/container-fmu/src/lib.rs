@@ -1,35 +1,67 @@
 #![allow(non_camel_case_types, non_snake_case, unused_variables)]
 
-use std::{ffi::{CString, c_void}, path::Path, println, sync::Arc, todo};
+use std::{
+    cell::RefCell,
+    ffi::{CString, c_char, c_void},
+    path::Path,
+    println,
+    sync::Arc,
+    todo, vec,
+};
 
 use approx::{relative_eq, relative_ne};
-use fmi_rs::{fmi2::{CS, FMU2, log::DefaultLogger, types::{fmi2False, fmi2Real, fmi2Status, fmi2StatusKind, fmi2True, fmi2ValueReference}}, fmi3::{FMU3, types::{fmi3Float64, fmi3InstanceEnvironment, fmi3LogMessageCallback, fmi3Status, fmi3String, fmi3ValueReference}}};
+use fmi_rs::{
+    fmi2::{
+        CS, FMU2,
+        types::{
+            fmi2Boolean, fmi2False, fmi2Integer, fmi2Real, fmi2Status, fmi2StatusKind, fmi2True,
+            fmi2ValueReference,
+        },
+    },
+    fmi3::{
+        FMU3,
+        log::DefaultLogger,
+        types::{
+            fmi3Boolean, fmi3Float32, fmi3Float64, fmi3InstanceEnvironment, fmi3Int8, fmi3Int16,
+            fmi3Int32, fmi3Int64, fmi3LogMessageCallback,
+            fmi3Status::{self, fmi3Error, fmi3Warning},
+            fmi3String, fmi3UInt8, fmi3UInt16, fmi3UInt32, fmi3UInt64, fmi3ValueReference,
+        },
+    },
+};
 
 pub mod conf;
 pub mod fmi2;
-// pub mod fmi3;
+pub mod fmi3;
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 enum fmiStatus {
     fmiOK,
     fmiWarning,
     fmiError,
 }
 
-type fmiValueReference = u32;
-
+type fmiFloat32 = f32;
 type fmiFloat64 = f64;
-
-
-impl From<fmiStatus> for fmi2Status {
-    fn from(source: fmiStatus) -> Self {
-        match source {
-            fmiStatus::fmiOK => fmi2Status::fmi2OK,
-            fmiStatus::fmiWarning => fmi2Status::fmi2Warning,
-            fmiStatus::fmiError => fmi2Status::fmi2Error,
-        }
-    }
-}
+type fmiInt8 = i8;
+type fmiUInt8 = u8;
+type fmiInt16 = i16;
+type fmiUInt16 = u16;
+type fmiInt32 = i32;
+type fmiUInt32 = u32;
+type fmiInt64 = i64;
+type fmiUInt64 = u64;
+type fmiBoolean = bool;
+// type fmiChar = c_char;
+// type fmiString = *const fmiChar;
+type fmiByte = u8;
+type fmiBinary = *const fmiByte;
+type fmiClock = bool;
+type fmiValueReference = u32;
+// type fmiValueReference = u32;
+// type fmiFMUState = *mut c_void;
+// type fmiInstance = *mut c_void;
+// type fmiInstanceEnvironment = *mut c_void;
 
 impl From<fmi2Status> for fmiStatus {
     fn from(source: fmi2Status) -> Self {
@@ -37,6 +69,36 @@ impl From<fmi2Status> for fmiStatus {
             fmi2Status::fmi2OK => fmiStatus::fmiOK,
             fmi2Status::fmi2Warning => fmiStatus::fmiWarning,
             _ => fmiStatus::fmiError,
+        }
+    }
+}
+
+impl Into<fmi2Status> for fmiStatus {
+    fn into(self) -> fmi2Status {
+        match self {
+            fmiStatus::fmiOK => fmi2Status::fmi2OK,
+            fmiStatus::fmiWarning => fmi2Status::fmi2Warning,
+            fmiStatus::fmiError => fmi2Status::fmi2Error,
+        }
+    }
+}
+
+impl From<fmi3Status> for fmiStatus {
+    fn from(source: fmi3Status) -> Self {
+        match source {
+            fmi3Status::fmi3OK => fmiStatus::fmiOK,
+            fmi3Status::fmi3Warning => fmiStatus::fmiWarning,
+            _ => fmiStatus::fmiError,
+        }
+    }
+}
+
+impl Into<fmi3Status> for fmiStatus {
+    fn into(self) -> fmi3Status {
+        match self {
+            fmiStatus::fmiOK => fmi3Status::fmi3OK,
+            fmiStatus::fmiWarning => fmi3Status::fmi3Warning,
+            fmiStatus::fmiError => fmi3Status::fmi3Error,
         }
     }
 }
@@ -66,7 +128,7 @@ const LOG_NESTED: fmi3String = "logNested\0".as_ptr() as fmi3String;
 
 enum FMUInstance {
     FMI2(Box<FMU2<CS>>),
-//     FMI3(Box<FMU3>),
+    FMI3(Arc<FMU3>),
 }
 
 struct Container {
@@ -93,8 +155,9 @@ struct Container {
     u64_buffer: Vec<u64>,
     bool_buffer: Vec<bool>,
     string_buffer: Vec<String>,
-    binary_buffer: Vec<*const u8>,
-    usize_buffer: Vec<usize>,
+    binary_buffer: RefCell<Vec<Vec<u8>>>,
+    // binary_buffer: Vec<*const u8>,
+    // usize_buffer: Vec<usize>,
 }
 
 macro_rules! return_on_error {
@@ -133,11 +196,13 @@ macro_rules! set_variables {
                     status,
                     match instance {
                         FMUInstance::FMI2(fmu) => {
-                            $fmi2_setter(&fmu, &[mapping.valueReference], &$values[i..i + size]).into()
+                            $fmi2_setter(&fmu, &[mapping.valueReference], &$values[i..i + size])
+                                .into()
                         }
-                        // FMUInstance::FMI3(fmu) => {
-                        //     $fmi3_setter(fmu, &[mapping.valueReference], &$values[i..i + size])
-                        // }
+                        FMUInstance::FMI3(fmu) => {
+                            $fmi3_setter(fmu, &[mapping.valueReference], &$values[i..i + size])
+                                .into()
+                        }
                     }
                 );
             }
@@ -155,25 +220,25 @@ macro_rules! set_variables {
             status = fmiStatus::fmiError;
         }
 
-        status
+        status.into()
     }};
 }
 
 type ContainerLogMessageCallback = dyn Fn(&fmiStatus, &str, &str) + Send + Sync;
 type ContainerLogFMICallCallback = dyn Fn(&fmiStatus, &str, &str) + Send + Sync;
 
-// macro_rules! set_start_value {
-//     ($self:ident, $value_references:ident, $start:ident, $setter:ident, $variable_type:ty) => {{
-//         let result: Result<Vec<$variable_type>, _> = $start.iter().map(|s| s.parse()).collect();
-//         if let Ok(values) = result {
-//             $self.$setter($value_references, &values)
-//         } else {
-//             let message = format!("Failed to parse start value \"{:?}\".", $start);
-//             $self.logError(&message);
-//             fmiError
-//         }
-//     }};
-// }
+macro_rules! set_start_value {
+    ($self:ident, $value_references:ident, $start:ident, $setter:ident, $variable_type:ty) => {{
+        let result: Result<Vec<$variable_type>, _> = $start.iter().map(|s| s.parse()).collect();
+        if let Ok(values) = result {
+            $self.$setter($value_references, &values)
+        } else {
+            let message = format!("Failed to parse start value \"{:?}\".", $start);
+            $self.logError(&message);
+            fmiStatus::fmiError
+        }
+    }};
+}
 
 /// Macro to check FMI status and return early if error or fatal
 /// Usage: fmi_check_status!(status);
@@ -186,8 +251,6 @@ macro_rules! fmi_check_status {
         }
     }};
 }
-
-
 
 impl Container {
     fn instantiate(
@@ -253,7 +316,7 @@ impl Container {
                         false,
                         loggingOn,
                         true,
-                        Box::new(DefaultLogger::default()),
+                        Box::new(fmi_rs::fmi2::log::DefaultLogger::default()),
                         true,
                     ) {
                         Ok(fmu) => FMUInstance::FMI2(Box::new(fmu)),
@@ -269,35 +332,30 @@ impl Container {
                     }
                 }
                 FMIMajorVersion::FMIMajorVersion3 => {
-                    todo!()
-//                     match FMU3::instantiateCoSimulation(
-//                         &unzipdir,
-//                         &component.modelIdentifier,
-//                         &component.name,
-//                         &component.instantiationToken,
-//                         false,
-//                         loggingOn,
-//                         false,
-//                         false,
-//                         &[],
-//                         if loggingOn {
-//                             Some(Box::new(log_component_fmi_call))
-//                         } else {
-//                             None
-//                         },
-//                         Some(Box::new(log_component_message)),
-//                     ) {
-//                         Ok(fmu) => FMUInstance::FMI3(Box::new(fmu)),
-//                         Err(error) => {
-//                             let message = format!(
-//                                 "Failed to instantiate the component {:?}. {:?}",
-//                                 component.name, error
-//                             );
-//                             let message = CString::new(message).unwrap();
-//                             let message = message.as_ptr() as fmi3String;
-//                             todo!()
-//                         }
-//                     }
+                    match FMU3::instantiateCoSimulation(
+                        &unzipdir,
+                        &component.modelIdentifier,
+                        &component.name,
+                        &component.instantiationToken,
+                        false,
+                        loggingOn,
+                        false,
+                        false,
+                        Box::new(fmi_rs::fmi3::log::DefaultLogger::default()),
+                        true,
+                        None,
+                    ) {
+                        Ok(fmu) => FMUInstance::FMI3(fmu),
+                        Err(error) => {
+                            let message = format!(
+                                "Failed to instantiate the component {:?}. {:?}",
+                                component.name, error
+                            );
+                            let message = CString::new(message).unwrap();
+                            let message = message.as_ptr() as fmi3String;
+                            todo!()
+                        }
+                    }
                 }
             };
 
@@ -329,104 +387,105 @@ impl Container {
             u64_buffer: Vec::new(),
             bool_buffer: Vec::new(),
             string_buffer: Vec::new(),
-            binary_buffer: Vec::new(),
-            usize_buffer: Vec::new(),
+            binary_buffer: RefCell::new(Vec::new()),
+            // usize_buffer: Vec::new(),
         };
 
-//         let status = container.setStartValues();
+        let status = container.setStartValues();
 
-//         if !matches!(status, fmiOK | fmiWarning) {
-//             let message = format!("Failed to set start values.");
-//             return Err(message);
-//         }
+        if !matches!(status, fmiStatus::fmiOK | fmiStatus::fmiWarning) {
+            let message = format!("Failed to set start values.");
+            return Err(message);
+        }
 
         Ok(container)
     }
 
-//     fn setStartValues(&self) -> fmiStatus {
-//         let mut status = fmiOK;
+    fn setStartValues(&self) -> fmiStatus {
+        let mut status = fmiStatus::fmiOK;
 
-//         for (i, variable) in self.system.variables.iter().enumerate() {
-//             if let Some(start) = &variable.start {
-//                 let valueReferences = &[(i + 1) as fmiValueReference];
-//                 return_on_error!(
-//                     status,
-//                     match variable.variableType {
-//                         VariableType::Float32 =>
-//                             set_start_value!(self, valueReferences, start, setFloat32, fmiFloat32),
-//                         VariableType::Float64 =>
-//                             set_start_value!(self, valueReferences, start, setFloat64, fmiFloat64),
-//                         VariableType::Int8 =>
-//                             set_start_value!(self, valueReferences, start, setInt8, fmiInt8),
-//                         VariableType::UInt8 =>
-//                             set_start_value!(self, valueReferences, start, setUInt8, fmiUInt8),
-//                         VariableType::Int16 =>
-//                             set_start_value!(self, valueReferences, start, setInt16, fmiInt16),
-//                         VariableType::UInt16 =>
-//                             set_start_value!(self, valueReferences, start, setUInt16, fmiUInt16),
-//                         VariableType::Int32 =>
-//                             set_start_value!(self, valueReferences, start, setInt32, fmiInt32),
-//                         VariableType::UInt32 =>
-//                             set_start_value!(self, valueReferences, start, setUInt32, fmiUInt32),
-//                         VariableType::Int64 =>
-//                             set_start_value!(self, valueReferences, start, setInt64, fmiInt64),
-//                         VariableType::UInt64 =>
-//                             set_start_value!(self, valueReferences, start, setUInt64, fmiUInt64),
-//                         VariableType::Boolean =>
-//                             set_start_value!(self, valueReferences, start, setBoolean, fmiBoolean),
-//                         VariableType::String => {
-//                             let start: Vec<&str> = start.iter().map(String::as_str).collect();
-//                             self.setString(valueReferences, &start)
-//                         }
-//                         VariableType::Binary => {
-//                             let values: Result<Vec<Vec<fmiByte>>, Box<dyn Error>> = start
-//                                 .into_iter()
-//                                 .map(|hex_str| {
-//                                     if hex_str.len() % 2 != 0 {
-//                                         return Err(format!(
-//                                             "Invalid hex string length: {}",
-//                                             hex_str
-//                                         )
-//                                         .into());
-//                                     }
+        for (i, variable) in self.system.variables.iter().enumerate() {
+            if let Some(start) = &variable.start {
+                let valueReferences = &[(i + 1) as fmiValueReference];
+                return_on_error!(
+                    status,
+                    match variable.variableType {
+                        VariableType::Float32 =>
+                            set_start_value!(self, valueReferences, start, setFloat32, fmiFloat32),
+                        VariableType::Float64 =>
+                            set_start_value!(self, valueReferences, start, setFloat64, fmiFloat64),
+                        VariableType::Int8 =>
+                            set_start_value!(self, valueReferences, start, setInt8, fmiInt8),
+                        VariableType::UInt8 =>
+                            set_start_value!(self, valueReferences, start, setUInt8, fmiUInt8),
+                        VariableType::Int16 =>
+                            set_start_value!(self, valueReferences, start, setInt16, fmiInt16),
+                        VariableType::UInt16 =>
+                            set_start_value!(self, valueReferences, start, setUInt16, fmiUInt16),
+                        VariableType::Int32 =>
+                            set_start_value!(self, valueReferences, start, setInt32, fmiInt32),
+                        VariableType::UInt32 =>
+                            set_start_value!(self, valueReferences, start, setUInt32, fmiUInt32),
+                        VariableType::Int64 =>
+                            set_start_value!(self, valueReferences, start, setInt64, fmiInt64),
+                        VariableType::UInt64 =>
+                            set_start_value!(self, valueReferences, start, setUInt64, fmiUInt64),
+                        VariableType::Boolean =>
+                            set_start_value!(self, valueReferences, start, setBoolean, fmiBoolean),
+                        VariableType::String => {
+                            let start: Vec<&str> = start.iter().map(String::as_str).collect();
+                            self.setString(valueReferences, &start)
+                        }
+                        VariableType::Binary => {
+                            let values: Result<Vec<Vec<fmiByte>>, Box<dyn std::error::Error>> =
+                                start
+                                    .into_iter()
+                                    .map(|hex_str| {
+                                        if hex_str.len() % 2 != 0 {
+                                            return Err(format!(
+                                                "Invalid hex string length: {}",
+                                                hex_str
+                                            )
+                                            .into());
+                                        }
 
-//                                     let mut bytes = Vec::new();
+                                        let mut bytes = Vec::new();
 
-//                                     for i in (0..hex_str.len()).step_by(2) {
-//                                         let byte_str = &hex_str[i..i + 2];
-//                                         match u8::from_str_radix(byte_str, 16) {
-//                                             Ok(byte) => bytes.push(byte),
-//                                             Err(e) => {
-//                                                 return Err(format!(
-//                                                     "Invalid hex byte '{}': {}",
-//                                                     byte_str, e
-//                                                 )
-//                                                 .into());
-//                                             }
-//                                         }
-//                                     }
+                                        for i in (0..hex_str.len()).step_by(2) {
+                                            let byte_str = &hex_str[i..i + 2];
+                                            match u8::from_str_radix(byte_str, 16) {
+                                                Ok(byte) => bytes.push(byte),
+                                                Err(e) => {
+                                                    return Err(format!(
+                                                        "Invalid hex byte '{}': {}",
+                                                        byte_str, e
+                                                    )
+                                                    .into());
+                                                }
+                                            }
+                                        }
 
-//                                     Ok(bytes)
-//                                 })
-//                                 .collect();
+                                        Ok(bytes)
+                                    })
+                                    .collect();
 
-//                             match values {
-//                                 Ok(v) => self.setBinary(valueReferences, &v),
-//                                 Err(e) => {
-//                                     self.logError("message");
-//                                     fmiError
-//                                 }
-//                             }
-//                         }
-//                         VariableType::Clock =>
-//                             set_start_value!(self, valueReferences, start, setClock, fmiClock),
-//                     }
-//                 );
-//             }
-//         }
+                            match values {
+                                Ok(v) => self.setBinary(valueReferences, &v),
+                                Err(e) => {
+                                    self.logError("message");
+                                    fmiStatus::fmiError
+                                }
+                            }
+                        }
+                        VariableType::Clock =>
+                            set_start_value!(self, valueReferences, start, setClock, fmiClock),
+                    }
+                );
+            }
+        }
 
-//         status
-//     }
+        status
+    }
 
     fn logError(&self, message: &str) {
         println!("container::logError(message: {message})");
@@ -444,19 +503,17 @@ impl Container {
 
     fn call_all<F, G>(&self, fmi2_function: F, fmi3_function: G) -> fmiStatus
     where
-        F: Fn(&FMU2::<CS>) -> fmi2Status,
+        F: Fn(&FMU2<CS>) -> fmi2Status,
         G: Fn(&FMU3) -> fmi3Status,
     {
         let mut status = fmiStatus::fmiOK;
 
         for instance in &self.instances {
             let s: fmiStatus = match instance {
-                FMUInstance::FMI2(fmu) => {
-                    fmi2_function(fmu).into()
-                }
-                // FMUInstance::FMI3(fmu) => fmi3_function(fmu),
+                FMUInstance::FMI2(fmu) => fmi2_function(fmu).into(),
+                FMUInstance::FMI3(fmu) => fmi3_function(fmu).into(),
             };
-            if s > fmiStatus::fmiError {
+            if s >= fmiStatus::fmiError {
                 return s;
             } else if s > status {
                 status = s;
@@ -466,7 +523,7 @@ impl Container {
     }
 
     pub fn enterInitializationMode(&self) -> fmiStatus {
-        let fmi2_function = |fmu: &FMU2::<CS>| {
+        let fmi2_function = |fmu: &FMU2<CS>| {
             let status = fmu.setupExperiment(self.tolerance, self.startTime, self.stopTime);
             fmu.enterInitializationMode()
         };
@@ -490,15 +547,14 @@ impl Container {
 
     fn reset(&mut self) -> fmiStatus {
         let mut status = fmiStatus::fmiOK;
-//         return_on_error!(status, self.call_all(|fmu| fmu.reset(), |fmu| fmu.reset()));
-//         return_on_error!(status, self.setStartValues());
-//         self.nSteps = 0;
+        return_on_error!(status, self.call_all(|fmu| fmu.reset(), |fmu| fmu.reset()));
+        return_on_error!(status, self.setStartValues());
+        self.nSteps = 0;
         status
     }
 
     fn terminate(&self) -> fmiStatus {
-        // self.call_all(|fmu| fmu.terminate(), |fmu| fmu.terminate())
-        fmiStatus::fmiOK
+        self.call_all(|fmu| fmu.terminate(), |fmu| fmu.terminate())
     }
 
     fn time(&self) -> f64 {
@@ -522,22 +578,22 @@ impl Container {
         }
     }
 
-//     fn getFloat32(
-//         &self,
-//         valueReferences: &[fmiValueReference],
-//         values: &mut [fmiFloat32],
-//     ) -> fmiStatus {
-//         let fmi2_getter =
-//             |fmu: &FMU2, valueReferences: &[fmiValueReference], values: &mut [fmiFloat32]| {
-//                 self.logError("Not implemented.");
-//                 fmiError
-//             };
-//         let fmi3_getter =
-//             |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &mut [fmi3Float32]| {
-//                 fmu.getFloat32(valueReferences, values)
-//             };
-//         self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
-//     }
+    fn getFloat32(
+        &self,
+        valueReferences: &[fmiValueReference],
+        values: &mut [fmiFloat32],
+    ) -> fmiStatus {
+        let fmi2_getter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmiValueReference], values: &mut [fmiFloat32]| {
+                self.logError("Not implemented.");
+                fmiStatus::fmiError
+            };
+        let fmi3_getter =
+            |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &mut [fmi3Float32]| {
+                fmu.getFloat32(valueReferences, values).into()
+            };
+        self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
+    }
 
     fn getFloat64(
         &self,
@@ -580,7 +636,7 @@ impl Container {
 
                 let s = match instance {
                     FMUInstance::FMI2(fmu) => fmu.getReal(valueReferences, slice).into(),
-                    // FMUInstance::FMI3(fmu) => fmu.getFloat64(valueReferences, slice),
+                    FMUInstance::FMI3(fmu) => fmu.getFloat64(valueReferences, slice).into(),
                 };
 
                 if s >= fmiStatus::fmiError {
@@ -603,299 +659,295 @@ impl Container {
         status
     }
 
-//     fn getInt8(&self, valueReferences: &[fmiValueReference], values: &mut [fmiInt8]) -> fmiStatus {
-//         let fmi2_getter =
-//             |fmu: &FMU2, valueReferences: &[fmiValueReference], values: &mut [fmiInt8]| {
-//                 todo!();
-//             };
-//         let fmi3_getter =
-//             |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmi3Int8]| {
-//                 fmu.getInt8(valueReferences, values)
-//             };
-//         self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
-//     }
+    fn getInt8(&self, valueReferences: &[fmiValueReference], values: &mut [fmiInt8]) -> fmiStatus {
+        let fmi2_getter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmiValueReference], values: &mut [fmiInt8]| {
+                todo!();
+            };
+        let fmi3_getter =
+            |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmi3Int8]| {
+                fmu.getInt8(valueReferences, values).into()
+            };
+        self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
+    }
 
-//     fn getUInt8(
-//         &self,
-//         valueReferences: &[fmiValueReference],
-//         values: &mut [fmiUInt8],
-//     ) -> fmiStatus {
-//         let fmi2_getter =
-//             |fmu: &FMU2, valueReferences: &[fmiValueReference], values: &mut [fmiUInt8]| {
-//                 todo!();
-//             };
-//         let fmi3_getter =
-//             |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmi3UInt8]| {
-//                 fmu.getUInt8(valueReferences, values)
-//             };
-//         self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
-//     }
+    fn getUInt8(
+        &self,
+        valueReferences: &[fmiValueReference],
+        values: &mut [fmiUInt8],
+    ) -> fmiStatus {
+        let fmi2_getter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmiValueReference], values: &mut [fmiUInt8]| {
+                todo!();
+            };
+        let fmi3_getter =
+            |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmi3UInt8]| {
+                fmu.getUInt8(valueReferences, values).into()
+            };
+        self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
+    }
 
-//     fn getInt16(
-//         &self,
-//         valueReferences: &[fmiValueReference],
-//         values: &mut [fmiInt16],
-//     ) -> fmiStatus {
-//         let fmi2_getter =
-//             |fmu: &FMU2, valueReferences: &[fmiValueReference], values: &mut [fmiInt16]| {
-//                 todo!();
-//             };
-//         let fmi3_getter =
-//             |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmiInt16]| {
-//                 fmu.getInt16(valueReferences, values)
-//             };
-//         self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
-//     }
+    fn getInt16(
+        &self,
+        valueReferences: &[fmiValueReference],
+        values: &mut [fmiInt16],
+    ) -> fmiStatus {
+        let fmi2_getter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmiValueReference], values: &mut [fmiInt16]| {
+                todo!();
+            };
+        let fmi3_getter =
+            |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmiInt16]| {
+                fmu.getInt16(valueReferences, values).into()
+            };
+        self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
+    }
 
-//     fn getUInt16(
-//         &self,
-//         valueReferences: &[fmiValueReference],
-//         values: &mut [fmiUInt16],
-//     ) -> fmiStatus {
-//         let fmi2_getter =
-//             |fmu: &FMU2, valueReferences: &[fmiValueReference], values: &mut [fmiUInt16]| {
-//                 todo!();
-//             };
-//         let fmi3_getter =
-//             |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmiUInt16]| {
-//                 fmu.getUInt16(valueReferences, values)
-//             };
-//         self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
-//     }
+    fn getUInt16(
+        &self,
+        valueReferences: &[fmiValueReference],
+        values: &mut [fmiUInt16],
+    ) -> fmiStatus {
+        let fmi2_getter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmiValueReference], values: &mut [fmiUInt16]| {
+                todo!();
+            };
+        let fmi3_getter =
+            |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmiUInt16]| {
+                fmu.getUInt16(valueReferences, values).into()
+            };
+        self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
+    }
 
-//     fn getInt32(
-//         &self,
-//         valueReferences: &[fmiValueReference],
-//         values: &mut [fmiInt32],
-//     ) -> fmiStatus {
-//         let fmi2_getter =
-//             |fmu: &FMU2, valueReferences: &[fmiValueReference], values: &mut [fmi2Integer]| {
-//                 fmu.getInteger(valueReferences, values)
-//             };
-//         let fmi3_getter =
-//             |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmi3Int32]| {
-//                 fmu.getInt32(valueReferences, values)
-//             };
-//         self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
-//     }
+    fn getInt32(
+        &self,
+        valueReferences: &[fmiValueReference],
+        values: &mut [fmiInt32],
+    ) -> fmiStatus {
+        let fmi2_getter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmiValueReference], values: &mut [fmi2Integer]| {
+                fmu.getInteger(valueReferences, values).into()
+            };
+        let fmi3_getter =
+            |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmi3Int32]| {
+                fmu.getInt32(valueReferences, values).into()
+            };
+        self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
+    }
 
-//     fn getUInt32(
-//         &self,
-//         valueReferences: &[fmiValueReference],
-//         values: &mut [fmiUInt32],
-//     ) -> fmiStatus {
-//         let fmi2_getter =
-//             |fmu: &FMU2, valueReferences: &[fmiValueReference], values: &mut [fmiUInt32]| {
-//                 todo!();
-//             };
-//         let fmi3_getter =
-//             |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmiUInt32]| {
-//                 fmu.getUInt32(valueReferences, values)
-//             };
-//         self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
-//     }
+    fn getUInt32(
+        &self,
+        valueReferences: &[fmiValueReference],
+        values: &mut [fmiUInt32],
+    ) -> fmiStatus {
+        let fmi2_getter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmiValueReference], values: &mut [fmiUInt32]| {
+                todo!();
+            };
+        let fmi3_getter =
+            |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmiUInt32]| {
+                fmu.getUInt32(valueReferences, values).into()
+            };
+        self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
+    }
 
-//     fn getInt64(
-//         &self,
-//         valueReferences: &[fmiValueReference],
-//         values: &mut [fmiInt64],
-//     ) -> fmiStatus {
-//         let fmi2_getter =
-//             |fmu: &FMU2, valueReferences: &[fmiValueReference], values: &mut [fmiInt64]| {
-//                 todo!();
-//             };
-//         let fmi3_getter =
-//             |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmiInt64]| {
-//                 fmu.getInt64(valueReferences, values)
-//             };
-//         self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
-//     }
+    fn getInt64(
+        &self,
+        valueReferences: &[fmiValueReference],
+        values: &mut [fmiInt64],
+    ) -> fmiStatus {
+        let fmi2_getter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmiValueReference], values: &mut [fmiInt64]| {
+                todo!();
+            };
+        let fmi3_getter =
+            |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmiInt64]| {
+                fmu.getInt64(valueReferences, values).into()
+            };
+        self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
+    }
 
-//     fn getUInt64(
-//         &self,
-//         valueReferences: &[fmiValueReference],
-//         values: &mut [fmiUInt64],
-//     ) -> fmiStatus {
-//         let fmi2_getter =
-//             |fmu: &FMU2, valueReferences: &[fmiValueReference], values: &mut [fmiUInt64]| {
-//                 todo!();
-//             };
-//         let fmi3_getter =
-//             |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmiUInt64]| {
-//                 fmu.getUInt64(valueReferences, values)
-//             };
-//         self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
-//     }
+    fn getUInt64(
+        &self,
+        valueReferences: &[fmiValueReference],
+        values: &mut [fmiUInt64],
+    ) -> fmiStatus {
+        let fmi2_getter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmiValueReference], values: &mut [fmiUInt64]| {
+                todo!();
+            };
+        let fmi3_getter =
+            |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmiUInt64]| {
+                fmu.getUInt64(valueReferences, values).into()
+            };
+        self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
+    }
 
-//     fn getBoolean(
-//         &self,
-//         valueReferences: &[fmiValueReference],
-//         values: &mut [fmiBoolean],
-//     ) -> fmiStatus {
-//         let fmi2_getter =
-//             |fmu: &FMU2, valueReferences: &[fmiValueReference], values: &mut [fmiBoolean]| {
-//                 let mut buffer = vec![0i32; values.len()];
-//                 let status = fmu.getBoolean(valueReferences, &mut buffer);
-//                 for (i, &value) in buffer.iter().enumerate() {
-//                     values[i] = value != fmi2False;
-//                 }
-//                 status
-//             };
-//         let fmi3_getter =
-//             |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmi3Boolean]| {
-//                 fmu.getBoolean(valueReferences, values)
-//             };
-//         self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
-//     }
+    fn getBoolean(
+        &self,
+        valueReferences: &[fmiValueReference],
+        values: &mut [fmiBoolean],
+    ) -> fmiStatus {
+        let fmi2_getter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmiValueReference], values: &mut [fmiBoolean]| {
+                let mut buffer = vec![0i32; values.len()];
+                let status = fmu.getBoolean(valueReferences, &mut buffer);
+                for (i, &value) in buffer.iter().enumerate() {
+                    values[i] = value != fmi2False;
+                }
+                status.into()
+            };
+        let fmi3_getter =
+            |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [fmi3Boolean]| {
+                fmu.getBoolean(valueReferences, values).into()
+            };
+        self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
+    }
 
-//     fn getString(
-//         &mut self,
-//         valueReferences: &[fmiValueReference],
-//         values: &mut [String],
-//     ) -> fmiStatus {
-//         let fmi2_getter =
-//             |fmu: &FMU2, valueReferences: &[fmiValueReference], values: &mut [String]| {
-//                 fmu.getString(valueReferences, values)
-//             };
-//         let fmi3_getter =
-//             |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [String]| {
-//                 fmu.getString(valueReferences, values)
-//             };
-//         self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
-//     }
+    fn getString(
+        &mut self,
+        valueReferences: &[fmiValueReference],
+        values: &mut [String],
+    ) -> fmiStatus {
+        let fmi2_getter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmiValueReference], values: &mut [String]| {
+                fmu.getString(valueReferences, values).into()
+            };
+        let fmi3_getter =
+            |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [String]| {
+                fmu.getString(valueReferences, values).into()
+            };
+        self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
+    }
 
-//     fn getBinary(
-//         &self,
-//         valueReferences: &[fmiValueReference],
-//         sizes: &mut [usize],
-//         values: &mut [fmiBinary],
-//     ) -> fmiStatus {
-//         let mut status = fmiOK;
-//         let mut size_idx = 0;
-//         let mut value_idx = 0;
+    fn getBinary(
+        &self,
+        valueReferences: &[fmiValueReference],
+        values: &mut [Vec<fmiByte>],
+    ) -> fmiStatus {
+        let fmi2_getter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmiValueReference], values: &mut [Vec<fmiByte>]| {
+                todo!();
+            };
+        let fmi3_getter =
+            |fmu: &FMU3, valueReferences: &[fmiValueReference], values: &mut [Vec<fmiByte>]| {
+                fmu.getBinary(valueReferences, values).into()
+            };
+        self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
+        // let mut status = fmiStatus::fmiOK;
 
-//         for valueReference in valueReferences {
-//             let variable = match self.getVariable(*valueReference, VariableType::Binary) {
-//                 Ok(var) => var,
-//                 Err(e) => {
-//                     self.logError(e.as_str());
-//                     return fmi3Error;
-//                 }
-//             };
+        // for valueReference in valueReferences {
+        //     let variable = match self.getVariable(*valueReference, VariableType::Binary) {
+        //         Ok(var) => var,
+        //         Err(e) => {
+        //             self.logError(e.as_str());
+        //             return fmiStatus::fmiError;
+        //         }
+        //     };
 
-//             let mapping = &variable.mappings[0];
-//             let var_size = variable.size.unwrap_or(1);
-//             let instance = &self.instances[mapping.component as usize];
+        //     let mapping = &variable.mappings[0];
+        //     let var_size = variable.size.unwrap_or(1);
+        //     let instance = &self.instances[mapping.component as usize];
 
-//             if size_idx + var_size > sizes.len() || value_idx + var_size > values.len() {
-//                 self.logError("Argument sizes or values array is too small.");
-//                 return fmi3Error;
-//             }
+        //     let vrs: [u32; 1] = [mapping.valueReference];
 
-//             let size_slice = &mut sizes[size_idx..size_idx + var_size];
-//             let value_slice = &mut values[value_idx..value_idx + var_size];
-//             let vrs: [u32; 1] = [mapping.valueReference];
+        //     let s = match instance {
+        //         FMUInstance::FMI2(fmu) => {
+        //             self.logError("Binary variables are not supported for FMI 2.");
+        //             fmiStatus::fmiError
+        //         }
+        //         FMUInstance::FMI3(fmu) => fmu.getBinary(&vrs, values).into(),
+        //     };
 
-//             let s = match instance {
-//                 FMUInstance::FMI2(fmu) => {
-//                     self.logError("Binary variables are not supported for FMI 2.");
-//                     fmiError
-//                 }
-//                 FMUInstance::FMI3(fmu) => fmu.getBinary(&vrs, size_slice, value_slice),
-//             };
+        //     if s >= fmiStatus::fmiError {
+        //         return s;
+        //     } else if s > status {
+        //         status = s;
+        //     }
+        // }
 
-//             if s >= fmiError {
-//                 return s;
-//             } else if s > status {
-//                 status = s;
-//             }
+        // status
+    }
 
-//             size_idx += var_size;
-//             value_idx += var_size;
-//         }
+    fn getValues<
+        T,
+        U: Fn(&FMU2<CS>, &[fmiValueReference], &mut [T]) -> fmiStatus,
+        V: Fn(&FMU3, &[fmiValueReference], &mut [T]) -> fmiStatus,
+    >(
+        &self,
+        valueReferences: &[fmiValueReference],
+        values: &mut [T],
+        fmi2_getter: U,
+        fmi3_getter: V,
+    ) -> fmiStatus {
+        let mut status = fmiStatus::fmiOK;
+        let mut values = values;
 
-//         status
-//     }
+        for valueReference in valueReferences {
+            let variable = match self.getVariable(*valueReference, VariableType::Float64) {
+                Ok(var) => var,
+                Err(e) => {
+                    self.logError(e.as_str());
+                    return fmiStatus::fmiError;
+                }
+            };
 
-//     fn getValues<
-//         T,
-//         U: Fn(&FMU2, &[fmiValueReference], &mut [T]) -> fmiStatus,
-//         V: Fn(&FMU3, &[fmiValueReference], &mut [T]) -> fmiStatus,
-//     >(
-//         &self,
-//         valueReferences: &[fmiValueReference],
-//         values: &mut [T],
-//         fmi2_getter: U,
-//         fmi3_getter: V,
-//     ) -> fmiStatus {
-//         let mut status = fmiOK;
-//         let mut values = values;
+            let mapping = &variable.mappings[0];
 
-//         for valueReference in valueReferences {
-//             let variable = match self.getVariable(*valueReference, VariableType::Float64) {
-//                 Ok(var) => var,
-//                 Err(e) => {
-//                     self.logError(e.as_str());
-//                     return fmi3Error;
-//                 }
-//             };
+            let size = variable.size.unwrap_or(1);
+            let instance = &self.instances[mapping.component as usize];
 
-//             let mapping = &variable.mappings[0];
+            let slice = match values.get_mut(0..size) {
+                Some(s) => s,
+                None => {
+                    self.logError(
+                        "Argument value is too small to hold the values of all variables.",
+                    );
+                    return fmiStatus::fmiError;
+                }
+            };
 
-//             let size = variable.size.unwrap_or(1);
-//             let instance = &self.instances[mapping.component as usize];
+            let vrs: [u32; 1] = [mapping.valueReference];
 
-//             let slice = match values.get_mut(0..size) {
-//                 Some(s) => s,
-//                 None => {
-//                     self.logError(
-//                         "Argument value is too small to hold the values of all variables.",
-//                     );
-//                     return fmi3Error;
-//                 }
-//             };
+            let s = match instance {
+                FMUInstance::FMI2(fmu) => fmi2_getter(fmu, &vrs, slice),
+                FMUInstance::FMI3(fmu) => fmi3_getter(fmu, &vrs, slice),
+            };
 
-//             let vrs: [u32; 1] = [mapping.valueReference];
+            if s >= fmiStatus::fmiError {
+                return s;
+            } else if s > status {
+                status = s;
+            }
+            values = &mut values[size..];
+        }
 
-//             let s = match instance {
-//                 FMUInstance::FMI2(fmu) => fmi2_getter(fmu, &vrs, slice),
-//                 FMUInstance::FMI3(fmu) => fmi3_getter(fmu, &vrs, slice),
-//             };
+        let excess = values.len();
 
-//             if s >= fmiError {
-//                 return s;
-//             } else if s > status {
-//                 status = s;
-//             }
-//             values = &mut values[size..];
-//         }
+        if excess != 0 {
+            self.logError("Argument value is too small to hold the values of all variables.");
+            return fmiStatus::fmiError;
+        }
 
-//         let excess = values.len();
+        status
+    }
 
-//         if excess != 0 {
-//             self.logError("Argument value is too small to hold the values of all variables.");
-//             return fmi3Error;
-//         }
-
-//         status
-//     }
-
-//     fn setFloat32(
-//         &self,
-//         valueReferences: &[fmiValueReference],
-//         values: &[fmiFloat32],
-//     ) -> fmiStatus {
-//         let fmi2_setter =
-//             |fmu: &FMU2, valueReferences: &[fmi2ValueReference], values: &[fmiFloat32]| {
-//                 let buffer: Vec<fmi2Real> = values.iter().map(|&v| v as fmi2Real).collect();
-//                 fmu.setReal(valueReferences, &buffer)
-//             };
-//         let fmi3_setter =
-//             |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3Float32]| {
-//                 fmu.setFloat32(valueReferences, values)
-//             };
-//         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
-//     }
+    fn setFloat32(
+        &self,
+        valueReferences: &[fmiValueReference],
+        values: &[fmiFloat32],
+    ) -> fmiStatus {
+        let fmi2_setter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmi2ValueReference], values: &[fmiFloat32]| {
+                let buffer: Vec<fmi2Real> = values.iter().map(|&v| v as fmi2Real).collect();
+                fmu.setReal(valueReferences, &buffer)
+            };
+        let fmi3_setter =
+            |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3Float32]| {
+                fmu.setFloat32(valueReferences, values)
+            };
+        set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
+    }
 
     fn setFloat64(
         &self,
@@ -903,7 +955,7 @@ impl Container {
         values: &[fmiFloat64],
     ) -> fmiStatus {
         let fmi2_setter =
-            |fmu: &FMU2::<CS>, valueReferences: &[fmi2ValueReference], values: &[fmi2Real]| {
+            |fmu: &FMU2<CS>, valueReferences: &[fmi2ValueReference], values: &[fmi2Real]| {
                 fmu.setReal(valueReferences, values)
             };
         let fmi3_setter =
@@ -913,160 +965,162 @@ impl Container {
         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
     }
 
-//     fn setInt8(&self, valueReferences: &[fmiValueReference], values: &[fmiInt8]) -> fmiStatus {
-//         let fmi2_setter =
-//             |fmu: &FMU2, valueReferences: &[fmi2ValueReference], values: &[fmiInt8]| {
-//                 let buffer: Vec<fmi2Integer> = values.iter().map(|&v| v as fmi2Integer).collect();
-//                 fmu.setInteger(valueReferences, &buffer)
-//             };
-//         let fmi3_setter =
-//             |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3Int8]| {
-//                 fmu.setInt8(valueReferences, values)
-//             };
-//         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
-//     }
+    fn setInt8(&self, valueReferences: &[fmiValueReference], values: &[fmiInt8]) -> fmiStatus {
+        let fmi2_setter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmi2ValueReference], values: &[fmiInt8]| {
+                let buffer: Vec<fmi2Integer> = values.iter().map(|&v| v as fmi2Integer).collect();
+                fmu.setInteger(valueReferences, &buffer)
+            };
+        let fmi3_setter =
+            |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3Int8]| {
+                fmu.setInt8(valueReferences, values)
+            };
+        set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
+    }
 
-//     fn setUInt8(&self, valueReferences: &[fmiValueReference], values: &[fmiUInt8]) -> fmiStatus {
-//         let fmi2_setter =
-//             |fmu: &FMU2, valueReferences: &[fmi2ValueReference], values: &[fmiUInt8]| {
-//                 let buffer: Vec<fmi2Integer> = values.iter().map(|&v| v as fmi2Integer).collect();
-//                 fmu.setInteger(valueReferences, &buffer)
-//             };
-//         let fmi3_setter =
-//             |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3UInt8]| {
-//                 fmu.setUInt8(valueReferences, values)
-//             };
-//         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
-//     }
+    fn setUInt8(&self, valueReferences: &[fmiValueReference], values: &[fmiUInt8]) -> fmiStatus {
+        let fmi2_setter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmi2ValueReference], values: &[fmiUInt8]| {
+                let buffer: Vec<fmi2Integer> = values.iter().map(|&v| v as fmi2Integer).collect();
+                fmu.setInteger(valueReferences, &buffer)
+            };
+        let fmi3_setter =
+            |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3UInt8]| {
+                fmu.setUInt8(valueReferences, values)
+            };
+        set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
+    }
 
-//     fn setInt16(&self, valueReferences: &[fmiValueReference], values: &[fmiInt16]) -> fmiStatus {
-//         let fmi2_setter =
-//             |fmu: &FMU2, valueReferences: &[fmi2ValueReference], values: &[fmiInt16]| {
-//                 let buffer: Vec<fmi2Integer> = values.iter().map(|&v| v as fmi2Integer).collect();
-//                 fmu.setInteger(valueReferences, &buffer)
-//             };
-//         let fmi3_setter =
-//             |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3Int16]| {
-//                 fmu.setInt16(valueReferences, values)
-//             };
-//         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
-//     }
+    fn setInt16(&self, valueReferences: &[fmiValueReference], values: &[fmiInt16]) -> fmiStatus {
+        let fmi2_setter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmi2ValueReference], values: &[fmiInt16]| {
+                let buffer: Vec<fmi2Integer> = values.iter().map(|&v| v as fmi2Integer).collect();
+                fmu.setInteger(valueReferences, &buffer)
+            };
+        let fmi3_setter =
+            |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3Int16]| {
+                fmu.setInt16(valueReferences, values)
+            };
+        set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
+    }
 
-//     fn setUInt16(&self, valueReferences: &[fmiValueReference], values: &[fmiUInt16]) -> fmiStatus {
-//         let fmi2_setter =
-//             |fmu: &FMU2, valueReferences: &[fmi2ValueReference], values: &[fmiUInt16]| {
-//                 let buffer: Vec<fmi2Integer> = values.iter().map(|&v| v as fmi2Integer).collect();
-//                 fmu.setInteger(valueReferences, &buffer)
-//             };
-//         let fmi3_setter =
-//             |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3UInt16]| {
-//                 fmu.setUInt16(valueReferences, values)
-//             };
-//         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
-//     }
+    fn setUInt16(&self, valueReferences: &[fmiValueReference], values: &[fmiUInt16]) -> fmiStatus {
+        let fmi2_setter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmi2ValueReference], values: &[fmiUInt16]| {
+                let buffer: Vec<fmi2Integer> = values.iter().map(|&v| v as fmi2Integer).collect();
+                fmu.setInteger(valueReferences, &buffer)
+            };
+        let fmi3_setter =
+            |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3UInt16]| {
+                fmu.setUInt16(valueReferences, values)
+            };
+        set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
+    }
 
-//     fn setInt32(&self, valueReferences: &[fmiValueReference], values: &[fmiInt32]) -> fmiStatus {
-//         let fmi2_setter =
-//             |fmu: &FMU2, valueReferences: &[fmi2ValueReference], values: &[fmi2Integer]| {
-//                 fmu.setInteger(valueReferences, values)
-//             };
-//         let fmi3_setter =
-//             |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3Int32]| {
-//                 fmu.setInt32(valueReferences, values)
-//             };
-//         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
-//     }
+    fn setInt32(&self, valueReferences: &[fmiValueReference], values: &[fmiInt32]) -> fmiStatus {
+        let fmi2_setter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmi2ValueReference], values: &[fmi2Integer]| {
+                fmu.setInteger(valueReferences, values)
+            };
+        let fmi3_setter =
+            |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3Int32]| {
+                fmu.setInt32(valueReferences, values)
+            };
+        set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
+    }
 
-//     fn setUInt32(&self, valueReferences: &[fmiValueReference], values: &[fmiUInt32]) -> fmiStatus {
-//         let fmi2_setter =
-//             |fmu: &FMU2, valueReferences: &[fmi2ValueReference], values: &[fmiUInt32]| {
-//                 let buffer: Vec<fmi2Integer> = values.iter().map(|&v| v as fmi2Integer).collect();
-//                 fmu.setInteger(valueReferences, &buffer)
-//             };
-//         let fmi3_setter =
-//             |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3UInt32]| {
-//                 fmu.setUInt32(valueReferences, values)
-//             };
-//         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
-//     }
+    fn setUInt32(&self, valueReferences: &[fmiValueReference], values: &[fmiUInt32]) -> fmiStatus {
+        let fmi2_setter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmi2ValueReference], values: &[fmiUInt32]| {
+                let buffer: Vec<fmi2Integer> = values.iter().map(|&v| v as fmi2Integer).collect();
+                fmu.setInteger(valueReferences, &buffer)
+            };
+        let fmi3_setter =
+            |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3UInt32]| {
+                fmu.setUInt32(valueReferences, values)
+            };
+        set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
+    }
 
-//     fn setInt64(&self, valueReferences: &[fmiValueReference], values: &[fmiInt64]) -> fmiStatus {
-//         let fmi2_setter =
-//             |fmu: &FMU2, valueReferences: &[fmi2ValueReference], values: &[fmiInt64]| {
-//                 let buffer: Vec<fmi2Integer> = values.iter().map(|&v| v as fmi2Integer).collect();
-//                 fmu.setInteger(valueReferences, &buffer)
-//             };
-//         let fmi3_setter =
-//             |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3Int64]| {
-//                 fmu.setInt64(valueReferences, values)
-//             };
-//         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
-//     }
+    fn setInt64(&self, valueReferences: &[fmiValueReference], values: &[fmiInt64]) -> fmiStatus {
+        let fmi2_setter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmi2ValueReference], values: &[fmiInt64]| {
+                let buffer: Vec<fmi2Integer> = values.iter().map(|&v| v as fmi2Integer).collect();
+                fmu.setInteger(valueReferences, &buffer)
+            };
+        let fmi3_setter =
+            |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3Int64]| {
+                fmu.setInt64(valueReferences, values)
+            };
+        set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
+    }
 
-//     fn setUInt64(&self, valueReferences: &[fmiValueReference], values: &[fmiUInt64]) -> fmiStatus {
-//         let fmi2_setter =
-//             |fmu: &FMU2, valueReferences: &[fmi2ValueReference], values: &[fmiUInt64]| {
-//                 let buffer: Vec<fmi2Integer> = values.iter().map(|&v| v as fmi2Integer).collect();
-//                 fmu.setInteger(valueReferences, &buffer)
-//             };
-//         let fmi3_setter =
-//             |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3UInt64]| {
-//                 fmu.setUInt64(valueReferences, values)
-//             };
-//         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
-//     }
+    fn setUInt64(&self, valueReferences: &[fmiValueReference], values: &[fmiUInt64]) -> fmiStatus {
+        let fmi2_setter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmi2ValueReference], values: &[fmiUInt64]| {
+                let buffer: Vec<fmi2Integer> = values.iter().map(|&v| v as fmi2Integer).collect();
+                fmu.setInteger(valueReferences, &buffer)
+            };
+        let fmi3_setter =
+            |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3UInt64]| {
+                fmu.setUInt64(valueReferences, values)
+            };
+        set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
+    }
 
-//     fn setBoolean(
-//         &self,
-//         valueReferences: &[fmiValueReference],
-//         values: &[fmiBoolean],
-//     ) -> fmiStatus {
-//         let fmi2_setter =
-//             |fmu: &FMU2, valueReferences: &[fmi2ValueReference], values: &[fmiBoolean]| {
-//                 let values: Vec<fmi2Boolean> = values
-//                     .iter()
-//                     .map(|&v| if v { fmi2True } else { fmi2False })
-//                     .collect();
-//                 fmu.setBoolean(valueReferences, &values)
-//             };
-//         let fmi3_setter =
-//             |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3Boolean]| {
-//                 fmu.setBoolean(valueReferences, values)
-//             };
-//         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
-//     }
+    fn setBoolean(
+        &self,
+        valueReferences: &[fmiValueReference],
+        values: &[fmiBoolean],
+    ) -> fmiStatus {
+        let fmi2_setter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmi2ValueReference], values: &[fmiBoolean]| {
+                let values: Vec<fmi2Boolean> = values
+                    .iter()
+                    .map(|&v| if v { fmi2True } else { fmi2False })
+                    .collect();
+                fmu.setBoolean(valueReferences, &values)
+            };
+        let fmi3_setter =
+            |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmi3Boolean]| {
+                fmu.setBoolean(valueReferences, values)
+            };
+        set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
+    }
 
-//     fn setString(&self, valueReferences: &[fmiValueReference], values: &[&str]) -> fmiStatus {
-//         let fmi2_setter = |fmu: &FMU2, valueReferences: &[fmi2ValueReference], values: &[&str]| {
-//             fmu.setString(valueReferences, values)
-//         };
-//         let fmi3_setter = |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[&str]| {
-//             fmu.setString(valueReferences, values)
-//         };
-//         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
-//     }
+    fn setString(&self, valueReferences: &[fmiValueReference], values: &[&str]) -> fmiStatus {
+        let fmi2_setter =
+            |fmu: &FMU2<CS>, valueReferences: &[fmi2ValueReference], values: &[&str]| {
+                fmu.setString(valueReferences, values)
+            };
+        let fmi3_setter = |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[&str]| {
+            fmu.setString(valueReferences, values)
+        };
+        set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
+    }
 
-//     fn setBinary(&self, valueReferences: &[fmiValueReference], values: &[Vec<u8>]) -> fmiStatus {
-//         let fmi2_setter =
-//             |fmu: &FMU2, valueReferences: &[fmi2ValueReference], values: &[Vec<u8>]| fmiError;
-//         let fmi3_setter =
-//             |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[Vec<u8>]| {
-//                 let sizes: Vec<usize> = values.iter().map(|v| v.len()).collect();
-//                 let values: Vec<*const u8> = values.iter().map(|v| v.as_ptr()).collect();
-//                 fmu.setBinary(valueReferences, &sizes, &values)
-//             };
-//         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
-//     }
+    fn setBinary(&self, valueReferences: &[fmiValueReference], values: &[Vec<u8>]) -> fmiStatus {
+        let fmi2_setter = |fmu: &FMU2<CS>,
+                           valueReferences: &[fmi2ValueReference],
+                           values: &[Vec<u8>]| fmiStatus::fmiError;
+        let fmi3_setter =
+            |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[Vec<u8>]| {
+                let values: Vec<&[u8]> = values.iter().map(|v| v.as_slice()).collect();
+                fmu.setBinary(valueReferences, &values)
+            };
+        set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
+    }
 
-//     fn setClock(&self, valueReferences: &[fmiValueReference], values: &[fmiBoolean]) -> fmiStatus {
-//         let fmi2_setter =
-//             |fmu: &FMU2, valueReferences: &[fmi2ValueReference], values: &[fmiBoolean]| fmiError;
-//         let fmi3_setter =
-//             |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmiBoolean]| {
-//                 fmu.setClock(valueReferences, values)
-//             };
-//         set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
-//     }
+    fn setClock(&self, valueReferences: &[fmiValueReference], values: &[fmiBoolean]) -> fmiStatus {
+        let fmi2_setter = |fmu: &FMU2<CS>,
+                           valueReferences: &[fmi2ValueReference],
+                           values: &[fmiBoolean]| fmiStatus::fmiError;
+        let fmi3_setter =
+            |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmiBoolean]| {
+                fmu.setClock(valueReferences, values)
+            };
+        set_variables!(self, valueReferences, values, fmi2_setter, fmi3_setter)
+    }
 
     fn updateConnections(&mut self) -> fmiStatus {
         let status = fmiStatus::fmiOK;
@@ -1081,139 +1135,151 @@ impl Container {
             let dstValueReferences = &connection.dstValueReferences;
 
             match connection.variableType {
-                // VariableType::Float32 => {
-                //     self.f32_buffer.resize(size, 0.0);
-                //     fmi_check_status!(match srcInstance {
-                //         FMUInstance::FMI2(fmu) => todo!(),
-                //         FMUInstance::FMI3(fmu) =>
-                //             fmu.getFloat32(&srcValueReferences, &mut self.f32_buffer),
-                //     });
-                //     fmi_check_status!(match dstInstance {
-                //         FMUInstance::FMI2(fmu) => todo!(),
-                //         FMUInstance::FMI3(fmu) =>
-                //             fmu.setFloat32(&dstValueReferences, &self.f32_buffer),
-                //     });
-                // }
+                VariableType::Float32 => {
+                    self.f32_buffer.resize(size, 0.0);
+                    fmi_check_status!(match srcInstance {
+                        FMUInstance::FMI2(fmu) => todo!(),
+                        FMUInstance::FMI3(fmu) => fmu
+                            .getFloat32(&srcValueReferences, &mut self.f32_buffer)
+                            .into(),
+                    });
+                    fmi_check_status!(match dstInstance {
+                        FMUInstance::FMI2(fmu) => todo!(),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setFloat32(&dstValueReferences, &self.f32_buffer).into(),
+                    });
+                }
                 VariableType::Float64 => {
                     self.f64_buffer.resize(size, 0.0);
                     fmi_check_status!(match srcInstance {
-                        FMUInstance::FMI2(fmu) =>
-                            fmu.getReal(&srcValueReferences, &mut self.f64_buffer).into(),
-                        // FMUInstance::FMI3(fmu) =>
-                        //     fmu.getFloat64(&srcValueReferences, &mut self.f64_buffer),
+                        FMUInstance::FMI2(fmu) => fmu
+                            .getReal(&srcValueReferences, &mut self.f64_buffer)
+                            .into(),
+                        FMUInstance::FMI3(fmu) => fmu
+                            .getFloat64(&srcValueReferences, &mut self.f64_buffer)
+                            .into(),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) =>
                             fmu.setReal(&dstValueReferences, &self.f64_buffer).into(),
-                        // FMUInstance::FMI3(fmu) =>
-                        //     fmu.setFloat64(&dstValueReferences, &self.f64_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setFloat64(&dstValueReferences, &self.f64_buffer).into(),
                     });
                 }
-                // VariableType::Int8 => {
-                //     self.i8_buffer.resize(size, 0);
-                //     fmi_check_status!(match srcInstance {
-                //         FMUInstance::FMI2(fmu) => todo!(),
-                //         FMUInstance::FMI3(fmu) =>
-                //             fmu.getInt8(&srcValueReferences, &mut self.i8_buffer),
-                //     });
-                //     fmi_check_status!(match dstInstance {
-                //         FMUInstance::FMI2(fmu) => todo!(),
-                //         FMUInstance::FMI3(fmu) => fmu.setInt8(&dstValueReferences, &self.i8_buffer),
-                //     });
-                // }
-                // VariableType::UInt8 => {
-                //     self.u8_buffer.resize(size, 0);
-                //     fmi_check_status!(match srcInstance {
-                //         FMUInstance::FMI2(fmu) => todo!(),
-                //         FMUInstance::FMI3(fmu) =>
-                //             fmu.getUInt8(&srcValueReferences, &mut self.u8_buffer),
-                //     });
-                //     fmi_check_status!(match dstInstance {
-                //         FMUInstance::FMI2(fmu) => todo!(),
-                //         FMUInstance::FMI3(fmu) =>
-                //             fmu.setUInt8(&dstValueReferences, &self.u8_buffer),
-                //     });
-                // }
-                // VariableType::Int16 => {
-                //     self.i16_buffer.resize(size, 0);
-                //     fmi_check_status!(match srcInstance {
-                //         FMUInstance::FMI2(fmu) => todo!(),
-                //         FMUInstance::FMI3(fmu) =>
-                //             fmu.getInt16(&srcValueReferences, &mut self.i16_buffer),
-                //     });
-                //     fmi_check_status!(match dstInstance {
-                //         FMUInstance::FMI2(fmu) => todo!(),
-                //         FMUInstance::FMI3(fmu) =>
-                //             fmu.setInt16(&dstValueReferences, &self.i16_buffer),
-                //     });
-                // }
-                // VariableType::UInt16 => {
-                //     self.u16_buffer.resize(size, 0);
-                //     fmi_check_status!(match srcInstance {
-                //         FMUInstance::FMI2(fmu) => todo!(),
-                //         FMUInstance::FMI3(fmu) =>
-                //             fmu.getUInt16(&srcValueReferences, &mut self.u16_buffer),
-                //     });
-                //     fmi_check_status!(match dstInstance {
-                //         FMUInstance::FMI2(fmu) => todo!(),
-                //         FMUInstance::FMI3(fmu) =>
-                //             fmu.setUInt16(&dstValueReferences, &self.u16_buffer),
-                //     });
-                // }
+                VariableType::Int8 => {
+                    self.i8_buffer.resize(size, 0);
+                    fmi_check_status!(match srcInstance {
+                        FMUInstance::FMI2(fmu) => todo!(),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.getInt8(&srcValueReferences, &mut self.i8_buffer).into(),
+                    });
+                    fmi_check_status!(match dstInstance {
+                        FMUInstance::FMI2(fmu) => todo!(),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setInt8(&dstValueReferences, &self.i8_buffer).into(),
+                    });
+                }
+                VariableType::UInt8 => {
+                    self.u8_buffer.resize(size, 0);
+                    fmi_check_status!(match srcInstance {
+                        FMUInstance::FMI2(fmu) => todo!(),
+                        FMUInstance::FMI3(fmu) => fmu
+                            .getUInt8(&srcValueReferences, &mut self.u8_buffer)
+                            .into(),
+                    });
+                    fmi_check_status!(match dstInstance {
+                        FMUInstance::FMI2(fmu) => todo!(),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setUInt8(&dstValueReferences, &self.u8_buffer).into(),
+                    });
+                }
+                VariableType::Int16 => {
+                    self.i16_buffer.resize(size, 0);
+                    fmi_check_status!(match srcInstance {
+                        FMUInstance::FMI2(fmu) => todo!(),
+                        FMUInstance::FMI3(fmu) => fmu
+                            .getInt16(&srcValueReferences, &mut self.i16_buffer)
+                            .into(),
+                    });
+                    fmi_check_status!(match dstInstance {
+                        FMUInstance::FMI2(fmu) => todo!(),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setInt16(&dstValueReferences, &self.i16_buffer).into(),
+                    });
+                }
+                VariableType::UInt16 => {
+                    self.u16_buffer.resize(size, 0);
+                    fmi_check_status!(match srcInstance {
+                        FMUInstance::FMI2(fmu) => todo!(),
+                        FMUInstance::FMI3(fmu) => fmu
+                            .getUInt16(&srcValueReferences, &mut self.u16_buffer)
+                            .into(),
+                    });
+                    fmi_check_status!(match dstInstance {
+                        FMUInstance::FMI2(fmu) => todo!(),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setUInt16(&dstValueReferences, &self.u16_buffer).into(),
+                    });
+                }
                 VariableType::Int32 => {
                     self.i32_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
-                        FMUInstance::FMI2(fmu) =>
-                            fmu.getInteger(&srcValueReferences, &mut self.i32_buffer).into(),
-                        // FMUInstance::FMI3(fmu) =>
-                        //     fmu.getInt32(&srcValueReferences, &mut self.i32_buffer),
+                        FMUInstance::FMI2(fmu) => fmu
+                            .getInteger(&srcValueReferences, &mut self.i32_buffer)
+                            .into(),
+                        FMUInstance::FMI3(fmu) => fmu
+                            .getInt32(&srcValueReferences, &mut self.i32_buffer)
+                            .into(),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) =>
                             fmu.setInteger(&dstValueReferences, &self.i32_buffer).into(),
-                        // FMUInstance::FMI3(fmu) =>
-                        //     fmu.setInt32(&dstValueReferences, &self.i32_buffer),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setInt32(&dstValueReferences, &self.i32_buffer).into(),
                     });
                 }
-                // VariableType::UInt32 => {
-                //     self.u32_buffer.resize(size, 0);
-                //     fmi_check_status!(match srcInstance {
-                //         FMUInstance::FMI2(fmu) => todo!(),
-                //         FMUInstance::FMI3(fmu) =>
-                //             fmu.getUInt32(&srcValueReferences, &mut self.u32_buffer),
-                //     });
-                //     fmi_check_status!(match dstInstance {
-                //         FMUInstance::FMI2(fmu) => todo!(),
-                //         FMUInstance::FMI3(fmu) =>
-                //             fmu.setUInt32(&dstValueReferences, &self.u32_buffer),
-                //     });
-                // }
-                // VariableType::Int64 => {
-                //     self.i64_buffer.resize(size, 0);
-                //     fmi_check_status!(match srcInstance {
-                //         FMUInstance::FMI2(fmu) => todo!(),
-                //         FMUInstance::FMI3(fmu) =>
-                //             fmu.getInt64(&srcValueReferences, &mut self.i64_buffer),
-                //     });
-                //     fmi_check_status!(match dstInstance {
-                //         FMUInstance::FMI2(fmu) => todo!(),
-                //         FMUInstance::FMI3(fmu) =>
-                //             fmu.setInt64(&dstValueReferences, &self.i64_buffer),
-                //     });
-                // }
-                // VariableType::UInt64 => {
-                //     self.u64_buffer.resize(size, 0);
-                //     fmi_check_status!(match srcInstance {
-                //         FMUInstance::FMI2(fmu) => todo!(),
-                //         FMUInstance::FMI3(fmu) =>
-                //             fmu.getUInt64(&srcValueReferences, &mut self.u64_buffer),
-                //     });
-                //     fmi_check_status!(match dstInstance {
-                //         FMUInstance::FMI2(fmu) => todo!(),
-                //         FMUInstance::FMI3(fmu) =>
-                //             fmu.setUInt64(&dstValueReferences, &self.u64_buffer),
-                //     });
-                // }
+                VariableType::UInt32 => {
+                    self.u32_buffer.resize(size, 0);
+                    fmi_check_status!(match srcInstance {
+                        FMUInstance::FMI2(fmu) => todo!(),
+                        FMUInstance::FMI3(fmu) => fmu
+                            .getUInt32(&srcValueReferences, &mut self.u32_buffer)
+                            .into(),
+                    });
+                    fmi_check_status!(match dstInstance {
+                        FMUInstance::FMI2(fmu) => todo!(),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setUInt32(&dstValueReferences, &self.u32_buffer).into(),
+                    });
+                }
+                VariableType::Int64 => {
+                    self.i64_buffer.resize(size, 0);
+                    fmi_check_status!(match srcInstance {
+                        FMUInstance::FMI2(fmu) => todo!(),
+                        FMUInstance::FMI3(fmu) => fmu
+                            .getInt64(&srcValueReferences, &mut self.i64_buffer)
+                            .into(),
+                    });
+                    fmi_check_status!(match dstInstance {
+                        FMUInstance::FMI2(fmu) => todo!(),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setInt64(&dstValueReferences, &self.i64_buffer).into(),
+                    });
+                }
+                VariableType::UInt64 => {
+                    self.u64_buffer.resize(size, 0);
+                    fmi_check_status!(match srcInstance {
+                        FMUInstance::FMI2(fmu) => todo!(),
+                        FMUInstance::FMI3(fmu) => fmu
+                            .getUInt64(&srcValueReferences, &mut self.u64_buffer)
+                            .into(),
+                    });
+                    fmi_check_status!(match dstInstance {
+                        FMUInstance::FMI2(fmu) => todo!(),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setUInt64(&dstValueReferences, &self.u64_buffer).into(),
+                    });
+                }
                 VariableType::Boolean => {
                     self.bool_buffer.resize(size, false);
                     fmi_check_status!(match srcInstance {
@@ -1225,8 +1291,9 @@ impl Container {
                             }
                             status.into()
                         }
-                        // FMUInstance::FMI3(fmu) =>
-                        //     fmu.getBoolean(&srcValueReferences, &mut self.bool_buffer),
+                        FMUInstance::FMI3(fmu) => fmu
+                            .getBoolean(&srcValueReferences, &mut self.bool_buffer)
+                            .into(),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => {
@@ -1236,50 +1303,52 @@ impl Container {
                             }
                             fmu.setBoolean(&dstValueReferences, &self.i32_buffer).into()
                         }
-                        // FMUInstance::FMI3(fmu) =>
-                        //     fmu.setBoolean(&dstValueReferences, &self.bool_buffer),
+                        FMUInstance::FMI3(fmu) => fmu
+                            .setBoolean(&dstValueReferences, &self.bool_buffer)
+                            .into(),
                     });
                 }
                 VariableType::String => {
                     self.string_buffer.resize(size, String::new());
                     fmi_check_status!(match srcInstance {
-                        FMUInstance::FMI2(fmu) =>
-                            fmu.getString(&srcValueReferences, &mut self.string_buffer).into(),
-                        // FMUInstance::FMI3(fmu) =>
-                        //     fmu.getString(&srcValueReferences, &mut self.string_buffer),
+                        FMUInstance::FMI2(fmu) => fmu
+                            .getString(&srcValueReferences, &mut self.string_buffer)
+                            .into(),
+                        FMUInstance::FMI3(fmu) => fmu
+                            .getString(&srcValueReferences, &mut self.string_buffer)
+                            .into(),
                     });
                     let values: Vec<&str> = self.string_buffer.iter().map(String::as_str).collect();
                     fmi_check_status!(match dstInstance {
-                        FMUInstance::FMI2(fmu) => fmu.setString(&dstValueReferences, &values).into(),
-                        // FMUInstance::FMI3(fmu) => fmu.setString(&dstValueReferences, &values),
+                        FMUInstance::FMI2(fmu) =>
+                            fmu.setString(&dstValueReferences, &values).into(),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setString(&dstValueReferences, &values).into(),
                     });
                 }
-                // VariableType::Binary => {
-                //     self.binary_buffer.resize(size, std::ptr::null::<u8>());
-                //     self.usize_buffer.resize(size, 0);
-                //     fmi_check_status!(match srcInstance {
-                //         FMUInstance::FMI2(fmu) => {
-                //             self.logError("Binary variables are not supported for FMI 2.");
-                //             return fmiError;
-                //         }
-                //         FMUInstance::FMI3(fmu) => fmu.getBinary(
-                //             &srcValueReferences,
-                //             &mut self.usize_buffer,
-                //             &mut self.binary_buffer
-                //         ),
-                //     });
-                //     fmi_check_status!(match dstInstance {
-                //         FMUInstance::FMI2(fmu) => {
-                //             self.logError("Binary variables are not supported for FMI 2.");
-                //             return fmiError;
-                //         }
-                //         FMUInstance::FMI3(fmu) => fmu.setBinary(
-                //             &dstValueReferences,
-                //             &self.usize_buffer,
-                //             &self.binary_buffer
-                //         ),
-                //     });
-                // }
+                VariableType::Binary => {
+                    let mut buffer = self.binary_buffer.borrow_mut();
+                    buffer.resize(size, Vec::new());
+                    let buffer_ref = &mut buffer[..];
+                    fmi_check_status!(match srcInstance {
+                        FMUInstance::FMI2(fmu) => {
+                            self.logError("Binary variables are not supported for FMI 2.");
+                            return fmiStatus::fmiError;
+                        }
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.getBinary(&srcValueReferences, buffer_ref).into(),
+                    });
+                    fmi_check_status!(match dstInstance {
+                        FMUInstance::FMI2(fmu) => {
+                            self.logError("Binary variables are not supported for FMI 2.");
+                            return fmiStatus::fmiError;
+                        }
+                        FMUInstance::FMI3(fmu) => {
+                            let slices: Vec<&[u8]> = buffer.iter().map(|v| v.as_slice()).collect();
+                            fmu.setBinary(&dstValueReferences, &slices[..]).into()
+                        }
+                    });
+                }
                 _ => {
                     self.logError(&format!(
                         "Connections of type {:?} are not supported.",
@@ -1317,22 +1386,22 @@ impl Container {
 
                 (status.into(), terminated != fmi2False)
             }
-            // FMUInstance::FMI3(fmu) => {
-            //     let mut eventHandlingNeeded = false;
-            //     let mut terminateSimulation = false;
-            //     let mut earlyReturn = false;
-            //     let mut lastSuccessfulTime = 0.0;
-            //     let status = fmu.doStep(
-            //         currentCommunicationPoint,
-            //         communicationStepSize,
-            //         true,
-            //         &mut eventHandlingNeeded,
-            //         &mut terminateSimulation,
-            //         &mut earlyReturn,
-            //         &mut lastSuccessfulTime,
-            //     );
-            //     (status, terminateSimulation)
-            // }
+            FMUInstance::FMI3(fmu) => {
+                let mut eventHandlingNeeded = false;
+                let mut terminateSimulation = false;
+                let mut earlyReturn = false;
+                let mut lastSuccessfulTime = 0.0;
+                let status = fmu.doStep(
+                    currentCommunicationPoint,
+                    communicationStepSize,
+                    true,
+                    &mut eventHandlingNeeded,
+                    &mut terminateSimulation,
+                    &mut earlyReturn,
+                    &mut lastSuccessfulTime,
+                );
+                (status.into(), terminateSimulation)
+            }
         };
 
         let result: Vec<(fmiStatus, bool)> = if self.system.parallelDoStep {

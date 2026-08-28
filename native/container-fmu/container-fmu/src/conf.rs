@@ -5,6 +5,7 @@ use serde::Deserialize;
 
 use crate::VERSION;
 
+// TODO: rename to V2, V3
 #[derive(Debug, Deserialize, PartialEq)]
 pub enum FMIMajorVersion {
     #[serde(rename = "2")]

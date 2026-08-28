@@ -61,6 +61,15 @@
             "args": ["--exact", "test_fmi2_container", "--nocapture", "--test-threads=1"],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Debug fmi3_connection_test",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/target/debug/deps/fmi3_connection_test-d5b67179c4d9101b.exe",
+            "args": ["--exact", "test_fmi3_float64_connections", "--nocapture", "--test-threads=1"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
         }
     ]
 }

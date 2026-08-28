@@ -544,7 +544,9 @@ pub extern "C" fn fmi2DoStep(
     communicationStepSize: fmi2Real,
     noSetFMUStatePriorToCurrentPoint: fmi2Boolean,
 ) -> fmi2Status {
-    get_container!(c).doStep(currentCommunicationPoint, communicationStepSize).into()
+    get_container!(c)
+        .doStep(currentCommunicationPoint, communicationStepSize)
+        .into()
 }
 
 #[unsafe(no_mangle)]

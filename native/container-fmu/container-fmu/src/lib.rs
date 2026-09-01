@@ -98,7 +98,6 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const LOG_STATUS_ERROR: fmi3String = "logStatusError\0".as_ptr() as fmi3String;
 const LOG_FMI_CALLS: fmi3String = "logFMICalls\0".as_ptr() as fmi3String;
-const LOG_NESTED: fmi3String = "logNested\0".as_ptr() as fmi3String;
 
 enum FMUInstance {
     FMI2(Box<FMU2<CS>>),
@@ -113,7 +112,7 @@ struct Container {
     terminated: bool,
     instances: Vec<FMUInstance>,
     system: System,
-    stringValues: Vec<CString>,
+    cstring_buffer: Vec<CString>,
     f32_buffer: Vec<f32>,
     f64_buffer: Vec<f64>,
     i8_buffer: Vec<i8>,
@@ -339,8 +338,6 @@ impl Container {
             instances.push(fmu_instance);
         }
 
-        let stringValues = Vec::new();
-
         let container = Container {
             tolerance: None,
             startTime: 0.0,
@@ -349,7 +346,7 @@ impl Container {
             terminated: false,
             instances,
             system,
-            stringValues,
+            cstring_buffer: Vec::new(),
             f32_buffer: Vec::new(),
             f64_buffer: Vec::new(),
             i8_buffer: Vec::new(),

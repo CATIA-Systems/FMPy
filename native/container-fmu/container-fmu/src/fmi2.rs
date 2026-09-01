@@ -319,12 +319,12 @@ pub extern "C" fn fmi2GetString(
     let status = container.getString(valueReferences, buffer.as_mut());
 
     container
-        .stringValues
+        .cstring_buffer
         .resize(values.len(), CString::new("").unwrap());
 
     for (i, v) in buffer.iter().enumerate() {
-        container.stringValues[i] = CString::new(v.as_str()).unwrap();
-        values[i] = container.stringValues[i].as_ptr();
+        container.cstring_buffer[i] = CString::new(v.as_str()).unwrap();
+        values[i] = container.cstring_buffer[i].as_ptr();
     }
 
     status.into()

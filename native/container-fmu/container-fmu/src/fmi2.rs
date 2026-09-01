@@ -3,7 +3,6 @@
 use crate::{Container, LOG_FMI_CALLS, LOG_STATUS_ERROR, fmiBoolean, fmiStatus};
 use fmi_rs::fmi2::types::*;
 use std::ffi::{CStr, CString};
-use std::println;
 use std::ptr::null_mut;
 use std::sync::Arc;
 use url::Url;
@@ -13,7 +12,7 @@ fn NOT_IMPLEMENTED(c: fmi2Component) -> fmi2Status {
         return fmi2Status::fmi2Fatal;
     }
     let container: &mut Container = unsafe { &mut *(c as *mut Container) };
-    // container.logError("Function is not implemented.");
+    container.logError("Function is not implemented.");
     fmi2Status::fmi2Error
 }
 

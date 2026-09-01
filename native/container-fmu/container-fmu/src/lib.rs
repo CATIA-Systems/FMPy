@@ -2,7 +2,7 @@
 
 use std::{
     cell::RefCell,
-    ffi::{CString, c_char, c_void},
+    ffi::{CString, c_void},
     path::Path,
     println,
     sync::Arc,
@@ -29,6 +29,7 @@ use fmi_rs::{
         },
     },
 };
+use crate::conf::*;
 
 pub mod conf;
 pub mod fmi2;
@@ -55,7 +56,7 @@ type fmiBoolean = bool;
 // type fmiChar = c_char;
 // type fmiString = *const fmiChar;
 type fmiByte = u8;
-type fmiBinary = *const fmiByte;
+// type fmiBinary = *const fmiByte;
 type fmiClock = bool;
 type fmiValueReference = u32;
 // type fmiValueReference = u32;
@@ -102,23 +103,6 @@ impl Into<fmi3Status> for fmiStatus {
         }
     }
 }
-
-use crate::conf::*;
-// use approx::{relative_eq, relative_ne};
-// use fmi::fmi2::types::*;
-// use fmi::fmi2::*;
-// use fmi::fmi3::types::*;
-// use fmi::fmi3::*;
-// use fmi::types::fmiStatus::*;
-// use fmi::types::*;
-// use fmi::*;
-// use rayon::prelude::*;
-// use std::error::Error;
-// use std::ffi::CString;
-// use std::os::raw::c_void;
-// use std::path::Path;
-
-// use std::sync::Arc;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -834,39 +818,6 @@ impl Container {
                 fmu.getBinary(valueReferences, values).into()
             };
         self.getValues(valueReferences, values, fmi2_getter, fmi3_getter)
-        // let mut status = fmiStatus::fmiOK;
-
-        // for valueReference in valueReferences {
-        //     let variable = match self.getVariable(*valueReference, VariableType::Binary) {
-        //         Ok(var) => var,
-        //         Err(e) => {
-        //             self.logError(e.as_str());
-        //             return fmiStatus::fmiError;
-        //         }
-        //     };
-
-        //     let mapping = &variable.mappings[0];
-        //     let var_size = variable.size.unwrap_or(1);
-        //     let instance = &self.instances[mapping.component as usize];
-
-        //     let vrs: [u32; 1] = [mapping.valueReference];
-
-        //     let s = match instance {
-        //         FMUInstance::FMI2(fmu) => {
-        //             self.logError("Binary variables are not supported for FMI 2.");
-        //             fmiStatus::fmiError
-        //         }
-        //         FMUInstance::FMI3(fmu) => fmu.getBinary(&vrs, values).into(),
-        //     };
-
-        //     if s >= fmiStatus::fmiError {
-        //         return s;
-        //     } else if s > status {
-        //         status = s;
-        //     }
-        // }
-
-        // status
     }
 
     fn getValues<

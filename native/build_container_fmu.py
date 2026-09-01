@@ -45,4 +45,4 @@ else:
         dst=native.parent / "src" / "fmpy" / "container_fmu" / "binaries" / platform_tuple / shared_library_dst_name
     )
 
-    check_call(["cargo", "test", "--release"], cwd=native / "container-fmu")
+    check_call(["cargo", "test", "--release", "--package=container_fmu"], cwd=native / "container-fmu")

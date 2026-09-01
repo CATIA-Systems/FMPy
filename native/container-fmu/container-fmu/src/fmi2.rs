@@ -104,7 +104,7 @@ pub extern "C" fn fmi2Instantiate(
             logger(
                 component_env_ptr as *mut std::os::raw::c_void,
                 instance_name_clone.as_ptr(),
-                status.clone().into(),
+                (*status).into(),
                 LOG_FMI_CALLS,
                 message.as_ptr(),
             )
@@ -120,7 +120,7 @@ pub extern "C" fn fmi2Instantiate(
             logger(
                 component_env_ptr as *mut std::os::raw::c_void,
                 instance_name_clone2.as_ptr(),
-                status.clone().into(),
+                (*status).into(),
                 LOG_FMI_CALLS,
                 message.as_ptr(),
             )

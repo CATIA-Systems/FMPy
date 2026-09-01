@@ -86,7 +86,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
     logMessage: Option<fmi3LogMessageCallback>,
     intermediateUpdate: fmi3IntermediateUpdateCallback,
 ) -> fmi3Instance {
-    if let None = logMessage {
+    if logMessage.is_none() {
         return ptr::null_mut();
     }
 

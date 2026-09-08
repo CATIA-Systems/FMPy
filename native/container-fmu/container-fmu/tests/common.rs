@@ -290,11 +290,11 @@ pub fn create_fmi3_container() -> Arc<FMU3> {
         "container",
         "{088cfe7e-cb81-4ca1-a83d-e7a5c3ff47fd}",
         false,
-        true,
+        false,
         false,
         false,
         logger,
-        true,
+        false,
         None,
     )
     .unwrap()

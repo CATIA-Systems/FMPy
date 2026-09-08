@@ -275,11 +275,11 @@ impl Container {
         for component in &system.components {
             let unzipdir = resource_path.join(&component.path);
 
-            let logger = ContainerLogger {
+            let logger = Box::new(ContainerLogger {
                 component_name: component.name.clone(),
                 log_message: log_message.clone(), 
                 log_fmi_call: log_fmi_call.clone() 
-            };
+            });
 
             let fmu_instance: FMUInstance = match component.fmiMajorVersion {
                 FMIMajorVersion::FMIMajorVersion2 => {
@@ -291,8 +291,8 @@ impl Container {
                         &component.instantiationToken,
                         false,
                         loggingOn,
-                        true,
-                        Box::new(logger),
+                        loggingOn,
+                        logger,
                         true,
                     ) {
                         Ok(fmu) => FMUInstance::FMI2(Box::new(fmu)),
@@ -317,8 +317,8 @@ impl Container {
                         loggingOn,
                         false,
                         false,
-                        Box::new(logger),
-                        true,
+                        logger,
+                        loggingOn,
                         None,
                     ) {
                         Ok(fmu) => FMUInstance::FMI3(fmu),

@@ -1,8 +1,7 @@
 #![allow(non_camel_case_types, non_snake_case, unused_variables)]
 
 use crate::*;
-use fmi::fmi2::types::*;
-use fmi::fmi3::types::*;
+use fmi_rs::fmi3::types::*;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_void;
 use std::path::Path;
@@ -11,18 +10,18 @@ use std::sync::Arc;
 
 fn NOT_IMPLEMENTED(instance: fmi3Instance) -> fmi3Status {
     if instance.is_null() {
-        return fmi3Fatal;
+        return fmi3Status::Fatal;
     }
     let container: &mut Container = unsafe { &mut *(instance as *mut Container) };
     container.logError("Function is not implemented.");
-    fmi3Error
+    fmi3Status::Error
 }
 
 macro_rules! get_container {
     ($instance:expr) => {{
         if $instance.is_null() {
             eprintln!("Argument instance must not be NULL.");
-            return fmi2Error;
+            return fmi3Status::Error;
         }
         unsafe { &mut *($instance as *mut Container) }
     }};
@@ -62,7 +61,7 @@ pub extern "C" fn fmi3InstantiateModelExchange(
         unsafe {
             (callback)(
                 instanceEnvironment,
-                fmi3Error,
+                fmi3Status::Error,
                 LOG_STATUS_ERROR,
                 message.as_ptr(),
             )
@@ -87,7 +86,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
     logMessage: Option<fmi3LogMessageCallback>,
     intermediateUpdate: fmi3IntermediateUpdateCallback,
 ) -> fmi3Instance {
-    if let None = logMessage {
+    if logMessage.is_none() {
         return ptr::null_mut();
     }
 
@@ -98,7 +97,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         unsafe {
             logMessage(
                 instanceEnvironment,
-                fmi3Error,
+                fmi3Status::Error,
                 LOG_STATUS_ERROR,
                 message.as_ptr(),
             )
@@ -129,7 +128,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         unsafe {
             logMessage(
                 instance_env_ptr as *mut std::os::raw::c_void,
-                *status,
+                (*status).into(),
                 LOG_STATUS_ERROR,
                 message.as_ptr(),
             )
@@ -142,7 +141,7 @@ pub extern "C" fn fmi3InstantiateCoSimulation(
         unsafe {
             logMessage(
                 instance_env_ptr as *mut std::os::raw::c_void,
-                *status,
+                (*status).into(),
                 LOG_FMI_CALLS,
                 message.as_ptr(),
             )
@@ -187,7 +186,7 @@ pub extern "C" fn fmi3InstantiateScheduledExecution(
         unsafe {
             (callback)(
                 instanceEnvironment,
-                fmi3Error,
+                fmi3Status::Error,
                 LOG_STATUS_ERROR,
                 message.as_ptr(),
             )
@@ -232,13 +231,12 @@ pub extern "C" fn fmi3EnterInitializationMode(
     } else {
         None
     };
-    container.enterInitializationMode()
+    container.enterInitializationMode().into()
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn fmi3ExitInitializationMode(instance: fmi3Instance) -> fmi3Status {
-    let container = get_container!(instance);
-    container.exitInitializationMode()
+    get_container!(instance).exitInitializationMode().into()
 }
 
 #[unsafe(no_mangle)]
@@ -248,14 +246,12 @@ pub extern "C" fn fmi3EnterEventMode(instance: fmi3Instance) -> fmi3Status {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn fmi3Terminate(instance: fmi3Instance) -> fmi3Status {
-    let container = get_container!(instance);
-    container.terminate()
+    get_container!(instance).terminate().into()
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn fmi3Reset(instance: fmi3Instance) -> fmi3Status {
-    let container = get_container!(instance);
-    container.reset()
+    get_container!(instance).reset().into()
 }
 
 /* Getting and setting variable values */
@@ -272,19 +268,19 @@ macro_rules! make_getter {
         ) -> fmi3Status {
             if instance.is_null() {
                 eprintln!("Argument instance must not be NULL.");
-                return fmi3Error;
+                return fmi3Status::Error;
             }
 
             let container = unsafe { &*(instance as *mut Container) };
 
             if valueReferences.is_null() {
                 container.logError("Argument valueReferences must not be NULL.");
-                return fmi3Error;
+                return fmi3Status::Error;
             }
 
             if values.is_null() {
                 container.logError("Argument values must not be NULL.");
-                return fmi3Error;
+                return fmi3Status::Error;
             }
 
             let valueReferences =
@@ -292,7 +288,7 @@ macro_rules! make_getter {
 
             let values = unsafe { std::slice::from_raw_parts_mut(values, nValues) };
 
-            container.$getter(valueReferences, values)
+            container.$getter(valueReferences, values).into()
         }
     };
 }
@@ -308,7 +304,6 @@ make_getter!(fmi3GetUInt32, fmi3UInt32, getUInt32);
 make_getter!(fmi3GetInt64, fmi3Int64, getInt64);
 make_getter!(fmi3GetUInt64, fmi3UInt64, getUInt64);
 make_getter!(fmi3GetBoolean, fmi3Boolean, getBoolean);
-// make_getter!(fmi3GetString, fmi3String, getString);
 
 #[unsafe(no_mangle)]
 pub extern "C" fn fmi3GetString(
@@ -320,19 +315,19 @@ pub extern "C" fn fmi3GetString(
 ) -> fmi3Status {
     if instance.is_null() {
         eprintln!("Argument instance must not be NULL.");
-        return fmi3Error;
+        return fmi3Status::Error;
     }
 
     let container = unsafe { &mut *(instance as *mut Container) };
 
     if valueReferences.is_null() {
         container.logError("Argument valueReferences must not be NULL.");
-        return fmi3Error;
+        return fmi3Status::Error;
     }
 
     if values.is_null() {
         container.logError("Argument values must not be NULL.");
-        return fmi3Error;
+        return fmi3Status::Error;
     }
 
     let valueReferences = unsafe { std::slice::from_raw_parts(valueReferences, nValueReferences) };
@@ -343,15 +338,15 @@ pub extern "C" fn fmi3GetString(
     let status = container.getString(valueReferences, buffer.as_mut());
 
     container
-        .stringValues
+        .cstring_buffer
         .resize(values.len(), CString::new("").unwrap());
 
     for (i, v) in buffer.iter().enumerate() {
-        container.stringValues[i] = CString::new(v.as_str()).unwrap();
-        values[i] = container.stringValues[i].as_ptr();
+        container.cstring_buffer[i] = CString::new(v.as_str()).unwrap();
+        values[i] = container.cstring_buffer[i].as_ptr();
     }
 
-    status
+    status.into()
 }
 
 #[unsafe(no_mangle)]
@@ -365,31 +360,43 @@ pub extern "C" fn fmi3GetBinary(
 ) -> fmi3Status {
     if instance.is_null() {
         eprintln!("Argument instance must not be NULL.");
-        return fmi3Error;
+        return fmi3Status::Error;
     }
 
     let container = unsafe { &*(instance as *mut Container) };
 
     if valueReferences.is_null() {
         container.logError("Argument valueReferences must not be NULL.");
-        return fmi3Error;
+        return fmi3Status::Error;
     }
 
     if valueSizes.is_null() {
         container.logError("Argument valueSizes must not be NULL.");
-        return fmi3Error;
+        return fmi3Status::Error;
     }
 
     if values.is_null() {
         container.logError("Argument values must not be NULL.");
-        return fmi3Error;
+        return fmi3Status::Error;
+    }
+    
+    let mut buffer = container.binary_buffer.borrow_mut();
+    
+    buffer.resize(nValues, Vec::new());
+    
+    let valueReferences = unsafe { std::slice::from_raw_parts(valueReferences, nValueReferences) };
+    
+    let status = container.getBinary(valueReferences, &mut buffer[..]);
+    
+    let valueSizes_slice = unsafe { std::slice::from_raw_parts_mut(valueSizes, nValues) };
+    let values_slice = unsafe { std::slice::from_raw_parts_mut(values, nValues) };
+
+    for (i, value) in buffer.iter().enumerate() {
+        valueSizes_slice[i] = value.len();
+        values_slice[i] = value.as_ptr();
     }
 
-    let valueReferences = unsafe { std::slice::from_raw_parts(valueReferences, nValueReferences) };
-    let sizes = unsafe { std::slice::from_raw_parts_mut(valueSizes, nValues) };
-    let values = unsafe { std::slice::from_raw_parts_mut(values, nValues) };
-
-    container.getBinary(valueReferences, sizes, values)
+    status.into()
 }
 
 #[unsafe(no_mangle)]
@@ -414,19 +421,19 @@ macro_rules! make_setter {
         ) -> fmi3Status {
             if instance.is_null() {
                 eprintln!("Argument instance must not be NULL.");
-                return fmi3Error;
+                return fmi3Status::Error;
             }
 
             let container = unsafe { &*(instance as *mut Container) };
 
             if valueReferences.is_null() {
                 container.logError("Argument valueReferences must not be NULL.");
-                return fmi3Error;
+                return fmi3Status::Error;
             }
 
             if values.is_null() {
                 container.logError("Argument values must not be NULL.");
-                return fmi3Error;
+                return fmi3Status::Error;
             }
 
             let valueReferences =
@@ -434,7 +441,7 @@ macro_rules! make_setter {
 
             let values = unsafe { std::slice::from_raw_parts(values, nValues) };
 
-            container.$setter(valueReferences, values)
+            container.$setter(valueReferences, values).into()
         }
     };
 }
@@ -450,7 +457,6 @@ make_setter!(fmi3SetUInt32, fmi3UInt32, setUInt32);
 make_setter!(fmi3SetInt64, fmi3Int64, setInt64);
 make_setter!(fmi3SetUInt64, fmi3UInt64, setUInt64);
 make_setter!(fmi3SetBoolean, fmi3Boolean, setBoolean);
-// make_setter!(fmi3SetString, fmi3String, setString);
 
 #[unsafe(no_mangle)]
 pub extern "C" fn fmi3SetString(
@@ -462,19 +468,19 @@ pub extern "C" fn fmi3SetString(
 ) -> fmi3Status {
     if instance.is_null() {
         eprintln!("Argument instance must not be NULL.");
-        return fmi3Error;
+        return fmi3Status::Error;
     }
 
     let container = unsafe { &*(instance as *mut Container) };
 
     if valueReferences.is_null() {
         container.logError("Argument valueReferences must not be NULL.");
-        return fmi3Error;
+        return fmi3Status::Error;
     }
 
     if values.is_null() {
         container.logError("Argument values must not be NULL.");
-        return fmi3Error;
+        return fmi3Status::Error;
     }
 
     let valueReferences = unsafe { std::slice::from_raw_parts(valueReferences, nValueReferences) };
@@ -487,7 +493,7 @@ pub extern "C" fn fmi3SetString(
 
     let v: Vec<&str> = values_vec.iter().map(|v| v.as_str()).collect();
 
-    container.setString(valueReferences, &v)
+    container.setString(valueReferences, &v).into()
 }
 
 #[unsafe(no_mangle)]
@@ -857,22 +863,22 @@ pub extern "C" fn fmi3DoStep(
 
     if eventHandlingNeeded.is_null() {
         container.logError("Argument eventHandlingNeeded must not be NULL.");
-        return fmi3Error;
+        return fmi3Status::Error;
     }
 
     if terminateSimulation.is_null() {
         container.logError("Argument terminateSimulation must not be NULL.");
-        return fmi3Error;
+        return fmi3Status::Error;
     }
 
     if earlyReturn.is_null() {
         container.logError("Argument earlyReturn must not be NULL.");
-        return fmi3Error;
+        return fmi3Status::Error;
     }
 
     if lastSuccessfulTime.is_null() {
         container.logError("Argument lastSuccessfulTime must not be NULL.");
-        return fmi3Error;
+        return fmi3Status::Error;
     }
 
     let status = container.doStep(currentCommunicationPoint, communicationStepSize);
@@ -884,7 +890,7 @@ pub extern "C" fn fmi3DoStep(
         *lastSuccessfulTime = container.time();
     };
 
-    status
+    status.into()
 }
 
 /***************************************************

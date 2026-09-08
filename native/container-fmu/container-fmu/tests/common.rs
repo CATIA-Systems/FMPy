@@ -1,16 +1,17 @@
 #![allow(unused)]
 
-use fmi::{
+use fmi_rs::fmi2::types::fmi2Status;
+use fmi_rs::{
     SHARED_LIBRARY_EXTENSION,
-    fmi2::{FMU2, PLATFORM, types::*},
-    fmi3::{FMU3, PLATFORM_TUPLE, types::fmi3Status},
+    fmi2::{CS, FMU2, PLATFORM, types::*},
+    fmi3::{FMU3, PLATFORM_TUPLE, intermediateUpdate, types::fmi3Status},
 };
 use rstest::*;
 use sha2::{Digest, Sha256};
-use std::fs;
 use std::io::{Read, Write};
 use std::sync::OnceLock;
 use std::{env, path::PathBuf, sync::Mutex};
+use std::{fs, println, sync::Arc};
 
 static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
 static SETUP_DONE: OnceLock<Mutex<bool>> = OnceLock::new();
@@ -156,7 +157,7 @@ fn ensure_feedthrough_fmus() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[fixture]
-pub fn create_fmi2_container() -> FMU2 {
+pub fn create_fmi2_container() -> FMU2<CS> {
     let _guard = LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
 
     // Ensure Feedthrough FMUs are available
@@ -213,21 +214,21 @@ pub fn create_fmi2_container() -> FMU2 {
     let log_fmi_call =
         move |_status: &fmi2Status, _message: &str| println!(">[{_status:?}] {_message}");
 
-    FMU2::new(
+    FMU2::<CS>::new(
         &unzipdir,
         "container_fmu",
         "container",
-        fmi2Type::fmi2CoSimulation,
         "f6cda2ea-6875-475c-b7dc-a43a33e69094",
         false,
         true,
-        Some(Box::new(log_fmi_call)),
-        Some(Box::new(log_message)),
+        true,
+        Box::new(fmi_rs::fmi2::log::DefaultLogger::default()),
+        false,
     )
     .unwrap()
 }
 
-pub fn create_fmi3_container() -> FMU3 {
+pub fn create_fmi3_container() -> Arc<FMU3> {
     let _guard = LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
 
     // Ensure Feedthrough FMUs are available
@@ -281,18 +282,20 @@ pub fn create_fmi3_container() -> FMU3 {
         // println!(">[{status:?}] {message}");
     };
 
+    let logger = Box::new(fmi_rs::fmi3::log::DefaultLogger::default());
+
     FMU3::instantiateCoSimulation(
         &unzipdir,
         "container_fmu",
         "container",
         "{088cfe7e-cb81-4ca1-a83d-e7a5c3ff47fd}",
         false,
-        true,
         false,
         false,
-        &[],
-        Some(Box::new(log_fmi_call)),
-        Some(Box::new(log_message)),
+        false,
+        logger,
+        false,
+        None,
     )
     .unwrap()
 }

@@ -1,9 +1,7 @@
 #![allow(non_camel_case_types, non_snake_case, unused_variables)]
 
-use crate::{Container, LOG_FMI_CALLS, LOG_STATUS_ERROR};
-use fmi::fmi2::types::*;
-use fmi::types::fmiStatus;
-use fmi::types::*;
+use crate::{Container, LOG_FMI_CALLS, LOG_STATUS_ERROR, fmiBoolean, fmiStatus};
+use fmi_rs::fmi2::types::*;
 use std::ffi::{CStr, CString};
 use std::ptr::null_mut;
 use std::sync::Arc;
@@ -11,18 +9,18 @@ use url::Url;
 
 fn NOT_IMPLEMENTED(c: fmi2Component) -> fmi2Status {
     if c.is_null() {
-        return fmi2Fatal;
+        return fmi2Status::Fatal;
     }
     let container: &mut Container = unsafe { &mut *(c as *mut Container) };
     container.logError("Function is not implemented.");
-    fmi2Error
+    fmi2Status::Error
 }
 
 macro_rules! get_container {
     ($c:expr) => {{
         if $c.is_null() {
             eprintln!("Argument c must not be NULL.");
-            return fmi2Error;
+            return fmi2Status::Error;
         }
         unsafe { &mut *($c as *mut Container) }
     }};
@@ -62,7 +60,6 @@ pub extern "C" fn fmi2Instantiate(
     visible: fmi2Boolean,
     loggingOn: fmi2Boolean,
 ) -> fmi2Component {
-
     // TODO: check pointers
 
     let resource_path = unsafe { CStr::from_ptr(fmuResourceLocation) };
@@ -80,7 +77,7 @@ pub extern "C" fn fmi2Instantiate(
             logger(
                 componentEnvironment,
                 instanceName.as_ptr() as fmi2String,
-                fmi2Error,
+                fmi2Status::Error,
                 LOG_STATUS_ERROR,
                 message.as_ptr(),
             )
@@ -107,7 +104,7 @@ pub extern "C" fn fmi2Instantiate(
             logger(
                 component_env_ptr as *mut std::os::raw::c_void,
                 instance_name_clone.as_ptr(),
-                *status,
+                (*status).into(),
                 LOG_FMI_CALLS,
                 message.as_ptr(),
             )
@@ -123,7 +120,7 @@ pub extern "C" fn fmi2Instantiate(
             logger(
                 component_env_ptr as *mut std::os::raw::c_void,
                 instance_name_clone2.as_ptr(),
-                *status,
+                (*status).into(),
                 LOG_FMI_CALLS,
                 message.as_ptr(),
             )
@@ -181,28 +178,27 @@ pub extern "C" fn fmi2SetupExperiment(
     if stopTimeDefined != fmi2False {
         container.stopTime = Some(stopTime);
     }
-    fmi2OK
+    fmi2Status::Ok
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn fmi2EnterInitializationMode(c: fmi2Component) -> fmi2Status {
-    let container = get_container!(c);
-    container.enterInitializationMode()
+    get_container!(c).enterInitializationMode().into()
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn fmi2ExitInitializationMode(c: fmi2Component) -> fmi2Status {
-    get_container!(c).exitInitializationMode()
+    get_container!(c).exitInitializationMode().into()
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn fmi2Terminate(c: fmi2Component) -> fmi2Status {
-    get_container!(c).terminate()
+    get_container!(c).terminate().into()
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn fmi2Reset(c: fmi2Component) -> fmi2Status {
-    get_container!(c).reset()
+    get_container!(c).reset().into()
 }
 
 /* Getting and setting variable values */
@@ -211,25 +207,25 @@ macro_rules! get_variable {
     ($c:ident, $vr:ident, $nvr:ident, $value:ident, $getter:ident) => {{
         if $c.is_null() {
             eprintln!("Argument c must not be NULL.");
-            return fmi2Error;
+            return fmi2Status::Error;
         }
 
         let container = unsafe { &mut *($c as *mut Container) };
 
         if $vr.is_null() {
             container.logError("Argument vr must not be NULL.");
-            return fmi2Error;
+            return fmi2Status::Error;
         }
 
         if $value.is_null() {
             container.logError("Argument value must not be NULL.");
-            return fmi2Error;
+            return fmi2Status::Error;
         }
 
         let valueReferences = unsafe { std::slice::from_raw_parts($vr, $nvr) };
         let values = unsafe { std::slice::from_raw_parts_mut($value, $nvr) };
 
-        container.$getter(valueReferences, values)
+        container.$getter(valueReferences, values).into()
     }};
 }
 
@@ -262,19 +258,19 @@ pub extern "C" fn fmi2GetBoolean(
 ) -> fmi2Status {
     if c.is_null() {
         eprintln!("Argument c must not be NULL.");
-        return fmi2Error;
+        return fmi2Status::Error;
     }
 
     let container = unsafe { &mut *(c as *mut Container) };
 
     if vr.is_null() {
         container.logError("Argument vr must not be NULL.");
-        return fmi2Error;
+        return fmi2Status::Error;
     }
 
     if value.is_null() {
         container.logError("Argument value must not be NULL.");
-        return fmi2Error;
+        return fmi2Status::Error;
     }
 
     let valueReferences = unsafe { std::slice::from_raw_parts(vr, nvr) };
@@ -288,7 +284,7 @@ pub extern "C" fn fmi2GetBoolean(
         value[i] = if *v { fmi2True } else { fmi2False };
     }
 
-    status
+    status.into()
 }
 
 #[unsafe(no_mangle)]
@@ -300,19 +296,19 @@ pub extern "C" fn fmi2GetString(
 ) -> fmi2Status {
     if c.is_null() {
         eprintln!("Argument c must not be NULL.");
-        return fmi2Error;
+        return fmi2Status::Error;
     }
 
     let container = unsafe { &mut *(c as *mut Container) };
 
     if vr.is_null() {
         container.logError("Argument vr must not be NULL.");
-        return fmi2Error;
+        return fmi2Status::Error;
     }
 
     if value.is_null() {
         container.logError("Argument value must not be NULL.");
-        return fmi2Error;
+        return fmi2Status::Error;
     }
 
     let valueReferences = unsafe { std::slice::from_raw_parts(vr, nvr) };
@@ -323,40 +319,40 @@ pub extern "C" fn fmi2GetString(
     let status = container.getString(valueReferences, buffer.as_mut());
 
     container
-        .stringValues
+        .cstring_buffer
         .resize(values.len(), CString::new("").unwrap());
 
     for (i, v) in buffer.iter().enumerate() {
-        container.stringValues[i] = CString::new(v.as_str()).unwrap();
-        values[i] = container.stringValues[i].as_ptr();
+        container.cstring_buffer[i] = CString::new(v.as_str()).unwrap();
+        values[i] = container.cstring_buffer[i].as_ptr();
     }
 
-    status
+    status.into()
 }
 
 macro_rules! set_variable {
     ($c:ident, $vr:ident, $nvr:ident, $value:ident, $setter:ident) => {{
         if $c.is_null() {
             eprintln!("Argument c must not be NULL.");
-            return fmi2Error;
+            return fmi2Status::Error;
         }
 
         let container = unsafe { &mut *($c as *mut Container) };
 
         if $vr.is_null() {
             container.logError("Argument vr must not be NULL.");
-            return fmi2Error;
+            return fmi2Status::Error;
         }
 
         if $value.is_null() {
             container.logError("Argument value must not be NULL.");
-            return fmi2Error;
+            return fmi2Status::Error;
         }
 
         let valueReferences = unsafe { std::slice::from_raw_parts($vr, $nvr) };
         let values = unsafe { std::slice::from_raw_parts($value, $nvr) };
 
-        container.$setter(valueReferences, values)
+        container.$setter(valueReferences, values).into()
     }};
 }
 
@@ -389,19 +385,19 @@ pub extern "C" fn fmi2SetBoolean(
 ) -> fmi2Status {
     if c.is_null() {
         eprintln!("Argument c must not be NULL.");
-        return fmi2Error;
+        return fmi2Status::Error;
     }
 
     let container = unsafe { &mut *(c as *mut Container) };
 
     if vr.is_null() {
         container.logError("Argument vr must not be NULL.");
-        return fmi2Error;
+        return fmi2Status::Error;
     }
 
     if value.is_null() {
         container.logError("Argument value must not be NULL.");
-        return fmi2Error;
+        return fmi2Status::Error;
     }
 
     let valueReferences = unsafe { std::slice::from_raw_parts(vr, nvr) };
@@ -409,7 +405,7 @@ pub extern "C" fn fmi2SetBoolean(
 
     let values: Vec<fmiBoolean> = values.iter().map(|&v| v != fmi2False).collect();
 
-    container.setBoolean(valueReferences, &values)
+    container.setBoolean(valueReferences, &values).into()
 }
 
 #[unsafe(no_mangle)]
@@ -421,19 +417,19 @@ pub extern "C" fn fmi2SetString(
 ) -> fmi2Status {
     if c.is_null() {
         eprintln!("Argument c must not be NULL.");
-        return fmi2Error;
+        return fmi2Status::Error;
     }
 
     let container = unsafe { &mut *(c as *mut Container) };
 
     if vr.is_null() {
         container.logError("Argument vr must not be NULL.");
-        return fmi2Error;
+        return fmi2Status::Error;
     }
 
     if value.is_null() {
         container.logError("Argument value must not be NULL.");
-        return fmi2Error;
+        return fmi2Status::Error;
     }
 
     let valueReferences = unsafe { std::slice::from_raw_parts(vr, nvr) };
@@ -446,7 +442,7 @@ pub extern "C" fn fmi2SetString(
 
     let v: Vec<&str> = values.iter().map(|v| v.as_str()).collect();
 
-    container.setString(valueReferences, &v)
+    container.setString(valueReferences, &v).into()
 }
 
 /* Getting and setting the internal FMU state */
@@ -541,8 +537,9 @@ pub extern "C" fn fmi2DoStep(
     communicationStepSize: fmi2Real,
     noSetFMUStatePriorToCurrentPoint: fmi2Boolean,
 ) -> fmi2Status {
-    let container = get_container!(c);
-    container.doStep(currentCommunicationPoint, communicationStepSize)
+    get_container!(c)
+        .doStep(currentCommunicationPoint, communicationStepSize)
+        .into()
 }
 
 #[unsafe(no_mangle)]

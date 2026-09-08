@@ -2,19 +2,22 @@
 
 mod common;
 
+use std::vec;
+
 use common::create_fmi3_container;
-use fmi::fmi3::types::*;
+use fmi_rs::fmi3::types::*;
+use rstest::rstest;
 
 macro_rules! assert_ok {
     ($expression:expr) => {
-        assert_eq!($expression, fmi3OK);
+        assert_eq!($expression, fmi3Status::Ok);
     };
 }
 
 /// Test to verify that all start values defined in the FMI3 container configuration
 /// are correctly set when the container FMU is instantiated and initialized.
 /// Note: Container start values override individual FMU model description start values.
-#[test]
+#[rstest]
 fn test_fmi3_start_values() {
     // Expected start values from container.json configuration
     // Only input variables and parameters have start values defined
@@ -74,10 +77,9 @@ fn test_fmi3_start_values() {
     let mut uint64_input_values = [0u64];
     let mut boolean_input_values = [false]; // Initialize to opposite of expected
     let mut string_input_values = [String::new()];
-    let mut binary_input_sizes = [1usize];
-    let mut binary_input_values = [std::ptr::null::<u8>()];
+    let mut binary_input_values = [Vec::new()];
     let mut enumeration_input_values = [0i64];
-
+    
     let fmu = create_fmi3_container();
 
     // Verify FMI version
@@ -235,26 +237,13 @@ fn test_fmi3_start_values() {
     // Test 17: Binary input (start="666f6f" which is "foo" in hex)
     assert_ok!(fmu.getBinary(
         &binary_input_vr,
-        &mut binary_input_sizes,
         &mut binary_input_values
     ));
 
-    // Verify the size matches expected
     assert_eq!(
-        binary_input_sizes[0],
-        expected_binary_input.len(),
-        "Binary_input size mismatch. Expected: {}, Got: {}",
-        expected_binary_input.len(),
-        binary_input_sizes[0]
-    );
-
-    // Convert the pointer to a slice and compare with expected value
-    let binary_slice =
-        unsafe { std::slice::from_raw_parts(binary_input_values[0], binary_input_sizes[0]) };
-    assert_eq!(
-        binary_slice, expected_binary_input,
+        binary_input_values[0], expected_binary_input,
         "Binary_input start value mismatch. Expected: {:?}, Got: {:?}",
-        expected_binary_input, binary_slice
+        expected_binary_input, binary_input_values
     );
 
     // Test 18: Enumeration input (start="2")

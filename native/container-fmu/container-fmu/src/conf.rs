@@ -5,6 +5,7 @@ use serde::Deserialize;
 
 use crate::VERSION;
 
+// TODO: rename to V2, V3
 #[derive(Debug, Deserialize, PartialEq)]
 pub enum FMIMajorVersion {
     #[serde(rename = "2")]
@@ -84,10 +85,10 @@ pub struct Connection {
 
 impl System {
     pub fn from_path(config_path: &Path, instantiation_token: &str) -> Result<System, String> {
-        let file = match File::open(&config_path) {
+        let file = match File::open(config_path) {
             Ok(f) => f,
             Err(_) => {
-                let message = format!("Failed to open configuration file.");
+                let message = "Failed to open configuration file.".to_string();
                 return Err(message);
             }
         };

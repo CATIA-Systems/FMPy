@@ -79,7 +79,7 @@ fn test_fmi3_start_values() {
     let mut string_input_values = [String::new()];
     let mut binary_input_values = [Vec::new()];
     let mut enumeration_input_values = [0i64];
-    
+
     let fmu = create_fmi3_container();
 
     // Verify FMI version
@@ -235,10 +235,7 @@ fn test_fmi3_start_values() {
     );
 
     // Test 17: Binary input (start="666f6f" which is "foo" in hex)
-    assert_ok!(fmu.getBinary(
-        &binary_input_vr,
-        &mut binary_input_values
-    ));
+    assert_ok!(fmu.getBinary(&binary_input_vr, &mut binary_input_values));
 
     assert_eq!(
         binary_input_values[0], expected_binary_input,

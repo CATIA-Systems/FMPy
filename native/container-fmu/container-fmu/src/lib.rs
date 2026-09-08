@@ -9,14 +9,16 @@ use std::{
     todo, vec,
 };
 
-use approx::{relative_eq, relative_ne};
+use crate::conf::*;
 use fmi_rs::{
     fmi2::{
-        CS, FMU2, types::{
+        CS, FMU2,
+        types::{
             fmi2Boolean, fmi2False, fmi2Integer, fmi2Real, fmi2Status, fmi2StatusKind, fmi2True,
             fmi2ValueReference,
         },
-    }, fmi3::{
+    },
+    fmi3::{
         FMU3,
         types::{
             fmi3Boolean, fmi3Float32, fmi3Float64, fmi3InstanceEnvironment, fmi3Int8, fmi3Int16,
@@ -25,12 +27,14 @@ use fmi_rs::{
             fmi3String, fmi3UInt8, fmi3UInt16, fmi3UInt32, fmi3UInt64, fmi3ValueReference,
         },
     },
+    sim::{relative_eq, relative_le},
 };
-use crate::conf::*;
 
 pub mod conf;
 pub mod fmi2;
 pub mod fmi3;
+
+const DEFAULT_TOLERANCE: f64 = 1e-4;
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 enum fmiStatus {
@@ -277,8 +281,8 @@ impl Container {
 
             let logger = Box::new(ContainerLogger {
                 component_name: component.name.clone(),
-                log_message: log_message.clone(), 
-                log_fmi_call: log_fmi_call.clone() 
+                log_message: log_message.clone(),
+                log_fmi_call: log_fmi_call.clone(),
             });
 
             let fmu_instance: FMUInstance = match component.fmiMajorVersion {
@@ -1090,9 +1094,8 @@ impl Container {
                 VariableType::Float64 => {
                     self.f64_buffer.resize(size, 0.0);
                     fmi_check_status!(match srcInstance {
-                        FMUInstance::FMI2(fmu) => fmu
-                            .getReal(srcValueReferences, &mut self.f64_buffer)
-                            .into(),
+                        FMUInstance::FMI2(fmu) =>
+                            fmu.getReal(srcValueReferences, &mut self.f64_buffer).into(),
                         FMUInstance::FMI3(fmu) => fmu
                             .getFloat64(srcValueReferences, &mut self.f64_buffer)
                             .into(),
@@ -1121,9 +1124,8 @@ impl Container {
                     self.u8_buffer.resize(size, 0);
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
-                        FMUInstance::FMI3(fmu) => fmu
-                            .getUInt8(srcValueReferences, &mut self.u8_buffer)
-                            .into(),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.getUInt8(srcValueReferences, &mut self.u8_buffer).into(),
                     });
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => todo!(),
@@ -1241,9 +1243,8 @@ impl Container {
                             }
                             fmu.setBoolean(dstValueReferences, &self.i32_buffer).into()
                         }
-                        FMUInstance::FMI3(fmu) => fmu
-                            .setBoolean(dstValueReferences, &self.bool_buffer)
-                            .into(),
+                        FMUInstance::FMI3(fmu) =>
+                            fmu.setBoolean(dstValueReferences, &self.bool_buffer).into(),
                     });
                 }
                 VariableType::String => {
@@ -1258,10 +1259,8 @@ impl Container {
                     });
                     let values: Vec<&str> = self.string_buffer.iter().map(String::as_str).collect();
                     fmi_check_status!(match dstInstance {
-                        FMUInstance::FMI2(fmu) =>
-                            fmu.setString(dstValueReferences, &values).into(),
-                        FMUInstance::FMI3(fmu) =>
-                            fmu.setString(dstValueReferences, &values).into(),
+                        FMUInstance::FMI2(fmu) => fmu.setString(dstValueReferences, &values).into(),
+                        FMUInstance::FMI3(fmu) => fmu.setString(dstValueReferences, &values).into(),
                     });
                 }
                 VariableType::Binary => {
@@ -1373,8 +1372,9 @@ impl Container {
         communicationStepSize: fmiFloat64,
     ) -> fmiStatus {
         let mut status = fmiStatus::Ok;
+        let relative_tolerance = self.tolerance.unwrap_or(DEFAULT_TOLERANCE);
 
-        if relative_ne!(currentCommunicationPoint, self.time()) {
+        if !relative_eq(currentCommunicationPoint, self.time(), relative_tolerance) {
             let message = format!(
                 "Expected currentCommunicationPoint={} but was {}",
                 self.time(),
@@ -1384,7 +1384,7 @@ impl Container {
             return fmiStatus::Error;
         }
 
-        if communicationStepSize < 0.0 || relative_eq!(communicationStepSize, 0.0) {
+        if relative_le(communicationStepSize, 0.0, relative_tolerance) {
             self.logError("Argument communicationStepSize must be greater than 0.");
             return fmiStatus::Error;
         }
@@ -1392,7 +1392,7 @@ impl Container {
         let n_steps_float = communicationStepSize / self.system.fixedStepSize;
         let n_steps = n_steps_float.round() as u64;
 
-        if n_steps == 0 || !relative_eq!(n_steps as f64, n_steps_float) {
+        if n_steps == 0 || !relative_eq(n_steps as f64, n_steps_float, relative_tolerance) {
             let message = format!(
                 "Argument communicationStepSize={} must be an even multiple of fixedStepSize={}.",
                 communicationStepSize, self.system.fixedStepSize

@@ -10,7 +10,7 @@ use rstest::rstest;
 
 macro_rules! assert_ok {
     ($expression:expr) => {
-        assert_eq!($expression, fmi3Status::fmi3OK);
+        assert_eq!($expression, fmi3Status::Ok);
     };
 }
 

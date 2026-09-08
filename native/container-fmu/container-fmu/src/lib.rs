@@ -34,9 +34,9 @@ pub mod fmi3;
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 enum fmiStatus {
-    fmiOK,
-    fmiWarning,
-    fmiError,
+    Ok,
+    Warning,
+    Error,
 }
 
 type fmiFloat32 = f32;
@@ -57,9 +57,9 @@ type fmiValueReference = u32;
 impl From<fmi2Status> for fmiStatus {
     fn from(source: fmi2Status) -> Self {
         match source {
-            fmi2Status::fmi2OK => fmiStatus::fmiOK,
-            fmi2Status::fmi2Warning => fmiStatus::fmiWarning,
-            _ => fmiStatus::fmiError,
+            fmi2Status::Ok => fmiStatus::Ok,
+            fmi2Status::Warning => fmiStatus::Warning,
+            _ => fmiStatus::Error,
         }
     }
 }
@@ -67,9 +67,9 @@ impl From<fmi2Status> for fmiStatus {
 impl From<fmiStatus> for fmi2Status {
     fn from(val: fmiStatus) -> Self {
         match val {
-            fmiStatus::fmiOK => fmi2Status::fmi2OK,
-            fmiStatus::fmiWarning => fmi2Status::fmi2Warning,
-            fmiStatus::fmiError => fmi2Status::fmi2Error,
+            fmiStatus::Ok => fmi2Status::Ok,
+            fmiStatus::Warning => fmi2Status::Warning,
+            fmiStatus::Error => fmi2Status::Error,
         }
     }
 }
@@ -77,9 +77,9 @@ impl From<fmiStatus> for fmi2Status {
 impl From<fmi3Status> for fmiStatus {
     fn from(source: fmi3Status) -> Self {
         match source {
-            fmi3Status::fmi3OK => fmiStatus::fmiOK,
-            fmi3Status::fmi3Warning => fmiStatus::fmiWarning,
-            _ => fmiStatus::fmiError,
+            fmi3Status::Ok => fmiStatus::Ok,
+            fmi3Status::Warning => fmiStatus::Warning,
+            _ => fmiStatus::Error,
         }
     }
 }
@@ -87,9 +87,9 @@ impl From<fmi3Status> for fmiStatus {
 impl From<fmiStatus> for fmi3Status {
     fn from(val: fmiStatus) -> Self {
         match val {
-            fmiStatus::fmiOK => fmi3Status::fmi3OK,
-            fmiStatus::fmiWarning => fmi3Status::fmi3Warning,
-            fmiStatus::fmiError => fmi3Status::fmi3Error,
+            fmiStatus::Ok => fmi3Status::Ok,
+            fmiStatus::Warning => fmi3Status::Warning,
+            fmiStatus::Error => fmi3Status::Error,
         }
     }
 }
@@ -132,7 +132,7 @@ macro_rules! return_on_error {
     ($status:ident, $expression:expr) => {{
         let s = $expression;
 
-        if !matches!(s, fmiStatus::fmiOK | fmiStatus::fmiWarning) {
+        if !matches!(s, fmiStatus::Ok | fmiStatus::Warning) {
             return s.into();
         }
 
@@ -144,7 +144,7 @@ macro_rules! return_on_error {
 
 macro_rules! set_variables {
     ($self:ident, $valueReferences:ident, $values:ident, $fmi2_setter:ident, $fmi3_setter:ident) => {{
-        let mut status = fmiStatus::fmiOK;
+        let mut status = fmiStatus::Ok;
         let mut i = 0;
 
         for valueReference in $valueReferences {
@@ -152,7 +152,7 @@ macro_rules! set_variables {
                 Ok(var) => var,
                 Err(e) => {
                     $self.logError(e.as_str());
-                    return fmiStatus::fmiError;
+                    return fmiStatus::Error;
                 }
             };
 
@@ -185,7 +185,7 @@ macro_rules! set_variables {
                 $values.len()
             );
             $self.logError(&message);
-            status = fmiStatus::fmiError;
+            status = fmiStatus::Error;
         }
 
         status.into()
@@ -203,7 +203,7 @@ macro_rules! set_start_value {
         } else {
             let message = format!("Failed to parse start value \"{:?}\".", $start);
             $self.logError(&message);
-            fmiStatus::fmiError
+            fmiStatus::Error
         }
     }};
 }
@@ -214,7 +214,7 @@ macro_rules! set_start_value {
 macro_rules! fmi_check_status {
     ($status:expr) => {{
         let __fmi_status = $status;
-        if __fmi_status > fmiStatus::fmiWarning {
+        if __fmi_status > fmiStatus::Warning {
             return __fmi_status;
         }
     }};
@@ -364,7 +364,7 @@ impl Container {
 
         let status = container.setStartValues();
 
-        if !matches!(status, fmiStatus::fmiOK | fmiStatus::fmiWarning) {
+        if !matches!(status, fmiStatus::Ok | fmiStatus::Warning) {
             let message = "Failed to set start values.".to_string();
             return Err(message);
         }
@@ -373,7 +373,7 @@ impl Container {
     }
 
     fn setStartValues(&self) -> fmiStatus {
-        let mut status = fmiStatus::fmiOK;
+        let mut status = fmiStatus::Ok;
 
         for (i, variable) in self.system.variables.iter().enumerate() {
             if let Some(start) = &variable.start {
@@ -444,7 +444,7 @@ impl Container {
                                 Ok(v) => self.setBinary(valueReferences, &v),
                                 Err(e) => {
                                     self.logError("message");
-                                    fmiStatus::fmiError
+                                    fmiStatus::Error
                                 }
                             }
                         }
@@ -477,14 +477,14 @@ impl Container {
         F: Fn(&FMU2<CS>) -> fmi2Status,
         G: Fn(&FMU3) -> fmi3Status,
     {
-        let mut status = fmiStatus::fmiOK;
+        let mut status = fmiStatus::Ok;
 
         for instance in &self.instances {
             let s: fmiStatus = match instance {
                 FMUInstance::FMI2(fmu) => fmi2_function(fmu).into(),
                 FMUInstance::FMI3(fmu) => fmi3_function(fmu).into(),
             };
-            if s >= fmiStatus::fmiError {
+            if s >= fmiStatus::Error {
                 return s;
             } else if s > status {
                 status = s;
@@ -504,7 +504,7 @@ impl Container {
     }
 
     fn exitInitializationMode(&mut self) -> fmiStatus {
-        let mut status = fmiStatus::fmiOK;
+        let mut status = fmiStatus::Ok;
         return_on_error!(status, self.updateConnections());
         return_on_error!(
             status,
@@ -517,7 +517,7 @@ impl Container {
     }
 
     fn reset(&mut self) -> fmiStatus {
-        let mut status = fmiStatus::fmiOK;
+        let mut status = fmiStatus::Ok;
         return_on_error!(status, self.call_all(|fmu| fmu.reset(), |fmu| fmu.reset()));
         return_on_error!(status, self.setStartValues());
         self.nSteps = 0;
@@ -557,7 +557,7 @@ impl Container {
         let fmi2_getter =
             |fmu: &FMU2<CS>, valueReferences: &[fmiValueReference], values: &mut [fmiFloat32]| {
                 self.logError("Not implemented.");
-                fmiStatus::fmiError
+                fmiStatus::Error
             };
         let fmi3_getter =
             |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &mut [fmi3Float32]| {
@@ -571,7 +571,7 @@ impl Container {
         valueReferences: &[fmiValueReference],
         values: &mut [fmiFloat64],
     ) -> fmiStatus {
-        let mut status = fmiStatus::fmiOK;
+        let mut status = fmiStatus::Ok;
         let mut values = values;
 
         for valueReference in valueReferences {
@@ -583,7 +583,7 @@ impl Container {
                     Ok(var) => var,
                     Err(e) => {
                         self.logError(e.as_str());
-                        return fmiStatus::fmiError;
+                        return fmiStatus::Error;
                     }
                 };
 
@@ -598,7 +598,7 @@ impl Container {
                         self.logError(
                             "Argument value is too small to hold the values of all variables.",
                         );
-                        return fmiStatus::fmiError;
+                        return fmiStatus::Error;
                     }
                 };
 
@@ -610,7 +610,7 @@ impl Container {
                     FMUInstance::FMI3(fmu) => fmu.getFloat64(valueReferences, slice).into(),
                 };
 
-                if s >= fmiStatus::fmiError {
+                if s >= fmiStatus::Error {
                     return s;
                 } else if s > status {
                     status = s;
@@ -624,7 +624,7 @@ impl Container {
 
         if excess != 0 {
             self.logError("Argument value is too small to hold the values of all variables.");
-            return fmiStatus::fmiError;
+            return fmiStatus::Error;
         }
 
         status
@@ -818,7 +818,7 @@ impl Container {
         fmi2_getter: U,
         fmi3_getter: V,
     ) -> fmiStatus {
-        let mut status = fmiStatus::fmiOK;
+        let mut status = fmiStatus::Ok;
         let mut values = values;
 
         for valueReference in valueReferences {
@@ -826,7 +826,7 @@ impl Container {
                 Ok(var) => var,
                 Err(e) => {
                     self.logError(e.as_str());
-                    return fmiStatus::fmiError;
+                    return fmiStatus::Error;
                 }
             };
 
@@ -841,7 +841,7 @@ impl Container {
                     self.logError(
                         "Argument value is too small to hold the values of all variables.",
                     );
-                    return fmiStatus::fmiError;
+                    return fmiStatus::Error;
                 }
             };
 
@@ -852,7 +852,7 @@ impl Container {
                 FMUInstance::FMI3(fmu) => fmi3_getter(fmu, &vrs, slice),
             };
 
-            if s >= fmiStatus::fmiError {
+            if s >= fmiStatus::Error {
                 return s;
             } else if s > status {
                 status = s;
@@ -864,7 +864,7 @@ impl Container {
 
         if excess != 0 {
             self.logError("Argument value is too small to hold the values of all variables.");
-            return fmiStatus::fmiError;
+            return fmiStatus::Error;
         }
 
         status
@@ -1040,7 +1040,7 @@ impl Container {
     fn setBinary(&self, valueReferences: &[fmiValueReference], values: &[Vec<u8>]) -> fmiStatus {
         let fmi2_setter = |fmu: &FMU2<CS>,
                            valueReferences: &[fmi2ValueReference],
-                           values: &[Vec<u8>]| fmiStatus::fmiError;
+                           values: &[Vec<u8>]| fmiStatus::Error;
         let fmi3_setter =
             |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[Vec<u8>]| {
                 let values: Vec<&[u8]> = values.iter().map(|v| v.as_slice()).collect();
@@ -1052,7 +1052,7 @@ impl Container {
     fn setClock(&self, valueReferences: &[fmiValueReference], values: &[fmiBoolean]) -> fmiStatus {
         let fmi2_setter = |fmu: &FMU2<CS>,
                            valueReferences: &[fmi2ValueReference],
-                           values: &[fmiBoolean]| fmiStatus::fmiError;
+                           values: &[fmiBoolean]| fmiStatus::Error;
         let fmi3_setter =
             |fmu: &FMU3, valueReferences: &[fmi3ValueReference], values: &[fmiBoolean]| {
                 fmu.setClock(valueReferences, values)
@@ -1061,7 +1061,7 @@ impl Container {
     }
 
     fn updateConnections(&mut self) -> fmiStatus {
-        let status = fmiStatus::fmiOK;
+        let status = fmiStatus::Ok;
 
         for connection in &self.system.connections {
             let srcInstance = &self.instances[connection.srcComponent];
@@ -1271,7 +1271,7 @@ impl Container {
                     fmi_check_status!(match srcInstance {
                         FMUInstance::FMI2(fmu) => {
                             self.logError("Binary variables are not supported for FMI 2.");
-                            return fmiStatus::fmiError;
+                            return fmiStatus::Error;
                         }
                         FMUInstance::FMI3(fmu) =>
                             fmu.getBinary(srcValueReferences, buffer_ref).into(),
@@ -1279,7 +1279,7 @@ impl Container {
                     fmi_check_status!(match dstInstance {
                         FMUInstance::FMI2(fmu) => {
                             self.logError("Binary variables are not supported for FMI 2.");
-                            return fmiStatus::fmiError;
+                            return fmiStatus::Error;
                         }
                         FMUInstance::FMI3(fmu) => {
                             let slices: Vec<&[u8]> = buffer.iter().map(|v| v.as_slice()).collect();
@@ -1292,7 +1292,7 @@ impl Container {
                         "Connections of type {:?} are not supported.",
                         connection.variableType
                     ));
-                    return fmiStatus::fmiError;
+                    return fmiStatus::Error;
                 }
             }
         }
@@ -1301,7 +1301,7 @@ impl Container {
     }
 
     fn doFixedStep(&mut self) -> fmiStatus {
-        let mut status = fmiStatus::fmiOK;
+        let mut status = fmiStatus::Ok;
         let communicationStepSize = self.system.fixedStepSize;
         let noSetFMUStatePriorToCurrentPoint = true;
 
@@ -1318,8 +1318,8 @@ impl Container {
 
                 let mut terminated = fmi2False;
 
-                if status == fmi2Status::fmi2Discard {
-                    fmu.getBooleanStatus(&fmi2StatusKind::fmi2Terminated, &mut terminated);
+                if status == fmi2Status::Discard {
+                    fmu.getBooleanStatus(&fmi2StatusKind::Terminated, &mut terminated);
                 }
 
                 (status.into(), terminated != fmi2False)
@@ -1356,7 +1356,7 @@ impl Container {
             }
         }
 
-        if !matches!(status, fmiStatus::fmiOK | fmiStatus::fmiWarning) || self.terminated {
+        if !matches!(status, fmiStatus::Ok | fmiStatus::Warning) || self.terminated {
             return status;
         }
 
@@ -1372,7 +1372,7 @@ impl Container {
         currentCommunicationPoint: fmiFloat64,
         communicationStepSize: fmiFloat64,
     ) -> fmiStatus {
-        let mut status = fmiStatus::fmiOK;
+        let mut status = fmiStatus::Ok;
 
         if relative_ne!(currentCommunicationPoint, self.time()) {
             let message = format!(
@@ -1381,12 +1381,12 @@ impl Container {
                 currentCommunicationPoint
             );
             self.logError(&message);
-            return fmiStatus::fmiError;
+            return fmiStatus::Error;
         }
 
         if communicationStepSize < 0.0 || relative_eq!(communicationStepSize, 0.0) {
             self.logError("Argument communicationStepSize must be greater than 0.");
-            return fmiStatus::fmiError;
+            return fmiStatus::Error;
         }
 
         let n_steps_float = communicationStepSize / self.system.fixedStepSize;
@@ -1398,7 +1398,7 @@ impl Container {
                 communicationStepSize, self.system.fixedStepSize
             );
             self.logError(&message);
-            return fmiStatus::fmiError;
+            return fmiStatus::Error;
         }
 
         for _ in 0..n_steps {

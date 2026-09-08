@@ -8,4 +8,4 @@ edition = "2024"
 license = "BSD-2-Clause"
 
 [workspace.dependencies]
-fmi-rs = { path = "fmi-rs/fmi-rs", version = "0.1.0" }
+fmi-rs = { version = "0.1.0" }

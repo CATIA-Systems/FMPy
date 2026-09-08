@@ -8,7 +8,7 @@ use rstest::rstest;
 
 macro_rules! assert_ok {
     ($expression:expr) => {
-        assert_eq!($expression, fmi3Status::fmi3OK);
+        assert_eq!($expression, fmi3Status::Ok);
     };
 }
 
@@ -662,7 +662,7 @@ fn test_fmi3_container_limitation() {
     // The error message will be: "Connections of type UInt8 are not supported"
     let result = fmu.exitInitializationMode();
 
-    if result != fmi3Status::fmi3OK {
+    if result != fmi3Status::Ok {
         println!(
             "❌ Exit initialization mode failed as expected due to unsupported connection types"
         );

@@ -8,7 +8,7 @@ use rstest::*;
 
 macro_rules! assert_ok {
     ($expression:expr) => {
-        assert_eq!($expression, fmi2Status::fmi2OK);
+        assert_eq!($expression, fmi2Status::Ok);
     };
 }
 

@@ -111,18 +111,20 @@ def supported_platforms(filename: Union[str, IO]):
             break
 
     # check for *.so on Linux
-    for bitness, architecture in [('32', 'i686'), ('64', 'x86_64')]:
+    for bitness, architectures in [('32', {'i686'}), ('64', {'x86_64', 'aarch64'})]:
+        dirs = {'binaries/linux' + bitness} | {'binaries/' + a + '-linux' for a in architectures}
         for name in names:
             head, tail = os.path.split(name)
-            if head in {'binaries/linux' + bitness, 'binaries/' + architecture + '-linux'} and tail.endswith('.so'):
+            if head in dirs and tail.endswith('.so'):
                 platforms.append('linux' + bitness)
                 break
 
     # check for *.dll on Windows
-    for bitness, architecture in [('32', 'x86'), ('64', 'x86_64')]:
+    for bitness, architectures in [('32', {'x86'}), ('64', {'x86_64', 'aarch64'})]:
+        dirs = {'binaries/win' + bitness} | {'binaries/' + a + '-windows' for a in architectures}
         for name in names:
             head, tail = os.path.split(name)
-            if head in {'binaries/win' + bitness, 'binaries/' + architecture + '-windows'} and tail.endswith('.dll'):
+            if head in dirs and tail.endswith('.dll'):
                 platforms.append('win' + bitness)
                 break
 

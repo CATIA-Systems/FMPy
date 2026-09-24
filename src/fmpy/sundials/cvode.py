@@ -55,6 +55,7 @@ CV_NORMAL = 1
 # #define CV_SUCCESS      0
 CV_SUCCESS = 0
 # #define CV_TSTOP_RETURN 1
+CV_TSTOP_RETURN = 1
 # #define CV_ROOT_RETURN  2
 CV_ROOT_RETURN = 2
 #
@@ -176,6 +177,9 @@ CVodeSetMaxStep.restype = c_int
 #                                             SUNNonlinearSolver NLS);
 # SUNDIALS_EXPORT int CVodeSetStabLimDet(void* cvode_mem, sunbooleantype stldet);
 # SUNDIALS_EXPORT int CVodeSetStopTime(void* cvode_mem, sunrealtype tstop);
+CVodeSetStopTime = getattr(sundials_cvode, 'CVodeSetStopTime')
+CVodeSetStopTime.argtypes = [c_void_p, sunrealtype]
+CVodeSetStopTime.restype = c_int
 # SUNDIALS_EXPORT int CVodeSetInterpolateStopTime(void* cvode_mem,
 #                                                 sunbooleantype interp);
 # SUNDIALS_EXPORT int CVodeClearStopTime(void* cvode_mem);

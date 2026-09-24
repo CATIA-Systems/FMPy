@@ -4,7 +4,7 @@ import numpy as np
 from ctypes import create_string_buffer, byref
 from .cvode import CV_SUCCESS, CVodeCreate, CVodeSetMaxStep, CV_BDF, CVodeInit, CVodeSVtolerances, CVodeRootInit, \
     CVodeSetMaxNumSteps, CVodeSetNoInactiveRootWarn, CVRhsFn, CVRootFn, CVode, CV_NORMAL, CV_ROOT_RETURN, \
-    CVodeGetRootInfo, CVodeReInit, CVodeFree
+    CVodeGetRootInfo, CVodeReInit, CVodeFree, CVodeSetStopTime
 from .cvode_ls import *
 from .nvector_serial import *
 from .sundials_context import SUNContext_Create, SUNContext_PushErrHandler
@@ -47,7 +47,8 @@ class CVodeSolver(object):
                  startTime,
                  maxStep=float('inf'),
                  relativeTolerance=1e-5,
-                 maxNumSteps=500):
+                 maxNumSteps=500,
+                 stopTime=None):
         """
         Parameters:
             nx                  number of continuous states
@@ -61,6 +62,7 @@ class CVodeSolver(object):
             maxStep             maximum absolute value of step size allowed
             relativeTolerance   relative tolerance
             maxNumSteps         maximum number of internal steps to be taken by the solver in its attempt to reach tout
+            stopTime            time beyond which the solver must not integrate, or None for no limit
         """
 
         self.get_x = get_x
@@ -72,6 +74,7 @@ class CVodeSolver(object):
         self.input = input
         self.error_info = None
         self.reltol = relativeTolerance
+        self.stopTime = stopTime
 
         self.discrete = nx == 0
 
@@ -129,6 +132,14 @@ class CVodeSolver(object):
 
         _assert_cv_success(CVodeSetNoInactiveRootWarn(self.cvode_mem))
 
+        if stopTime is not None:
+            # Keep the solver inside the interval the caller has promised. CVode
+            # integrates past tout and interpolates back, so without this the
+            # right-hand side is evaluated beyond stopTime -- which for an FMU
+            # that has been told the stop time through fmi2SetupExperiment is
+            # outside the agreed experiment.
+            _assert_cv_success(CVodeSetStopTime(self.cvode_mem, stopTime))
+
         _assert_cv_success(SUNContext_PushErrHandler(self.sunctx, self.ehfun_, None))
 
     def ehfun(self, line: c_int, func: c_char_p, file: c_char_p, msg: c_char_p, err_code: SUNErrCode, err_user_data: c_void_p, sunctx: SUNContext) -> None:
@@ -184,7 +195,10 @@ class CVodeSolver(object):
         elif flag < 0:
             raise RuntimeError("CVode error (code %s) in module %s, function %s: %s" % self.error_info)
 
-        return flag > 0, roots_found, tret.value
+        # CV_ROOT_RETURN, and not simply flag > 0: with a stop time set CVode
+        # also returns CV_TSTOP_RETURN, which is not a state event and must not
+        # be reported as one.
+        return flag == CV_ROOT_RETURN, roots_found, tret.value
 
     def reset(self, time):
 
@@ -195,6 +209,11 @@ class CVodeSolver(object):
 
         # reset the solver
         flag = CVodeReInit(self.cvode_mem, time, self.x)
+
+        if self.stopTime is not None:
+            # CVode clears the stop time once it has been reached, and a
+            # re-initialization is the natural place to put it back.
+            _assert_cv_success(CVodeSetStopTime(self.cvode_mem, self.stopTime))
 
     def __del__(self):
         # clean up

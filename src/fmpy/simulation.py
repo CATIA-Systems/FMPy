@@ -1057,6 +1057,11 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                              startTime=start_time,
                              maxStep=(stop_time - start_time) / 50.,
                              relativeTolerance=relative_tolerance,
+                             # Only when the stop time has actually been
+                             # communicated to the FMU: FMI 1.0 Model Exchange
+                             # has no way to declare one, so there is no bound
+                             # to honour and nothing to change there.
+                             stopTime=stop_time if (set_stop_time and not is_fmi1) else None,
                              **solver_args)
         step_size = output_interval
         fixed_step = False

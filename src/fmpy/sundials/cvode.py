@@ -61,6 +61,7 @@ CV_ROOT_RETURN = 2
 # #define CV_WARNING 99
 #
 # #define CV_TOO_MUCH_WORK -1
+CV_TOO_MUCH_WORK = -1
 # #define CV_TOO_MUCH_ACC  -2
 # #define CV_ERR_FAILURE   -3
 # #define CV_CONV_FAILURE  -4

@@ -626,6 +626,7 @@ def simulate_fmu(filename,
                  solver: str = 'CVode',
                  step_size: Union[float, str] = None,
                  relative_tolerance: Union[float, str] = None,
+                 max_num_steps: int = None,
                  output_interval: Union[float, str] = None,
                  record_events: bool = True,
                  fmi_type: str = None,
@@ -659,6 +660,8 @@ def simulate_fmu(filename,
         solver                 solver to use for model exchange ('Euler' or 'CVode')
         step_size              step size for the 'Euler' solver
         relative_tolerance     relative tolerance for the 'CVode' solver and FMI 2.0 co-simulation FMUs
+        max_num_steps          maximum number of internal steps the 'CVode' solver may take to reach the
+                               next output point (default: 500)
         output_interval        interval for sampling the output
         record_events          record outputs at events (model exchange only)
         fmi_type               FMI type for the simulation (None: determine from FMU)
@@ -796,7 +799,7 @@ def simulate_fmu(filename,
 
     # simulate_fmu the FMU
     if fmi_type == 'ModelExchange':
-        result = simulateME(model_description, fmu, start_time, stop_time, solver, step_size, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, record_events, timeout, step_finished, validate, set_stop_time)
+        result = simulateME(model_description, fmu, start_time, stop_time, solver, step_size, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, record_events, timeout, step_finished, validate, set_stop_time, max_num_steps)
     elif fmi_type == 'CoSimulation':
         result = simulateCS(model_description, fmu, start_time, stop_time, relative_tolerance, start_values, apply_default_start_values, input, output, output_interval, timeout, step_finished, set_input_derivatives, use_event_mode, early_return_allowed, validate, initialize, terminate, set_stop_time)
 
@@ -925,7 +928,7 @@ def settable_in_initialization_mode(variable):
            or (variable.variability != 'constant' and variable.initial == 'exact')
 
 
-def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_size, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, record_events, timeout, step_finished, validate, set_stop_time):
+def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_size, relative_tolerance, start_values, apply_default_start_values, input_signals, output, output_interval, record_events, timeout, step_finished, validate, set_stop_time, max_num_steps=None):
 
     if relative_tolerance is None:
         relative_tolerance = 1e-5
@@ -1057,6 +1060,7 @@ def simulateME(model_description, fmu, start_time, stop_time, solver_name, step_
                              startTime=start_time,
                              maxStep=(stop_time - start_time) / 50.,
                              relativeTolerance=relative_tolerance,
+                             **({} if max_num_steps is None else {'maxNumSteps': max_num_steps}),
                              **solver_args)
         step_size = output_interval
         fixed_step = False

@@ -4,7 +4,7 @@ import numpy as np
 from ctypes import create_string_buffer, byref
 from .cvode import CV_SUCCESS, CVodeCreate, CVodeSetMaxStep, CV_BDF, CVodeInit, CVodeSVtolerances, CVodeRootInit, \
     CVodeSetMaxNumSteps, CVodeSetNoInactiveRootWarn, CVRhsFn, CVRootFn, CVode, CV_NORMAL, CV_ROOT_RETURN, \
-    CVodeGetRootInfo, CVodeReInit, CVodeFree
+    CVodeGetRootInfo, CVodeReInit, CVodeFree, CV_TOO_MUCH_WORK
 from .cvode_ls import *
 from .nvector_serial import *
 from .sundials_context import SUNContext_Create, SUNContext_PushErrHandler
@@ -48,6 +48,8 @@ class CVodeSolver(object):
                  maxStep=float('inf'),
                  relativeTolerance=1e-5,
                  maxNumSteps=500):
+        # NOTE: this is the number of internal steps allowed to reach ONE output
+        # point, not the whole simulation.
         """
         Parameters:
             nx                  number of continuous states
@@ -72,6 +74,7 @@ class CVodeSolver(object):
         self.input = input
         self.error_info = None
         self.reltol = relativeTolerance
+        self.maxNumSteps = maxNumSteps
 
         self.discrete = nx == 0
 
@@ -181,6 +184,12 @@ class CVodeSolver(object):
         if flag == CV_ROOT_RETURN:
             p_roots_found = np.ctypeslib.as_ctypes(roots_found)
             _assert_cv_success(CVodeGetRootInfo(self.cvode_mem, p_roots_found))
+        elif flag == CV_TOO_MUCH_WORK:
+            raise RuntimeError(
+                f"CVode took more than the permitted {self.maxNumSteps} internal steps to reach "
+                f"t={tNext}. Pass a larger max_num_steps to simulate_fmu(), or a shorter "
+                f"output_interval: the limit applies per output point, so shorter intervals "
+                f"need fewer steps each.")
         elif flag < 0:
             raise RuntimeError("CVode error (code %s) in module %s, function %s: %s" % self.error_info)
 

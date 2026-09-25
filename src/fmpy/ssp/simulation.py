@@ -69,6 +69,35 @@ def set_parameters(component, parameter_set):
             set_value(component, variable_name, parameter.value)
 
 
+def apply_parameter_bindings(component):
+    """ Apply the parameter bindings the SSD declares for this component
+
+    An SSP carries its own parameter values -- inline in an
+    `ssd:ParameterValues/ssv:ParameterSet`, or in an .ssv the binding's
+    `source` points at -- and `read_ssd()` already parses both into
+    `component.parameterBindings`. They name the component's OWN variables, so
+    unlike an externally supplied parameter set there is no component path to
+    strip.
+
+    A name that matches no variable of this FMU is skipped rather than raising:
+    one parameter set may be bound to several components, which is the point of
+    sharing an .ssv.
+    """
+
+    for parameter_binding in component.parameterBindings:
+
+        prefix = parameter_binding.prefix or ''
+
+        for parameter_set in parameter_binding.parameterValues:
+
+            for parameter in parameter_set.parameters:
+
+                name = prefix + parameter.name
+
+                if name in component.variables:
+                    set_value(component, name, parameter.value)
+
+
 def instantiate_fmu(component, ssp_unzipdir, start_time, stop_time=None, parameter_set=None):
     """ Instantiate an FMU """
 
@@ -96,6 +125,9 @@ def instantiate_fmu(component, ssp_unzipdir, start_time, stop_time=None, paramet
     if model_description.fmiVersion == '1.0':
         component.fmu = FMU1Slave(**fmu_kwargs)
         component.fmu.instantiate()
+        # The SSD's own values first, so an explicitly supplied parameter set
+        # still overrides what the file says.
+        apply_parameter_bindings(component)
         if parameter_set is not None:
             set_parameters(component, parameter_set)
         component.fmu.initialize(stopTime=stop_time)
@@ -103,6 +135,7 @@ def instantiate_fmu(component, ssp_unzipdir, start_time, stop_time=None, paramet
         component.fmu = FMU2Slave(**fmu_kwargs)
         component.fmu.instantiate()
         component.fmu.setupExperiment(startTime=start_time)
+        apply_parameter_bindings(component)
         if parameter_set is not None:
             set_parameters(component, parameter_set)
         component.fmu.enterInitializationMode()

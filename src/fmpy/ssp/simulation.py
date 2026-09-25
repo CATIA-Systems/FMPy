@@ -120,6 +120,14 @@ def free_fmu(component):
         print("Failed to remove unzip directory. " + str(e))
 
 
+def get_outputs(component):
+    """ Read a component's outputs into its connectors """
+
+    for connector in component.connectors:
+        if connector.kind == 'output':
+            connector.value = get_value(component, connector.name)
+
+
 def do_step(component, time, step_size):
     """ Perform one simulation step """
 
@@ -132,9 +140,7 @@ def do_step(component, time, step_size):
     component.fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
 
     # get outputs
-    for connector in component.connectors:
-        if connector.kind == 'output':
-            connector.value = get_value(component, connector.name)
+    get_outputs(component)
 
 
 def simulate_ssp(ssp_filename, start_time=0.0, stop_time=None, step_size=None, parameter_set=None, input={}):
@@ -183,12 +189,32 @@ def simulate_ssp(ssp_filename, start_time=0.0, stop_time=None, step_size=None, p
     for component in components:
         instantiate_fmu(component, ssp_unzipdir, start_time, stop_time, parameter_set)
 
-    time = start_time
-
     rows = []  # list to record the results
 
+    def record(t):
+        rows.append((t,) + tuple(connector.value for connector in connectors))
+
+    def apply_connections():
+        for start_connector, end_connector in connections:
+            end_connector.value = start_connector.value
+
+    # the state at start_time, before any step is taken
+    for component in components:
+        get_outputs(component)
+
+    apply_connections()
+    record(start_time)
+
+    # The number of steps is computed once and each sample time is derived from
+    # the step INDEX. Accumulating `time += step_size` drifts: for
+    # start_time=0, stop_time=10, step_size=0.1 the hundredth value is
+    # 9.999999999999998, so `while time < stop_time` ran a 101st step.
+    n_steps = max(int(round((stop_time - start_time) / step_size)), 0)
+
     # simulation loop
-    while time < stop_time:
+    for step in range(n_steps):
+
+        time = start_time + step * step_size
 
         # apply input
         for connector in ssd.system.connectors:
@@ -200,20 +226,10 @@ def simulate_ssp(ssp_filename, start_time=0.0, stop_time=None, step_size=None, p
             do_step(component, time, step_size)
 
         # apply connections
-        for start_connector, end_connector in connections:
-            end_connector.value = start_connector.value
+        apply_connections()
 
-        # get the results
-        row = [time]
-
-        for connector in connectors:
-            row.append(connector.value)
-
-        # append the results
-        rows.append(tuple(row))
-
-        # advance the time
-        time += step_size
+        # the state now is the state at the END of the step
+        record(start_time + (step + 1) * step_size)
 
     # free the FMUs
     for component in components:

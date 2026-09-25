@@ -679,7 +679,7 @@ def get_connections(system, connectors=None):
                     break
                 elif connection.startElement is None and connection.startConnector == connector.name:
                     start_p = build_path(connector)
-                    end_p = build_path(system) + '.' + connection.startElement + '.' + connection.startConnector
+                    end_p = build_path(system) + '.' + connection.endElement + '.' + connection.endConnector
                     break
 
             cons.append((connectors[start_p], connectors[end_p]))

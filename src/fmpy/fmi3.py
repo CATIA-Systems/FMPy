@@ -1545,7 +1545,7 @@ class _FMU3(_FMU):
     # Getting Variable Dependency Information
     def getNumberOfVariableDependencies(self, valueReference: int) -> int:
         valueReference = fmi3ValueReference(valueReference)
-        nDependencies = c_size_t
+        nDependencies = c_size_t()
         self.fmi3GetNumberOfVariableDependencies(self.component, valueReference, byref(nDependencies))
         return nDependencies.value
 

@@ -43,9 +43,9 @@ def validate_fmu(filename: str) -> List[str]:
                                validate_variable_names=True,
                                validate_model_structure=True)
     except ValidationError as e:
-        problems = e.problems
+        problems += e.problems
     except Exception as e:
-        problems = [str(e)]
+        problems.append(str(e))
 
     return problems
 

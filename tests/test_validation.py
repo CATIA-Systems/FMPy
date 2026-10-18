@@ -39,3 +39,19 @@ def test_validate_start_values():
         simulate_fmu(filename, start_values={'clutch1.sa': 0.0})
 
     assert 'The start values for the following variables could not be set: clutch1.sa' == str(exception_info.value)
+
+
+def test_validate_fmu_preserves_archive_problems(tmp_path):
+    import zipfile
+    from fmpy.validation import validate_fmu
+
+    fmu_path = tmp_path / "test_archive_problems.fmu"
+    invalid_xml = "<fmiModelDescription><invalid></fmiModelDescription>"
+
+    with zipfile.ZipFile(fmu_path, "w") as zf:
+        zf.writestr("resources\\file.txt", "dummy content")
+        zf.writestr("modelDescription.xml", invalid_xml)
+
+    problems = validate_fmu(str(fmu_path))
+    assert any('The file path "resources\\file.txt" contains a backslash.' in p for p in problems)
+    assert len(problems) >= 2

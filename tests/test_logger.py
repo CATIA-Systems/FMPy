@@ -1,6 +1,6 @@
 import gc
 import pytest
-from fmpy import extract, read_model_description, instantiate_fmu
+from fmpy import extract, read_model_description, instantiate_fmu, platform_tuple
 from fmpy.fmi1 import FMICallException
 
 
@@ -25,6 +25,7 @@ def log_error(fmu):
 
 
 @pytest.mark.parametrize('fmi_version', ['1.0', '2.0'])
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_default_logger_after_custom_logger(reference_fmus_dist_dir, fmi_version, capsys):
     """ https://github.com/CATIA-Systems/FMPy/issues/899 """
 
@@ -54,6 +55,7 @@ def test_default_logger_after_custom_logger(reference_fmus_dist_dir, fmi_version
     assert '[ERROR]' in capsys.readouterr().out
 
 
+@pytest.mark.skipif(platform_tuple == "aarch64-darwin", reason="Not supported on aarch64-darwin")
 def test_loggers_of_simultaneous_instances(reference_fmus_dist_dir):
 
     unzipdir, model_description = reference_fmu(reference_fmus_dist_dir, '2.0')

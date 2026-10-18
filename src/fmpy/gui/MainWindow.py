@@ -225,7 +225,7 @@ class MainWindow(QMainWindow):
 
         self.log = Log(self)
 
-        self.log.htmlChanged.connect(self.ui.logWebEngineView.setHtml)
+        self.log.htmlChanged.connect(self.ui.logTextBrowser.setHtml)
 
         self.ui.clearLogButton.clicked.connect(self.log.clear)
 

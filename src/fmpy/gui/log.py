@@ -1,5 +1,6 @@
 import re
-from PySide6.QtCore import Qt, QObject
+from html import escape
+from PySide6.QtCore import Qt, QObject, QTimer
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QGuiApplication
 from string import Template
@@ -35,6 +36,12 @@ class Log(QObject):
         self.numberOfInfoMessages = 0
         self.numberOfWarningMessages = 0
         self.numberOfErrorMessages = 0
+
+        # throttle the HTML updates to avoid rebuilding the page for every message
+        self.updateHtmlTimer = QTimer(self)
+        self.updateHtmlTimer.setSingleShot(True)
+        self.updateHtmlTimer.setInterval(100)
+        self.updateHtmlTimer.timeout.connect(self.updateHtml)
 
     @staticmethod
     def severity(level: Severity):
@@ -79,7 +86,8 @@ class Log(QObject):
             self.numberOfErrorMessages += 1
             self.numberOfErrorMessagesChanged.emit(self.numberOfErrorMessages)
 
-        self.updateHtml()
+        if not self.updateHtmlTimer.isActive():
+            self.updateHtmlTimer.start()
 
     def setShowDebugMessages(self, show):
         self.showDebugMessages = show
@@ -124,24 +132,6 @@ class Log(QObject):
 <html>
 <head>
 <style>
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-  border-radius: 10px;
-  background: #A0A0A4;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #A9A9AD;
-}
-
-::-webkit-scrollbar-corner {
-  background-color: transparent;
-}
-
 body {
     background-color: $background;
 }
@@ -149,35 +139,35 @@ body {
 pre {
     font-size: 13px;
     line-height: 130%;
-    background-repeat: no-repeat;
-    background-size: 1.2em 1.2em;
-    padding-left: 1.5em;
     margin: 0em;
 }
 
 pre.debug {
-    background-image: url('qrc:/icons/light/debug.svg');
     color: $grey;
 }
 
 pre.info {
-    background-image: url('qrc:/icons/light/info.svg');
     color: $blue;
 }
 
 pre.warning {
-    background-image: url('qrc:/icons/light/warning.svg');
     color: $yellow;
 }
 
 pre.error {
-    background-image: url('qrc:/icons/light/error.svg');
     color: $red;
 }
 </style>
 </head>
 <body>
 ''').substitute(**colors)
+
+        symbols = {
+            "debug": "\u2022",    # bullet
+            "info": "\u2139",     # information source
+            "warning": "\u26a0",  # warning sign
+            "error": "\u2716",    # heavy multiplication x
+        }
 
         for level, text in self.messages:
 
@@ -188,7 +178,7 @@ pre.error {
                 level == "info" and self.showInfoMessages or
                 level == "warning" and self.showWarningMessages or
                 level == "error" and self.showErrorMessages):
-                html += f'<pre class="{level}">{text}</pre>\n'
+                html += f'<pre class="{level}">{symbols[level]} {escape(text)}</pre>\n'
 
         html += "</body></html>"
 

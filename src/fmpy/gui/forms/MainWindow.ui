@@ -1233,7 +1233,7 @@ QToolButton:checked, QToolButton:hover:pressed {
          </widget>
         </item>
         <item>
-         <widget class="QWebEngineView" name="logWebEngineView">
+         <widget class="QTextBrowser" name="logTextBrowser">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
             <horstretch>0</horstretch>

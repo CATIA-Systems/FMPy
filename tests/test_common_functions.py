@@ -96,3 +96,47 @@ def test_common_functions(fmi_version, reference_fmus_dist_dir):
     fmu.terminate()
     fmu.freeInstance()
     shutil.rmtree(unzipdir)
+
+
+def test_require_functions_missing_function(reference_fmus_dist_dir, monkeypatch):
+    from fmpy.fmi1 import cdll
+
+    filename = reference_fmus_dist_dir / '2.0' / 'Feedthrough.fmu'
+    model_description = read_model_description(filename)
+    unzipdir = extract(filename)
+
+    args = {
+        'guid': model_description.guid,
+        'modelIdentifier': model_description.coSimulation.modelIdentifier,
+        'unzipDirectory': unzipdir,
+        'instanceName': None,
+    }
+
+    real_load_library = cdll.LoadLibrary
+
+    class MockDLL:
+        def __init__(self, inner):
+            self._inner = inner
+            self._handle = getattr(inner, '_handle', None)
+
+        def __getattr__(self, name):
+            if name == 'fmi2GetDirectionalDerivative':
+                raise AttributeError(f"symbol {name} not found")
+            return getattr(self._inner, name)
+
+    def mock_load_library(path):
+        return MockDLL(real_load_library(path))
+
+    monkeypatch.setattr('fmpy.fmi1.cdll.LoadLibrary', mock_load_library)
+
+    # When requireFunctions=True, instantiation must raise AttributeError
+    with pytest.raises(AttributeError):
+        FMU2Slave(requireFunctions=True, **args)
+
+    # When requireFunctions=False, instantiation succeeds, but calling the missing function raises AttributeError
+    fmu = FMU2Slave(requireFunctions=False, **args)
+    assert 'fmi2GetDirectionalDerivative' not in fmu._functions
+    with pytest.raises(AttributeError, match="not available in the shared library"):
+        fmu._call('fmi2GetDirectionalDerivative')
+
+    shutil.rmtree(unzipdir)

@@ -356,6 +356,11 @@ class _FMU(object):
     def _call(self, fname: str, *args) -> Any:
         """Call and log the FMI API function"""
 
+        if fname not in self._functions:
+            raise AttributeError(
+                f"Function {fname} is not available in the shared library"
+            )
+
         f = self._functions[fname]
 
         res = f(*args)
@@ -396,7 +401,12 @@ class _FMU(object):
                 if identifier:
                     c_fun_name = identifier + c_fun_name.replace("fmi1", "fmi")
 
-                c_fun: ctypes._FuncPointer = getattr(self.dll, c_fun_name)
+                try:
+                    c_fun: ctypes._FuncPointer = getattr(self.dll, c_fun_name)
+                except AttributeError:
+                    if self.requireFunctions:
+                        raise
+                    continue
 
                 argnames = []
                 argtypes = []

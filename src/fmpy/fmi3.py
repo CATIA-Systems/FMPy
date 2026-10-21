@@ -1301,8 +1301,11 @@ class _FMU3(_FMU):
         return version.decode("utf-8")
 
     def setDebugLogging(self, loggingOn, categories):
-        categories_ = (fmi3String * len(categories))()
-        categories_[:] = [c.encode("utf-8") for c in categories]
+        if categories:
+            categories_ = (fmi3String * len(categories))()
+            categories_[:] = [c.encode("utf-8") for c in categories]
+        else:
+            categories_ = None
         self.fmi3SetDebugLogging(
             self.component, fmi3Boolean(loggingOn), len(categories), categories_
         )

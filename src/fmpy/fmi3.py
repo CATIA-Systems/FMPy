@@ -155,7 +155,7 @@ class _FMU3(_FMU):
         self,
         instanceName: fmi3String | bytes,
         instantiationToken: fmi3String | bytes,
-        resourcePath: fmi3String | bytes,
+        resourcePath: fmi3String | bytes | None,
         visible: fmi3Boolean | bool,
         loggingOn: fmi3Boolean | bool,
         instanceEnvironment: fmi3InstanceEnvironment,
@@ -207,7 +207,7 @@ class _FMU3(_FMU):
         self,
         instanceName: fmi3String | bytes,
         instantiationToken: fmi3String | bytes,
-        resourcePath: fmi3String | bytes,
+        resourcePath: fmi3String | bytes | None,
         visible: fmi3Boolean | bool,
         loggingOn: fmi3Boolean | bool,
         instanceEnvironment: fmi3InstanceEnvironment,
@@ -1802,8 +1802,14 @@ class FMU3Model(_FMU3):
     def __init__(self, **kwargs):
         super(FMU3Model, self).__init__(**kwargs)
 
-    def instantiate(self, visible=False, loggingOn=False, logMessage=None):
-        resourcePath = os.path.join(self.unzipDirectory, "resources") + os.path.sep
+    def instantiate(self, visible=False, loggingOn=False, logMessage=None, resourcePath=None):
+        if resourcePath is None:
+            defaultResourcePath = os.path.join(self.unzipDirectory, "resources") + os.path.sep
+            if os.path.isdir(defaultResourcePath):
+                resourcePath = defaultResourcePath
+
+        if resourcePath is not None and isinstance(resourcePath, str):
+            resourcePath = resourcePath.encode("utf-8")
 
         # save callbacks from GC
         self.logMessage = fmi3LogMessageCallback(
@@ -1813,7 +1819,7 @@ class FMU3Model(_FMU3):
         self.component = self.fmi3InstantiateModelExchange(
             self.instanceName.encode("utf-8"),
             self.guid.encode("utf-8"),
-            resourcePath.encode("utf-8"),
+            resourcePath,
             fmi3Boolean(visible),
             fmi3Boolean(loggingOn),
             fmi3InstanceEnvironment(),
@@ -1899,6 +1905,7 @@ class FMU3Slave(_FMU3):
         logMessage=None,
         intermediateUpdate=None,
         requiredIntermediateVariables=None,
+        resourcePath=None,
     ):
         # save callbacks from GC
         self.logMessage = fmi3LogMessageCallback(
@@ -1915,12 +1922,18 @@ class FMU3Slave(_FMU3):
         else:
             self.intermediateUpdate = fmi3IntermediateUpdateCallback(intermediateUpdate)
 
-        resourcePath = os.path.join(self.unzipDirectory, "resources") + os.path.sep
+        if resourcePath is None:
+            defaultResourcePath = os.path.join(self.unzipDirectory, "resources") + os.path.sep
+            if os.path.isdir(defaultResourcePath):
+                resourcePath = defaultResourcePath
+
+        if resourcePath is not None and isinstance(resourcePath, str):
+            resourcePath = resourcePath.encode("utf-8")
 
         self.component = self.fmi3InstantiateCoSimulation(
             self.instanceName.encode("utf-8"),
             self.guid.encode("utf-8"),
-            resourcePath.encode("utf-8"),
+            resourcePath,
             fmi3Boolean(visible),
             fmi3Boolean(loggingOn),
             fmi3Boolean(eventModeUsed),
@@ -1991,9 +2004,7 @@ class FMU3ScheduledExecution(_FMU3):
         kwargs["instanceName"] = instanceName
         super(FMU3ScheduledExecution, self).__init__(**kwargs)
 
-    def instantiate(self, visible=False, loggingOn=False, logMessage=None):
-        resourcePath = os.path.join(self.unzipDirectory, "resources") + os.path.sep
-
+    def instantiate(self, visible=False, loggingOn=False, logMessage=None, resourcePath=None):
         def noop(*args):
             pass
 
@@ -2005,10 +2016,18 @@ class FMU3ScheduledExecution(_FMU3):
         self.lockPreemption = fmi3LockPreemptionCallback(noop)
         self.unlockPreemption = fmi3UnlockPreemptionCallback(noop)
 
+        if resourcePath is None:
+            defaultResourcePath = os.path.join(self.unzipDirectory, "resources") + os.path.sep
+            if os.path.isdir(defaultResourcePath):
+                resourcePath = defaultResourcePath
+
+        if resourcePath is not None and isinstance(resourcePath, str):
+            resourcePath = resourcePath.encode("utf-8")
+
         self.component = self.fmi3InstantiateScheduledExecution(
             self.instanceName.encode("utf-8"),
             self.guid.encode("utf-8"),
-            resourcePath.encode("utf-8"),
+            resourcePath,
             fmi3Boolean(visible),
             fmi3Boolean(loggingOn),
             fmi3InstanceEnvironment(),

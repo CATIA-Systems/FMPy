@@ -230,7 +230,8 @@ def _validate_model_structure(model_description: ModelDescription) -> List[str]:
 
     for variable in model_description.modelVariables:
 
-        if variable.causality == 'output' and variable.initial in {'approx', 'calculated'} and not variable.clocks:
+        if variable.causality == 'output' and variable.initial in {'approx', 'calculated'} \
+                and variable.type != 'Clock' and not variable.clocks:
             expected_initial_unknowns.add(variable)
 
         if variable.causality == 'calculatedParameter':
@@ -246,7 +247,9 @@ def _validate_model_structure(model_description: ModelDescription) -> List[str]:
 
         initial_unknowns = set(v.variable for v in model_description.initialUnknowns)
 
-        if initial_unknowns != expected_initial_unknowns:
+        clocked = set(v for v in model_description.modelVariables if v.clocks)
+
+        if not expected_initial_unknowns <= initial_unknowns <= expected_initial_unknowns | clocked:
             expected = ', '.join(sorted(v.name for v in expected_initial_unknowns))
             actual = ', '.join(sorted(v.name for v in initial_unknowns))
             problem = ("ModelStructure/InitialUnknowns does not contain the expected set of variables." 

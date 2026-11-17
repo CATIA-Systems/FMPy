@@ -8,6 +8,15 @@ from fmpy.model_description import ModelVariable
 __version__ = "0.1.0"
 
 
+def _to_fmi3_type(variable_type: str) -> str:
+    """Map FMI 2.0 type names to FMI 3.0 type names accepted by the container runner."""
+    if variable_type == "Real":
+        return "Float64"
+    elif variable_type in ("Integer", "Enumeration"):
+        return "Int32"
+    return variable_type
+
+
 def write_configuration(configuration: Configuration, filename: Path):
 
     data = {
@@ -54,12 +63,7 @@ def write_configuration(configuration: Configuration, filename: Path):
                 component_variable.valueReference
             ))
 
-        variable_type = container_variable.type
-
-        if variable_type == "Real":
-            variable_type = "Float64"
-        elif variable_type == "Integer":
-            variable_type = "Int32"
+        variable_type = _to_fmi3_type(container_variable.type)
 
         variable = {
             "variableType": variable_type,
@@ -81,7 +85,7 @@ def write_configuration(configuration: Configuration, filename: Path):
 
         data["connections"].append(
             {
-                "variableType": c.startConnectors[0].type,
+                "variableType": _to_fmi3_type(c.startConnectors[0].type),
                 "srcComponent": configuration.components.index(c.startElement),
                 "dstComponent": configuration.components.index(c.endElement),
                 "srcValueReferences": list(map(lambda v: v.valueReference, c.startConnectors)),

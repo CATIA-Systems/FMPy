@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 from fmpy import read_model_description
 from fmpy.container_fmu import write_configuration
 from fmpy.container_fmu.config import Component, Configuration, Connection

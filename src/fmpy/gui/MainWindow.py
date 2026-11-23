@@ -159,6 +159,19 @@ class MainWindow(QMainWindow):
         self.fmiTypeComboBox.setSizeAdjustPolicy(QComboBox.AdjustToContents)
         self.ui.toolBar.addWidget(self.fmiTypeComboBox)
 
+        from fmpy.gui.simulation import fmi_rs_available
+
+        self.engineComboBox = QComboBox(self)
+        self.engineComboBox.addItem("FMPy")
+        if fmi_rs_available():
+            self.engineComboBox.addItem("fmi-rs")
+        self.engineComboBox.setToolTip("Simulation engine")
+        self.engineComboBox.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        self.engineComboBox.setCurrentText(QSettings().value('engine', "FMPy"))
+        self.engineComboBox.currentTextChanged.connect(lambda engine: QSettings().setValue('engine', engine))
+        self.engineComboBox.setEnabled(self.engineComboBox.count() > 1)
+        self.ui.toolBar.addWidget(self.engineComboBox)
+
         # disable widgets
         self.ui.actionLoadStartValues.setEnabled(False)
         self.ui.actionSave.setEnabled(False)
@@ -753,7 +766,13 @@ class MainWindow(QMainWindow):
 
     def startSimulation(self):
 
-        from fmpy.gui.simulation import SimulationThread
+        from fmpy.gui.simulation import SimulationThread, FmiRsSimulationThread
+
+        use_fmi_rs = self.engineComboBox.currentText() == 'fmi-rs'
+
+        if use_fmi_rs and self.modelDescription.fmiVersion == '1.0':
+            self.log.logMessage('warning', "fmi-rs does not support FMI 1.0. Simulating with FMPy.")
+            use_fmi_rs = False
 
         try:
             stop_time = float(self.stopTimeLineEdit.text())
@@ -777,7 +796,10 @@ class MainWindow(QMainWindow):
         else:
             solver = 'CVode'
 
-        if self.ui.inputCheckBox.isChecked():
+        if self.ui.inputCheckBox.isChecked() and use_fmi_rs:
+            # fmi-rs reads the CSV file itself
+            input = None
+        elif self.ui.inputCheckBox.isChecked():
 
             input_variables = []
             for variable in self.modelDescription.modelVariables:
@@ -799,19 +821,30 @@ class MainWindow(QMainWindow):
 
         fmi_type = 'CoSimulation' if self.fmiTypeComboBox.currentText() == 'Co-Simulation' else 'ModelExchange'
 
-        self.simulationThread = SimulationThread(filename=self.unzipdir,
-                                                 fmiType=fmi_type,
-                                                 stopTime=stop_time,
-                                                 solver=solver,
-                                                 stepSize=step_size,
-                                                 relativeTolerance=relative_tolerance,
-                                                 outputInterval=output_interval,
-                                                 startValues=self.startValues,
-                                                 applyDefaultStartValues=self.ui.applyDefaultStartValuesCheckBox.isChecked(),
-                                                 input=input,
-                                                 output=output,
-                                                 debugLogging=self.ui.debugLoggingCheckBox.isChecked(),
-                                                 fmiLogging=self.ui.logFMICallsCheckBox.isChecked())
+        if use_fmi_rs:
+            thread_class = FmiRsSimulationThread
+            if self.ui.inputCheckBox.isChecked():
+                thread_kwargs = dict(inputFilename=self.ui.inputFilenameLineEdit.text())
+            else:
+                thread_kwargs = dict()
+        else:
+            thread_class = SimulationThread
+            thread_kwargs = dict()
+
+        self.simulationThread = thread_class(filename=self.unzipdir,
+                                             fmiType=fmi_type,
+                                             stopTime=stop_time,
+                                             solver=solver,
+                                             stepSize=step_size,
+                                             relativeTolerance=relative_tolerance,
+                                             outputInterval=output_interval,
+                                             startValues=self.startValues,
+                                             applyDefaultStartValues=self.ui.applyDefaultStartValuesCheckBox.isChecked(),
+                                             input=input,
+                                             output=output,
+                                             debugLogging=self.ui.debugLoggingCheckBox.isChecked(),
+                                             fmiLogging=self.ui.logFMICallsCheckBox.isChecked(),
+                                             **thread_kwargs)
 
         self.ui.actionSimulate.setIcon(QIcon(':/icons/light/stop.svg'))
         self.ui.actionSimulate.setToolTip("Stop simulation")
